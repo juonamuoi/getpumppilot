@@ -1076,7 +1076,7 @@ function ReplayPanel() {
     return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
   }, [filteredSignals]);
 
-  const maxBucket = result ? Math.max(1, ...result.perBucket) : 1;
+  const maxBucket = filteredBuckets.length ? Math.max(1, ...filteredBuckets) : 1;
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
