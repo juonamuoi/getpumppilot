@@ -1528,3 +1528,223 @@ function RuleImpactPanel({
   );
 }
 
+/* ---------------------- Snapshot inspector modal ---------------------- */
+
+function ruleComparisonLine(
+  k: RuleKey,
+  snap: BucketSnapshot,
+  rules: ScannerRules,
+): { label: string; observed: number; threshold: number; slack: number; passed: boolean; unit: string } {
+  const meta = RULE_META[k];
+  const threshold = ruleThreshold(rules, k);
+  const observed =
+    k === "momentum" ? snap.momentum
+    : k === "volume" ? snap.volumeScore
+    : k === "volatility" ? snap.volatility
+    : snap.change;
+  return {
+    label: meta.label + ` ${threshold}${meta.unit}`,
+    observed,
+    threshold,
+    slack: snap.slack[k],
+    passed: snap.slack[k] >= 0,
+    unit: meta.unit,
+  };
+}
+
+function SnapshotBucketDialog({
+  open,
+  onOpenChange,
+  bucketIndex,
+  result,
+  rules,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  bucketIndex: number | null;
+  result: ReplayResult;
+  rules: ScannerRules;
+}) {
+  const snaps =
+    bucketIndex == null ? [] : result.perBucketSnapshots[bucketIndex] ?? [];
+  const spanMs = WINDOW_MS[result.window];
+  const stepMs = spanMs / result.steps;
+  const bucketStart =
+    bucketIndex == null ? 0 : result.ranAt - spanMs + bucketIndex * stepMs;
+  const bucketEnd = bucketStart + stepMs;
+
+  const matched = snaps.filter((s) => s.outcome === "match");
+  const failed = snaps.filter((s) => s.outcome === "fail");
+  const cooled = snaps.filter((s) => s.outcome === "cooldown");
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    setExpanded({});
+  }, [bucketIndex]);
+
+  const keyOf = (s: BucketSnapshot) => `${s.symbol}-${s.ts}`;
+
+  const renderSnap = (s: BucketSnapshot) => {
+    const k = keyOf(s);
+    const isOpen = expanded[k] ?? false;
+    const rows = (Object.keys(RULE_META) as RuleKey[]).map((rk) =>
+      ruleComparisonLine(rk, s, rules),
+    );
+    return (
+      <div
+        key={k}
+        className="rounded-md border border-border/60 bg-muted/20 px-3 py-2"
+      >
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left"
+          onClick={() => setExpanded((p) => ({ ...p, [k]: !isOpen }))}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-mono text-sm font-semibold">{s.symbol}</span>
+            {s.category === "demo-smallcap" && (
+              <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-300">
+                DEMO
+              </Badge>
+            )}
+            <Badge
+              variant="outline"
+              className={
+                s.outcome === "match"
+                  ? "border-emerald-500/40 text-[10px] text-emerald-300"
+                  : s.outcome === "cooldown"
+                    ? "border-sky-500/40 text-[10px] text-sky-300"
+                    : "border-rose-500/40 text-[10px] text-rose-300"
+              }
+            >
+              {s.outcome === "match"
+                ? "Matched"
+                : s.outcome === "cooldown"
+                  ? `Cooldown ${Math.ceil((s.cooldownRemainingMs ?? 0) / 60000)}m`
+                  : `Failed ${s.failedRules.length}/4`}
+            </Badge>
+          </div>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {format(new Date(s.ts), "HH:mm:ss")}
+            <ChevronRight
+              className={`ml-1 inline h-3 w-3 transition ${isOpen ? "rotate-90" : ""}`}
+            />
+          </span>
+        </button>
+        {isOpen && (
+          <div className="mt-2 space-y-1.5 border-t border-border/40 pt-2">
+            {rows.map((r) => {
+              const meta = RULE_META[
+                (Object.keys(RULE_META) as RuleKey[]).find(
+                  (k2) => RULE_META[k2].label === r.label.replace(/ [-\d.%]+$/, ""),
+                ) ?? "momentum"
+              ];
+              const slackAbs = Math.abs(r.slack).toFixed(r.unit === "%" ? 2 : 1);
+              return (
+                <div
+                  key={r.label}
+                  className="flex items-center justify-between gap-3 rounded-sm bg-background/40 px-2 py-1 text-[11px]"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {r.passed ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                    ) : (
+                      <XCircle className="h-3.5 w-3.5 shrink-0 text-rose-400" />
+                    )}
+                    <span className={`truncate ${meta.textClass}`}>{r.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-mono">
+                    <span className="text-muted-foreground">
+                      obs{" "}
+                      <span className="text-foreground">
+                        {r.observed.toFixed(r.unit === "%" ? 2 : 0)}
+                        {r.unit}
+                      </span>
+                    </span>
+                    <span className={r.passed ? "text-emerald-300" : "text-rose-300"}>
+                      {r.passed ? "+" : "−"}
+                      {slackAbs}
+                      {r.unit}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="pt-1 text-[10px] text-muted-foreground">
+              Price {s.price.toFixed(s.price < 10 ? 4 : 2)} · momentum {s.momentum} · vol{" "}
+              {s.volumeScore} · volatility {s.volatility} · 24h{" "}
+              {s.change >= 0 ? "+" : ""}
+              {s.change.toFixed(2)}%
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            Snapshot bucket
+            {bucketIndex != null && (
+              <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">
+                {format(new Date(bucketStart), "MMM d HH:mm:ss")} →{" "}
+                {format(new Date(bucketEnd), "HH:mm:ss")}
+              </span>
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {snaps.length} evaluation{snaps.length === 1 ? "" : "s"} against your saved rules ·{" "}
+            <span className="text-emerald-300">{matched.length} matched</span>
+            {cooled.length > 0 && (
+              <>
+                {" "}
+                · <span className="text-sky-300">{cooled.length} cooled</span>
+              </>
+            )}
+            {failed.length > 0 && (
+              <>
+                {" "}
+                · <span className="text-rose-300">{failed.length} failed</span>
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+          {matched.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                Matched ({matched.length})
+              </h4>
+              {matched.map(renderSnap)}
+            </section>
+          )}
+          {cooled.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+                Suppressed by cooldown ({cooled.length})
+              </h4>
+              {cooled.map(renderSnap)}
+            </section>
+          )}
+          {failed.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-rose-300">
+                Failed rule checks ({failed.length})
+              </h4>
+              {failed.map(renderSnap)}
+            </section>
+          )}
+          {snaps.length === 0 && (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              No evaluations in this bucket.
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
