@@ -110,7 +110,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mt-4 flex-1 overflow-y-auto px-3">
           <NavList />
         </div>
-        <div className="p-3">
+        <div className="space-y-2 p-3">
+          <button
+            onClick={() => {
+              // trigger ⌘K
+              document.dispatchEvent(
+                new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }),
+              );
+            }}
+            className="flex w-full items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted/40"
+          >
+            <CommandIcon className="h-3.5 w-3.5" />
+            <span className="flex-1 text-left">Quick jump</span>
+            <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+          </button>
           <LiveLockedCard />
         </div>
       </aside>
