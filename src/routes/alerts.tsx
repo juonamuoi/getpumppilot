@@ -1194,8 +1194,214 @@ function exportRuleImpactCsv(result: ReplayResult, rules: ScannerRules) {
   );
 }
 
+type RuleTuning = {
+  key: RuleKey;
+  current: number;
+  suggested: number | null;
+  unlocked: number;
+  candidatePool: number;
+  fragile: number;
+  avgOtherMinSlack: number;
+};
+
+function snapshotValue(s: BucketSnapshot, k: RuleKey): number {
+  if (k === "momentum") return s.momentum;
+  if (k === "volume") return s.volumeScore;
+  if (k === "volatility") return s.volatility;
+  return s.change;
+}
+
+function computeTuning(
+  result: ReplayResult,
+  rules: ScannerRules,
+): Record<RuleKey, RuleTuning> {
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const out = {} as Record<RuleKey, RuleTuning>;
+  const allSnaps = result.perBucketSnapshots.flat();
+  const FRAGILE_MARGIN = 5;
+  for (const k of keys) {
+    const meta = RULE_META[k];
+    const current = ruleThreshold(rules, k);
+    const pool = allSnaps.filter(
+      (s) =>
+        s.outcome === "fail" &&
+        s.failedRules.length === 1 &&
+        s.failedRules[0] === k,
+    );
+    if (pool.length === 0) {
+      out[k] = {
+        key: k,
+        current,
+        suggested: null,
+        unlocked: 0,
+        candidatePool: 0,
+        fragile: 0,
+        avgOtherMinSlack: 0,
+      };
+      continue;
+    }
+    const targetCount = Math.max(1, Math.ceil(pool.length * 0.5));
+    const sorted = [...pool].sort(
+      (a, b) => Math.abs(a.slack[k]) - Math.abs(b.slack[k]),
+    );
+    const unlocked = sorted.slice(0, targetCount);
+    const values = unlocked.map((s) => snapshotValue(s, k));
+    let suggested =
+      meta.op === ">=" ? Math.min(...values) : Math.max(...values);
+    suggested = Math.round(suggested * 10) / 10;
+    let fragile = 0;
+    let sumOther = 0;
+    for (const s of unlocked) {
+      const others = keys.filter((x) => x !== k).map((x) => s.slack[x]);
+      const m = Math.min(...others);
+      sumOther += m;
+      if (m < FRAGILE_MARGIN) fragile++;
+    }
+    out[k] = {
+      key: k,
+      current,
+      suggested,
+      unlocked: unlocked.length,
+      candidatePool: pool.length,
+      fragile,
+      avgOtherMinSlack: sumOther / unlocked.length,
+    };
+  }
+  return out;
+}
+
+function RuleTuningPanel({
+  result,
+  rules,
+  onApply,
+}: {
+  result: ReplayResult;
+  rules: ScannerRules;
+  onApply: (k: RuleKey, value: number) => void;
+}) {
+  const tuning = useMemo(() => computeTuning(result, rules), [result, rules]);
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const anySuggestion = keys.some((k) => tuning[k].suggested != null);
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/10 p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <Label className="text-xs">Rule tuning recommendations</Label>
+        <span className="text-[10px] text-muted-foreground">
+          Loosens each rule to unlock ~half of its near-miss snapshots
+        </span>
+      </div>
+      {!anySuggestion ? (
+        <div className="p-4 text-center text-xs text-muted-foreground">
+          No near-miss snapshots in this window — current rules are the binding
+          constraint on no failed evaluation, so there is nothing to unlock.
+        </div>
+      ) : (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {keys.map((k) => {
+            const meta = RULE_META[k];
+            const t = tuning[k];
+            const disabled = t.suggested == null;
+            const delta = t.suggested != null ? t.suggested - t.current : 0;
+            const fragilePct = t.unlocked
+              ? (t.fragile / t.unlocked) * 100
+              : 0;
+            const riskTone =
+              fragilePct >= 60
+                ? "text-rose-300"
+                : fragilePct >= 30
+                  ? "text-amber-300"
+                  : "text-emerald-300";
+            return (
+              <div
+                key={k}
+                className={cn(
+                  "rounded-md border bg-card/50 p-3",
+                  meta.accent,
+                  disabled && "opacity-60",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={cn("text-xs font-medium", meta.textClass)}>
+                    {meta.short}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="border-border/60 text-[10px]"
+                  >
+                    {meta.op}
+                  </Badge>
+                </div>
+
+                {disabled ? (
+                  <div className="mt-2 text-[11px] text-muted-foreground">
+                    No failed-only snapshots on this rule.
+                  </div>
+                ) : (
+                  <>
+                    <div className="mt-2 flex items-baseline gap-1 text-sm">
+                      <span className="text-muted-foreground">
+                        {t.current}
+                        {meta.unit}
+                      </span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className={cn("font-semibold", meta.textClass)}>
+                        {t.suggested}
+                        {meta.unit}
+                      </span>
+                      <span className="ml-1 text-[10px] text-muted-foreground">
+                        ({delta >= 0 ? "+" : ""}
+                        {delta.toFixed(1)})
+                      </span>
+                    </div>
+
+                    <div className="mt-2 grid grid-cols-2 gap-1 text-[11px]">
+                      <div>
+                        <span className="text-muted-foreground">Unlocks </span>
+                        <span className="font-medium text-foreground">
+                          +{t.unlocked}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          / {t.candidatePool} near-miss
+                        </span>
+                      </div>
+                      <div className={riskTone}>
+                        {t.fragile}/{t.unlocked} fragile
+                        <span className="text-muted-foreground">
+                          {" "}
+                          ({fragilePct.toFixed(0)}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-1 text-[10px] text-muted-foreground">
+                      Avg other-rule slack on unlocked:{" "}
+                      {t.avgOtherMinSlack.toFixed(1)} — lower means the
+                      unlocked snapshots also nearly failed another rule.
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-2 h-7 w-full text-xs"
+                      onClick={() => onApply(k, t.suggested!)}
+                    >
+                      Apply {meta.short} {meta.op} {t.suggested}
+                      {meta.unit}
+                    </Button>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReplayPanel() {
-  const { scannerRules } = usePaper();
+  const { scannerRules, setScannerRules } = usePaper();
   const [windowKey, setWindowKey] = useState<WindowKey>("24h");
   const [steps, setSteps] = useState(30);
   const [assetFilter, setAssetFilter] = useState<"all" | "major" | "demo-smallcap">("all");
