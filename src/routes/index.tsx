@@ -687,6 +687,13 @@ function LandingPage() {
                     </Link>
                   </li>
                   <li>
+                    <Link to="/developers" className="hover:text-foreground">
+                      Widgets & API
+                    </Link>
+                  </li>
+
+
+                  <li>
                     <a href="#faq" className="hover:text-foreground">
                       FAQ
                     </a>
