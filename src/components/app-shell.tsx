@@ -4,7 +4,6 @@ import {
   Radar,
   Bell,
   Wallet,
-  FlaskConical,
   History,
   ShieldCheck,
   ShieldAlert,
