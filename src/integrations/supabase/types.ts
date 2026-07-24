@@ -59,29 +59,70 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          months: number
+          reason: string
+          referral_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          months?: number
+          reason?: string
+          referral_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          months?: number
+          reason?: string
+          referral_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           created_at: string
           id: string
+          qualified_at: string | null
           referred_user_id: string
           referrer_code: string
           referrer_id: string
+          reward_granted_at: string | null
           status: string
         }
         Insert: {
           created_at?: string
           id?: string
+          qualified_at?: string | null
           referred_user_id: string
           referrer_code: string
           referrer_id: string
+          reward_granted_at?: string | null
           status?: string
         }
         Update: {
           created_at?: string
           id?: string
+          qualified_at?: string | null
           referred_user_id?: string
           referrer_code?: string
           referrer_id?: string
+          reward_granted_at?: string | null
           status?: string
         }
         Relationships: []
@@ -240,6 +281,9 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      my_referral_reward_months: { Args: never; Returns: number }
+      process_referral_rewards: { Args: never; Returns: number }
+      resolve_referral_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

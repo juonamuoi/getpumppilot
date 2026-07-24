@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
-import { getMyReferralCode, getMyReferralCount } from "@/lib/referral";
+import { getMyReferralCode, getMyReferralCount, getMyRewardMonths, getMyQualifiedReferralCount } from "@/lib/referral";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,12 +28,16 @@ function ReferPage() {
   const { user, loading } = useAuth();
   const [code, setCode] = useState<string | null>(null);
   const [count, setCount] = useState<number>(0);
+  const [qualified, setQualified] = useState<number>(0);
+  const [rewardMonths, setRewardMonths] = useState<number>(0);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     getMyReferralCode(user.id).then(setCode);
     getMyReferralCount(user.id).then(setCount);
+    getMyQualifiedReferralCount(user.id).then(setQualified);
+    getMyRewardMonths().then(setRewardMonths);
   }, [user]);
 
   if (loading) {
@@ -87,9 +91,10 @@ function ReferPage() {
           Share your personal link. When a friend signs up and stays for 7 days, <span className="text-foreground font-medium">you both get 1 month of Pro free</span>.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-4">
           <StatCard icon={<Users className="h-5 w-5" />} label="Friends referred" value={String(count)} />
-          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Free months earned" value={String(count)} />
+          <StatCard icon={<Check className="h-5 w-5" />} label="Qualified (7-day)" value={String(qualified)} />
+          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Free months earned" value={String(rewardMonths)} />
           <StatCard icon={<Gift className="h-5 w-5" />} label="Your code" value={code ?? "—"} mono />
         </div>
 
@@ -149,7 +154,7 @@ function ReferPage() {
               ))}
             </ol>
             <p className="mt-4 text-xs text-muted-foreground">
-              Rewards are credited manually within 48 hours of your friend's 7-day activity milestone. Self-referrals and abusive patterns are ignored.
+              Rewards are credited automatically each day once your friend's referral qualifies (signed up more than 7 days ago and still active). Self-referrals and abusive patterns are ignored.
             </p>
           </CardContent>
         </Card>
