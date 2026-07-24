@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,12 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import {
   Bell,
   Trash2,
@@ -28,10 +34,20 @@ import {
   CheckCircle2,
   XCircle,
   BellOff,
+  CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type Alert, type AlertDelivery, type ScannerRules } from "@/lib/paper-store";
 import { toast } from "sonner";
+
+type ChannelKey = AlertDelivery["channel"];
+type StatusKey = AlertDelivery["status"];
+const ALL_CHANNELS: ChannelKey[] = ["in-app", "email", "push"];
+const ALL_STATUSES: StatusKey[] = ["delivered", "muted", "failed"];
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 export const Route = createFileRoute("/alerts")({
   head: () => ({
