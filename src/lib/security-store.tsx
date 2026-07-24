@@ -278,6 +278,11 @@ export function SecurityProvider({ children }: { children: ReactNode }) {
       ...input,
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       ts: Date.now(),
+      originUrl:
+        input.originUrl ??
+        (typeof window !== "undefined" ? window.location.href : undefined),
+      matchedRule: input.matchedRule ?? KIND_TO_RULE[input.kind],
+      category: input.category ?? KIND_TO_CATEGORY[input.kind],
     };
     setReports((prev) => [r, ...prev].slice(0, 500));
     return r;
