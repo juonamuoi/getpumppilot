@@ -91,9 +91,10 @@ function ReferPage() {
           Share your personal link. When a friend signs up and stays for 7 days, <span className="text-foreground font-medium">you both get 1 month of Pro free</span>.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-4">
           <StatCard icon={<Users className="h-5 w-5" />} label="Friends referred" value={String(count)} />
-          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Free months earned" value={String(count)} />
+          <StatCard icon={<Check className="h-5 w-5" />} label="Qualified (7-day)" value={String(qualified)} />
+          <StatCard icon={<Sparkles className="h-5 w-5" />} label="Free months earned" value={String(rewardMonths)} />
           <StatCard icon={<Gift className="h-5 w-5" />} label="Your code" value={code ?? "—"} mono />
         </div>
 
