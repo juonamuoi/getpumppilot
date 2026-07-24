@@ -83,3 +83,20 @@ export async function getMyReferralCount(userId: string): Promise<number> {
     .eq("referrer_id", userId);
   return count ?? 0;
 }
+
+/** Sum of free Pro months credited to the current user (referrer + referred). */
+export async function getMyRewardMonths(): Promise<number> {
+  const { data, error } = await supabase.rpc("my_referral_reward_months");
+  if (error || typeof data !== "number") return 0;
+  return data;
+}
+
+/** Number of referrals that have qualified (7-day active) so far. */
+export async function getMyQualifiedReferralCount(userId: string): Promise<number> {
+  const { count } = await supabase
+    .from("referrals")
+    .select("id", { count: "exact", head: true })
+    .eq("referrer_id", userId)
+    .not("reward_granted_at", "is", null);
+  return count ?? 0;
+}
