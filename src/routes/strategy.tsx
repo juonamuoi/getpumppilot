@@ -64,7 +64,7 @@ function StrategyPage() {
         max_volatility: maxVol[0],
         include_demo: includeDemo,
         auto_rebalance: autoRebalance,
-      },
+      } as never,
     });
     setPublishing(false);
     if (error) return toast.error(error.message);
