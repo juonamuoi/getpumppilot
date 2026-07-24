@@ -597,6 +597,47 @@ function IncidentsPanel() {
     other: "Other",
   };
 
+  const stats = useMemo(() => {
+    const total = filtered.length;
+    const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
+    const byCategory = new Map<string, number>();
+    const byOrigin = new Map<string, number>();
+    const byRule = new Map<string, number>();
+    const bySeverity = new Map<string, number>();
+    const buckets = new Map<string, number>();
+    const now = Date.now();
+    const BUCKETS: { key: string; label: string; ms: number }[] = [
+      { key: "1h", label: "Last hour", ms: 60 * 60_000 },
+      { key: "24h", label: "Last 24h", ms: 24 * 60 * 60_000 },
+      { key: "7d", label: "Last 7d", ms: 7 * 24 * 60 * 60_000 },
+      { key: "30d", label: "Last 30d", ms: 30 * 24 * 60 * 60_000 },
+      { key: "older", label: "Older", ms: Infinity },
+    ];
+    for (const b of BUCKETS) buckets.set(b.key, 0);
+    let blocked = 0;
+    for (const r of filtered) {
+      bump(byCategory, r.category ?? "other");
+      bump(byOrigin, r.originUrl?.trim() || "(unknown)");
+      bump(byRule, r.matchedRule?.trim() || "(none)");
+      bump(bySeverity, r.severity);
+      if (r.blocked) blocked += 1;
+      const age = now - r.ts;
+      const b = BUCKETS.find((x) => age <= x.ms) ?? BUCKETS[BUCKETS.length - 1];
+      buckets.set(b.key, (buckets.get(b.key) ?? 0) + 1);
+    }
+    const sortDesc = (m: Map<string, number>) =>
+      [...m.entries()].sort((a, b) => b[1] - a[1]);
+    return {
+      total,
+      blocked,
+      bySeverity: sortDesc(bySeverity),
+      byCategory: sortDesc(byCategory),
+      byOrigin: sortDesc(byOrigin).slice(0, 8),
+      byRule: sortDesc(byRule).slice(0, 8),
+      buckets: BUCKETS.map((b) => ({ label: b.label, count: buckets.get(b.key) ?? 0 })),
+    };
+  }, [filtered]);
+
   return (
     <Card className="border-border/60 bg-card/60">
       <CardHeader className="pb-3">
