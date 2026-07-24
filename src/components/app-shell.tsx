@@ -30,7 +30,7 @@ import { AICopilot } from "./ai-copilot";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/scanner", label: "Scanner", icon: Radar },
   { to: "/doctor", label: "Portfolio Doctor", icon: Stethoscope },
   { to: "/copilot", label: "AI Copilot", icon: Bot },
