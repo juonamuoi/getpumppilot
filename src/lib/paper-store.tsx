@@ -24,11 +24,38 @@ export type Alert = {
   active: boolean;
 };
 
+export type ScannerRules = {
+  minMomentum: number;
+  minVolumeScore: number;
+  maxVolatility: number;
+  min24hChangePct: number;
+  includeMajors: boolean;
+  includeDemoSmallCaps: boolean;
+  channels: {
+    inApp: boolean;
+    email: boolean;
+    push: boolean;
+  };
+  cooldownMinutes: number;
+};
+
+export type AlertDelivery = {
+  id: string;
+  ts: number;
+  symbol: string;
+  rule: string; // human-readable rule description
+  channel: "in-app" | "email" | "push";
+  status: "delivered" | "muted" | "failed";
+  detail: string;
+};
+
 type State = {
   cash: number;
   positions: Position[];
   trades: Trade[];
   alerts: Alert[];
+  scannerRules: ScannerRules;
+  deliveries: AlertDelivery[];
   liveExecutionEnabled: boolean; // always false — locked
   masterSwitchLocked: boolean;
   risk: {
@@ -41,10 +68,14 @@ type State = {
   addAlert: (a: Omit<Alert, "id" | "active"> & { active?: boolean }) => void;
   removeAlert: (id: string) => void;
   toggleAlert: (id: string) => void;
+  setScannerRules: (r: ScannerRules) => void;
+  simulateScannerRun: () => number; // returns count of new deliveries
+  clearDeliveries: () => void;
   setRisk: (r: State["risk"]) => void;
   resetPaper: () => void;
   equity: number;
 };
+
 
 const STARTING_CASH = 100_000;
 
@@ -68,6 +99,66 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     stopLossPct: 8,
     takeProfitPct: 20,
   });
+  const [scannerRules, setScannerRules] = useState<ScannerRules>({
+    minMomentum: 75,
+    minVolumeScore: 60,
+    maxVolatility: 85,
+    min24hChangePct: 3,
+    includeMajors: true,
+    includeDemoSmallCaps: true,
+    channels: { inApp: true, email: false, push: true },
+    cooldownMinutes: 30,
+  });
+
+  const now = Date.now();
+  const [deliveries, setDeliveries] = useState<AlertDelivery[]>([
+    {
+      id: "d1",
+      ts: now - 1000 * 60 * 8,
+      symbol: "SOL",
+      rule: "Momentum ≥ 80",
+      channel: "in-app",
+      status: "delivered",
+      detail: "SOL momentum 84 crossed threshold",
+    },
+    {
+      id: "d2",
+      ts: now - 1000 * 60 * 42,
+      symbol: "DEMOX",
+      rule: "24h change ≥ 15%",
+      channel: "push",
+      status: "delivered",
+      detail: "DEMOX +22.4% on rising volume",
+    },
+    {
+      id: "d3",
+      ts: now - 1000 * 60 * 95,
+      symbol: "BTC",
+      rule: "Price above $70,000",
+      channel: "email",
+      status: "muted",
+      detail: "Suppressed by 30m cooldown",
+    },
+    {
+      id: "d4",
+      ts: now - 1000 * 60 * 60 * 4,
+      symbol: "ORBIT",
+      rule: "Momentum ≥ 75",
+      channel: "in-app",
+      status: "delivered",
+      detail: "ORBIT momentum 81 breakout confirmed",
+    },
+    {
+      id: "d5",
+      ts: now - 1000 * 60 * 60 * 22,
+      symbol: "PILOT",
+      rule: "Momentum ≥ 75",
+      channel: "push",
+      status: "failed",
+      detail: "Simulated push delivery error",
+    },
+  ]);
+
 
   const equity = useMemo(() => {
     const posValue = positions.reduce((s, p) => {
@@ -116,11 +207,46 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     return { ok: true, msg: `Paper ${side.toUpperCase()} ${qty} ${symbol} @ ${a.price}` };
   };
 
+  const simulateScannerRun = () => {
+    const channels: AlertDelivery["channel"][] = [];
+    if (scannerRules.channels.inApp) channels.push("in-app");
+    if (scannerRules.channels.email) channels.push("email");
+    if (scannerRules.channels.push) channels.push("push");
+    if (channels.length === 0) return 0;
+
+    const matches = ASSETS.filter((a) => {
+      if (!scannerRules.includeMajors && a.category === "major") return false;
+      if (!scannerRules.includeDemoSmallCaps && a.category === "demo-smallcap") return false;
+      return (
+        a.momentum.total >= scannerRules.minMomentum &&
+        a.momentum.volume >= scannerRules.minVolumeScore &&
+        a.momentum.volatility <= scannerRules.maxVolatility &&
+        a.change24h >= scannerRules.min24hChangePct
+      );
+    });
+
+    const ts = Date.now();
+    const created: AlertDelivery[] = matches.map((a, i) => ({
+      id: `${ts}-${a.symbol}-${i}`,
+      ts,
+      symbol: a.symbol,
+      rule: `Momentum ≥ ${scannerRules.minMomentum} · Vol ≥ ${scannerRules.minVolumeScore} · 24h ≥ ${scannerRules.min24hChangePct}%`,
+      channel: channels[i % channels.length],
+      status: "delivered",
+      detail: `${a.symbol} momentum ${a.momentum.total}, 24h ${a.change24h >= 0 ? "+" : ""}${a.change24h.toFixed(2)}%`,
+    }));
+
+    if (created.length > 0) setDeliveries((prev) => [...created, ...prev]);
+    return created.length;
+  };
+
   const value: State = {
     cash,
     positions,
     trades,
     alerts,
+    scannerRules,
+    deliveries,
     liveExecutionEnabled: false,
     masterSwitchLocked: true,
     risk,
@@ -133,6 +259,9 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     removeAlert: (id) => setAlerts((prev) => prev.filter((x) => x.id !== id)),
     toggleAlert: (id) =>
       setAlerts((prev) => prev.map((x) => (x.id === id ? { ...x, active: !x.active } : x))),
+    setScannerRules,
+    simulateScannerRun,
+    clearDeliveries: () => setDeliveries([]),
     setRisk,
     resetPaper: () => {
       setCash(STARTING_CASH);
@@ -141,6 +270,7 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     },
     equity,
   };
+
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
