@@ -1635,6 +1635,24 @@ function ReplayPanel() {
                 onFocus={setRuleFocus}
               />
 
+              <RuleTuningPanel
+                result={result}
+                rules={scannerRules}
+                onApply={(k, value) => {
+                  const next: ScannerRules = { ...scannerRules };
+                  if (k === "momentum") next.minMomentum = value;
+                  else if (k === "volume") next.minVolumeScore = value;
+                  else if (k === "volatility") next.maxVolatility = value;
+                  else next.min24hChangePct = value;
+                  setScannerRules(next);
+                  toast.success(
+                    `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
+                  );
+                }}
+              />
+
+
+
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
