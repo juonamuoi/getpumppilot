@@ -847,6 +847,8 @@ const WINDOW_LABEL: Record<WindowKey, string> = {
   "30d": "Last 30 days",
 };
 
+export type RuleKey = "momentum" | "volume" | "volatility" | "change";
+
 type ReplaySignal = {
   ts: number;
   symbol: string;
@@ -856,6 +858,22 @@ type ReplaySignal = {
   volatility: number;
   change: number;
   category: "major" | "demo-smallcap";
+  /** Slack per rule at match time (positive = passed by this margin). */
+  slack: Record<RuleKey, number>;
+  /** Rule with the smallest slack — the binding constraint. */
+  binding: RuleKey;
+};
+
+type RuleImpact = {
+  key: RuleKey;
+  /** How many matches were bound by this rule (tightest slack). */
+  bindingMatches: number;
+  /** Snapshots that failed at least this rule. */
+  failedAny: number;
+  /** Snapshots that failed ONLY this rule (loosening it would unlock them). */
+  failedOnly: number;
+  /** Average slack across matches (higher = rule is loose). */
+  avgSlack: number;
 };
 
 type ReplayResult = {
@@ -865,6 +883,7 @@ type ReplayResult = {
   signals: ReplaySignal[];
   evaluatedSnapshots: number;
   perBucket: number[];
+  impact: Record<RuleKey, RuleImpact>;
 };
 
 function jitter(seed: number) {
@@ -882,6 +901,11 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
   const lastAccepted: Record<string, number> = {};
   const perBucket = new Array(steps).fill(0);
   const signals: ReplaySignal[] = [];
+  const zero = (): Record<RuleKey, number> => ({ momentum: 0, volume: 0, volatility: 0, change: 0 });
+  const failedAny = zero();
+  const failedOnly = zero();
+  const slackSum = zero();
+  const bindingCount = zero();
 
   const eligible = ASSETS.filter((a) => {
     if (!rules.includeMajors && a.category === "major") return false;
@@ -920,17 +944,36 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
         100,
       );
 
-      const match =
-        momentum >= rules.minMomentum &&
-        volumeScore >= rules.minVolumeScore &&
-        volatility <= rules.maxVolatility &&
-        change >= rules.min24hChangePct;
-      if (!match) continue;
+      // Per-rule slack: positive = passed by this margin, negative = failed by this margin.
+      const slack: Record<RuleKey, number> = {
+        momentum: momentum - rules.minMomentum,
+        volume: volumeScore - rules.minVolumeScore,
+        volatility: rules.maxVolatility - volatility,
+        change: change - rules.min24hChangePct,
+      };
+      const failedRules = (Object.keys(slack) as RuleKey[]).filter((k) => slack[k] < 0);
+      if (failedRules.length > 0) {
+        for (const k of failedRules) failedAny[k]++;
+        if (failedRules.length === 1) failedOnly[failedRules[0]]++;
+        continue;
+      }
 
       const last = lastAccepted[a.symbol] ?? -Infinity;
       if (ts - last < cooldownMs) continue;
       lastAccepted[a.symbol] = ts;
       perBucket[i]++;
+
+      // Binding rule = smallest slack (in a scale-normalised sense).
+      const norm = (k: RuleKey) => {
+        // Volatility & change use different scales; normalise by their thresholds' scale.
+        if (k === "change") return slack.change / 5; // 5% units
+        return slack[k] / 20; // 20-point units for 0-100 scores
+      };
+      const binding = (Object.keys(slack) as RuleKey[]).reduce((best, k) =>
+        norm(k) < norm(best) ? k : best,
+      );
+      for (const k of Object.keys(slack) as RuleKey[]) slackSum[k] += slack[k];
+      bindingCount[binding]++;
       signals.push({
         ts,
         symbol: a.symbol,
@@ -940,8 +983,27 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
         volatility,
         change,
         category: a.category,
+        slack,
+        binding,
       });
     }
+  }
+
+  const matches = signals.length || 1;
+  const impact: Record<RuleKey, RuleImpact> = {
+    momentum: buildImpact("momentum"),
+    volume: buildImpact("volume"),
+    volatility: buildImpact("volatility"),
+    change: buildImpact("change"),
+  };
+  function buildImpact(k: RuleKey): RuleImpact {
+    return {
+      key: k,
+      bindingMatches: bindingCount[k],
+      failedAny: failedAny[k],
+      failedOnly: failedOnly[k],
+      avgSlack: slackSum[k] / matches,
+    };
   }
 
   return {
@@ -951,6 +1013,7 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
     signals,
     evaluatedSnapshots: evaluated,
     perBucket,
+    impact,
   };
 }
 
@@ -964,6 +1027,7 @@ function ReplayPanel() {
   const [steps, setSteps] = useState(30);
   const [assetFilter, setAssetFilter] = useState<"all" | "major" | "demo-smallcap">("all");
   const [result, setResult] = useState<ReplayResult | null>(null);
+  const [ruleFocus, setRuleFocus] = useState<RuleKey | null>(null);
 
   const run = () => {
     const r = runReplay(scannerRules, windowKey, steps);
@@ -976,13 +1040,31 @@ function ReplayPanel() {
         `Replay: ${r.signals.length} signal${r.signals.length === 1 ? "" : "s"} across ${uniq} asset${uniq === 1 ? "" : "s"}`,
       );
     }
+    setRuleFocus(null);
   };
 
   const filteredSignals = useMemo(() => {
     if (!result) return [];
-    if (assetFilter === "all") return result.signals;
-    return result.signals.filter((s) => s.category === assetFilter);
-  }, [result, assetFilter]);
+    let s = result.signals;
+    if (assetFilter !== "all") s = s.filter((x) => x.category === assetFilter);
+    if (ruleFocus) s = s.filter((x) => x.binding === ruleFocus);
+    return s;
+  }, [result, assetFilter, ruleFocus]);
+
+  const filteredBuckets = useMemo(() => {
+    if (!result) return [] as number[];
+    if (!ruleFocus && assetFilter === "all") return result.perBucket;
+    const buckets = new Array(result.steps).fill(0);
+    const spanMs = WINDOW_MS[result.window];
+    const stepMs = spanMs / result.steps;
+    const start = result.ranAt - spanMs;
+    for (const s of filteredSignals) {
+      const i = Math.min(result.steps - 1, Math.max(0, Math.floor((s.ts - start) / stepMs)));
+      buckets[i]++;
+    }
+    return buckets;
+  }, [result, filteredSignals, ruleFocus, assetFilter]);
+
 
   const bySymbol = useMemo(() => {
     const map = new Map<string, ReplaySignal[]>();
@@ -994,7 +1076,7 @@ function ReplayPanel() {
     return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
   }, [filteredSignals]);
 
-  const maxBucket = result ? Math.max(1, ...result.perBucket) : 1;
+  const maxBucket = filteredBuckets.length ? Math.max(1, ...filteredBuckets) : 1;
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
@@ -1096,10 +1178,10 @@ function ReplayPanel() {
               <div>
                 <Label className="text-xs">Signal timeline</Label>
                 <div className="mt-2 flex h-16 items-end gap-[2px] rounded-md border border-border/60 bg-muted/20 p-2">
-                  {result.perBucket.map((n, i) => (
+                  {filteredBuckets.map((n, i) => (
                     <div
                       key={i}
-                      className="flex-1 rounded-sm bg-emerald-500/70"
+                      className={`flex-1 rounded-sm ${ruleFocus ? RULE_META[ruleFocus].barClass : "bg-emerald-500/70"}`}
                       style={{ height: `${(n / maxBucket) * 100}%`, minHeight: n ? 2 : 0 }}
                       title={`${n} signal${n === 1 ? "" : "s"}`}
                     />
@@ -1110,6 +1192,14 @@ function ReplayPanel() {
                   <span>{format(new Date(result.ranAt), "MMM d HH:mm")}</span>
                 </div>
               </div>
+
+              <RuleImpactPanel
+                result={result}
+                rules={scannerRules}
+                focus={ruleFocus}
+                onFocus={setRuleFocus}
+              />
+
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
@@ -1190,3 +1280,172 @@ function ReplayAssetRow({
     </div>
   );
 }
+
+/* ------------------------------ Rule Impact ------------------------------ */
+
+const RULE_META: Record<
+  RuleKey,
+  {
+    label: string;
+    short: string;
+    op: ">=" | "<=";
+    unit: string;
+    barClass: string;
+    textClass: string;
+    accent: string;
+  }
+> = {
+  momentum: {
+    label: "Momentum ≥",
+    short: "Momentum",
+    op: ">=",
+    unit: "",
+    barClass: "bg-emerald-500/70",
+    textClass: "text-emerald-300",
+    accent: "border-emerald-500/40",
+  },
+  volume: {
+    label: "Volume ≥",
+    short: "Volume",
+    op: ">=",
+    unit: "",
+    barClass: "bg-sky-500/70",
+    textClass: "text-sky-300",
+    accent: "border-sky-500/40",
+  },
+  volatility: {
+    label: "Volatility ≤",
+    short: "Volatility",
+    op: "<=",
+    unit: "",
+    barClass: "bg-violet-500/70",
+    textClass: "text-violet-300",
+    accent: "border-violet-500/40",
+  },
+  change: {
+    label: "24h change ≥",
+    short: "24h Δ",
+    op: ">=",
+    unit: "%",
+    barClass: "bg-amber-500/70",
+    textClass: "text-amber-300",
+    accent: "border-amber-500/40",
+  },
+};
+
+function ruleThreshold(rules: ScannerRules, k: RuleKey) {
+  if (k === "momentum") return rules.minMomentum;
+  if (k === "volume") return rules.minVolumeScore;
+  if (k === "volatility") return rules.maxVolatility;
+  return rules.min24hChangePct;
+}
+
+function RuleImpactPanel({
+  result,
+  rules,
+  focus,
+  onFocus,
+}: {
+  result: ReplayResult;
+  rules: ScannerRules;
+  focus: RuleKey | null;
+  onFocus: (k: RuleKey | null) => void;
+}) {
+  const totalMatches = result.signals.length;
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const maxBinding = Math.max(1, ...keys.map((k) => result.impact[k].bindingMatches));
+  const maxUnlock = Math.max(1, ...keys.map((k) => result.impact[k].failedOnly));
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <Label className="text-xs">Rule impact</Label>
+        {focus && (
+          <button
+            type="button"
+            onClick={() => onFocus(null)}
+            className="text-[10px] text-muted-foreground underline-offset-2 hover:underline"
+          >
+            Clear focus
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {keys.map((k) => {
+          const meta = RULE_META[k];
+          const imp = result.impact[k];
+          const bindPct = totalMatches ? (imp.bindingMatches / totalMatches) * 100 : 0;
+          const isFocus = focus === k;
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => onFocus(isFocus ? null : k)}
+              className={`group rounded-lg border p-3 text-left transition ${
+                isFocus
+                  ? `${meta.accent} bg-muted/40`
+                  : "border-border/60 bg-muted/20 hover:border-border"
+              }`}
+              title={
+                imp.failedOnly > 0
+                  ? `${imp.failedOnly} snapshot${imp.failedOnly === 1 ? "" : "s"} failed only this rule — loosening it would unlock them`
+                  : "No snapshots failed only this rule"
+              }
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-semibold ${meta.textClass}`}>{meta.short}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {meta.op} {ruleThreshold(rules, k)}
+                  {meta.unit}
+                </span>
+              </div>
+
+              <div className="mt-2 space-y-1.5">
+                <div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>Binding on matches</span>
+                    <span className="font-mono">
+                      {imp.bindingMatches} ({bindPct.toFixed(0)}%)
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted/60">
+                    <div
+                      className={`h-full rounded-full ${meta.barClass}`}
+                      style={{ width: `${(imp.bindingMatches / maxBinding) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>Near-miss (only-fail)</span>
+                    <span className="font-mono">{imp.failedOnly}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted/60">
+                    <div
+                      className={`h-full rounded-full ${meta.barClass} opacity-60`}
+                      style={{ width: `${(imp.failedOnly / maxUnlock) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>avg slack</span>
+                <span className={`font-mono ${meta.textClass}`}>
+                  {imp.avgSlack >= 0 ? "+" : ""}
+                  {imp.avgSlack.toFixed(1)}
+                  {meta.unit}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[10px] text-muted-foreground">
+        Tap a rule to filter the timeline and asset list to matches it bound. Near-miss counts
+        snapshots that failed only that rule — the biggest lever to unlock more signals.
+      </p>
+    </div>
+  );
+}
+
