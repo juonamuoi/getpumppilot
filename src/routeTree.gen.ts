@@ -13,6 +13,7 @@ import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as RiskRouteImport } from './routes/risk'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PaperRouteImport } from './routes/paper'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -44,6 +45,11 @@ const ScannerRoute = ScannerRouteImport.update({
 const RiskRoute = RiskRouteImport.update({
   id: '/risk',
   path: '/risk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaperRoute = PaperRouteImport.update({
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
+  '/pricing': typeof PricingRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
+  '/pricing': typeof PricingRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
+  '/pricing': typeof PricingRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/paper'
+    | '/pricing'
     | '/risk'
     | '/scanner'
     | '/security'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/paper'
+    | '/pricing'
     | '/risk'
     | '/scanner'
     | '/security'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/paper'
+    | '/pricing'
     | '/risk'
     | '/scanner'
     | '/security'
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRoute
   LearnRoute: typeof LearnRoute
   PaperRoute: typeof PaperRoute
+  PricingRoute: typeof PricingRoute
   RiskRoute: typeof RiskRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/risk'
       fullPath: '/risk'
       preLoaderRoute: typeof RiskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/paper': {
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRoute,
   LearnRoute: LearnRoute,
   PaperRoute: PaperRoute,
+  PricingRoute: PricingRoute,
   RiskRoute: RiskRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
