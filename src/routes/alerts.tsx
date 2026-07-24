@@ -1060,6 +1060,7 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
     signals,
     evaluatedSnapshots: evaluated,
     perBucket,
+    perBucketSnapshots,
     impact,
   };
 }
