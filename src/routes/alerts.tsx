@@ -1635,15 +1635,11 @@ function SnapshotBucketDialog({
         {isOpen && (
           <div className="mt-2 space-y-1.5 border-t border-border/40 pt-2">
             {rows.map((r) => {
-              const meta = RULE_META[
-                (Object.keys(RULE_META) as RuleKey[]).find(
-                  (k2) => RULE_META[k2].label === r.label.replace(/ [-\d.%]+$/, ""),
-                ) ?? "momentum"
-              ];
+              const meta = RULE_META[r.key];
               const slackAbs = Math.abs(r.slack).toFixed(r.unit === "%" ? 2 : 1);
               return (
                 <div
-                  key={r.label}
+                  key={r.key}
                   className="flex items-center justify-between gap-3 rounded-sm bg-background/40 px-2 py-1 text-[11px]"
                 >
                   <div className="flex items-center gap-2 min-w-0">
