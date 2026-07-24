@@ -847,6 +847,8 @@ const WINDOW_LABEL: Record<WindowKey, string> = {
   "30d": "Last 30 days",
 };
 
+export type RuleKey = "momentum" | "volume" | "volatility" | "change";
+
 type ReplaySignal = {
   ts: number;
   symbol: string;
@@ -856,6 +858,22 @@ type ReplaySignal = {
   volatility: number;
   change: number;
   category: "major" | "demo-smallcap";
+  /** Slack per rule at match time (positive = passed by this margin). */
+  slack: Record<RuleKey, number>;
+  /** Rule with the smallest slack — the binding constraint. */
+  binding: RuleKey;
+};
+
+type RuleImpact = {
+  key: RuleKey;
+  /** How many matches were bound by this rule (tightest slack). */
+  bindingMatches: number;
+  /** Snapshots that failed at least this rule. */
+  failedAny: number;
+  /** Snapshots that failed ONLY this rule (loosening it would unlock them). */
+  failedOnly: number;
+  /** Average slack across matches (higher = rule is loose). */
+  avgSlack: number;
 };
 
 type ReplayResult = {
@@ -865,6 +883,7 @@ type ReplayResult = {
   signals: ReplaySignal[];
   evaluatedSnapshots: number;
   perBucket: number[];
+  impact: Record<RuleKey, RuleImpact>;
 };
 
 function jitter(seed: number) {
