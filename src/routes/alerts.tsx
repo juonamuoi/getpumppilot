@@ -1321,13 +1321,38 @@ function ReplayPanel() {
 
       <Card className="border-border/60 bg-card/60">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center justify-between text-base">
+          <CardTitle className="flex items-center justify-between gap-2 text-base">
             <span>Replay results</span>
-            {result && (
-              <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
-                {filteredSignals.length} signal{filteredSignals.length === 1 ? "" : "s"}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {result && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={() => exportReplaySignalsCsv(result, filteredSignals, scannerRules)}
+                    disabled={filteredSignals.length === 0}
+                    title="Download filtered signals as CSV"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Signals
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={() => exportRuleImpactCsv(result, scannerRules)}
+                    title="Download rule-impact stats as CSV"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Impact
+                  </Button>
+                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
+                    {filteredSignals.length} signal{filteredSignals.length === 1 ? "" : "s"}
+                  </Badge>
+                </>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
