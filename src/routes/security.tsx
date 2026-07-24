@@ -409,6 +409,55 @@ const KIND_LABEL: Record<ReportKind, string> = {
   other: "Other",
 };
 
+type CsvColumnKey =
+  | "id"
+  | "timestamp"
+  | "severity"
+  | "category"
+  | "kind"
+  | "matched_rule"
+  | "source"
+  | "origin_url"
+  | "blocked"
+  | "message"
+  | "detail";
+
+const CSV_COLUMNS: {
+  key: CsvColumnKey;
+  label: string;
+  value: (r: Report) => string;
+}[] = [
+  { key: "id", label: "ID", value: (r) => r.id },
+  { key: "timestamp", label: "Timestamp (ISO)", value: (r) => new Date(r.ts).toISOString() },
+  { key: "severity", label: "Severity", value: (r) => r.severity },
+  { key: "category", label: "Category", value: (r) => r.category ?? "" },
+  { key: "kind", label: "Kind", value: (r) => KIND_LABEL[r.kind] ?? r.kind },
+  { key: "matched_rule", label: "Matched rule", value: (r) => r.matchedRule ?? "" },
+  { key: "source", label: "Source", value: (r) => r.source },
+  { key: "origin_url", label: "Origin URL", value: (r) => r.originUrl ?? "" },
+  { key: "blocked", label: "Blocked", value: (r) => (r.blocked ? "yes" : "no") },
+  { key: "message", label: "Message", value: (r) => r.message },
+  { key: "detail", label: "Detail", value: (r) => r.detail ?? "" },
+];
+
+const DEFAULT_CSV_COLUMNS: CsvColumnKey[] = CSV_COLUMNS.map((c) => c.key);
+const CSV_COLUMNS_STORAGE_KEY = "pumppilot.security.csvColumns.v1";
+
+function loadCsvColumns(): CsvColumnKey[] {
+  if (typeof window === "undefined") return DEFAULT_CSV_COLUMNS;
+  try {
+    const raw = window.localStorage.getItem(CSV_COLUMNS_STORAGE_KEY);
+    if (!raw) return DEFAULT_CSV_COLUMNS;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return DEFAULT_CSV_COLUMNS;
+    const valid = new Set(DEFAULT_CSV_COLUMNS);
+    const picked = parsed.filter((k): k is CsvColumnKey => typeof k === "string" && valid.has(k as CsvColumnKey));
+    return picked.length > 0 ? picked : DEFAULT_CSV_COLUMNS;
+  } catch {
+    return DEFAULT_CSV_COLUMNS;
+  }
+}
+
 function IncidentsPanel() {
   const { reports, clearReports } = useSecurity();
   const [q, setQ] = useState("");
@@ -416,6 +465,25 @@ function IncidentsPanel() {
   const [kind, setKind] = useState<"all" | ReportKind>("all");
   const [category, setCategory] = useState<"all" | ReportCategory>("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [csvColumns, setCsvColumnsState] = useState<CsvColumnKey[]>(() => loadCsvColumns());
+  const setCsvColumns = (next: CsvColumnKey[]) => {
+    // Preserve canonical ordering from CSV_COLUMNS
+    const set = new Set(next);
+    const ordered = DEFAULT_CSV_COLUMNS.filter((k) => set.has(k));
+    setCsvColumnsState(ordered);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(CSV_COLUMNS_STORAGE_KEY, JSON.stringify(ordered));
+      } catch {
+        /* ignore quota */
+      }
+    }
+  };
+  const toggleCsvColumn = (key: CsvColumnKey) => {
+    setCsvColumns(
+      csvColumns.includes(key) ? csvColumns.filter((k) => k !== key) : [...csvColumns, key],
+    );
+  };
 
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
