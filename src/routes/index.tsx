@@ -137,6 +137,38 @@ function Dashboard() {
           <StatCard label="Positions" value={String(positions.length)} sub="assets held" />
         </div>
 
+        {/* Today's signals — plain English */}
+        <Card className="border-border/60 bg-card/60">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4 text-emerald-400" /> Today's signals
+              <span className="text-xs font-normal text-muted-foreground">— explained in plain English</span>
+            </CardTitle>
+            <Link to="/scanner" className="text-xs text-emerald-300 hover:underline">
+              See all →
+            </Link>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            {topSignals.map((a) => (
+              <Link
+                key={a.symbol}
+                to="/asset/$symbol"
+                params={{ symbol: a.symbol }}
+                className="block transition hover:opacity-90"
+              >
+                <PlainSignalCard asset={a} />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Portfolio card follows */}
+          </div>
+          <PortfolioHealthCard />
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Portfolio */}
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
