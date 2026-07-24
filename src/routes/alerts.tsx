@@ -1040,6 +1040,7 @@ function ReplayPanel() {
         `Replay: ${r.signals.length} signal${r.signals.length === 1 ? "" : "s"} across ${uniq} asset${uniq === 1 ? "" : "s"}`,
       );
     }
+    setRuleFocus(null);
   };
 
   const filteredSignals = useMemo(() => {
