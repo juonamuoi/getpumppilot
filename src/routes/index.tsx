@@ -718,6 +718,11 @@ function LandingPage() {
                       Refund Policy
                     </Link>
                   </li>
+                  <li>
+                    <Link to="/risk-disclosure" className="hover:text-foreground">
+                      Risk Disclosure
+                    </Link>
+                  </li>
                   <li>support@pumppilot.ai</li>
                 </ul>
               </div>
