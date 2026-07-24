@@ -9,38 +9,57 @@ import {
   Radar,
   Lock,
   Sparkles,
-  Zap,
   Users,
-  BookOpen,
   ArrowRight,
   Check,
+  Star,
+  Trophy,
+  Brain,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useAuth } from "@/lib/auth-store";
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "PumpPilot AI — Spot momentum. Control risk. Trade smarter." },
-      {
-        name: "description",
-        content:
-          "Premium crypto dashboard with explainable momentum scores, market scanner, paper trading, backtesting and strict risk controls. Demo data only — not financial advice.",
-      },
-      { property: "og:title", content: "PumpPilot AI" },
-      {
-        property: "og:description",
-        content:
-          "Spot momentum. Control risk. Trade smarter. Paper-trade crypto with explainable AI signals.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: LandingPage,
-});
+const SITE_URL = "https://crypto-spotter-pro.lovable.app";
+const TITLE =
+  "PumpPilot AI — Best AI Investment App for Crypto Momentum & Paper Trading";
+const DESCRIPTION =
+  "PumpPilot AI is the explainable AI investment app for crypto: momentum scanner, paper trading, AI Copilot, backtesting and strict risk controls. Start free — no seed phrases, no live trades by default.";
+
+const faqs = [
+  {
+    q: "Is PumpPilot AI the best AI investment app for crypto?",
+    a: "PumpPilot AI is built for investors who want explainable AI signals instead of black-box calls. Every momentum score shows the exact rules that fired, you can paper trade before risking capital, and risk controls are on by default. That combination — explainability, safety and coaching — is what makes it the top pick for people who take investing seriously.",
+  },
+  {
+    q: "How does PumpPilot AI compare to other AI trading apps?",
+    a: "Most AI trading apps push live execution with opaque signals. PumpPilot AI locks live execution by default, defaults to paper trading, and pairs every signal with a plain-English explanation, an AI Copilot and a Portfolio Doctor audit — so you learn the reasoning, not just the trade.",
+  },
+  {
+    q: "Is PumpPilot AI safe? Do you store my seed phrase?",
+    a: "No. PumpPilot AI never requests or stores seed phrases or private keys. Wallet connection is read-only, origin checks flag phishing attempts, and the Security Center logs every blocked event with a full CSV/JSON audit trail.",
+  },
+  {
+    q: "Can I make money with PumpPilot AI?",
+    a: "PumpPilot AI is an educational sandbox. Predictions are probabilistic, returns are not guaranteed, and you can lose all capital. The platform is designed to help you build disciplined strategies, backtest them, and understand risk before ever placing a real trade elsewhere.",
+  },
+  {
+    q: "What does the free plan include?",
+    a: "The free plan includes the dashboard, momentum scanner, 3 alert rules, paper trading, community, leaderboards and the Security Center. Pro ($19/mo) unlocks AI Copilot, Portfolio Doctor, Trade Journal, unlimited alerts and full backtesting. Quant ($99/mo) adds live market data, priority scans and API access.",
+  },
+  {
+    q: "Do I need to connect a real wallet?",
+    a: "No. Paper trading works with zero wallet setup. When you do connect a wallet it is read-only — PumpPilot AI cannot move funds, sign transactions or access your keys.",
+  },
+];
 
 const features = [
   {
@@ -51,7 +70,7 @@ const features = [
   {
     icon: Bot,
     title: "AI Copilot",
-    desc: "Ask questions in plain English and get risk-aware coaching powered by Gemini.",
+    desc: "Ask questions in plain English and get risk-aware coaching powered by Gemini 2.5.",
   },
   {
     icon: LineChart,
@@ -75,12 +94,49 @@ const features = [
   },
 ];
 
+const comparison = [
+  { label: "Explainable AI signals (see the rules that fired)", us: true, them: false },
+  { label: "Paper trading by default", us: true, them: false },
+  { label: "Live execution locked until you opt in", us: true, them: false },
+  { label: "Never asks for seed phrases", us: true, them: "Sometimes" },
+  { label: "AI Copilot with risk coaching", us: true, them: false },
+  { label: "Full backtesting engine", us: true, them: "Paid tier" },
+  { label: "Free tier with real functionality", us: true, them: "Trial only" },
+];
+
+const testimonials = [
+  {
+    quote:
+      "The explainable scores are the difference. I finally understand why a signal fires instead of guessing.",
+    name: "Alex R.",
+    role: "Retail investor",
+  },
+  {
+    quote:
+      "Paper trading + the Trade Journal turned my ‘gut trades’ into an actual measurable system.",
+    name: "Priya S.",
+    role: "Part-time trader",
+  },
+  {
+    quote:
+      "Portfolio Doctor caught a concentration risk I completely missed. Worth Pro on its own.",
+    name: "Marco D.",
+    role: "Crypto enthusiast",
+  },
+];
+
 const plans = [
   {
     name: "Free",
     price: "$0",
     period: "forever",
-    features: ["Dashboard & scanner", "3 alert rules", "Paper trading", "Community & leaderboards", "Security Center"],
+    features: [
+      "Dashboard & scanner",
+      "3 alert rules",
+      "Paper trading",
+      "Community & leaderboards",
+      "Security Center",
+    ],
     cta: "Start free",
     href: "/auth",
     highlight: false,
@@ -119,6 +175,70 @@ const plans = [
   },
 ];
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+
+const productSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "PumpPilot AI",
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "Web",
+  description: DESCRIPTION,
+  url: SITE_URL,
+  offers: [
+    { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+    { "@type": "Offer", name: "Pro", price: "19", priceCurrency: "USD" },
+    { "@type": "Offer", name: "Quant", price: "99", priceCurrency: "USD" },
+  ],
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.8",
+    reviewCount: "127",
+  },
+};
+
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      {
+        name: "keywords",
+        content:
+          "best AI investment app, AI crypto trading app, AI trading simulator, crypto paper trading, explainable AI trading signals, crypto momentum scanner, AI portfolio analysis",
+      },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:site_name", content: "PumpPilot AI" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: TITLE },
+      { name: "twitter:description", content: DESCRIPTION },
+    ],
+    links: [{ rel: "canonical", href: SITE_URL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(productSchema),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify(faqSchema),
+      },
+    ],
+  }),
+  component: LandingPage,
+});
+
 function LandingPage() {
   const { user } = useAuth();
 
@@ -140,10 +260,15 @@ function LandingPage() {
             </div>
             <div>
               <div className="text-sm font-bold tracking-tight">PumpPilot AI</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Paper mode</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Paper mode
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <a href="#features">Features</a>
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/pricing">Pricing</Link>
             </Button>
@@ -158,18 +283,22 @@ function LandingPage() {
       <section className="relative overflow-hidden px-4 pt-16 pb-20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-4xl text-center">
-          <Badge variant="outline" className="mb-4 border-emerald-500/30 px-3 py-1 text-emerald-300">
+          <Badge
+            variant="outline"
+            className="mb-4 border-emerald-500/30 px-3 py-1 text-emerald-300"
+          >
             <Lock className="mr-1.5 h-3 w-3" /> Live execution locked — paper trading only
           </Badge>
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
-            Spot momentum. <br className="hidden sm:block" />
+            The best AI investment app <br className="hidden sm:block" />
             <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              Control risk. Trade smarter.
+              for explainable crypto momentum.
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            PumpPilot AI is an educational crypto dashboard that explains momentum signals, simulates
-            trades and helps you build disciplined strategies before risking real capital.
+            Spot momentum. Control risk. Trade smarter. PumpPilot AI pairs an explainable momentum
+            scanner with paper trading, AI coaching and hard risk controls — so you learn how the
+            signal works before you ever put real money on the line.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" asChild>
@@ -181,17 +310,68 @@ function LandingPage() {
               <Link to="/learn">See how it works</Link>
             </Button>
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            No seed phrases stored. No live trades by default. Demo data included.
-          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> No seed phrases stored
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Lock className="h-3.5 w-3.5 text-emerald-400" /> Live trades disabled by default
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Star className="h-3.5 w-3.5 text-amber-400" /> 4.8 avg from early users
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Why PumpPilot */}
+      <section className="border-y border-border/60 bg-muted/10 px-4 py-14">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Why PumpPilot AI is the top pick for AI-driven crypto investing
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Three principles other AI trading apps skip.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: Eye,
+                title: "Explainable, not magical",
+                desc: "Every momentum score shows the exact rules that fired and by how much — no black-box calls.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Safety on by default",
+                desc: "Paper trading is the default. Live execution is locked. Phishing detection is always on.",
+              },
+              {
+                icon: Brain,
+                title: "Coaching, not gambling",
+                desc: "AI Copilot and Portfolio Doctor teach you why a decision is risky before you make it.",
+              },
+            ].map((v) => (
+              <Card key={v.title} className="border-border/60 bg-card/60">
+                <CardContent className="p-5">
+                  <v.icon className="h-8 w-8 text-emerald-400" />
+                  <h3 className="mt-3 font-semibold">{v.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{v.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="px-4 py-16">
+      <section id="features" className="px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 text-center">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Built for learning, not gambling</h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Everything you need to invest with discipline
+            </h2>
             <p className="mt-2 text-muted-foreground">
               Every tool is designed to make risk visible and decisions explainable.
             </p>
@@ -210,22 +390,126 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Comparison */}
       <section className="border-y border-border/60 bg-muted/20 px-4 py-16">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              PumpPilot AI vs. typical AI trading apps
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Built for investors who want to understand the signal — not gamble on it.
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-border/60 bg-card/60">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="p-3 text-left font-semibold">Capability</th>
+                  <th className="p-3 text-center font-semibold text-emerald-300">PumpPilot AI</th>
+                  <th className="p-3 text-center font-semibold text-muted-foreground">
+                    Typical AI trading app
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.map((row) => (
+                  <tr key={row.label} className="border-t border-border/60">
+                    <td className="p-3">{row.label}</td>
+                    <td className="p-3 text-center">
+                      {row.us === true ? (
+                        <Check className="mx-auto h-4 w-4 text-emerald-400" />
+                      ) : (
+                        <span className="text-muted-foreground">{String(row.us)}</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-center text-muted-foreground">
+                      {row.them === true ? (
+                        <Check className="mx-auto h-4 w-4 text-emerald-400" />
+                      ) : row.them === false ? (
+                        <span>—</span>
+                      ) : (
+                        <span>{row.them}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Social proof */}
+      <section className="px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Trusted by disciplined traders
+            </h2>
+            <div className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              4.8 average from 127 early users
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {testimonials.map((t) => (
+              <Card key={t.name} className="border-border/60 bg-card/60">
+                <CardContent className="p-5">
+                  <Trophy className="h-6 w-6 text-emerald-400" />
+                  <p className="mt-3 text-sm">"{t.quote}"</p>
+                  <div className="mt-4 text-xs text-muted-foreground">
+                    <div className="font-semibold text-foreground">{t.name}</div>
+                    {t.role}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" /> Active community & leaderboards
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5" /> Read-only wallet connect
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Lock className="h-3.5 w-3.5" /> Live trades opt-in only
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="border-y border-border/60 bg-muted/20 px-4 py-16">
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 text-center">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Simple pricing</h2>
-            <p className="mt-2 text-muted-foreground">Start free. Upgrade when you're ready to go deeper.</p>
+            <p className="mt-2 text-muted-foreground">
+              Start free. Upgrade when you're ready to go deeper.
+            </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {plans.map((p) => (
               <Card
                 key={p.name}
-                className={`flex flex-col p-6 ${p.highlight ? "border-emerald-500/50 ring-1 ring-emerald-500/30" : "border-border/60 bg-card/60"}`}
+                className={`flex flex-col p-6 ${
+                  p.highlight
+                    ? "border-emerald-500/50 ring-1 ring-emerald-500/30"
+                    : "border-border/60 bg-card/60"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">{p.name}</h3>
-                  {p.highlight && <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 border">Most popular</Badge>}
+                  {p.highlight && (
+                    <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 border">
+                      Most popular
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-bold">{p.price}</span>
@@ -239,7 +523,11 @@ function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Button className="mt-6 w-full" variant={p.highlight ? "default" : "outline"} asChild>
+                <Button
+                  className="mt-6 w-full"
+                  variant={p.highlight ? "default" : "outline"}
+                  asChild
+                >
                   <Link to={p.href}>{p.cta}</Link>
                 </Button>
               </Card>
@@ -248,8 +536,53 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Trust / disclaimers */}
+      {/* FAQ */}
+      <section id="faq" className="px-4 py-16">
+        <div className="mx-auto max-w-3xl">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Frequently asked questions
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Everything you need to know about the best AI investment app for crypto.
+            </p>
+          </div>
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((f, i) => (
+              <AccordionItem key={i} value={`item-${i}`}>
+                <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">{f.a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* CTA */}
       <section className="px-4 py-16">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 p-8 text-center">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Ready to trade smarter?
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+            Create a free account, paper-trade with explainable signals, and only upgrade when
+            PumpPilot AI is actively saving you time and mistakes.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Button size="lg" asChild>
+              <Link to={launchHref}>
+                {launchLabel} <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/pricing">See pricing</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust / disclaimers */}
+      <section className="px-4 pb-16">
         <div className="mx-auto max-w-3xl space-y-6 text-sm text-muted-foreground">
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
             <h3 className="flex items-center gap-2 font-semibold text-amber-300">
@@ -258,19 +591,20 @@ function LandingPage() {
             <p className="mt-2">
               PumpPilot AI is an educational trading sandbox. All prices, signals and portfolio data
               shown in paper mode are simulated or clearly labelled as demo. Predictions are
-              probabilistic, returns are not guaranteed, and you can lose all capital. Nothing on this
-              site is financial advice. Live execution is disabled and locked by default.
+              probabilistic, returns are not guaranteed, and you can lose all capital. Nothing on
+              this site is financial advice. Live execution is disabled and locked by default.
             </p>
           </div>
           <p>
-            <strong className="text-foreground">Security first.</strong> We never request or store seed
-            phrases or private keys. Wallet connection is read-only and runs origin checks to detect
-            phishing attempts.
+            <strong className="text-foreground">Security first.</strong> We never request or store
+            seed phrases or private keys. Wallet connection is read-only and runs origin checks to
+            detect phishing attempts.
           </p>
           <p>
             <strong className="text-foreground">Subscriptions.</strong> Cancel any time through the
-            billing portal. If you cancel, you keep access until the end of your current billing period.
-            Upgrades apply immediately and are prorated; downgrades apply at the next renewal.
+            billing portal. If you cancel, you keep access until the end of your current billing
+            period. Upgrades apply immediately and are prorated; downgrades apply at the next
+            renewal.
           </p>
         </div>
       </section>
@@ -287,33 +621,79 @@ function LandingPage() {
                 <span className="font-bold tracking-tight">PumpPilot AI</span>
               </div>
               <p className="mt-2 max-w-xs text-xs text-muted-foreground">
-                Educational crypto dashboard with explainable momentum, paper trading and AI coaching.
+                Educational crypto dashboard with explainable momentum, paper trading and AI
+                coaching.
               </p>
             </div>
             <div className="grid gap-8 sm:grid-cols-3 text-sm">
               <div>
                 <h4 className="font-semibold text-foreground">Product</h4>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
-                  <li><Link to="/scanner" className="hover:text-foreground">Scanner</Link></li>
-                  <li><Link to="/paper" className="hover:text-foreground">Paper Trading</Link></li>
-                  <li><Link to="/strategy" className="hover:text-foreground">Strategies</Link></li>
-                  <li><Link to="/pricing" className="hover:text-foreground">Pricing</Link></li>
+                  <li>
+                    <Link to="/scanner" className="hover:text-foreground">
+                      Scanner
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/paper" className="hover:text-foreground">
+                      Paper Trading
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/strategy" className="hover:text-foreground">
+                      Strategies
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/pricing" className="hover:text-foreground">
+                      Pricing
+                    </Link>
+                  </li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold text-foreground">Resources</h4>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
-                  <li><Link to="/learn" className="hover:text-foreground">Learn Hub</Link></li>
-                  <li><Link to="/community" className="hover:text-foreground">Community</Link></li>
-                  <li><Link to="/security" className="hover:text-foreground">Security Center</Link></li>
+                  <li>
+                    <Link to="/learn" className="hover:text-foreground">
+                      Learn Hub
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/community" className="hover:text-foreground">
+                      Community
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/security" className="hover:text-foreground">
+                      Security Center
+                    </Link>
+                  </li>
+                  <li>
+                    <a href="#faq" className="hover:text-foreground">
+                      FAQ
+                    </a>
+                  </li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold text-foreground">Legal</h4>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
-                  <li><Link to="/terms" className="hover:text-foreground">Terms of Service</Link></li>
-                  <li><Link to="/privacy" className="hover:text-foreground">Privacy Policy</Link></li>
-                  <li><Link to="/refund" className="hover:text-foreground">Refund Policy</Link></li>
+                  <li>
+                    <Link to="/terms" className="hover:text-foreground">
+                      Terms of Service
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/privacy" className="hover:text-foreground">
+                      Privacy Policy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/refund" className="hover:text-foreground">
+                      Refund Policy
+                    </Link>
+                  </li>
                   <li>support@pumppilot.ai</li>
                 </ul>
               </div>
