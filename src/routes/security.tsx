@@ -36,6 +36,7 @@ import {
   CheckCircle2,
   XCircle,
   CalendarIcon,
+  BarChart3,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -596,12 +597,127 @@ function IncidentsPanel() {
     other: "Other",
   };
 
+  const stats = useMemo(() => {
+    const total = filtered.length;
+    const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
+    const byCategory = new Map<string, number>();
+    const byOrigin = new Map<string, number>();
+    const byRule = new Map<string, number>();
+    const bySeverity = new Map<string, number>();
+    const buckets = new Map<string, number>();
+    const now = Date.now();
+    const BUCKETS: { key: string; label: string; ms: number }[] = [
+      { key: "1h", label: "Last hour", ms: 60 * 60_000 },
+      { key: "24h", label: "Last 24h", ms: 24 * 60 * 60_000 },
+      { key: "7d", label: "Last 7d", ms: 7 * 24 * 60 * 60_000 },
+      { key: "30d", label: "Last 30d", ms: 30 * 24 * 60 * 60_000 },
+      { key: "older", label: "Older", ms: Infinity },
+    ];
+    for (const b of BUCKETS) buckets.set(b.key, 0);
+    let blocked = 0;
+    for (const r of filtered) {
+      bump(byCategory, r.category ?? "other");
+      bump(byOrigin, r.originUrl?.trim() || "(unknown)");
+      bump(byRule, r.matchedRule?.trim() || "(none)");
+      bump(bySeverity, r.severity);
+      if (r.blocked) blocked += 1;
+      const age = now - r.ts;
+      const b = BUCKETS.find((x) => age <= x.ms) ?? BUCKETS[BUCKETS.length - 1];
+      buckets.set(b.key, (buckets.get(b.key) ?? 0) + 1);
+    }
+    const sortDesc = (m: Map<string, number>) =>
+      [...m.entries()].sort((a, b) => b[1] - a[1]);
+    return {
+      total,
+      blocked,
+      bySeverity: sortDesc(bySeverity),
+      byCategory: sortDesc(byCategory),
+      byOrigin: sortDesc(byOrigin).slice(0, 8),
+      byRule: sortDesc(byRule).slice(0, 8),
+      buckets: BUCKETS.map((b) => ({ label: b.label, count: buckets.get(b.key) ?? 0 })),
+    };
+  }, [filtered]);
+
   return (
     <Card className="border-border/60 bg-card/60">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">Incident log</CardTitle>
           <div className="flex items-center gap-1">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={filtered.length === 0}
+                  title={`Summary of ${filtered.length} filtered incident(s)`}
+                >
+                  <BarChart3 className="mr-1 h-3.5 w-3.5" /> Summary
+                  {activeFilterCount > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="ml-2 border-sky-500/40 text-[10px] text-sky-300"
+                    >
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[380px] p-0">
+                <div className="border-b border-border/60 px-4 py-3">
+                  <div className="text-sm font-medium">Filtered summary</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {stats.total} incident{stats.total === 1 ? "" : "s"} · {stats.blocked} blocked
+                    {activeFilterCount > 0
+                      ? ` · ${activeFilterCount} active filter${activeFilterCount === 1 ? "" : "s"}`
+                      : ""}
+                  </div>
+                  {stats.bySeverity.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {stats.bySeverity.map(([sev, n]) => (
+                        <Badge
+                          key={sev}
+                          variant="outline"
+                          className={cn(
+                            "text-[10px]",
+                            sev === "high" && "border-red-500/40 text-red-300",
+                            sev === "medium" && "border-amber-500/40 text-amber-300",
+                            sev === "low" && "border-emerald-500/40 text-emerald-300",
+                          )}
+                        >
+                          {sev} · {n}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="max-h-[420px] space-y-4 overflow-y-auto px-4 py-3 text-xs">
+                  <StatBlock
+                    title="By category"
+                    rows={stats.byCategory.map(([k, n]) => ({
+                      label: CATEGORY_LABEL[k as ReportCategory] ?? k,
+                      count: n,
+                    }))}
+                    total={stats.total}
+                  />
+                  <StatBlock
+                    title="By matched rule"
+                    rows={stats.byRule.map(([k, n]) => ({ label: k, count: n }))}
+                    total={stats.total}
+                  />
+                  <StatBlock
+                    title="By origin URL"
+                    rows={stats.byOrigin.map(([k, n]) => ({ label: k, count: n, mono: true }))}
+                    total={stats.total}
+                  />
+                  <StatBlock
+                    title="By time"
+                    rows={stats.buckets.map((b) => ({ label: b.label, count: b.count }))}
+                    total={stats.total}
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="sm"
@@ -826,4 +942,51 @@ function relativeTime(ts: number) {
   if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
   return `${d}d ago`;
+}
+
+function StatBlock({
+  title,
+  rows,
+  total,
+}: {
+  title: string;
+  rows: { label: string; count: number; mono?: boolean }[];
+  total: number;
+}) {
+  if (rows.length === 0) return null;
+  const max = Math.max(...rows.map((r) => r.count), 1);
+  return (
+    <div>
+      <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {title}
+      </div>
+      <div className="space-y-1.5">
+        {rows.map((r, i) => {
+          const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
+          const barW = `${Math.max(4, (r.count / max) * 100)}%`;
+          return (
+            <div key={`${r.label}-${i}`} className="space-y-0.5">
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate",
+                    r.mono && "font-mono text-[11px]",
+                  )}
+                  title={r.label}
+                >
+                  {r.label}
+                </span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  {r.count} · {pct}%
+                </span>
+              </div>
+              <div className="h-1 overflow-hidden rounded bg-muted/40">
+                <div className="h-full bg-sky-500/60" style={{ width: barW }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
