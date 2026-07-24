@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>PumpPilot AI</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #0B0F19;
+        color: #F8FAFC;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      }
+      .logo {
+        width: 96px;
+        height: 96px;
+        border-radius: 22px;
+        background: #111827;
+        box-shadow: 0 0 40px rgba(59, 130, 246, 0.25);
+        margin-bottom: 24px;
+        object-fit: contain;
+        padding: 12px;
+      }
+      h1 { margin: 0 0 8px; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+      p { margin: 0 0 28px; color: #94A3B8; font-size: 15px; line-height: 1.5; max-width: 280px; }
+      .spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(59, 130, 246, 0.2);
+        border-top-color: #3B82F6;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+        margin-bottom: 28px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 12px;
+        background: #3B82F6;
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        border: none;
+        cursor: pointer;
+      }
+      .offline { display: none; }
+    </style>
+  </head>
+  <body>
+    <img class="logo" src="icon.png" alt="PumpPilot AI" />
+    <h1>PumpPilot AI</h1>
+    <p>Spot momentum. Control risk. Trade smarter.</p>
+    <div class="spinner" id="spinner"></div>
+    <div class="offline" id="offline">
+      <p>Unable to reach the live app. Make sure you are connected to the internet.</p>
+      <a class="btn" href="https://getpumppilot.app" rel="noopener">Open getpumppilot.app</a>
+    </div>
+    <script>
+      // Capacitor uses the server.url from capacitor.config.ts for the main WebView load.
+      // This page is only shown if the remote URL fails or during local preview.
+      setTimeout(() => {
+        const spinner = document.getElementById('spinner');
+        const offline = document.getElementById('offline');
+        if (spinner) spinner.style.display = 'none';
+        if (offline) offline.style.display = 'block';
+      }, 5000);
+    </script>
+  </body>
+</html>

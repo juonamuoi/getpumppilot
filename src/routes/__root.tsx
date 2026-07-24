@@ -12,6 +12,7 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { hideSplashScreen, setStatusBarDark } from "@/lib/native";
 import { PaperProvider } from "@/lib/paper-store";
 import { SecurityProvider } from "@/lib/security-store";
 import { OnboardingProvider } from "@/lib/onboarding-store";
@@ -125,6 +126,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    // Native app polish: dark status bar + hide splash once React hydrates.
+    // These helpers are no-ops in the browser / Lovable preview.
+    void setStatusBarDark();
+    void hideSplashScreen();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

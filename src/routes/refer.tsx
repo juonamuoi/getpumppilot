@@ -2,13 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { getMyReferralCode, getMyReferralCount, getMyRewardMonths, getMyQualifiedReferralCount } from "@/lib/referral";
+import { nativeShare } from "@/lib/native";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Share2, Twitter, Mail, MessageCircle, Gift, Users, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 
-const BASE = "https://crypto-spotter-pro.lovable.app";
+const BASE = "https://getpumppilot.app";
 
 export const Route = createFileRoute("/refer")({
   head: () => ({
@@ -72,11 +73,9 @@ function ReferPage() {
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + link)}`;
   const emailUrl = `mailto:?subject=${encodeURIComponent("Try PumpPilot AI with me")}&body=${encodeURIComponent(shareText + "\n\n" + link)}`;
 
-  const nativeShare = async () => {
-    if (!navigator.share) { copy(); return; }
-    try {
-      await navigator.share({ title: "PumpPilot AI", text: shareText, url: link });
-    } catch {}
+  const handleNativeShare = async () => {
+    const ok = await nativeShare({ title: "PumpPilot AI", text: shareText, url: link });
+    if (!ok) copy();
   };
 
   return (
@@ -128,7 +127,7 @@ function ReferPage() {
                   <Mail className="mr-2 h-4 w-4" /> Email
                 </a>
               </Button>
-              <Button onClick={nativeShare} variant="secondary">
+              <Button onClick={handleNativeShare} variant="secondary">
                 <Share2 className="mr-2 h-4 w-4" /> Share
               </Button>
             </div>
