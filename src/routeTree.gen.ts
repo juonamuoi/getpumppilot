@@ -14,6 +14,8 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as RiskRouteImport } from './routes/risk'
 import { Route as PaperRouteImport } from './routes/paper'
+import { Route as LearnRouteImport } from './routes/learn'
+import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,6 +46,16 @@ const PaperRoute = PaperRouteImport.update({
   path: '/paper',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LearnRoute = LearnRouteImport.update({
+  id: '/learn',
+  path: '/learn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CopilotRoute = CopilotRouteImport.update({
+  id: '/copilot',
+  path: '/copilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BacktestRoute = BacktestRouteImport.update({
   id: '/backtest',
   path: '/backtest',
@@ -69,6 +81,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/backtest': typeof BacktestRoute
+  '/copilot': typeof CopilotRoute
+  '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
@@ -80,6 +94,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/backtest': typeof BacktestRoute
+  '/copilot': typeof CopilotRoute
+  '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
@@ -92,6 +108,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/backtest': typeof BacktestRoute
+  '/copilot': typeof CopilotRoute
+  '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
@@ -105,6 +123,8 @@ export interface FileRouteTypes {
     | '/'
     | '/alerts'
     | '/backtest'
+    | '/copilot'
+    | '/learn'
     | '/paper'
     | '/risk'
     | '/scanner'
@@ -116,6 +136,8 @@ export interface FileRouteTypes {
     | '/'
     | '/alerts'
     | '/backtest'
+    | '/copilot'
+    | '/learn'
     | '/paper'
     | '/risk'
     | '/scanner'
@@ -127,6 +149,8 @@ export interface FileRouteTypes {
     | '/'
     | '/alerts'
     | '/backtest'
+    | '/copilot'
+    | '/learn'
     | '/paper'
     | '/risk'
     | '/scanner'
@@ -139,6 +163,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AlertsRoute: typeof AlertsRoute
   BacktestRoute: typeof BacktestRoute
+  CopilotRoute: typeof CopilotRoute
+  LearnRoute: typeof LearnRoute
   PaperRoute: typeof PaperRoute
   RiskRoute: typeof RiskRoute
   ScannerRoute: typeof ScannerRoute
@@ -184,6 +210,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaperRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/learn': {
+      id: '/learn'
+      path: '/learn'
+      fullPath: '/learn'
+      preLoaderRoute: typeof LearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/copilot': {
+      id: '/copilot'
+      path: '/copilot'
+      fullPath: '/copilot'
+      preLoaderRoute: typeof CopilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/backtest': {
       id: '/backtest'
       path: '/backtest'
@@ -219,6 +259,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AlertsRoute: AlertsRoute,
   BacktestRoute: BacktestRoute,
+  CopilotRoute: CopilotRoute,
+  LearnRoute: LearnRoute,
   PaperRoute: PaperRoute,
   RiskRoute: RiskRoute,
   ScannerRoute: ScannerRoute,
