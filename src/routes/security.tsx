@@ -525,6 +525,68 @@ function IncidentsPanel() {
     );
   };
 
+  const exportJson = () => {
+    if (filtered.length === 0) {
+      toast.error("No incidents to export");
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const payload = {
+      schema: "pumppilot.incidents",
+      version: 1,
+      exportedAt: nowIso,
+      source: typeof window !== "undefined" ? window.location.href : "",
+      totalIncidents: reports.length,
+      exportedCount: filtered.length,
+      filters: {
+        query: q.trim() || null,
+        severity,
+        kind,
+        category,
+        dateRange: dateRange?.from
+          ? {
+              from: new Date(dateRange.from).toISOString(),
+              to: (dateRange.to ?? dateRange.from
+                ? new Date(dateRange.to ?? dateRange.from!).toISOString()
+                : null),
+            }
+          : null,
+      },
+      incidents: filtered.map((r) => ({
+        id: r.id,
+        ts: r.ts,
+        timestamp: new Date(r.ts).toISOString(),
+        kind: r.kind,
+        kindLabel: KIND_LABEL[r.kind] ?? r.kind,
+        severity: r.severity,
+        category: r.category ?? null,
+        matchedRule: r.matchedRule ?? null,
+        source: r.source,
+        originUrl: r.originUrl ?? null,
+        blocked: r.blocked ?? false,
+        message: r.message,
+        detail: r.detail ?? null,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = nowIso.replace(/[:.]/g, "-").slice(0, 19);
+    a.href = url;
+    a.download = `pumppilot-incidents-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(
+      `Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"} as JSON${
+        activeFilterCount ? ` (${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"})` : ""
+      }`,
+    );
+  };
+
   const CATEGORY_LABEL: Record<ReportCategory, string> = {
     "credential-leak": "Credential leak",
     phishing: "Phishing",
