@@ -37,6 +37,7 @@ import {
   XCircle,
   CalendarIcon,
   BarChart3,
+  Columns3,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
