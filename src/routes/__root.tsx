@@ -127,6 +127,13 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    // Native app polish: dark status bar + hide splash once React hydrates.
+    // These helpers are no-ops in the browser / Lovable preview.
+    void setStatusBarDark();
+    void hideSplashScreen();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
