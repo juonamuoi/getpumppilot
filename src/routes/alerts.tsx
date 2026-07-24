@@ -39,6 +39,13 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type Alert, type AlertDelivery, type ScannerRules } from "@/lib/paper-store";
 import { toast } from "sonner";
@@ -884,6 +891,24 @@ type ReplayResult = {
   evaluatedSnapshots: number;
   perBucket: number[];
   impact: Record<RuleKey, RuleImpact>;
+  perBucketSnapshots: BucketSnapshot[][];
+};
+
+export type SnapshotOutcome = "match" | "fail" | "cooldown";
+
+export type BucketSnapshot = {
+  ts: number;
+  symbol: string;
+  category: "major" | "demo-smallcap";
+  price: number;
+  momentum: number;
+  volumeScore: number;
+  volatility: number;
+  change: number;
+  slack: Record<RuleKey, number>;
+  outcome: SnapshotOutcome;
+  failedRules: RuleKey[];
+  cooldownRemainingMs?: number;
 };
 
 function jitter(seed: number) {
@@ -900,6 +925,7 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
   const cooldownMs = rules.cooldownMinutes * 60_000;
   const lastAccepted: Record<string, number> = {};
   const perBucket = new Array(steps).fill(0);
+  const perBucketSnapshots: BucketSnapshot[][] = Array.from({ length: steps }, () => []);
   const signals: ReplaySignal[] = [];
   const zero = (): Record<RuleKey, number> => ({ momentum: 0, volume: 0, volatility: 0, change: 0 });
   const failedAny = zero();
@@ -952,14 +978,34 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
         change: change - rules.min24hChangePct,
       };
       const failedRules = (Object.keys(slack) as RuleKey[]).filter((k) => slack[k] < 0);
+      const baseSnap = {
+        ts,
+        symbol: a.symbol,
+        category: a.category,
+        price,
+        momentum,
+        volumeScore,
+        volatility,
+        change,
+        slack,
+      };
       if (failedRules.length > 0) {
         for (const k of failedRules) failedAny[k]++;
         if (failedRules.length === 1) failedOnly[failedRules[0]]++;
+        perBucketSnapshots[i].push({ ...baseSnap, outcome: "fail", failedRules });
         continue;
       }
 
       const last = lastAccepted[a.symbol] ?? -Infinity;
-      if (ts - last < cooldownMs) continue;
+      if (ts - last < cooldownMs) {
+        perBucketSnapshots[i].push({
+          ...baseSnap,
+          outcome: "cooldown",
+          failedRules: [],
+          cooldownRemainingMs: cooldownMs - (ts - last),
+        });
+        continue;
+      }
       lastAccepted[a.symbol] = ts;
       perBucket[i]++;
 
@@ -974,6 +1020,7 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
       );
       for (const k of Object.keys(slack) as RuleKey[]) slackSum[k] += slack[k];
       bindingCount[binding]++;
+      perBucketSnapshots[i].push({ ...baseSnap, outcome: "match", failedRules: [] });
       signals.push({
         ts,
         symbol: a.symbol,
@@ -1013,6 +1060,7 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
     signals,
     evaluatedSnapshots: evaluated,
     perBucket,
+    perBucketSnapshots,
     impact,
   };
 }
@@ -1028,6 +1076,7 @@ function ReplayPanel() {
   const [assetFilter, setAssetFilter] = useState<"all" | "major" | "demo-smallcap">("all");
   const [result, setResult] = useState<ReplayResult | null>(null);
   const [ruleFocus, setRuleFocus] = useState<RuleKey | null>(null);
+  const [openBucket, setOpenBucket] = useState<number | null>(null);
 
   const run = () => {
     const r = runReplay(scannerRules, windowKey, steps);
@@ -1176,22 +1225,52 @@ function ReplayPanel() {
               </div>
 
               <div>
-                <Label className="text-xs">Signal timeline</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Signal timeline</Label>
+                  <span className="text-[10px] text-muted-foreground">Tap a bar to inspect</span>
+                </div>
                 <div className="mt-2 flex h-16 items-end gap-[2px] rounded-md border border-border/60 bg-muted/20 p-2">
-                  {filteredBuckets.map((n, i) => (
-                    <div
-                      key={i}
-                      className={`flex-1 rounded-sm ${ruleFocus ? RULE_META[ruleFocus].barClass : "bg-emerald-500/70"}`}
-                      style={{ height: `${(n / maxBucket) * 100}%`, minHeight: n ? 2 : 0 }}
-                      title={`${n} signal${n === 1 ? "" : "s"}`}
-                    />
-                  ))}
+                  {filteredBuckets.map((n, i) => {
+                    const snaps = result.perBucketSnapshots[i] ?? [];
+                    const hasAny = snaps.length > 0;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => hasAny && setOpenBucket(i)}
+                        disabled={!hasAny}
+                        className={`group relative flex-1 rounded-sm transition hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-emerald-400/60 disabled:cursor-not-allowed ${
+                          n > 0
+                            ? ruleFocus
+                              ? RULE_META[ruleFocus].barClass
+                              : "bg-emerald-500/70"
+                            : hasAny
+                              ? "bg-muted-foreground/25"
+                              : "bg-muted-foreground/10"
+                        }`}
+                        style={{
+                          height: n > 0 ? `${(n / maxBucket) * 100}%` : hasAny ? "6%" : "3%",
+                          minHeight: n ? 2 : hasAny ? 2 : 1,
+                        }}
+                        title={`${n} match${n === 1 ? "" : "es"} · ${snaps.length} evaluation${snaps.length === 1 ? "" : "s"}`}
+                        aria-label={`Bucket ${i + 1}: ${n} matches, ${snaps.length} evaluations`}
+                      />
+                    );
+                  })}
                 </div>
                 <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
                   <span>{format(new Date(result.ranAt - WINDOW_MS[result.window]), "MMM d HH:mm")}</span>
                   <span>{format(new Date(result.ranAt), "MMM d HH:mm")}</span>
                 </div>
               </div>
+
+              <SnapshotBucketDialog
+                open={openBucket !== null}
+                onOpenChange={(v) => !v && setOpenBucket(null)}
+                bucketIndex={openBucket}
+                result={result}
+                rules={scannerRules}
+              />
 
               <RuleImpactPanel
                 result={result}
@@ -1449,3 +1528,220 @@ function RuleImpactPanel({
   );
 }
 
+/* ---------------------- Snapshot inspector modal ---------------------- */
+
+function ruleComparisonLine(
+  k: RuleKey,
+  snap: BucketSnapshot,
+  rules: ScannerRules,
+): { label: string; observed: number; threshold: number; slack: number; passed: boolean; unit: string } {
+  const meta = RULE_META[k];
+  const threshold = ruleThreshold(rules, k);
+  const observed =
+    k === "momentum" ? snap.momentum
+    : k === "volume" ? snap.volumeScore
+    : k === "volatility" ? snap.volatility
+    : snap.change;
+  return {
+    label: meta.label + ` ${threshold}${meta.unit}`,
+    observed,
+    threshold,
+    slack: snap.slack[k],
+    passed: snap.slack[k] >= 0,
+    unit: meta.unit,
+  };
+}
+
+function SnapshotBucketDialog({
+  open,
+  onOpenChange,
+  bucketIndex,
+  result,
+  rules,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  bucketIndex: number | null;
+  result: ReplayResult;
+  rules: ScannerRules;
+}) {
+  const snaps =
+    bucketIndex == null ? [] : result.perBucketSnapshots[bucketIndex] ?? [];
+  const spanMs = WINDOW_MS[result.window];
+  const stepMs = spanMs / result.steps;
+  const bucketStart =
+    bucketIndex == null ? 0 : result.ranAt - spanMs + bucketIndex * stepMs;
+  const bucketEnd = bucketStart + stepMs;
+
+  const matched = snaps.filter((s) => s.outcome === "match");
+  const failed = snaps.filter((s) => s.outcome === "fail");
+  const cooled = snaps.filter((s) => s.outcome === "cooldown");
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    setExpanded({});
+  }, [bucketIndex]);
+
+  const keyOf = (s: BucketSnapshot) => `${s.symbol}-${s.ts}`;
+
+  const renderSnap = (s: BucketSnapshot) => {
+    const k = keyOf(s);
+    const isOpen = expanded[k] ?? false;
+    const rows = (Object.keys(RULE_META) as RuleKey[]).map((rk) => ({
+      key: rk,
+      ...ruleComparisonLine(rk, s, rules),
+    }));
+    return (
+      <div
+        key={k}
+        className="rounded-md border border-border/60 bg-muted/20 px-3 py-2"
+      >
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-left"
+          onClick={() => setExpanded((p) => ({ ...p, [k]: !isOpen }))}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-mono text-sm font-semibold">{s.symbol}</span>
+            {s.category === "demo-smallcap" && (
+              <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-300">
+                DEMO
+              </Badge>
+            )}
+            <Badge
+              variant="outline"
+              className={
+                s.outcome === "match"
+                  ? "border-emerald-500/40 text-[10px] text-emerald-300"
+                  : s.outcome === "cooldown"
+                    ? "border-sky-500/40 text-[10px] text-sky-300"
+                    : "border-rose-500/40 text-[10px] text-rose-300"
+              }
+            >
+              {s.outcome === "match"
+                ? "Matched"
+                : s.outcome === "cooldown"
+                  ? `Cooldown ${Math.ceil((s.cooldownRemainingMs ?? 0) / 60000)}m`
+                  : `Failed ${s.failedRules.length}/4`}
+            </Badge>
+          </div>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {format(new Date(s.ts), "HH:mm:ss")}
+            <ChevronRight
+              className={`ml-1 inline h-3 w-3 transition ${isOpen ? "rotate-90" : ""}`}
+            />
+          </span>
+        </button>
+        {isOpen && (
+          <div className="mt-2 space-y-1.5 border-t border-border/40 pt-2">
+            {rows.map((r) => {
+              const meta = RULE_META[r.key];
+              const slackAbs = Math.abs(r.slack).toFixed(r.unit === "%" ? 2 : 1);
+              return (
+                <div
+                  key={r.key}
+                  className="flex items-center justify-between gap-3 rounded-sm bg-background/40 px-2 py-1 text-[11px]"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {r.passed ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                    ) : (
+                      <XCircle className="h-3.5 w-3.5 shrink-0 text-rose-400" />
+                    )}
+                    <span className={`truncate ${meta.textClass}`}>{r.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-mono">
+                    <span className="text-muted-foreground">
+                      obs{" "}
+                      <span className="text-foreground">
+                        {r.observed.toFixed(r.unit === "%" ? 2 : 0)}
+                        {r.unit}
+                      </span>
+                    </span>
+                    <span className={r.passed ? "text-emerald-300" : "text-rose-300"}>
+                      {r.passed ? "+" : "−"}
+                      {slackAbs}
+                      {r.unit}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="pt-1 text-[10px] text-muted-foreground">
+              Price {s.price.toFixed(s.price < 10 ? 4 : 2)} · momentum {s.momentum} · vol{" "}
+              {s.volumeScore} · volatility {s.volatility} · 24h{" "}
+              {s.change >= 0 ? "+" : ""}
+              {s.change.toFixed(2)}%
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            Snapshot bucket
+            {bucketIndex != null && (
+              <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">
+                {format(new Date(bucketStart), "MMM d HH:mm:ss")} →{" "}
+                {format(new Date(bucketEnd), "HH:mm:ss")}
+              </span>
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {snaps.length} evaluation{snaps.length === 1 ? "" : "s"} against your saved rules ·{" "}
+            <span className="text-emerald-300">{matched.length} matched</span>
+            {cooled.length > 0 && (
+              <>
+                {" "}
+                · <span className="text-sky-300">{cooled.length} cooled</span>
+              </>
+            )}
+            {failed.length > 0 && (
+              <>
+                {" "}
+                · <span className="text-rose-300">{failed.length} failed</span>
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1">
+          {matched.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                Matched ({matched.length})
+              </h4>
+              {matched.map(renderSnap)}
+            </section>
+          )}
+          {cooled.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+                Suppressed by cooldown ({cooled.length})
+              </h4>
+              {cooled.map(renderSnap)}
+            </section>
+          )}
+          {failed.length > 0 && (
+            <section className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-rose-300">
+                Failed rule checks ({failed.length})
+              </h4>
+              {failed.map(renderSnap)}
+            </section>
+          )}
+          {snaps.length === 0 && (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              No evaluations in this bucket.
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
