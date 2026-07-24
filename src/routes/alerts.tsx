@@ -85,6 +85,9 @@ function AlertsPage() {
             <TabsTrigger value="rules" className="flex-1 sm:flex-none">
               Scanner rules
             </TabsTrigger>
+            <TabsTrigger value="replay" className="flex-1 sm:flex-none">
+              Replay
+            </TabsTrigger>
             <TabsTrigger value="custom" className="flex-1 sm:flex-none">
               Custom alerts
             </TabsTrigger>
@@ -95,6 +98,9 @@ function AlertsPage() {
 
           <TabsContent value="rules" className="mt-5">
             <ScannerRulesPanel />
+          </TabsContent>
+          <TabsContent value="replay" className="mt-5">
+            <ReplayPanel />
           </TabsContent>
           <TabsContent value="custom" className="mt-5">
             <CustomAlertsPanel />
