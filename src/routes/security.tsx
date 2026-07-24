@@ -943,3 +943,50 @@ function relativeTime(ts: number) {
   const d = Math.floor(h / 24);
   return `${d}d ago`;
 }
+
+function StatBlock({
+  title,
+  rows,
+  total,
+}: {
+  title: string;
+  rows: { label: string; count: number; mono?: boolean }[];
+  total: number;
+}) {
+  if (rows.length === 0) return null;
+  const max = Math.max(...rows.map((r) => r.count), 1);
+  return (
+    <div>
+      <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {title}
+      </div>
+      <div className="space-y-1.5">
+        {rows.map((r, i) => {
+          const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
+          const barW = `${Math.max(4, (r.count / max) * 100)}%`;
+          return (
+            <div key={`${r.label}-${i}`} className="space-y-0.5">
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate",
+                    r.mono && "font-mono text-[11px]",
+                  )}
+                  title={r.label}
+                >
+                  {r.label}
+                </span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  {r.count} · {pct}%
+                </span>
+              </div>
+              <div className="h-1 overflow-hidden rounded bg-muted/40">
+                <div className="h-full bg-sky-500/60" style={{ width: barW }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
