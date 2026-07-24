@@ -257,9 +257,11 @@ function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 text-black shadow-lg shadow-emerald-500/20">
-              <FlaskConical className="h-5 w-5" />
-            </div>
+            <img
+              src="/favicon.png"
+              alt="PumpPilot AI logo"
+              className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-lg shadow-emerald-500/20"
+            />
             <div>
               <div className="text-sm font-bold tracking-tight">PumpPilot AI</div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
