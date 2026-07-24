@@ -6,9 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MomentumBadge } from "@/components/momentum";
 import { Sparkline } from "@/components/sparkline";
 import { usePaper } from "@/lib/paper-store";
-import { ArrowDownRight, ArrowUpRight, Lock, TrendingUp, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Lock, TrendingUp, Wallet, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { PlainSignalCard } from "@/components/plain-signal";
+import { PortfolioHealthCard } from "@/components/portfolio-health";
+import { Term } from "@/components/glossary";
+import { useOnboarding } from "@/lib/onboarding-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
