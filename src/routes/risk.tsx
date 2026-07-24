@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
+import { DeviceSecurityCard } from "@/components/device-security-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -137,6 +138,8 @@ function RiskPage() {
             </CardContent>
           </Card>
         </div>
+
+        <DeviceSecurityCard />
       </div>
     </AppShell>
   );
