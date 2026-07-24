@@ -1,5 +1,4 @@
 import { Capacitor } from "@capacitor/core";
-import { Style } from "@capacitor/status-bar";
 
 /**
  * Safe native helpers for PumpPilot AI.
