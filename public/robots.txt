@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://crypto-spotter-pro.lovable.app/sitemap.xml
