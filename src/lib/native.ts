@@ -13,7 +13,7 @@ export function isNativeApp(): boolean {
 export async function setStatusBarDark() {
   if (!Capacitor.isNativePlatform()) return;
   try {
-    const { StatusBar } = await import("@capacitor/status-bar");
+    const { StatusBar, Style } = await import("@capacitor/status-bar");
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: "#0B0F19" });
   } catch {
