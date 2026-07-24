@@ -1224,6 +1224,7 @@ function snapshotValue(s: BucketSnapshot, k: RuleKey): number {
 function computeTuning(
   result: ReplayResult,
   rules: ScannerRules,
+  fraction: number = 0.5,
 ): Record<RuleKey, RuleTuning> {
   const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
   const out = {} as Record<RuleKey, RuleTuning>;
