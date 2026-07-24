@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PlainSignalCard } from "@/components/plain-signal";
 import { PortfolioHealthCard } from "@/components/portfolio-health";
+import { LiveMarket } from "@/components/live-market";
 import { Term } from "@/components/glossary";
 import { useOnboarding } from "@/lib/onboarding-store";
 
@@ -166,15 +167,20 @@ function Dashboard() {
           <div className="lg:col-span-2">
             <PortfolioHealthCard />
           </div>
-          <Card className="border-border/60 bg-card/60">
+          <LiveMarket />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="border-border/60 bg-card/60 lg:col-span-2">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Sparkles className="h-4 w-4 text-emerald-400" /> Ask the copilot
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
+            <CardContent className="flex flex-wrap items-center gap-3 text-sm">
               <p className="text-muted-foreground">
-                Not sure what to do? Tap the sparkle button (bottom-right) or open the full copilot.
+                Not sure what to do? Tap the sparkle button (bottom-right), open the full copilot,
+                or run a full AI diagnosis of your book.
               </p>
               <Link
                 to="/copilot"
@@ -182,12 +188,38 @@ function Dashboard() {
               >
                 <Sparkles className="h-3.5 w-3.5" /> Open AI Copilot
               </Link>
-              <p className="text-[10px] text-muted-foreground">
+              <Link
+                to="/doctor"
+                className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/10"
+              >
+                Run Portfolio Doctor →
+              </Link>
+              <p className="basis-full text-[10px] text-muted-foreground">
                 Educational. Not financial advice.
               </p>
             </CardContent>
           </Card>
+          <Card className="border-border/60 bg-card/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4 text-emerald-400" /> Measure your edge
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                Track win rate, expectancy, profit factor and equity curve across every paper
+                trade you make.
+              </p>
+              <Link
+                to="/journal"
+                className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs font-semibold hover:bg-muted/60"
+              >
+                Open Trade Journal →
+              </Link>
+            </CardContent>
+          </Card>
         </div>
+
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Portfolio */}

@@ -13,6 +13,8 @@ import {
   Sparkles,
   BookOpen,
   Bot,
+  Stethoscope,
+  LineChart,
   Command as CommandIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -28,7 +30,9 @@ import { cn } from "@/lib/utils";
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/scanner", label: "Scanner", icon: Radar },
+  { to: "/doctor", label: "Portfolio Doctor", icon: Stethoscope },
   { to: "/copilot", label: "AI Copilot", icon: Bot },
+  { to: "/journal", label: "Trade Journal", icon: LineChart },
   { to: "/alerts", label: "Alerts", icon: Bell },
   { to: "/paper", label: "Paper Trading", icon: Wallet },
   { to: "/strategy", label: "Strategy Builder", icon: Sparkles },
@@ -37,6 +41,7 @@ const nav = [
   { to: "/security", label: "Security", icon: ShieldAlert },
   { to: "/learn", label: "Learn", icon: BookOpen },
 ] as const;
+
 
 function Brand() {
   return (

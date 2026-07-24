@@ -15,6 +15,8 @@ import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as RiskRouteImport } from './routes/risk'
 import { Route as PaperRouteImport } from './routes/paper'
 import { Route as LearnRouteImport } from './routes/learn'
+import { Route as JournalRouteImport } from './routes/journal'
+import { Route as DoctorRouteImport } from './routes/doctor'
 import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as AlertsRouteImport } from './routes/alerts'
@@ -51,6 +53,16 @@ const LearnRoute = LearnRouteImport.update({
   path: '/learn',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JournalRoute = JournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoctorRoute = DoctorRouteImport.update({
+  id: '/doctor',
+  path: '/doctor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CopilotRoute = CopilotRouteImport.update({
   id: '/copilot',
   path: '/copilot',
@@ -82,6 +94,8 @@ export interface FileRoutesByFullPath {
   '/alerts': typeof AlertsRoute
   '/backtest': typeof BacktestRoute
   '/copilot': typeof CopilotRoute
+  '/doctor': typeof DoctorRoute
+  '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
@@ -95,6 +109,8 @@ export interface FileRoutesByTo {
   '/alerts': typeof AlertsRoute
   '/backtest': typeof BacktestRoute
   '/copilot': typeof CopilotRoute
+  '/doctor': typeof DoctorRoute
+  '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
@@ -109,6 +125,8 @@ export interface FileRoutesById {
   '/alerts': typeof AlertsRoute
   '/backtest': typeof BacktestRoute
   '/copilot': typeof CopilotRoute
+  '/doctor': typeof DoctorRoute
+  '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
@@ -124,6 +142,8 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/backtest'
     | '/copilot'
+    | '/doctor'
+    | '/journal'
     | '/learn'
     | '/paper'
     | '/risk'
@@ -137,6 +157,8 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/backtest'
     | '/copilot'
+    | '/doctor'
+    | '/journal'
     | '/learn'
     | '/paper'
     | '/risk'
@@ -150,6 +172,8 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/backtest'
     | '/copilot'
+    | '/doctor'
+    | '/journal'
     | '/learn'
     | '/paper'
     | '/risk'
@@ -164,6 +188,8 @@ export interface RootRouteChildren {
   AlertsRoute: typeof AlertsRoute
   BacktestRoute: typeof BacktestRoute
   CopilotRoute: typeof CopilotRoute
+  DoctorRoute: typeof DoctorRoute
+  JournalRoute: typeof JournalRoute
   LearnRoute: typeof LearnRoute
   PaperRoute: typeof PaperRoute
   RiskRoute: typeof RiskRoute
@@ -217,6 +243,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/journal': {
+      id: '/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/doctor': {
+      id: '/doctor'
+      path: '/doctor'
+      fullPath: '/doctor'
+      preLoaderRoute: typeof DoctorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/copilot': {
       id: '/copilot'
       path: '/copilot'
@@ -260,6 +300,8 @@ const rootRouteChildren: RootRouteChildren = {
   AlertsRoute: AlertsRoute,
   BacktestRoute: BacktestRoute,
   CopilotRoute: CopilotRoute,
+  DoctorRoute: DoctorRoute,
+  JournalRoute: JournalRoute,
   LearnRoute: LearnRoute,
   PaperRoute: PaperRoute,
   RiskRoute: RiskRoute,
