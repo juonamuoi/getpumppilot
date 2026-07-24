@@ -110,7 +110,7 @@ function PostPage() {
         </Link>
 
         <div className="flex items-center gap-2">
-          {post.tags.map((t) => (
+          {post.tags.map((t: string) => (
             <Badge key={t} variant="secondary">{t}</Badge>
           ))}
           <span className="text-xs text-muted-foreground">

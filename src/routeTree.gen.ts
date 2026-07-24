@@ -29,6 +29,8 @@ import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -132,6 +134,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AssetSymbolRoute = AssetSymbolRouteImport.update({
   id: '/asset/$symbol',
   path: '/asset/$symbol',
@@ -166,6 +178,8 @@ export interface FileRoutesByFullPath {
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -190,6 +204,8 @@ export interface FileRoutesByTo {
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog': typeof BlogIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -215,6 +231,8 @@ export interface FileRoutesById {
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/blog/': typeof BlogIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -241,6 +259,8 @@ export interface FileRouteTypes {
     | '/strategy'
     | '/terms'
     | '/asset/$symbol'
+    | '/blog/$slug'
+    | '/blog/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -265,6 +285,8 @@ export interface FileRouteTypes {
     | '/strategy'
     | '/terms'
     | '/asset/$symbol'
+    | '/blog/$slug'
+    | '/blog'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -289,6 +311,8 @@ export interface FileRouteTypes {
     | '/strategy'
     | '/terms'
     | '/asset/$symbol'
+    | '/blog/$slug'
+    | '/blog/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -314,6 +338,8 @@ export interface RootRouteChildren {
   StrategyRoute: typeof StrategyRoute
   TermsRoute: typeof TermsRoute
   AssetSymbolRoute: typeof AssetSymbolRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -459,6 +485,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/asset/$symbol': {
       id: '/asset/$symbol'
       path: '/asset/$symbol'
@@ -498,6 +538,8 @@ const rootRouteChildren: RootRouteChildren = {
   StrategyRoute: StrategyRoute,
   TermsRoute: TermsRoute,
   AssetSymbolRoute: AssetSymbolRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
