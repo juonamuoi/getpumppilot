@@ -283,6 +283,7 @@ export type Database = {
       }
       my_referral_reward_months: { Args: never; Returns: number }
       process_referral_rewards: { Args: never; Returns: number }
+      resolve_referral_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
