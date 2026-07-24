@@ -1,0 +1,102 @@
+export interface BlogPost {
+  slug: string;
+  title: string;
+  description: string;
+  date: string; // ISO
+  readMinutes: number;
+  keywords: string[];
+  tags: string[];
+  // Body is an array of blocks for simple structured rendering.
+  body: BlogBlock[];
+}
+
+export type BlogBlock =
+  | { type: "p"; text: string }
+  | { type: "h2"; text: string }
+  | { type: "h3"; text: string }
+  | { type: "ul"; items: string[] }
+  | { type: "quote"; text: string }
+  | { type: "cta"; text: string; href: string; label: string };
+
+export const BLOG_POSTS: BlogPost[] = [
+  {
+    slug: "best-ai-investment-app-2026",
+    title: "Best AI Investment App in 2026: An Honest Comparison",
+    description:
+      "How to choose the best AI investment app in 2026. We compare explainability, safety, paper trading, and live execution across the top AI trading platforms.",
+    date: "2026-07-15",
+    readMinutes: 8,
+    keywords: [
+      "best ai investment app",
+      "ai trading app",
+      "ai crypto trading",
+      "ai portfolio manager",
+    ],
+    tags: ["Guides", "AI"],
+    body: [
+      { type: "p", text: "Everyone claims to have the 'best AI investment app.' Very few can explain why their model made a call, show you the exact risk you're taking, or let you rehearse a strategy before a single dollar is at risk. This guide breaks down what actually matters." },
+      { type: "h2", text: "The 5 things that separate great AI investment apps from marketing" },
+      { type: "ul", items: [
+        "Explainable signals — every score should tell you what drove it",
+        "Paper trading by default — never gamble to learn",
+        "Risk controls that are locked, not optional",
+        "Backtesting on real historical data",
+        "A community layer to compare and fork strategies",
+      ]},
+      { type: "h2", text: "How PumpPilot AI stacks up" },
+      { type: "p", text: "PumpPilot AI is built around the principle that if the model can't explain itself, you shouldn't trust it. Every momentum score comes with a plain-English breakdown, every alert shows exactly which rule fired, and live execution stays disabled behind a locked master switch until you deliberately turn it on." },
+      { type: "cta", text: "See it in action", href: "/pricing", label: "View pricing" },
+    ],
+  },
+  {
+    slug: "ai-crypto-trading-explained",
+    title: "AI Crypto Trading, Explained: Signals, Risk, and Realistic Returns",
+    description:
+      "What AI crypto trading actually does — how momentum signals work, why explainability matters, and how to avoid the biggest mistakes new traders make.",
+    date: "2026-07-08",
+    readMinutes: 6,
+    keywords: [
+      "ai crypto trading",
+      "crypto momentum signals",
+      "ai trading explained",
+    ],
+    tags: ["Education", "AI"],
+    body: [
+      { type: "p", text: "AI crypto trading isn't a magic money button. It's pattern recognition, risk math, and disciplined execution — done faster than any human can do it manually. Here's what's really going on under the hood." },
+      { type: "h2", text: "What a momentum signal actually measures" },
+      { type: "p", text: "A momentum score blends short-term price velocity, volume acceleration, volatility regime, and cross-market context. Any model that gives you one number without showing the ingredients is asking you to take it on faith." },
+      { type: "h2", text: "Why explainability changes everything" },
+      { type: "p", text: "When a signal is transparent, you can override it when your judgement disagrees, tighten thresholds when the market shifts, and learn from every trade. Black-box AI takes those levers away." },
+      { type: "cta", text: "Try the AI Copilot free", href: "/dashboard", label: "Open dashboard" },
+    ],
+  },
+  {
+    slug: "paper-trading-vs-live-trading",
+    title: "Paper Trading vs Live Trading: The Case for Rehearsal",
+    description:
+      "Why paper trading is the single highest-ROI habit for new traders — and how to know when a strategy is actually ready for live capital.",
+    date: "2026-06-28",
+    readMinutes: 5,
+    keywords: [
+      "paper trading",
+      "paper trading vs live",
+      "crypto simulator",
+    ],
+    tags: ["Education"],
+    body: [
+      { type: "p", text: "Every professional trader you admire ran thousands of simulated trades before risking real money. Paper trading is not a beginner's toy — it's rehearsal." },
+      { type: "h2", text: "The 3-month readiness rule" },
+      { type: "ul", items: [
+        "Positive expectancy over at least 100 simulated trades",
+        "Max drawdown below your personal loss tolerance",
+        "Consistent behavior across bull, chop, and bear regimes",
+      ]},
+      { type: "quote", text: "If you can't stay profitable on paper, you will not be profitable live. Full stop." },
+      { type: "cta", text: "Start paper trading now", href: "/paper", label: "Open paper trading" },
+    ],
+  },
+];
+
+export function getPostBySlug(slug: string): BlogPost | undefined {
+  return BLOG_POSTS.find((p) => p.slug === slug);
+}

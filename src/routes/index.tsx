@@ -272,6 +272,9 @@ function LandingPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link to="/pricing">Pricing</Link>
             </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/blog">Blog</Link>
+            </Button>
             <Button size="sm" asChild>
               <Link to={launchHref}>{launchLabel}</Link>
             </Button>
@@ -654,6 +657,11 @@ function LandingPage() {
               <div>
                 <h4 className="font-semibold text-foreground">Resources</h4>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
+                  <li>
+                    <Link to="/blog" className="hover:text-foreground">
+                      Blog
+                    </Link>
+                  </li>
                   <li>
                     <Link to="/learn" className="hover:text-foreground">
                       Learn Hub
