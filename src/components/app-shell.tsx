@@ -52,9 +52,11 @@ const nav = [
 function Brand() {
   return (
     <div className="flex items-center gap-2">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 text-black shadow-lg shadow-emerald-500/20">
-        <FlaskConical className="h-5 w-5" />
-      </div>
+      <img
+        src="/favicon.png"
+        alt="PumpPilot AI logo"
+        className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-lg shadow-emerald-500/20"
+      />
       <div className="min-w-0">
         <div className="truncate text-sm font-bold tracking-tight">PumpPilot AI</div>
         <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
