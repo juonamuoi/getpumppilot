@@ -429,12 +429,29 @@ function IncidentsPanel() {
       const s = v == null ? "" : String(v);
       return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    const header = ["timestamp", "severity", "kind", "source", "message", "detail"];
+    const header = [
+      "id",
+      "timestamp",
+      "severity",
+      "category",
+      "kind",
+      "matched_rule",
+      "source",
+      "origin_url",
+      "blocked",
+      "message",
+      "detail",
+    ];
     const rows = filtered.map((r) => [
+      r.id,
       new Date(r.ts).toISOString(),
       r.severity,
+      r.category ?? "",
       KIND_LABEL[r.kind] ?? r.kind,
+      r.matchedRule ?? "",
       r.source,
+      r.originUrl ?? "",
+      r.blocked ? "yes" : "no",
       r.message,
       r.detail ?? "",
     ]);
