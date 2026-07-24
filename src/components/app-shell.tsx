@@ -163,6 +163,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="lg:ml-64">
         <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
+
+      <CommandPalette />
+      <OnboardingDialog />
+      <AICopilot />
     </div>
   );
 }
