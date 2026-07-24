@@ -163,10 +163,30 @@ function Dashboard() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Portfolio card follows */}
+          <div className="lg:col-span-2">
+            <PortfolioHealthCard />
           </div>
-          <PortfolioHealthCard />
+          <Card className="border-border/60 bg-card/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="h-4 w-4 text-emerald-400" /> Ask the copilot
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                Not sure what to do? Tap the sparkle button (bottom-right) or open the full copilot.
+              </p>
+              <Link
+                to="/copilot"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-400 to-cyan-500 px-3 py-2 text-xs font-semibold text-black hover:opacity-90"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Open AI Copilot
+              </Link>
+              <p className="text-[10px] text-muted-foreground">
+                Educational. Not financial advice.
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
