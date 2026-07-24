@@ -15,6 +15,7 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as RiskRouteImport } from './routes/risk'
 import { Route as RefundRouteImport } from './routes/refund'
+import { Route as ReferRouteImport } from './routes/refer'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PaperRouteImport } from './routes/paper'
@@ -62,6 +63,11 @@ const RiskRoute = RiskRouteImport.update({
 const RefundRoute = RefundRouteImport.update({
   id: '/refund',
   path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReferRoute = ReferRouteImport.update({
+  id: '/refer',
+  path: '/refer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/paper'
     | '/pricing'
     | '/privacy'
+    | '/refer'
     | '/refund'
     | '/risk'
     | '/scanner'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/paper'
     | '/pricing'
     | '/privacy'
+    | '/refer'
     | '/refund'
     | '/risk'
     | '/scanner'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/paper'
     | '/pricing'
     | '/privacy'
+    | '/refer'
     | '/refund'
     | '/risk'
     | '/scanner'
@@ -331,6 +343,7 @@ export interface RootRouteChildren {
   PaperRoute: typeof PaperRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ReferRoute: typeof ReferRoute
   RefundRoute: typeof RefundRoute
   RiskRoute: typeof RiskRoute
   ScannerRoute: typeof ScannerRoute
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/refund'
       fullPath: '/refund'
       preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refer': {
+      id: '/refer'
+      path: '/refer'
+      fullPath: '/refer'
+      preLoaderRoute: typeof ReferRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaperRoute: PaperRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ReferRoute: ReferRoute,
   RefundRoute: RefundRoute,
   RiskRoute: RiskRoute,
   ScannerRoute: ScannerRoute,
