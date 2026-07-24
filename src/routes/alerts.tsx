@@ -1252,7 +1252,7 @@ function computeTuning(
       };
       continue;
     }
-    const targetCount = Math.max(1, Math.ceil(pool.length * 0.5));
+    const targetCount = Math.max(1, Math.ceil(pool.length * fraction));
     const sorted = [...pool].sort(
       (a, b) => Math.abs(a.slack[k]) - Math.abs(b.slack[k]),
     );
