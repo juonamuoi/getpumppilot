@@ -21,6 +21,7 @@ import {
   ShieldAlert,
   Flag,
   Trash2,
+  Download,
   Search,
   Plus,
   AlertTriangle,
