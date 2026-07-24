@@ -28,6 +28,14 @@ export type ReportKind =
 
 export type Severity = "info" | "warn" | "critical";
 
+export type ReportCategory =
+  | "credential-leak"
+  | "phishing"
+  | "impersonation"
+  | "origin"
+  | "user-report"
+  | "other";
+
 export type Report = {
   id: string;
   ts: number;
@@ -37,6 +45,32 @@ export type Report = {
   message: string;
   detail?: string;
   blocked: boolean;
+  /** Page URL where the incident was captured. Auto-filled if omitted. */
+  originUrl?: string;
+  /** Human-readable rule/heuristic that matched (e.g. "seed-phrase-guard"). */
+  matchedRule?: string;
+  /** Coarse audit bucket. Derived from `kind` if omitted. */
+  category?: ReportCategory;
+};
+
+const KIND_TO_CATEGORY: Record<ReportKind, ReportCategory> = {
+  "seed-phrase": "credential-leak",
+  "private-key": "credential-leak",
+  "phishing-domain": "phishing",
+  "malicious-link": "phishing",
+  impersonation: "impersonation",
+  "suspicious-address": "phishing",
+  other: "other",
+};
+
+const KIND_TO_RULE: Record<ReportKind, string> = {
+  "seed-phrase": "seed-phrase-guard",
+  "private-key": "private-key-guard",
+  "phishing-domain": "domain-blocklist",
+  "malicious-link": "link-scanner",
+  impersonation: "impersonation-keywords",
+  "suspicious-address": "address-heuristic",
+  other: "manual",
 };
 
 export type SecuritySettings = {
