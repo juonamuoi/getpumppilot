@@ -37,6 +37,7 @@ const nav = [
   { to: "/alerts", label: "Alerts", icon: Bell },
   { to: "/paper", label: "Paper Trading", icon: Wallet },
   { to: "/strategy", label: "Strategy Builder", icon: Sparkles },
+  { to: "/community", label: "Community", icon: Users },
   { to: "/backtest", label: "Backtest", icon: History },
   { to: "/risk", label: "Risk Controls", icon: ShieldCheck },
   { to: "/security", label: "Security", icon: ShieldAlert },
