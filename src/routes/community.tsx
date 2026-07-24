@@ -224,7 +224,7 @@ function CommunityPage() {
       author_id: user.id,
       title: `${s.title} (fork)`,
       description: s.description,
-      config: s.config,
+      config: s.config as never,
       tags: s.tags,
       parent_id: s.id,
     });
