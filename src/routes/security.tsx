@@ -767,6 +767,74 @@ function IncidentsPanel() {
                 </div>
               </PopoverContent>
             </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Choose CSV columns"
+                >
+                  <Columns3 className="mr-1 h-3.5 w-3.5" /> Columns
+                  <Badge
+                    variant="outline"
+                    className="ml-2 border-border/60 text-[10px] text-muted-foreground"
+                  >
+                    {csvColumns.length}/{CSV_COLUMNS.length}
+                  </Badge>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-0">
+                <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                  <div className="text-xs font-medium">CSV columns</div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => setCsvColumns(DEFAULT_CSV_COLUMNS)}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => setCsvColumns([])}
+                    >
+                      None
+                    </Button>
+                  </div>
+                </div>
+                <div className="max-h-72 space-y-1 overflow-y-auto p-2">
+                  {CSV_COLUMNS.map((c) => {
+                    const checked = csvColumns.includes(c.key);
+                    return (
+                      <label
+                        key={c.key}
+                        className={cn(
+                          "flex cursor-pointer items-center justify-between gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted/40",
+                          checked && "bg-muted/30",
+                        )}
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleCsvColumn(c.key)}
+                          />
+                          <span className="truncate">{c.label}</span>
+                        </div>
+                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                          {c.key}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-border/60 px-3 py-2 text-[10px] text-muted-foreground">
+                  Saved to this browser
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="sm"
