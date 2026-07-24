@@ -11,23 +11,31 @@ import {
   Menu,
   Lock,
   Sparkles,
+  BookOpen,
+  Bot,
+  Command as CommandIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "./wallet-connect";
+import { CommandPalette } from "./command-palette";
+import { OnboardingDialog } from "./onboarding-dialog";
+import { AICopilot } from "./ai-copilot";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/scanner", label: "Scanner", icon: Radar },
+  { to: "/copilot", label: "AI Copilot", icon: Bot },
   { to: "/alerts", label: "Alerts", icon: Bell },
   { to: "/paper", label: "Paper Trading", icon: Wallet },
   { to: "/strategy", label: "Strategy Builder", icon: Sparkles },
   { to: "/backtest", label: "Backtest", icon: History },
   { to: "/risk", label: "Risk Controls", icon: ShieldCheck },
   { to: "/security", label: "Security", icon: ShieldAlert },
+  { to: "/learn", label: "Learn", icon: BookOpen },
 ] as const;
 
 function Brand() {
