@@ -68,7 +68,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1">
       {nav.map((n) => {
-        const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+        const active = pathname === n.to || pathname.startsWith(n.to + "/");
         const Icon = n.icon;
         return (
           <Link
