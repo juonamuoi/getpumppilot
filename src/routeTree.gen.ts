@@ -9,38 +9,175 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StrategyRouteImport } from './routes/strategy'
+import { Route as ScannerRouteImport } from './routes/scanner'
+import { Route as RiskRouteImport } from './routes/risk'
+import { Route as PaperRouteImport } from './routes/paper'
+import { Route as BacktestRouteImport } from './routes/backtest'
+import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
 
+const StrategyRoute = StrategyRouteImport.update({
+  id: '/strategy',
+  path: '/strategy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScannerRoute = ScannerRouteImport.update({
+  id: '/scanner',
+  path: '/scanner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RiskRoute = RiskRouteImport.update({
+  id: '/risk',
+  path: '/risk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaperRoute = PaperRouteImport.update({
+  id: '/paper',
+  path: '/paper',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BacktestRoute = BacktestRouteImport.update({
+  id: '/backtest',
+  path: '/backtest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlertsRoute = AlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssetSymbolRoute = AssetSymbolRouteImport.update({
+  id: '/asset/$symbol',
+  path: '/asset/$symbol',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/alerts': typeof AlertsRoute
+  '/backtest': typeof BacktestRoute
+  '/paper': typeof PaperRoute
+  '/risk': typeof RiskRoute
+  '/scanner': typeof ScannerRoute
+  '/strategy': typeof StrategyRoute
+  '/asset/$symbol': typeof AssetSymbolRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/alerts': typeof AlertsRoute
+  '/backtest': typeof BacktestRoute
+  '/paper': typeof PaperRoute
+  '/risk': typeof RiskRoute
+  '/scanner': typeof ScannerRoute
+  '/strategy': typeof StrategyRoute
+  '/asset/$symbol': typeof AssetSymbolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/alerts': typeof AlertsRoute
+  '/backtest': typeof BacktestRoute
+  '/paper': typeof PaperRoute
+  '/risk': typeof RiskRoute
+  '/scanner': typeof ScannerRoute
+  '/strategy': typeof StrategyRoute
+  '/asset/$symbol': typeof AssetSymbolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/alerts'
+    | '/backtest'
+    | '/paper'
+    | '/risk'
+    | '/scanner'
+    | '/strategy'
+    | '/asset/$symbol'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/alerts'
+    | '/backtest'
+    | '/paper'
+    | '/risk'
+    | '/scanner'
+    | '/strategy'
+    | '/asset/$symbol'
+  id:
+    | '__root__'
+    | '/'
+    | '/alerts'
+    | '/backtest'
+    | '/paper'
+    | '/risk'
+    | '/scanner'
+    | '/strategy'
+    | '/asset/$symbol'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AlertsRoute: typeof AlertsRoute
+  BacktestRoute: typeof BacktestRoute
+  PaperRoute: typeof PaperRoute
+  RiskRoute: typeof RiskRoute
+  ScannerRoute: typeof ScannerRoute
+  StrategyRoute: typeof StrategyRoute
+  AssetSymbolRoute: typeof AssetSymbolRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/strategy': {
+      id: '/strategy'
+      path: '/strategy'
+      fullPath: '/strategy'
+      preLoaderRoute: typeof StrategyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scanner': {
+      id: '/scanner'
+      path: '/scanner'
+      fullPath: '/scanner'
+      preLoaderRoute: typeof ScannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/risk': {
+      id: '/risk'
+      path: '/risk'
+      fullPath: '/risk'
+      preLoaderRoute: typeof RiskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paper': {
+      id: '/paper'
+      path: '/paper'
+      fullPath: '/paper'
+      preLoaderRoute: typeof PaperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/backtest': {
+      id: '/backtest'
+      path: '/backtest'
+      fullPath: '/backtest'
+      preLoaderRoute: typeof BacktestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alerts': {
+      id: '/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,12 +185,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/asset/$symbol': {
+      id: '/asset/$symbol'
+      path: '/asset/$symbol'
+      fullPath: '/asset/$symbol'
+      preLoaderRoute: typeof AssetSymbolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AlertsRoute: AlertsRoute,
+  BacktestRoute: BacktestRoute,
+  PaperRoute: PaperRoute,
+  RiskRoute: RiskRoute,
+  ScannerRoute: ScannerRoute,
+  StrategyRoute: StrategyRoute,
+  AssetSymbolRoute: AssetSymbolRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
