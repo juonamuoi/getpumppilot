@@ -13,6 +13,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScannerRouteImport } from './routes/scanner'
+import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
 import { Route as RiskRouteImport } from './routes/risk'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as ReferRouteImport } from './routes/refer'
@@ -56,6 +57,11 @@ const SecurityRoute = SecurityRouteImport.update({
 const ScannerRoute = ScannerRouteImport.update({
   id: '/scanner',
   path: '/scanner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RiskDisclosureRoute = RiskDisclosureRouteImport.update({
+  id: '/risk-disclosure',
+  path: '/risk-disclosure',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RiskRoute = RiskRouteImport.update({
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
+  '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
+  '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
+  '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
@@ -292,6 +301,7 @@ export interface FileRouteTypes {
     | '/refer'
     | '/refund'
     | '/risk'
+    | '/risk-disclosure'
     | '/scanner'
     | '/security'
     | '/strategy'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/refer'
     | '/refund'
     | '/risk'
+    | '/risk-disclosure'
     | '/scanner'
     | '/security'
     | '/strategy'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/refer'
     | '/refund'
     | '/risk'
+    | '/risk-disclosure'
     | '/scanner'
     | '/security'
     | '/strategy'
@@ -383,6 +395,7 @@ export interface RootRouteChildren {
   ReferRoute: typeof ReferRoute
   RefundRoute: typeof RefundRoute
   RiskRoute: typeof RiskRoute
+  RiskDisclosureRoute: typeof RiskDisclosureRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
   StrategyRoute: typeof StrategyRoute
@@ -423,6 +436,13 @@ declare module '@tanstack/react-router' {
       path: '/scanner'
       fullPath: '/scanner'
       preLoaderRoute: typeof ScannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/risk-disclosure': {
+      id: '/risk-disclosure'
+      path: '/risk-disclosure'
+      fullPath: '/risk-disclosure'
+      preLoaderRoute: typeof RiskDisclosureRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/risk': {
@@ -615,6 +635,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReferRoute: ReferRoute,
   RefundRoute: RefundRoute,
   RiskRoute: RiskRoute,
+  RiskDisclosureRoute: RiskDisclosureRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
   StrategyRoute: StrategyRoute,
@@ -629,13 +650,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

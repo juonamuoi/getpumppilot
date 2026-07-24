@@ -17,6 +17,8 @@ import { PaperProvider } from "@/lib/paper-store";
 import { SecurityProvider } from "@/lib/security-store";
 import { OnboardingProvider } from "@/lib/onboarding-store";
 import { AuthProvider } from "@/lib/auth-store";
+import { AppLockProvider, useAppLock } from "@/lib/app-lock";
+import { AppLockScreen } from "@/components/app-lock-screen";
 
 function NotFoundComponent() {
   return (
@@ -124,12 +126,20 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function LockGate({ children }: { children: ReactNode }) {
+  const { locked } = useAppLock();
+  return (
+    <>
+      {children}
+      {locked ? <AppLockScreen /> : null}
+    </>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    // Native app polish: dark status bar + hide splash once React hydrates.
-    // These helpers are no-ops in the browser / Lovable preview.
     void setStatusBarDark();
     void hideSplashScreen();
   }, []);
@@ -140,8 +150,12 @@ function RootComponent() {
         <SecurityProvider>
           <OnboardingProvider>
             <PaperProvider>
-              <Outlet />
-              <Toaster theme="dark" position="top-right" />
+              <AppLockProvider>
+                <LockGate>
+                  <Outlet />
+                </LockGate>
+                <Toaster theme="dark" position="top-right" />
+              </AppLockProvider>
             </PaperProvider>
           </OnboardingProvider>
         </SecurityProvider>
