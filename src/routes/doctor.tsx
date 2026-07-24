@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PaywallGate } from "@/components/paywall-gate";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/doctor")({
       },
     ],
   }),
-  component: DoctorPage,
+  component: GatedDoctorPage,
 });
 
 const ACTION_META: Record<
@@ -292,5 +293,13 @@ function DoctorPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function GatedDoctorPage() {
+  return (
+    <PaywallGate required="pro" featureName="Doctor">
+      <DoctorPage />
+    </PaywallGate>
   );
 }

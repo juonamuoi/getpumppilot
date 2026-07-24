@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PaywallGate } from "@/components/paywall-gate";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/journal")({
       },
     ],
   }),
-  component: JournalPage,
+  component: GatedJournalPage,
 });
 
 function Stat({
@@ -304,5 +305,13 @@ function JournalPage() {
         </Card>
       </div>
     </AppShell>
+  );
+}
+
+function GatedJournalPage() {
+  return (
+    <PaywallGate required="pro" featureName="Journal">
+      <JournalPage />
+    </PaywallGate>
   );
 }
