@@ -431,7 +431,7 @@ function IncidentsPanel() {
     };
     const header = ["timestamp", "severity", "kind", "source", "message", "detail"];
     const rows = filtered.map((r) => [
-      new Date(r.at).toISOString(),
+      new Date(r.ts).toISOString(),
       r.severity,
       KIND_LABEL[r.kind] ?? r.kind,
       r.source,
