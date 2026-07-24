@@ -644,6 +644,80 @@ function IncidentsPanel() {
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">Incident log</CardTitle>
           <div className="flex items-center gap-1">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={filtered.length === 0}
+                  title={`Summary of ${filtered.length} filtered incident(s)`}
+                >
+                  <BarChart3 className="mr-1 h-3.5 w-3.5" /> Summary
+                  {activeFilterCount > 0 && (
+                    <Badge
+                      variant="outline"
+                      className="ml-2 border-sky-500/40 text-[10px] text-sky-300"
+                    >
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[380px] p-0">
+                <div className="border-b border-border/60 px-4 py-3">
+                  <div className="text-sm font-medium">Filtered summary</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {stats.total} incident{stats.total === 1 ? "" : "s"} · {stats.blocked} blocked
+                    {activeFilterCount > 0
+                      ? ` · ${activeFilterCount} active filter${activeFilterCount === 1 ? "" : "s"}`
+                      : ""}
+                  </div>
+                  {stats.bySeverity.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {stats.bySeverity.map(([sev, n]) => (
+                        <Badge
+                          key={sev}
+                          variant="outline"
+                          className={cn(
+                            "text-[10px]",
+                            sev === "high" && "border-red-500/40 text-red-300",
+                            sev === "medium" && "border-amber-500/40 text-amber-300",
+                            sev === "low" && "border-emerald-500/40 text-emerald-300",
+                          )}
+                        >
+                          {sev} · {n}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="max-h-[420px] space-y-4 overflow-y-auto px-4 py-3 text-xs">
+                  <StatBlock
+                    title="By category"
+                    rows={stats.byCategory.map(([k, n]) => ({
+                      label: CATEGORY_LABEL[k as ReportCategory] ?? k,
+                      count: n,
+                    }))}
+                    total={stats.total}
+                  />
+                  <StatBlock
+                    title="By matched rule"
+                    rows={stats.byRule.map(([k, n]) => ({ label: k, count: n }))}
+                    total={stats.total}
+                  />
+                  <StatBlock
+                    title="By origin URL"
+                    rows={stats.byOrigin.map(([k, n]) => ({ label: k, count: n, mono: true }))}
+                    total={stats.total}
+                  />
+                  <StatBlock
+                    title="By time"
+                    rows={stats.buckets.map((b) => ({ label: b.label, count: b.count }))}
+                    total={stats.total}
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="sm"
