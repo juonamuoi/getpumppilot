@@ -1587,9 +1587,10 @@ function SnapshotBucketDialog({
   const renderSnap = (s: BucketSnapshot) => {
     const k = keyOf(s);
     const isOpen = expanded[k] ?? false;
-    const rows = (Object.keys(RULE_META) as RuleKey[]).map((rk) =>
-      ruleComparisonLine(rk, s, rules),
-    );
+    const rows = (Object.keys(RULE_META) as RuleKey[]).map((rk) => ({
+      key: rk,
+      ...ruleComparisonLine(rk, s, rules),
+    }));
     return (
       <div
         key={k}
