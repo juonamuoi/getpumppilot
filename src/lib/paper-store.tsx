@@ -207,11 +207,46 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     return { ok: true, msg: `Paper ${side.toUpperCase()} ${qty} ${symbol} @ ${a.price}` };
   };
 
+  const simulateScannerRun = () => {
+    const channels: AlertDelivery["channel"][] = [];
+    if (scannerRules.channels.inApp) channels.push("in-app");
+    if (scannerRules.channels.email) channels.push("email");
+    if (scannerRules.channels.push) channels.push("push");
+    if (channels.length === 0) return 0;
+
+    const matches = ASSETS.filter((a) => {
+      if (!scannerRules.includeMajors && a.category === "major") return false;
+      if (!scannerRules.includeDemoSmallCaps && a.category === "demo-smallcap") return false;
+      return (
+        a.momentum.total >= scannerRules.minMomentum &&
+        a.momentum.volume >= scannerRules.minVolumeScore &&
+        a.momentum.volatility <= scannerRules.maxVolatility &&
+        a.change24h >= scannerRules.min24hChangePct
+      );
+    });
+
+    const ts = Date.now();
+    const created: AlertDelivery[] = matches.map((a, i) => ({
+      id: `${ts}-${a.symbol}-${i}`,
+      ts,
+      symbol: a.symbol,
+      rule: `Momentum ≥ ${scannerRules.minMomentum} · Vol ≥ ${scannerRules.minVolumeScore} · 24h ≥ ${scannerRules.min24hChangePct}%`,
+      channel: channels[i % channels.length],
+      status: "delivered",
+      detail: `${a.symbol} momentum ${a.momentum.total}, 24h ${a.change24h >= 0 ? "+" : ""}${a.change24h.toFixed(2)}%`,
+    }));
+
+    if (created.length > 0) setDeliveries((prev) => [...created, ...prev]);
+    return created.length;
+  };
+
   const value: State = {
     cash,
     positions,
     trades,
     alerts,
+    scannerRules,
+    deliveries,
     liveExecutionEnabled: false,
     masterSwitchLocked: true,
     risk,
@@ -224,6 +259,9 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     removeAlert: (id) => setAlerts((prev) => prev.filter((x) => x.id !== id)),
     toggleAlert: (id) =>
       setAlerts((prev) => prev.map((x) => (x.id === id ? { ...x, active: !x.active } : x))),
+    setScannerRules,
+    simulateScannerRun,
+    clearDeliveries: () => setDeliveries([]),
     setRisk,
     resetPaper: () => {
       setCash(STARTING_CASH);
@@ -232,6 +270,7 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     },
     equity,
   };
+
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
