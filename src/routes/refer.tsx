@@ -127,7 +127,7 @@ function ReferPage() {
                   <Mail className="mr-2 h-4 w-4" /> Email
                 </a>
               </Button>
-              <Button onClick={nativeShare} variant="secondary">
+              <Button onClick={handleNativeShare} variant="secondary">
                 <Share2 className="mr-2 h-4 w-4" /> Share
               </Button>
             </div>
