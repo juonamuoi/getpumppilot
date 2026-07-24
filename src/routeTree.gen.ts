@@ -23,6 +23,7 @@ import { Route as LearnRouteImport } from './routes/learn'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as GoLiveTestRouteImport } from './routes/go-live-test'
 import { Route as DoctorRouteImport } from './routes/doctor'
+import { Route as DevelopersRouteImport } from './routes/developers'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as CommunityRouteImport } from './routes/community'
@@ -31,8 +32,10 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as EmbedMomentumRouteImport } from './routes/embed.momentum'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
+import { Route as ApiPublicMomentumRouteImport } from './routes/api/public/momentum'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const TermsRoute = TermsRouteImport.update({
@@ -105,6 +108,11 @@ const DoctorRoute = DoctorRouteImport.update({
   path: '/doctor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevelopersRoute = DevelopersRouteImport.update({
+  id: '/developers',
+  path: '/developers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -145,6 +153,11 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
   path: '/blog/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbedMomentumRoute = EmbedMomentumRouteImport.update({
+  id: '/embed/momentum',
+  path: '/embed/momentum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/blog/$slug',
   path: '/blog/$slug',
@@ -153,6 +166,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 const AssetSymbolRoute = AssetSymbolRouteImport.update({
   id: '/asset/$symbol',
   path: '/asset/$symbol',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMomentumRoute = ApiPublicMomentumRouteImport.update({
+  id: '/api/public/momentum',
+  path: '/api/public/momentum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPaymentsWebhookRoute =
@@ -170,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
   '/dashboard': typeof DashboardRoute
+  '/developers': typeof DevelopersRoute
   '/doctor': typeof DoctorRoute
   '/go-live-test': typeof GoLiveTestRoute
   '/journal': typeof JournalRoute
@@ -186,7 +205,9 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/embed/momentum': typeof EmbedMomentumRoute
   '/blog/': typeof BlogIndexRoute
+  '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -197,6 +218,7 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
   '/dashboard': typeof DashboardRoute
+  '/developers': typeof DevelopersRoute
   '/doctor': typeof DoctorRoute
   '/go-live-test': typeof GoLiveTestRoute
   '/journal': typeof JournalRoute
@@ -213,7 +235,9 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/embed/momentum': typeof EmbedMomentumRoute
   '/blog': typeof BlogIndexRoute
+  '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -225,6 +249,7 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
   '/dashboard': typeof DashboardRoute
+  '/developers': typeof DevelopersRoute
   '/doctor': typeof DoctorRoute
   '/go-live-test': typeof GoLiveTestRoute
   '/journal': typeof JournalRoute
@@ -241,7 +266,9 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/embed/momentum': typeof EmbedMomentumRoute
   '/blog/': typeof BlogIndexRoute
+  '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -254,6 +281,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/copilot'
     | '/dashboard'
+    | '/developers'
     | '/doctor'
     | '/go-live-test'
     | '/journal'
@@ -270,7 +298,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/asset/$symbol'
     | '/blog/$slug'
+    | '/embed/momentum'
     | '/blog/'
+    | '/api/public/momentum'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -281,6 +311,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/copilot'
     | '/dashboard'
+    | '/developers'
     | '/doctor'
     | '/go-live-test'
     | '/journal'
@@ -297,7 +328,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/asset/$symbol'
     | '/blog/$slug'
+    | '/embed/momentum'
     | '/blog'
+    | '/api/public/momentum'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -308,6 +341,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/copilot'
     | '/dashboard'
+    | '/developers'
     | '/doctor'
     | '/go-live-test'
     | '/journal'
@@ -324,7 +358,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/asset/$symbol'
     | '/blog/$slug'
+    | '/embed/momentum'
     | '/blog/'
+    | '/api/public/momentum'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -336,6 +372,7 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   CopilotRoute: typeof CopilotRoute
   DashboardRoute: typeof DashboardRoute
+  DevelopersRoute: typeof DevelopersRoute
   DoctorRoute: typeof DoctorRoute
   GoLiveTestRoute: typeof GoLiveTestRoute
   JournalRoute: typeof JournalRoute
@@ -352,7 +389,9 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   AssetSymbolRoute: typeof AssetSymbolRoute
   BlogSlugRoute: typeof BlogSlugRoute
+  EmbedMomentumRoute: typeof EmbedMomentumRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  ApiPublicMomentumRoute: typeof ApiPublicMomentumRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -456,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoctorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/developers': {
+      id: '/developers'
+      path: '/developers'
+      fullPath: '/developers'
+      preLoaderRoute: typeof DevelopersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -512,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/embed/momentum': {
+      id: '/embed/momentum'
+      path: '/embed/momentum'
+      fullPath: '/embed/momentum'
+      preLoaderRoute: typeof EmbedMomentumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/$slug': {
       id: '/blog/$slug'
       path: '/blog/$slug'
@@ -524,6 +577,13 @@ declare module '@tanstack/react-router' {
       path: '/asset/$symbol'
       fullPath: '/asset/$symbol'
       preLoaderRoute: typeof AssetSymbolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/momentum': {
+      id: '/api/public/momentum'
+      path: '/api/public/momentum'
+      fullPath: '/api/public/momentum'
+      preLoaderRoute: typeof ApiPublicMomentumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/payments/webhook': {
@@ -544,6 +604,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   CopilotRoute: CopilotRoute,
   DashboardRoute: DashboardRoute,
+  DevelopersRoute: DevelopersRoute,
   DoctorRoute: DoctorRoute,
   GoLiveTestRoute: GoLiveTestRoute,
   JournalRoute: JournalRoute,
@@ -560,19 +621,11 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   AssetSymbolRoute: AssetSymbolRoute,
   BlogSlugRoute: BlogSlugRoute,
+  EmbedMomentumRoute: EmbedMomentumRoute,
   BlogIndexRoute: BlogIndexRoute,
+  ApiPublicMomentumRoute: ApiPublicMomentumRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
