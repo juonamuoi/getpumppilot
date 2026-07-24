@@ -15,7 +15,7 @@ export async function setStatusBarDark() {
   if (!Capacitor.isNativePlatform()) return;
   try {
     const { StatusBar } = await import("@capacitor/status-bar");
-    await StatusBar.setStyle({ style: "DARK" });
+    await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: "#0B0F19" });
   } catch {
     // ignore
