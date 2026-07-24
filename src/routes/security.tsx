@@ -16,6 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -30,12 +35,15 @@ import {
   Fingerprint,
   CheckCircle2,
   XCircle,
+  CalendarIcon,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useSecurity,
   type Report,
   type ReportKind,
+  type ReportCategory,
   type Severity,
 } from "@/lib/security-store";
 
@@ -405,12 +413,25 @@ function IncidentsPanel() {
   const [q, setQ] = useState("");
   const [severity, setSeverity] = useState<"all" | Severity>("all");
   const [kind, setKind] = useState<"all" | ReportKind>("all");
+  const [category, setCategory] = useState<"all" | ReportCategory>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
+    const fromMs = dateRange?.from
+      ? new Date(dateRange.from).setHours(0, 0, 0, 0)
+      : undefined;
+    const toMs = dateRange?.to
+      ? new Date(dateRange.to).setHours(23, 59, 59, 999)
+      : dateRange?.from
+        ? new Date(dateRange.from).setHours(23, 59, 59, 999)
+        : undefined;
     return reports.filter((r) => {
       if (severity !== "all" && r.severity !== severity) return false;
       if (kind !== "all" && r.kind !== kind) return false;
+      if (category !== "all" && (r.category ?? "other") !== category) return false;
+      if (fromMs !== undefined && r.ts < fromMs) return false;
+      if (toMs !== undefined && r.ts > toMs) return false;
       if (!t) return true;
       return (
         r.message.toLowerCase().includes(t) ||
@@ -418,7 +439,35 @@ function IncidentsPanel() {
         r.source.toLowerCase().includes(t)
       );
     });
-  }, [reports, q, severity, kind]);
+  }, [reports, q, severity, kind, category, dateRange]);
+
+  const activeFilterCount =
+    (severity !== "all" ? 1 : 0) +
+    (kind !== "all" ? 1 : 0) +
+    (category !== "all" ? 1 : 0) +
+    (dateRange?.from ? 1 : 0) +
+    (q.trim() ? 1 : 0);
+
+  const setPresetDays = (days: number) => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - (days - 1));
+    setDateRange({ from, to });
+  };
+
+  const resetFilters = () => {
+    setQ("");
+    setSeverity("all");
+    setKind("all");
+    setCategory("all");
+    setDateRange(undefined);
+  };
+
+  const rangeLabel = dateRange?.from
+    ? dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime()
+      ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d")}`
+      : format(dateRange.from, "MMM d, yyyy")
+    : "Any date";
 
   const exportCsv = () => {
     if (filtered.length === 0) {
@@ -469,7 +518,20 @@ function IncidentsPanel() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"}`);
+    toast.success(
+      `Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"}${
+        activeFilterCount ? ` (${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"})` : ""
+      }`,
+    );
+  };
+
+  const CATEGORY_LABEL: Record<ReportCategory, string> = {
+    "credential-leak": "Credential leak",
+    phishing: "Phishing",
+    impersonation: "Impersonation",
+    origin: "Origin",
+    "user-report": "User report",
+    other: "Other",
   };
 
   return (
@@ -483,8 +545,21 @@ function IncidentsPanel() {
               size="sm"
               onClick={exportCsv}
               disabled={filtered.length === 0}
+              title={
+                activeFilterCount
+                  ? `Export ${filtered.length} filtered incident(s)`
+                  : `Export all ${filtered.length} incident(s)`
+              }
             >
               <Download className="mr-1 h-3.5 w-3.5" /> Export CSV
+              {activeFilterCount > 0 && (
+                <Badge
+                  variant="outline"
+                  className="ml-2 border-emerald-500/40 text-[10px] text-emerald-300"
+                >
+                  {activeFilterCount}
+                </Badge>
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -499,8 +574,8 @@ function IncidentsPanel() {
             </Button>
           </div>
         </div>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <div className="relative flex-1">
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <div className="relative min-w-[200px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
@@ -520,6 +595,19 @@ function IncidentsPanel() {
               <SelectItem value="info">Info</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
+            <SelectTrigger className="sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              {(Object.keys(CATEGORY_LABEL) as ReportCategory[]).map((c) => (
+                <SelectItem key={c} value={c}>
+                  {CATEGORY_LABEL[c]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
             <SelectTrigger className="sm:w-44">
               <SelectValue />
@@ -533,6 +621,63 @@ function IncidentsPanel() {
               ))}
             </SelectContent>
           </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "justify-start gap-2 text-left font-normal sm:w-56",
+                  !dateRange?.from && "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="h-4 w-4" />
+                {rangeLabel}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <div className="flex flex-wrap gap-1 border-b border-border/60 p-2">
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPresetDays(1)}>
+                  Today
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPresetDays(7)}>
+                  7d
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPresetDays(30)}>
+                  30d
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setPresetDays(90)}>
+                  90d
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs"
+                  onClick={() => setDateRange(undefined)}
+                >
+                  Clear
+                </Button>
+              </div>
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          {activeFilterCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1"
+              onClick={resetFilters}
+              title="Reset all filters"
+            >
+              <X className="h-3.5 w-3.5" /> Reset
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-0">
