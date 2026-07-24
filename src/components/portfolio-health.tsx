@@ -57,9 +57,9 @@ export function PortfolioHealthCard() {
   score = Math.max(5, Math.min(100, score));
 
   const band =
-    score >= 80 ? { label: "Strong", color: "text-emerald-300", bar: "bg-emerald-500" } :
-    score >= 55 ? { label: "OK", color: "text-amber-300", bar: "bg-amber-500" } :
-                  { label: "Fragile", color: "text-rose-300", bar: "bg-rose-500" };
+    score >= 80 ? { label: "Strong", color: "text-emerald-300" } :
+    score >= 55 ? { label: "OK", color: "text-amber-300" } :
+                  { label: "Fragile", color: "text-rose-300" };
 
   return (
     <Card className="border-border/60 bg-card/60">
