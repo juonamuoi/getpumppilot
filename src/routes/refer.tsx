@@ -154,7 +154,7 @@ function ReferPage() {
               ))}
             </ol>
             <p className="mt-4 text-xs text-muted-foreground">
-              Rewards are credited manually within 48 hours of your friend's 7-day activity milestone. Self-referrals and abusive patterns are ignored.
+              Rewards are credited automatically each day once your friend's referral qualifies (signed up more than 7 days ago and still active). Self-referrals and abusive patterns are ignored.
             </p>
           </CardContent>
         </Card>
