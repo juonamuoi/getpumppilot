@@ -420,22 +420,67 @@ function IncidentsPanel() {
     });
   }, [reports, q, severity, kind]);
 
+  const exportCsv = () => {
+    if (filtered.length === 0) {
+      toast.error("No incidents to export");
+      return;
+    }
+    const esc = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = ["timestamp", "severity", "kind", "source", "message", "detail"];
+    const rows = filtered.map((r) => [
+      new Date(r.at).toISOString(),
+      r.severity,
+      KIND_LABEL[r.kind] ?? r.kind,
+      r.source,
+      r.message,
+      r.detail ?? "",
+    ]);
+    const csv =
+      "\ufeff" +
+      [header, ...rows].map((row) => row.map(esc).join(",")).join("\r\n") +
+      "\r\n";
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    a.href = url;
+    a.download = `pumppilot-incidents-${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"}`);
+  };
+
   return (
     <Card className="border-border/60 bg-card/60">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">Incident log</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              clearReports();
-              toast.success("Incident log cleared");
-            }}
-            disabled={reports.length === 0}
-          >
-            <Trash2 className="mr-1 h-3.5 w-3.5" /> Clear
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={exportCsv}
+              disabled={filtered.length === 0}
+            >
+              <Download className="mr-1 h-3.5 w-3.5" /> Export CSV
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearReports();
+                toast.success("Incident log cleared");
+              }}
+              disabled={reports.length === 0}
+            >
+              <Trash2 className="mr-1 h-3.5 w-3.5" /> Clear
+            </Button>
+          </div>
         </div>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <div className="relative flex-1">
