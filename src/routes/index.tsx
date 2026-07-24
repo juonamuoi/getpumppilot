@@ -6,9 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MomentumBadge } from "@/components/momentum";
 import { Sparkline } from "@/components/sparkline";
 import { usePaper } from "@/lib/paper-store";
-import { ArrowDownRight, ArrowUpRight, Lock, TrendingUp, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Lock, TrendingUp, Wallet, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { PlainSignalCard } from "@/components/plain-signal";
+import { PortfolioHealthCard } from "@/components/portfolio-health";
+import { Term } from "@/components/glossary";
+import { useOnboarding } from "@/lib/onboarding-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,6 +69,7 @@ function StatCard({
 
 function Dashboard() {
   const { cash, positions, equity } = usePaper();
+  const { state: onb } = useOnboarding();
 
   const posRows = positions.map((p) => {
     const a = getAsset(p.symbol)!;
@@ -79,6 +84,11 @@ function Dashboard() {
   const totalPnlPct = invested > 0 ? (totalPnl / invested) * 100 : 0;
 
   const topMomentum = [...ASSETS].sort((a, b) => b.momentum.total - a.momentum.total).slice(0, 4);
+  const topSignals = [...ASSETS]
+    .sort((a, b) => b.momentum.total - a.momentum.total)
+    .slice(0, 3);
+
+  const greeting = onb.name ? `Welcome back, ${onb.name}.` : "Welcome back.";
 
   return (
     <AppShell>
@@ -89,11 +99,10 @@ function Dashboard() {
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">
               <TrendingUp className="h-3.5 w-3.5" /> PumpPilot AI
             </div>
-            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">
-              Spot momentum. Control risk. Trade smarter.
-            </h1>
+            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">{greeting}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Portfolio and market pulse — updated with demo data.
+              Spot momentum. Control risk. Trade smarter. Your <Term k="paper trading">paper</Term>{" "}
+              portfolio and today's top signals.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -126,6 +135,58 @@ function Dashboard() {
             positive={totalPnl >= 0}
           />
           <StatCard label="Positions" value={String(positions.length)} sub="assets held" />
+        </div>
+
+        {/* Today's signals — plain English */}
+        <Card className="border-border/60 bg-card/60">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4 text-emerald-400" /> Today's signals
+              <span className="text-xs font-normal text-muted-foreground">— explained in plain English</span>
+            </CardTitle>
+            <Link to="/scanner" className="text-xs text-emerald-300 hover:underline">
+              See all →
+            </Link>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            {topSignals.map((a) => (
+              <Link
+                key={a.symbol}
+                to="/asset/$symbol"
+                params={{ symbol: a.symbol }}
+                className="block transition hover:opacity-90"
+              >
+                <PlainSignalCard asset={a} />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <PortfolioHealthCard />
+          </div>
+          <Card className="border-border/60 bg-card/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="h-4 w-4 text-emerald-400" /> Ask the copilot
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="text-muted-foreground">
+                Not sure what to do? Tap the sparkle button (bottom-right) or open the full copilot.
+              </p>
+              <Link
+                to="/copilot"
+                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-400 to-cyan-500 px-3 py-2 text-xs font-semibold text-black hover:opacity-90"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Open AI Copilot
+              </Link>
+              <p className="text-[10px] text-muted-foreground">
+                Educational. Not financial advice.
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">

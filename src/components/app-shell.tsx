@@ -11,23 +11,31 @@ import {
   Menu,
   Lock,
   Sparkles,
+  BookOpen,
+  Bot,
+  Command as CommandIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WalletConnect } from "./wallet-connect";
+import { CommandPalette } from "./command-palette";
+import { OnboardingDialog } from "./onboarding-dialog";
+import { AICopilot } from "./ai-copilot";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/scanner", label: "Scanner", icon: Radar },
+  { to: "/copilot", label: "AI Copilot", icon: Bot },
   { to: "/alerts", label: "Alerts", icon: Bell },
   { to: "/paper", label: "Paper Trading", icon: Wallet },
   { to: "/strategy", label: "Strategy Builder", icon: Sparkles },
   { to: "/backtest", label: "Backtest", icon: History },
   { to: "/risk", label: "Risk Controls", icon: ShieldCheck },
   { to: "/security", label: "Security", icon: ShieldAlert },
+  { to: "/learn", label: "Learn", icon: BookOpen },
 ] as const;
 
 function Brand() {
@@ -102,7 +110,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mt-4 flex-1 overflow-y-auto px-3">
           <NavList />
         </div>
-        <div className="p-3">
+        <div className="space-y-2 p-3">
+          <button
+            onClick={() => {
+              // trigger ⌘K
+              document.dispatchEvent(
+                new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }),
+              );
+            }}
+            className="flex w-full items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted/40"
+          >
+            <CommandIcon className="h-3.5 w-3.5" />
+            <span className="flex-1 text-left">Quick jump</span>
+            <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+          </button>
           <LiveLockedCard />
         </div>
       </aside>
@@ -142,6 +163,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="lg:ml-64">
         <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
+
+      <CommandPalette />
+      <OnboardingDialog />
+      <AICopilot />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PaperProvider } from "@/lib/paper-store";
 import { SecurityProvider } from "@/lib/security-store";
+import { OnboardingProvider } from "@/lib/onboarding-store";
 
 function NotFoundComponent() {
   return (
@@ -127,10 +128,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SecurityProvider>
-        <PaperProvider>
-          <Outlet />
-          <Toaster theme="dark" position="top-right" />
-        </PaperProvider>
+        <OnboardingProvider>
+          <PaperProvider>
+            <Outlet />
+            <Toaster theme="dark" position="top-right" />
+          </PaperProvider>
+        </OnboardingProvider>
       </SecurityProvider>
     </QueryClientProvider>
   );
