@@ -245,6 +245,9 @@ function PricingPage() {
           <p><strong className="text-foreground">Cancel anytime.</strong> If you cancel, you keep full access until the end of the current billing period. No refunds for partial periods.</p>
           <p><strong className="text-foreground">Upgrades</strong> apply immediately and are prorated. <strong className="text-foreground">Downgrades</strong> take effect at the next renewal.</p>
           <p>PumpPilot AI is an educational trading sandbox. Live execution is locked. Predictions are probabilistic — you can lose all capital. Nothing here is financial advice.</p>
+          <p className="pt-1">
+            Admin: run a <Button variant="link" className="h-auto p-0 text-xs" onClick={() => navigate({ to: "/go-live-test" })}>guided go-live payment test</Button> to verify checkout and statement descriptor.
+          </p>
         </Card>
       </div>
     </AppShell>
