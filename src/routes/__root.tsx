@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PaperProvider } from "@/lib/paper-store";
 import { SecurityProvider } from "@/lib/security-store";
 import { OnboardingProvider } from "@/lib/onboarding-store";
+import { AuthProvider } from "@/lib/auth-store";
 
 function NotFoundComponent() {
   return (
@@ -127,14 +128,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SecurityProvider>
-        <OnboardingProvider>
-          <PaperProvider>
-            <Outlet />
-            <Toaster theme="dark" position="top-right" />
-          </PaperProvider>
-        </OnboardingProvider>
-      </SecurityProvider>
+      <AuthProvider>
+        <SecurityProvider>
+          <OnboardingProvider>
+            <PaperProvider>
+              <Outlet />
+              <Toaster theme="dark" position="top-right" />
+            </PaperProvider>
+          </OnboardingProvider>
+        </SecurityProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
