@@ -18,7 +18,9 @@ import { Route as LearnRouteImport } from './routes/learn'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as DoctorRouteImport } from './routes/doctor'
 import { Route as CopilotRouteImport } from './routes/copilot'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as BacktestRouteImport } from './routes/backtest'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
@@ -68,9 +70,19 @@ const CopilotRoute = CopilotRouteImport.update({
   path: '/copilot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BacktestRoute = BacktestRouteImport.update({
   id: '/backtest',
   path: '/backtest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlertsRoute = AlertsRouteImport.update({
@@ -92,7 +104,9 @@ const AssetSymbolRoute = AssetSymbolRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
+  '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
+  '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
   '/doctor': typeof DoctorRoute
   '/journal': typeof JournalRoute
@@ -107,7 +121,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
+  '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
+  '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
   '/doctor': typeof DoctorRoute
   '/journal': typeof JournalRoute
@@ -123,7 +139,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
+  '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
+  '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
   '/doctor': typeof DoctorRoute
   '/journal': typeof JournalRoute
@@ -140,7 +158,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/alerts'
+    | '/auth'
     | '/backtest'
+    | '/community'
     | '/copilot'
     | '/doctor'
     | '/journal'
@@ -155,7 +175,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/alerts'
+    | '/auth'
     | '/backtest'
+    | '/community'
     | '/copilot'
     | '/doctor'
     | '/journal'
@@ -170,7 +192,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/alerts'
+    | '/auth'
     | '/backtest'
+    | '/community'
     | '/copilot'
     | '/doctor'
     | '/journal'
@@ -186,7 +210,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AlertsRoute: typeof AlertsRoute
+  AuthRoute: typeof AuthRoute
   BacktestRoute: typeof BacktestRoute
+  CommunityRoute: typeof CommunityRoute
   CopilotRoute: typeof CopilotRoute
   DoctorRoute: typeof DoctorRoute
   JournalRoute: typeof JournalRoute
@@ -264,11 +290,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CopilotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/backtest': {
       id: '/backtest'
       path: '/backtest'
       fullPath: '/backtest'
       preLoaderRoute: typeof BacktestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/alerts': {
@@ -298,7 +338,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AlertsRoute: AlertsRoute,
+  AuthRoute: AuthRoute,
   BacktestRoute: BacktestRoute,
+  CommunityRoute: CommunityRoute,
   CopilotRoute: CopilotRoute,
   DoctorRoute: DoctorRoute,
   JournalRoute: JournalRoute,

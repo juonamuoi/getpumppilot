@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -7,9 +7,12 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Share2, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/strategy")({
   head: () => ({
@@ -32,11 +35,43 @@ export const Route = createFileRoute("/strategy")({
 
 function StrategyPage() {
   const [name, setName] = useState("Breakout Momentum v1");
+  const [description, setDescription] = useState("Enters on strong momentum with confirming volume and modest volatility.");
+  const [tags, setTags] = useState("momentum, breakout");
   const [minScore, setMinScore] = useState([70]);
   const [minVolume, setMinVolume] = useState([50]);
   const [maxVol, setMaxVol] = useState([80]);
   const [includeDemo, setIncludeDemo] = useState(true);
   const [autoRebalance, setAutoRebalance] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const { user } = useAuth();
+  const nav = useNavigate();
+
+  async function publish() {
+    if (!user) {
+      toast.info("Sign in to publish to the community");
+      nav({ to: "/auth" });
+      return;
+    }
+    setPublishing(true);
+    const { error } = await supabase.from("strategies").insert({
+      author_id: user.id,
+      title: name,
+      description,
+      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      config: {
+        min_momentum: minScore[0],
+        min_volume: minVolume[0],
+        max_volatility: maxVol[0],
+        include_demo: includeDemo,
+        auto_rebalance: autoRebalance,
+      },
+    });
+    setPublishing(false);
+    if (error) return toast.error(error.message);
+    toast.success("Published to community");
+    nav({ to: "/community" });
+  }
+
 
   return (
     <AppShell>
@@ -58,6 +93,14 @@ function StrategyPage() {
               <div className="space-y-1">
                 <Label className="text-xs">Strategy name</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Description</Label>
+                <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Tags (comma separated)</Label>
+                <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="momentum, breakout" />
               </div>
 
               <SliderRow
@@ -99,12 +142,21 @@ function StrategyPage() {
                 <Switch checked={autoRebalance} onCheckedChange={setAutoRebalance} />
               </div>
 
-              <Button
-                onClick={() => toast.success(`Saved strategy "${name}" (paper mode)`)}
-                className="w-full"
-              >
-                <Sparkles className="mr-2 h-4 w-4" /> Save strategy
-              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => toast.success(`Saved strategy "${name}" (paper mode)`)}
+                  variant="outline"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" /> Save
+                </Button>
+                <Button onClick={publish} disabled={publishing}>
+                  {publishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                  Publish to community
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Publishing shares your rule set publicly. <Link to="/community" className="text-emerald-300 hover:underline">Browse community</Link>.
+              </p>
             </CardContent>
           </Card>
 
