@@ -978,14 +978,34 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
         change: change - rules.min24hChangePct,
       };
       const failedRules = (Object.keys(slack) as RuleKey[]).filter((k) => slack[k] < 0);
+      const baseSnap = {
+        ts,
+        symbol: a.symbol,
+        category: a.category,
+        price,
+        momentum,
+        volumeScore,
+        volatility,
+        change,
+        slack,
+      };
       if (failedRules.length > 0) {
         for (const k of failedRules) failedAny[k]++;
         if (failedRules.length === 1) failedOnly[failedRules[0]]++;
+        perBucketSnapshots[i].push({ ...baseSnap, outcome: "fail", failedRules });
         continue;
       }
 
       const last = lastAccepted[a.symbol] ?? -Infinity;
-      if (ts - last < cooldownMs) continue;
+      if (ts - last < cooldownMs) {
+        perBucketSnapshots[i].push({
+          ...baseSnap,
+          outcome: "cooldown",
+          failedRules: [],
+          cooldownRemainingMs: cooldownMs - (ts - last),
+        });
+        continue;
+      }
       lastAccepted[a.symbol] = ts;
       perBucket[i]++;
 
@@ -1000,6 +1020,7 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
       );
       for (const k of Object.keys(slack) as RuleKey[]) slackSum[k] += slack[k];
       bindingCount[binding]++;
+      perBucketSnapshots[i].push({ ...baseSnap, outcome: "match", failedRules: [] });
       signals.push({
         ts,
         symbol: a.symbol,
