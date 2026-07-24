@@ -66,7 +66,7 @@ function AuthPage() {
     });
     if (result.error) return toast.error(result.error.message);
     if (result.redirected) return;
-    nav({ to: "/community" });
+    nav({ to: "/dashboard" });
   }
 
   return (
