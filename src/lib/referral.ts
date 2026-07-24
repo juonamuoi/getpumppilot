@@ -53,7 +53,7 @@ export async function recordReferralIfPresent(userId: string): Promise<void> {
 
 
   const { error } = await supabase.from("referrals").insert({
-    referrer_id: codeRow.user_id,
+    referrer_id: referrerId,
     referred_user_id: userId,
     referrer_code: code,
     status: "signed_up",
