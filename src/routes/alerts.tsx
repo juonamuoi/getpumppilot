@@ -85,6 +85,9 @@ function AlertsPage() {
             <TabsTrigger value="rules" className="flex-1 sm:flex-none">
               Scanner rules
             </TabsTrigger>
+            <TabsTrigger value="replay" className="flex-1 sm:flex-none">
+              Replay
+            </TabsTrigger>
             <TabsTrigger value="custom" className="flex-1 sm:flex-none">
               Custom alerts
             </TabsTrigger>
@@ -95,6 +98,9 @@ function AlertsPage() {
 
           <TabsContent value="rules" className="mt-5">
             <ScannerRulesPanel />
+          </TabsContent>
+          <TabsContent value="replay" className="mt-5">
+            <ReplayPanel />
           </TabsContent>
           <TabsContent value="custom" className="mt-5">
             <CustomAlertsPanel />
@@ -821,4 +827,366 @@ function relativeTime(ts: number) {
   if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
   return `${d}d ago`;
+}
+
+/* ----------------------------------- Replay ---------------------------------- */
+
+type WindowKey = "1h" | "6h" | "24h" | "7d" | "30d";
+const WINDOW_MS: Record<WindowKey, number> = {
+  "1h": 60 * 60 * 1000,
+  "6h": 6 * 60 * 60 * 1000,
+  "24h": 24 * 60 * 60 * 1000,
+  "7d": 7 * 24 * 60 * 60 * 1000,
+  "30d": 30 * 24 * 60 * 60 * 1000,
+};
+const WINDOW_LABEL: Record<WindowKey, string> = {
+  "1h": "Last hour",
+  "6h": "Last 6 hours",
+  "24h": "Last 24 hours",
+  "7d": "Last 7 days",
+  "30d": "Last 30 days",
+};
+
+type ReplaySignal = {
+  ts: number;
+  symbol: string;
+  price: number;
+  momentum: number;
+  volumeScore: number;
+  volatility: number;
+  change: number;
+  category: "major" | "demo-smallcap";
+};
+
+type ReplayResult = {
+  window: WindowKey;
+  steps: number;
+  ranAt: number;
+  signals: ReplaySignal[];
+  evaluatedSnapshots: number;
+  perBucket: number[];
+};
+
+function jitter(seed: number) {
+  const s = Math.sin(seed * 9301 + 49297) * 233280;
+  return s - Math.floor(s);
+}
+
+function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): ReplayResult {
+  const end = Date.now();
+  const spanMs = WINDOW_MS[windowKey];
+  const start = end - spanMs;
+  const stepMs = spanMs / steps;
+
+  const cooldownMs = rules.cooldownMinutes * 60_000;
+  const lastAccepted: Record<string, number> = {};
+  const perBucket = new Array(steps).fill(0);
+  const signals: ReplaySignal[] = [];
+
+  const eligible = ASSETS.filter((a) => {
+    if (!rules.includeMajors && a.category === "major") return false;
+    if (!rules.includeDemoSmallCaps && a.category === "demo-smallcap") return false;
+    return true;
+  });
+
+  let evaluated = 0;
+  for (let i = 0; i < steps; i++) {
+    const ts = start + Math.round(i * stepMs);
+    for (const a of eligible) {
+      evaluated++;
+      const sp = a.sparkline;
+      const idx = Math.min(sp.length - 1, Math.floor((i / steps) * sp.length));
+      const price = sp[idx];
+      const lookback = Math.min(idx, Math.max(1, Math.round(sp.length * 0.5)));
+      const past = sp[idx - lookback] || sp[0];
+      const change = ((price - past) / past) * 100;
+
+      // Per-snapshot variation of momentum components (deterministic).
+      const wobble = (Math.sin((i + a.symbol.charCodeAt(0)) * 0.55) + 1) / 2; // 0-1
+      const noise = (jitter(i * 31 + a.symbol.charCodeAt(0)) - 0.5) * 14;
+      const momentum = clamp(
+        Math.round(a.momentum.total * (0.75 + 0.35 * wobble) + noise),
+        0,
+        100,
+      );
+      const volumeScore = clamp(
+        Math.round(a.momentum.volume * (0.7 + 0.4 * wobble) + noise * 0.6),
+        0,
+        100,
+      );
+      const volatility = clamp(
+        Math.round(a.momentum.volatility * (0.85 + 0.25 * (1 - wobble)) - noise * 0.4),
+        0,
+        100,
+      );
+
+      const match =
+        momentum >= rules.minMomentum &&
+        volumeScore >= rules.minVolumeScore &&
+        volatility <= rules.maxVolatility &&
+        change >= rules.min24hChangePct;
+      if (!match) continue;
+
+      const last = lastAccepted[a.symbol] ?? -Infinity;
+      if (ts - last < cooldownMs) continue;
+      lastAccepted[a.symbol] = ts;
+      perBucket[i]++;
+      signals.push({
+        ts,
+        symbol: a.symbol,
+        price,
+        momentum,
+        volumeScore,
+        volatility,
+        change,
+        category: a.category,
+      });
+    }
+  }
+
+  return {
+    window: windowKey,
+    steps,
+    ranAt: Date.now(),
+    signals,
+    evaluatedSnapshots: evaluated,
+    perBucket,
+  };
+}
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function ReplayPanel() {
+  const { scannerRules } = usePaper();
+  const [windowKey, setWindowKey] = useState<WindowKey>("24h");
+  const [steps, setSteps] = useState(30);
+  const [assetFilter, setAssetFilter] = useState<"all" | "major" | "demo-smallcap">("all");
+  const [result, setResult] = useState<ReplayResult | null>(null);
+
+  const run = () => {
+    const r = runReplay(scannerRules, windowKey, steps);
+    setResult(r);
+    if (r.signals.length === 0) {
+      toast.message("Replay finished — no matches for current rules in this window");
+    } else {
+      const uniq = new Set(r.signals.map((s) => s.symbol)).size;
+      toast.success(
+        `Replay: ${r.signals.length} signal${r.signals.length === 1 ? "" : "s"} across ${uniq} asset${uniq === 1 ? "" : "s"}`,
+      );
+    }
+  };
+
+  const filteredSignals = useMemo(() => {
+    if (!result) return [];
+    if (assetFilter === "all") return result.signals;
+    return result.signals.filter((s) => s.category === assetFilter);
+  }, [result, assetFilter]);
+
+  const bySymbol = useMemo(() => {
+    const map = new Map<string, ReplaySignal[]>();
+    for (const s of filteredSignals) {
+      const arr = map.get(s.symbol) ?? [];
+      arr.push(s);
+      map.set(s.symbol, arr);
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
+  }, [filteredSignals]);
+
+  const maxBucket = result ? Math.max(1, ...result.perBucket) : 1;
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
+      <Card className="border-border/60 bg-card/60">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Replay window</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs">Time window</Label>
+            <ToggleGroup
+              type="single"
+              value={windowKey}
+              onValueChange={(v) => v && setWindowKey(v as WindowKey)}
+              className="flex-wrap justify-start"
+              size="sm"
+            >
+              {(Object.keys(WINDOW_MS) as WindowKey[]).map((k) => (
+                <ToggleGroupItem key={k} value={k} aria-label={WINDOW_LABEL[k]}>
+                  {k}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Snapshots to evaluate</Label>
+              <span className="font-mono text-xs text-emerald-300">{steps}</span>
+            </div>
+            <Slider
+              value={[steps]}
+              onValueChange={(v) => setSteps(v[0])}
+              min={10}
+              max={60}
+              step={5}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">Asset scope</Label>
+            <ToggleGroup
+              type="single"
+              value={assetFilter}
+              onValueChange={(v) => v && setAssetFilter(v as typeof assetFilter)}
+              size="sm"
+              className="flex-wrap justify-start"
+            >
+              <ToggleGroupItem value="all">All</ToggleGroupItem>
+              <ToggleGroupItem value="major">Majors</ToggleGroupItem>
+              <ToggleGroupItem value="demo-smallcap">Demo</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+
+          <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+            Replays synthesize price and momentum snapshots from demo history and evaluate them
+            against your saved scanner rules (momentum ≥ {scannerRules.minMomentum}, vol ≥{" "}
+            {scannerRules.minVolumeScore}, volatility ≤ {scannerRules.maxVolatility}, 24h ≥{" "}
+            {scannerRules.min24hChangePct}%). Cooldown {scannerRules.cooldownMinutes}m applied per
+            asset.
+          </div>
+
+          <Button onClick={run} className="w-full">
+            <PlayCircle className="mr-2 h-4 w-4" /> Run replay
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60 bg-card/60">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center justify-between text-base">
+            <span>Replay results</span>
+            {result && (
+              <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
+                {filteredSignals.length} signal{filteredSignals.length === 1 ? "" : "s"}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!result ? (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              Choose a window and press Run replay to see which assets would have matched.
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <StatTile label="Window" value={WINDOW_LABEL[result.window]} />
+                <StatTile
+                  label="Assets triggered"
+                  value={String(new Set(filteredSignals.map((s) => s.symbol)).size)}
+                />
+                <StatTile
+                  label="Evaluations"
+                  value={result.evaluatedSnapshots.toLocaleString()}
+                />
+              </div>
+
+              <div>
+                <Label className="text-xs">Signal timeline</Label>
+                <div className="mt-2 flex h-16 items-end gap-[2px] rounded-md border border-border/60 bg-muted/20 p-2">
+                  {result.perBucket.map((n, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 rounded-sm bg-emerald-500/70"
+                      style={{ height: `${(n / maxBucket) * 100}%`, minHeight: n ? 2 : 0 }}
+                      title={`${n} signal${n === 1 ? "" : "s"}`}
+                    />
+                  ))}
+                </div>
+                <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                  <span>{format(new Date(result.ranAt - WINDOW_MS[result.window]), "MMM d HH:mm")}</span>
+                  <span>{format(new Date(result.ranAt), "MMM d HH:mm")}</span>
+                </div>
+              </div>
+
+              {bySymbol.length === 0 ? (
+                <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
+                  No matches under current filters.
+                </div>
+              ) : (
+                <div className="max-h-[420px] divide-y divide-border/60 overflow-y-auto rounded-md border border-border/60">
+                  {bySymbol.map(([symbol, sigs]) => (
+                    <ReplayAssetRow key={symbol} symbol={symbol} signals={sigs} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StatTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/20 p-2">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-0.5 truncate text-sm font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function ReplayAssetRow({
+  symbol,
+  signals,
+}: {
+  symbol: string;
+  signals: ReplaySignal[];
+}) {
+  const first = signals[0];
+  const peak = signals.reduce((a, b) => (b.momentum > a.momentum ? b : a), signals[0]);
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold">{symbol}</span>
+            {first.category === "demo-smallcap" && (
+              <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-300">
+                DEMO
+              </Badge>
+            )}
+          </div>
+          <div className="truncate text-[11px] text-muted-foreground">
+            First match {format(new Date(first.ts), "MMM d HH:mm")} · peak momentum {peak.momentum}
+          </div>
+        </div>
+        <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
+          {signals.length} hit{signals.length === 1 ? "" : "s"}
+        </Badge>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {signals.slice(0, 8).map((s, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/30 px-2 py-0.5 font-mono text-[10px]"
+            title={`Momentum ${s.momentum} · vol ${s.volumeScore} · volatility ${s.volatility} · 24h ${s.change.toFixed(2)}%`}
+          >
+            <span className="text-muted-foreground">{format(new Date(s.ts), "HH:mm")}</span>
+            <span className="text-emerald-300">m{s.momentum}</span>
+            <span className={s.change >= 0 ? "text-emerald-400" : "text-rose-400"}>
+              {s.change >= 0 ? "+" : ""}
+              {s.change.toFixed(1)}%
+            </span>
+          </span>
+        ))}
+        {signals.length > 8 && (
+          <span className="text-[10px] text-muted-foreground">+{signals.length - 8} more</span>
+        )}
+      </div>
+    </div>
+  );
 }
