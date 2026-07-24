@@ -1194,6 +1194,15 @@ function exportRuleImpactCsv(result: ReplayResult, rules: ScannerRules) {
   );
 }
 
+type TuningPreview = {
+  matchesBefore: number;
+  matchesAfter: number;
+  nearMissThisBefore: number;
+  nearMissThisAfter: number;
+  nearMissAnyBefore: number;
+  nearMissAnyAfter: number;
+};
+
 type RuleTuning = {
   key: RuleKey;
   current: number;
@@ -1202,6 +1211,7 @@ type RuleTuning = {
   candidatePool: number;
   fragile: number;
   avgOtherMinSlack: number;
+  preview: TuningPreview | null;
 };
 
 function snapshotValue(s: BucketSnapshot, k: RuleKey): number {
