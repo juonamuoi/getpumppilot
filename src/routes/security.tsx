@@ -626,6 +626,19 @@ function IncidentsPanel() {
             <Button
               variant="ghost"
               size="sm"
+              onClick={exportJson}
+              disabled={filtered.length === 0}
+              title={
+                activeFilterCount
+                  ? `Export ${filtered.length} filtered incident(s) as JSON`
+                  : `Export all ${filtered.length} incident(s) as JSON`
+              }
+            >
+              <Download className="mr-1 h-3.5 w-3.5" /> Export JSON
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 clearReports();
                 toast.success("Incident log cleared");
