@@ -287,9 +287,14 @@ function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 pt-16 pb-20">
+      <section className="relative overflow-hidden px-4 pt-12 pb-20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-4xl text-center">
+          <img
+            src="/favicon.png"
+            alt="PumpPilot AI mascot — AI robot pumping crypto into a wallet while you sleep"
+            className="mx-auto mb-6 h-32 w-32 rounded-3xl object-cover shadow-2xl shadow-emerald-500/10 sm:h-40 sm:w-40"
+          />
           <Badge
             variant="outline"
             className="mb-4 border-emerald-500/30 px-3 py-1 text-emerald-300"
