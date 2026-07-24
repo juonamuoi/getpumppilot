@@ -486,14 +486,25 @@ function labelForKind(k: Alert["kind"]) {
 function HistoryPanel() {
   const { deliveries, clearDeliveries } = usePaper();
   const [q, setQ] = useState("");
-  const [channel, setChannel] = useState<"all" | AlertDelivery["channel"]>("all");
-  const [status, setStatus] = useState<"all" | AlertDelivery["status"]>("all");
+  const [channels, setChannels] = useState<ChannelKey[]>([...ALL_CHANNELS]);
+  const [statuses, setStatuses] = useState<StatusKey[]>([...ALL_STATUSES]);
+  const [range, setRange] = useState<DateRange | undefined>(undefined);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
+    const from = range?.from ? new Date(range.from).setHours(0, 0, 0, 0) : undefined;
+    const to = range?.to
+      ? new Date(range.to).setHours(23, 59, 59, 999)
+      : range?.from
+        ? new Date(range.from).setHours(23, 59, 59, 999)
+        : undefined;
     return deliveries.filter((d) => {
-      if (channel !== "all" && d.channel !== channel) return false;
-      if (status !== "all" && d.status !== status) return false;
+      if (!channels.includes(d.channel)) return false;
+      if (!statuses.includes(d.status)) return false;
+      if (from !== undefined && d.ts < from) return false;
+      if (to !== undefined && d.ts > to) return false;
       if (!term) return true;
       return (
         d.symbol.toLowerCase().includes(term) ||
@@ -501,25 +512,71 @@ function HistoryPanel() {
         d.detail.toLowerCase().includes(term)
       );
     });
-  }, [deliveries, q, channel, status]);
+  }, [deliveries, q, channels, statuses, range]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+  const pageStart = (page - 1) * pageSize;
+  const pageItems = filtered.slice(pageStart, pageStart + pageSize);
+
+  // Reset page to 1 whenever filters change
+  useEffect(() => {
+    setPage(1);
+  }, [q, channels, statuses, range, pageSize]);
+
+  const resetFilters = () => {
+    setQ("");
+    setChannels([...ALL_CHANNELS]);
+    setStatuses([...ALL_STATUSES]);
+    setRange(undefined);
+  };
+
+  const activeFilterCount =
+    (q ? 1 : 0) +
+    (channels.length !== ALL_CHANNELS.length ? 1 : 0) +
+    (statuses.length !== ALL_STATUSES.length ? 1 : 0) +
+    (range?.from ? 1 : 0);
+
+  const rangeLabel = range?.from
+    ? range.to
+      ? `${format(range.from, "MMM d")} – ${format(range.to, "MMM d")}`
+      : format(range.from, "MMM d, yyyy")
+    : "Any date";
 
   return (
     <Card className="border-border/60 bg-card/60">
       <CardHeader className="pb-3">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:items-center sm:justify-between">
-          <CardTitle className="text-base">Delivery history</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              clearDeliveries();
-              toast.success("History cleared");
-            }}
-            disabled={deliveries.length === 0}
-          >
-            <Trash2 className="mr-1 h-3.5 w-3.5" /> Clear
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base">Delivery history</CardTitle>
+            {activeFilterCount > 0 && (
+              <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
+                {filtered.length} of {deliveries.length}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                <X className="mr-1 h-3.5 w-3.5" /> Reset
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearDeliveries();
+                toast.success("History cleared");
+              }}
+              disabled={deliveries.length === 0}
+            >
+              <Trash2 className="mr-1 h-3.5 w-3.5" /> Clear
+            </Button>
+          </div>
         </div>
+
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -530,28 +587,90 @@ function HistoryPanel() {
               className="pl-9"
             />
           </div>
-          <Select value={channel} onValueChange={(v) => setChannel(v as typeof channel)}>
-            <SelectTrigger className="sm:w-40">
-              <SelectValue placeholder="Channel" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All channels</SelectItem>
-              <SelectItem value="in-app">In-app</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="push">Push</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
-            <SelectTrigger className="sm:w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="muted">Muted</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "justify-start text-left font-normal sm:w-56",
+                  !range?.from && "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {rangeLabel}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="range"
+                selected={range}
+                onSelect={setRange}
+                numberOfMonths={1}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+              <div className="flex items-center justify-between border-t border-border/60 p-2">
+                <Button variant="ghost" size="sm" onClick={() => setRange(undefined)}>
+                  Clear
+                </Button>
+                <div className="flex gap-1">
+                  {[7, 30, 90].map((n) => (
+                    <Button
+                      key={n}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const to = new Date();
+                        const from = new Date();
+                        from.setDate(to.getDate() - (n - 1));
+                        setRange({ from, to });
+                      }}
+                    >
+                      {n}d
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Channels</span>
+            <ToggleGroup
+              type="multiple"
+              size="sm"
+              value={channels}
+              onValueChange={(v) => setChannels((v as ChannelKey[]) ?? [])}
+              className="flex-wrap justify-start"
+            >
+              <ToggleGroupItem value="in-app" aria-label="In-app">
+                <MonitorSmartphone className="mr-1 h-3.5 w-3.5" /> In-app
+              </ToggleGroupItem>
+              <ToggleGroupItem value="email" aria-label="Email">
+                <Mail className="mr-1 h-3.5 w-3.5" /> Email
+              </ToggleGroupItem>
+              <ToggleGroupItem value="push" aria-label="Push">
+                <Smartphone className="mr-1 h-3.5 w-3.5" /> Push
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Status</span>
+            {ALL_STATUSES.map((s) => (
+              <StatusChip
+                key={s}
+                status={s}
+                active={statuses.includes(s)}
+                onToggle={() =>
+                  setStatuses((prev) =>
+                    prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+                  )
+                }
+              />
+            ))}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -563,13 +682,94 @@ function HistoryPanel() {
           </div>
         ) : (
           <div className="divide-y divide-border/60">
-            {filtered.map((d) => (
+            {pageItems.map((d) => (
               <DeliveryRow key={d.id} d={d} />
             ))}
           </div>
         )}
+        {filtered.length > 0 && (
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-border/60 px-4 py-3 sm:flex-row">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>
+                {pageStart + 1}–{Math.min(pageStart + pageSize, filtered.length)} of{" "}
+                {filtered.length}
+              </span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => setPageSize(parseInt(v, 10))}
+              >
+                <SelectTrigger className="h-7 w-[84px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n} / page
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="px-2 font-mono text-xs">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function StatusChip({
+  status,
+  active,
+  onToggle,
+}: {
+  status: StatusKey;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  const Icon =
+    status === "delivered" ? CheckCircle2 : status === "muted" ? BellOff : XCircle;
+  const activeCls =
+    status === "delivered"
+      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+      : status === "muted"
+        ? "border-border bg-muted/40 text-foreground"
+        : "border-rose-500/40 bg-rose-500/10 text-rose-300";
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs capitalize transition",
+        active
+          ? activeCls
+          : "border-border/60 bg-transparent text-muted-foreground hover:bg-muted/30",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {status}
+    </button>
   );
 }
 
