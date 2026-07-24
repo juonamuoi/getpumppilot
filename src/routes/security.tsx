@@ -543,36 +543,17 @@ function IncidentsPanel() {
       toast.error("No incidents to export");
       return;
     }
+    if (csvColumns.length === 0) {
+      toast.error("Select at least one column to export");
+      return;
+    }
     const esc = (v: unknown) => {
       const s = v == null ? "" : String(v);
       return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    const header = [
-      "id",
-      "timestamp",
-      "severity",
-      "category",
-      "kind",
-      "matched_rule",
-      "source",
-      "origin_url",
-      "blocked",
-      "message",
-      "detail",
-    ];
-    const rows = filtered.map((r) => [
-      r.id,
-      new Date(r.ts).toISOString(),
-      r.severity,
-      r.category ?? "",
-      KIND_LABEL[r.kind] ?? r.kind,
-      r.matchedRule ?? "",
-      r.source,
-      r.originUrl ?? "",
-      r.blocked ? "yes" : "no",
-      r.message,
-      r.detail ?? "",
-    ]);
+    const cols = CSV_COLUMNS.filter((c) => csvColumns.includes(c.key));
+    const header = cols.map((c) => c.key);
+    const rows = filtered.map((r) => cols.map((c) => c.value(r)));
     const csv =
       "\ufeff" +
       [header, ...rows].map((row) => row.map(esc).join(",")).join("\r\n") +
@@ -588,7 +569,7 @@ function IncidentsPanel() {
     a.remove();
     URL.revokeObjectURL(url);
     toast.success(
-      `Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"}${
+      `Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"} · ${cols.length} column${cols.length === 1 ? "" : "s"}${
         activeFilterCount ? ` (${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"})` : ""
       }`,
     );
