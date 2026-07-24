@@ -39,6 +39,13 @@ import {
   ChevronRight,
   X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type Alert, type AlertDelivery, type ScannerRules } from "@/lib/paper-store";
 import { toast } from "sonner";
