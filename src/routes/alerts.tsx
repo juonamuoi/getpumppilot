@@ -1331,6 +1331,46 @@ function simulateApply(
   };
 }
 
+function PreviewStat({
+  label,
+  before,
+  after,
+  goodUp,
+  goodDown,
+}: {
+  label: string;
+  before: number;
+  after: number;
+  goodUp?: boolean;
+  goodDown?: boolean;
+}) {
+  const delta = after - before;
+  const tone =
+    delta === 0
+      ? "text-muted-foreground"
+      : (delta > 0 && goodUp) || (delta < 0 && goodDown)
+        ? "text-emerald-300"
+        : (delta > 0 && goodDown) || (delta < 0 && goodUp)
+          ? "text-rose-300"
+          : "text-amber-300";
+  return (
+    <div className="rounded bg-muted/20 p-1.5">
+      <div className="truncate text-[9px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="flex items-baseline gap-1 font-mono text-[11px]">
+        <span className="text-muted-foreground">{before}</span>
+        <span className="text-muted-foreground">→</span>
+        <span className="font-semibold text-foreground">{after}</span>
+        <span className={cn("ml-auto text-[10px]", tone)}>
+          {delta > 0 ? "+" : ""}
+          {delta}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function RuleTuningPanel({
   result,
   rules,
