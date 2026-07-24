@@ -1178,10 +1178,10 @@ function ReplayPanel() {
               <div>
                 <Label className="text-xs">Signal timeline</Label>
                 <div className="mt-2 flex h-16 items-end gap-[2px] rounded-md border border-border/60 bg-muted/20 p-2">
-                  {result.perBucket.map((n, i) => (
+                  {filteredBuckets.map((n, i) => (
                     <div
                       key={i}
-                      className="flex-1 rounded-sm bg-emerald-500/70"
+                      className={`flex-1 rounded-sm ${ruleFocus ? RULE_META[ruleFocus].barClass : "bg-emerald-500/70"}`}
                       style={{ height: `${(n / maxBucket) * 100}%`, minHeight: n ? 2 : 0 }}
                       title={`${n} signal${n === 1 ? "" : "s"}`}
                     />
@@ -1192,6 +1192,14 @@ function ReplayPanel() {
                   <span>{format(new Date(result.ranAt), "MMM d HH:mm")}</span>
                 </div>
               </div>
+
+              <RuleImpactPanel
+                result={result}
+                rules={scannerRules}
+                focus={ruleFocus}
+                onFocus={setRuleFocus}
+              />
+
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
