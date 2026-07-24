@@ -1381,17 +1381,43 @@ function RuleTuningPanel({
   rules: ScannerRules;
   onApply: (k: RuleKey, value: number) => void;
 }) {
-  const tuning = useMemo(() => computeTuning(result, rules), [result, rules]);
+  const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
+  const fraction = preset === "conservative" ? 0.25 : preset === "aggressive" ? 0.9 : 0.5;
+  const tuning = useMemo(
+    () => computeTuning(result, rules, fraction),
+    [result, rules, fraction],
+  );
   const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
   const anySuggestion = keys.some((k) => tuning[k].suggested != null);
+  const presetHint =
+    preset === "conservative"
+      ? "Unlocks ~25% of near-miss snapshots — tighter, safer"
+      : preset === "aggressive"
+        ? "Unlocks ~90% of near-miss snapshots — loosest, highest risk"
+        : "Unlocks ~50% of near-miss snapshots — balanced default";
   return (
     <div className="rounded-md border border-border/60 bg-muted/10 p-3">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <Label className="text-xs">Rule tuning recommendations</Label>
-        <span className="text-[10px] text-muted-foreground">
-          Loosens each rule to unlock ~half of its near-miss snapshots
-        </span>
+        <ToggleGroup
+          type="single"
+          size="sm"
+          value={preset}
+          onValueChange={(v) => v && setPreset(v as typeof preset)}
+          className="gap-0.5"
+        >
+          <ToggleGroupItem value="conservative" className="h-6 px-2 text-[10px]">
+            Conservative
+          </ToggleGroupItem>
+          <ToggleGroupItem value="balanced" className="h-6 px-2 text-[10px]">
+            Balanced
+          </ToggleGroupItem>
+          <ToggleGroupItem value="aggressive" className="h-6 px-2 text-[10px]">
+            Aggressive
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
+      <div className="mb-2 text-[10px] text-muted-foreground">{presetHint}</div>
       {!anySuggestion ? (
         <div className="p-4 text-center text-xs text-muted-foreground">
           No near-miss snapshots in this window — current rules are the binding
