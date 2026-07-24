@@ -16,6 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -30,12 +35,15 @@ import {
   Fingerprint,
   CheckCircle2,
   XCircle,
+  CalendarIcon,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useSecurity,
   type Report,
   type ReportKind,
+  type ReportCategory,
   type Severity,
 } from "@/lib/security-store";
 
