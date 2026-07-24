@@ -115,3 +115,80 @@ export const createPortalSession = createServerFn({ method: "POST" })
       return { error: getStripeErrorMessage(error) };
     }
   });
+
+export const createGoLiveTestCheckout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: {
+    amountInCents: number;
+    returnUrl: string;
+    environment: StripeEnv;
+  }) => {
+    if (!data.amountInCents || data.amountInCents < 50) throw new Error("Amount must be at least 50 cents");
+    if (data.amountInCents > 500) throw new Error("Go-live test is capped at $5.00");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<CheckoutSessionResult & { sessionId?: string }> => {
+    try {
+      const { userId, supabase } = context;
+      const { data: { user } } = await supabase.auth.getUser();
+      const stripe = createStripeClient(data.environment);
+      const customerId = await resolveOrCreateCustomer(stripe, {
+        email: user?.email ?? undefined,
+        userId,
+      });
+      const session = await stripe.checkout.sessions.create({
+        line_items: [{
+          price_data: {
+            currency: "usd",
+            product_data: { name: "PumpPilot AI — Go-Live Test Charge" },
+            unit_amount: data.amountInCents,
+          },
+          quantity: 1,
+        }],
+        mode: "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        customer: customerId,
+        payment_intent_data: { description: "PumpPilot AI — Go-Live Test Charge" },
+        metadata: { userId, purpose: "go_live_test" },
+      } as any);
+      return { clientSecret: session.client_secret ?? "", sessionId: session.id };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
+
+export const getGoLiveTestSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { sessionId: string; environment: StripeEnv }) => {
+    if (!/^cs_[a-zA-Z0-9_]+$/.test(data.sessionId)) throw new Error("Invalid sessionId");
+    return data;
+  })
+  .handler(async ({ data }): Promise<
+    | { status: string | null; paymentStatus: string | null; amountTotal: number | null; currency: string | null; paymentIntentId: string | null; statementDescriptor: string | null; chargeId: string | null; receiptUrl: string | null; created: string | null; last4: string | null; brand: string | null }
+    | { error: string }
+  > => {
+    try {
+      const stripe = createStripeClient(data.environment);
+      const session = await stripe.checkout.sessions.retrieve(data.sessionId, {
+        expand: ["payment_intent", "payment_intent.latest_charge"],
+      });
+      const pi: any = typeof session.payment_intent === "object" ? session.payment_intent : null;
+      const charge: any = pi && typeof pi.latest_charge === "object" ? pi.latest_charge : null;
+      return {
+        status: session.status ?? null,
+        paymentStatus: session.payment_status ?? null,
+        amountTotal: session.amount_total ?? null,
+        currency: session.currency ?? null,
+        paymentIntentId: pi?.id ?? null,
+        statementDescriptor: charge?.statement_descriptor ?? charge?.calculated_statement_descriptor ?? pi?.statement_descriptor ?? null,
+        chargeId: charge?.id ?? null,
+        receiptUrl: charge?.receipt_url ?? null,
+        created: charge?.created ? new Date(charge.created * 1000).toISOString() : null,
+        last4: charge?.payment_method_details?.card?.last4 ?? null,
+        brand: charge?.payment_method_details?.card?.brand ?? null,
+      };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
