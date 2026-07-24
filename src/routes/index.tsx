@@ -658,6 +658,11 @@ function LandingPage() {
                 <h4 className="font-semibold text-foreground">Resources</h4>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
                   <li>
+                    <Link to="/blog" className="hover:text-foreground">
+                      Blog
+                    </Link>
+                  </li>
+                  <li>
                     <Link to="/learn" className="hover:text-foreground">
                       Learn Hub
                     </Link>
