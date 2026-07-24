@@ -18,6 +18,7 @@ import {
   Users,
   Command as CommandIcon,
   Zap,
+  Gift,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -43,6 +44,7 @@ const nav = [
   { to: "/risk", label: "Risk Controls", icon: ShieldCheck },
   { to: "/security", label: "Security", icon: ShieldAlert },
   { to: "/learn", label: "Learn", icon: BookOpen },
+  { to: "/refer", label: "Invite & earn", icon: Gift },
   { to: "/pricing", label: "Pricing", icon: Zap },
 ] as const;
 

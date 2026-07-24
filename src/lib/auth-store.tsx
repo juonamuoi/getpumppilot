@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { captureReferralFromUrl, recordReferralIfPresent } from "@/lib/referral";
 
 type Ctx = {
   session: Session | null;
@@ -21,9 +22,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    // Capture ?ref= from URL as early as possible.
+    captureReferralFromUrl();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       setLoading(false);
+      // On sign-in, try to record any pending referral. Defer so RLS/session
+      // is fully established.
+      if (event === "SIGNED_IN" && s?.user?.id) {
+        setTimeout(() => {
+          recordReferralIfPresent(s.user.id).catch(() => {});
+        }, 0);
+      }
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
