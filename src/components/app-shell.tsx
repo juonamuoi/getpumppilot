@@ -15,6 +15,7 @@ import {
   Bot,
   Stethoscope,
   LineChart,
+  Users,
   Command as CommandIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
