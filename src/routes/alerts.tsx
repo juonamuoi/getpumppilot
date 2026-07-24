@@ -1076,6 +1076,7 @@ function ReplayPanel() {
   const [assetFilter, setAssetFilter] = useState<"all" | "major" | "demo-smallcap">("all");
   const [result, setResult] = useState<ReplayResult | null>(null);
   const [ruleFocus, setRuleFocus] = useState<RuleKey | null>(null);
+  const [openBucket, setOpenBucket] = useState<number | null>(null);
 
   const run = () => {
     const r = runReplay(scannerRules, windowKey, steps);
