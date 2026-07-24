@@ -1441,6 +1441,36 @@ function RuleTuningPanel({
                       unlocked snapshots also nearly failed another rule.
                     </div>
 
+                    {t.preview && (
+                      <div className="mt-2 rounded border border-border/60 bg-background/40 p-2">
+                        <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wide text-muted-foreground">
+                          <span>Before → After preview</span>
+                          <span>this rule only</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-[11px]">
+                          <PreviewStat
+                            label="Matches"
+                            before={t.preview.matchesBefore}
+                            after={t.preview.matchesAfter}
+                            goodUp
+                          />
+                          <PreviewStat
+                            label="Near-miss (any)"
+                            before={t.preview.nearMissAnyBefore}
+                            after={t.preview.nearMissAnyAfter}
+                          />
+                          <PreviewStat
+                            label={`Near-miss (${meta.short})`}
+                            before={t.preview.nearMissThisBefore}
+                            after={t.preview.nearMissThisAfter}
+                            goodDown
+                          />
+                        </div>
+                      </div>
+                    )}
+
+
+
                     <Button
                       size="sm"
                       variant="outline"
