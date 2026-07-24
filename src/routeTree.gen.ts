@@ -9,10 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as RiskRouteImport } from './routes/risk'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PaperRouteImport } from './routes/paper'
 import { Route as LearnRouteImport } from './routes/learn'
@@ -28,6 +31,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StrategyRoute = StrategyRouteImport.update({
   id: '/strategy',
   path: '/strategy',
@@ -46,6 +54,16 @@ const ScannerRoute = ScannerRouteImport.update({
 const RiskRoute = RiskRouteImport.update({
   id: '/risk',
   path: '/risk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -133,10 +151,13 @@ export interface FileRoutesByFullPath {
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
+  '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -153,10 +174,13 @@ export interface FileRoutesByTo {
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
+  '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -174,10 +198,13 @@ export interface FileRoutesById {
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
+  '/terms': typeof TermsRoute
   '/asset/$symbol': typeof AssetSymbolRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -196,10 +223,13 @@ export interface FileRouteTypes {
     | '/learn'
     | '/paper'
     | '/pricing'
+    | '/privacy'
+    | '/refund'
     | '/risk'
     | '/scanner'
     | '/security'
     | '/strategy'
+    | '/terms'
     | '/asset/$symbol'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -216,10 +246,13 @@ export interface FileRouteTypes {
     | '/learn'
     | '/paper'
     | '/pricing'
+    | '/privacy'
+    | '/refund'
     | '/risk'
     | '/scanner'
     | '/security'
     | '/strategy'
+    | '/terms'
     | '/asset/$symbol'
     | '/api/public/payments/webhook'
   id:
@@ -236,10 +269,13 @@ export interface FileRouteTypes {
     | '/learn'
     | '/paper'
     | '/pricing'
+    | '/privacy'
+    | '/refund'
     | '/risk'
     | '/scanner'
     | '/security'
     | '/strategy'
+    | '/terms'
     | '/asset/$symbol'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -257,16 +293,26 @@ export interface RootRouteChildren {
   LearnRoute: typeof LearnRoute
   PaperRoute: typeof PaperRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RefundRoute: typeof RefundRoute
   RiskRoute: typeof RiskRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
   StrategyRoute: typeof StrategyRoute
+  TermsRoute: typeof TermsRoute
   AssetSymbolRoute: typeof AssetSymbolRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/strategy': {
       id: '/strategy'
       path: '/strategy'
@@ -293,6 +339,20 @@ declare module '@tanstack/react-router' {
       path: '/risk'
       fullPath: '/risk'
       preLoaderRoute: typeof RiskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -409,10 +469,13 @@ const rootRouteChildren: RootRouteChildren = {
   LearnRoute: LearnRoute,
   PaperRoute: PaperRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  RefundRoute: RefundRoute,
   RiskRoute: RiskRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
   StrategyRoute: StrategyRoute,
+  TermsRoute: TermsRoute,
   AssetSymbolRoute: AssetSymbolRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
