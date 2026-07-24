@@ -40,17 +40,17 @@ export async function recordReferralIfPresent(userId: string): Promise<void> {
   const code = getStoredReferralCode();
   if (!code) return;
 
-  // Look up the referrer via the public code table.
-  const { data: codeRow } = await supabase
-    .from("referral_codes")
-    .select("user_id")
-    .eq("code", code)
-    .maybeSingle();
+  // Resolve the referrer via a SECURITY DEFINER RPC so the codes table
+  // stays private (no bulk enumeration of user IDs).
+  const { data: referrerId } = await supabase.rpc("resolve_referral_code", {
+    _code: code,
+  });
 
-  if (!codeRow || codeRow.user_id === userId) {
+  if (!referrerId || referrerId === userId) {
     clearStoredReferralCode();
     return;
   }
+
 
   const { error } = await supabase.from("referrals").insert({
     referrer_id: codeRow.user_id,
