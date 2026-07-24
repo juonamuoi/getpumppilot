@@ -901,6 +901,11 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
   const lastAccepted: Record<string, number> = {};
   const perBucket = new Array(steps).fill(0);
   const signals: ReplaySignal[] = [];
+  const zero = (): Record<RuleKey, number> => ({ momentum: 0, volume: 0, volatility: 0, change: 0 });
+  const failedAny = zero();
+  const failedOnly = zero();
+  const slackSum = zero();
+  const bindingCount = zero();
 
   const eligible = ASSETS.filter((a) => {
     if (!rules.includeMajors && a.category === "major") return false;
