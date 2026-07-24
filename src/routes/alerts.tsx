@@ -891,6 +891,24 @@ type ReplayResult = {
   evaluatedSnapshots: number;
   perBucket: number[];
   impact: Record<RuleKey, RuleImpact>;
+  perBucketSnapshots: BucketSnapshot[][];
+};
+
+export type SnapshotOutcome = "match" | "fail" | "cooldown";
+
+export type BucketSnapshot = {
+  ts: number;
+  symbol: string;
+  category: "major" | "demo-smallcap";
+  price: number;
+  momentum: number;
+  volumeScore: number;
+  volatility: number;
+  change: number;
+  slack: Record<RuleKey, number>;
+  outcome: SnapshotOutcome;
+  failedRules: RuleKey[];
+  cooldownRemainingMs?: number;
 };
 
 function jitter(seed: number) {
