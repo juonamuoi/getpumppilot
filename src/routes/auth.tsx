@@ -31,7 +31,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) nav({ to: "/community" });
+    if (!loading && session) nav({ to: "/dashboard" });
   }, [loading, session, nav]);
 
   async function signIn(e: React.FormEvent) {
@@ -41,7 +41,7 @@ function AuthPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Signed in");
-    nav({ to: "/community" });
+    nav({ to: "/dashboard" });
   }
 
   async function signUp(e: React.FormEvent) {
