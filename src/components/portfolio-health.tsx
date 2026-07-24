@@ -76,7 +76,7 @@ export function PortfolioHealthCard() {
               {band.label}
             </div>
           </div>
-          <Progress value={score} className={`mt-2 h-2 [&>*]:${band.bar}`} />
+          <Progress value={score} className="mt-2 h-2" />
           <p className="mt-2 text-[11px] text-muted-foreground">
             Combines concentration, <Term k="volatility">volatility</Term>, small-cap exposure and cash buffer.
           </p>
