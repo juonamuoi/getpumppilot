@@ -13,6 +13,7 @@ import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as RiskRouteImport } from './routes/risk'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PaperRouteImport } from './routes/paper'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -24,6 +25,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const StrategyRoute = StrategyRouteImport.update({
   id: '/strategy',
@@ -43,6 +45,11 @@ const ScannerRoute = ScannerRouteImport.update({
 const RiskRoute = RiskRouteImport.update({
   id: '/risk',
   path: '/risk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaperRoute = PaperRouteImport.update({
@@ -100,6 +107,12 @@ const AssetSymbolRoute = AssetSymbolRouteImport.update({
   path: '/asset/$symbol',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -112,11 +125,13 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
+  '/pricing': typeof PricingRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
   '/asset/$symbol': typeof AssetSymbolRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -129,11 +144,13 @@ export interface FileRoutesByTo {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
+  '/pricing': typeof PricingRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
   '/asset/$symbol': typeof AssetSymbolRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -147,11 +164,13 @@ export interface FileRoutesById {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/paper': typeof PaperRoute
+  '/pricing': typeof PricingRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
   '/asset/$symbol': typeof AssetSymbolRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -166,11 +185,13 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/paper'
+    | '/pricing'
     | '/risk'
     | '/scanner'
     | '/security'
     | '/strategy'
     | '/asset/$symbol'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,11 +204,13 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/paper'
+    | '/pricing'
     | '/risk'
     | '/scanner'
     | '/security'
     | '/strategy'
     | '/asset/$symbol'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -200,11 +223,13 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/paper'
+    | '/pricing'
     | '/risk'
     | '/scanner'
     | '/security'
     | '/strategy'
     | '/asset/$symbol'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -218,11 +243,13 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRoute
   LearnRoute: typeof LearnRoute
   PaperRoute: typeof PaperRoute
+  PricingRoute: typeof PricingRoute
   RiskRoute: typeof RiskRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
   StrategyRoute: typeof StrategyRoute
   AssetSymbolRoute: typeof AssetSymbolRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -253,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/risk'
       fullPath: '/risk'
       preLoaderRoute: typeof RiskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/paper': {
@@ -332,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssetSymbolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -346,11 +387,13 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRoute,
   LearnRoute: LearnRoute,
   PaperRoute: PaperRoute,
+  PricingRoute: PricingRoute,
   RiskRoute: RiskRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
   StrategyRoute: StrategyRoute,
   AssetSymbolRoute: AssetSymbolRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

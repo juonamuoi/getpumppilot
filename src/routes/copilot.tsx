@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PaywallGate } from "@/components/paywall-gate";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/copilot")({
       { property: "og:description", content: "Ask your investing coach anything — plain English, cautious answers." },
     ],
   }),
-  component: CopilotPage,
+  component: GatedCopilotPage,
 });
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -160,5 +161,13 @@ function CopilotPage() {
         </Card>
       </div>
     </AppShell>
+  );
+}
+
+function GatedCopilotPage() {
+  return (
+    <PaywallGate required="pro" featureName="Copilot">
+      <CopilotPage />
+    </PaywallGate>
   );
 }

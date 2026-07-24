@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PaywallGate } from "@/components/paywall-gate";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/backtest")({
       },
     ],
   }),
-  component: BacktestPage,
+  component: GatedBacktestPage,
 });
 
 type Result = {
@@ -257,5 +258,13 @@ function Metric({
         {value}
       </div>
     </div>
+  );
+}
+
+function GatedBacktestPage() {
+  return (
+    <PaywallGate required="pro" featureName="Backtest">
+      <BacktestPage />
+    </PaywallGate>
   );
 }
