@@ -939,17 +939,36 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
         100,
       );
 
-      const match =
-        momentum >= rules.minMomentum &&
-        volumeScore >= rules.minVolumeScore &&
-        volatility <= rules.maxVolatility &&
-        change >= rules.min24hChangePct;
-      if (!match) continue;
+      // Per-rule slack: positive = passed by this margin, negative = failed by this margin.
+      const slack: Record<RuleKey, number> = {
+        momentum: momentum - rules.minMomentum,
+        volume: volumeScore - rules.minVolumeScore,
+        volatility: rules.maxVolatility - volatility,
+        change: change - rules.min24hChangePct,
+      };
+      const failedRules = (Object.keys(slack) as RuleKey[]).filter((k) => slack[k] < 0);
+      if (failedRules.length > 0) {
+        for (const k of failedRules) failedAny[k]++;
+        if (failedRules.length === 1) failedOnly[failedRules[0]]++;
+        continue;
+      }
 
       const last = lastAccepted[a.symbol] ?? -Infinity;
       if (ts - last < cooldownMs) continue;
       lastAccepted[a.symbol] = ts;
       perBucket[i]++;
+
+      // Binding rule = smallest slack (in a scale-normalised sense).
+      const norm = (k: RuleKey) => {
+        // Volatility & change use different scales; normalise by their thresholds' scale.
+        if (k === "change") return slack.change / 5; // 5% units
+        return slack[k] / 20; // 20-point units for 0-100 scores
+      };
+      const binding = (Object.keys(slack) as RuleKey[]).reduce((best, k) =>
+        norm(k) < norm(best) ? k : best,
+      );
+      for (const k of Object.keys(slack) as RuleKey[]) slackSum[k] += slack[k];
+      bindingCount[binding]++;
       signals.push({
         ts,
         symbol: a.symbol,
@@ -959,8 +978,27 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
         volatility,
         change,
         category: a.category,
+        slack,
+        binding,
       });
     }
+  }
+
+  const matches = signals.length || 1;
+  const impact: Record<RuleKey, RuleImpact> = {
+    momentum: buildImpact("momentum"),
+    volume: buildImpact("volume"),
+    volatility: buildImpact("volatility"),
+    change: buildImpact("change"),
+  };
+  function buildImpact(k: RuleKey): RuleImpact {
+    return {
+      key: k,
+      bindingMatches: bindingCount[k],
+      failedAny: failedAny[k],
+      failedOnly: failedOnly[k],
+      avgSlack: slackSum[k] / matches,
+    };
   }
 
   return {
@@ -970,6 +1008,7 @@ function runReplay(rules: ScannerRules, windowKey: WindowKey, steps: number): Re
     signals,
     evaluatedSnapshots: evaluated,
     perBucket,
+    impact,
   };
 }
 
