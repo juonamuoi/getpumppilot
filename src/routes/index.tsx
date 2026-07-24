@@ -69,6 +69,7 @@ function StatCard({
 
 function Dashboard() {
   const { cash, positions, equity } = usePaper();
+  const { state: onb } = useOnboarding();
 
   const posRows = positions.map((p) => {
     const a = getAsset(p.symbol)!;
@@ -83,6 +84,11 @@ function Dashboard() {
   const totalPnlPct = invested > 0 ? (totalPnl / invested) * 100 : 0;
 
   const topMomentum = [...ASSETS].sort((a, b) => b.momentum.total - a.momentum.total).slice(0, 4);
+  const topSignals = [...ASSETS]
+    .sort((a, b) => b.momentum.total - a.momentum.total)
+    .slice(0, 3);
+
+  const greeting = onb.name ? `Welcome back, ${onb.name}.` : "Welcome back.";
 
   return (
     <AppShell>
@@ -93,11 +99,10 @@ function Dashboard() {
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">
               <TrendingUp className="h-3.5 w-3.5" /> PumpPilot AI
             </div>
-            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">
-              Spot momentum. Control risk. Trade smarter.
-            </h1>
+            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">{greeting}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Portfolio and market pulse — updated with demo data.
+              Spot momentum. Control risk. Trade smarter. Your <Term k="paper trading">paper</Term>{" "}
+              portfolio and today's top signals.
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
