@@ -1045,9 +1045,26 @@ function ReplayPanel() {
 
   const filteredSignals = useMemo(() => {
     if (!result) return [];
-    if (assetFilter === "all") return result.signals;
-    return result.signals.filter((s) => s.category === assetFilter);
-  }, [result, assetFilter]);
+    let s = result.signals;
+    if (assetFilter !== "all") s = s.filter((x) => x.category === assetFilter);
+    if (ruleFocus) s = s.filter((x) => x.binding === ruleFocus);
+    return s;
+  }, [result, assetFilter, ruleFocus]);
+
+  const filteredBuckets = useMemo(() => {
+    if (!result) return [] as number[];
+    if (!ruleFocus && assetFilter === "all") return result.perBucket;
+    const buckets = new Array(result.steps).fill(0);
+    const spanMs = WINDOW_MS[result.window];
+    const stepMs = spanMs / result.steps;
+    const start = result.ranAt - spanMs;
+    for (const s of filteredSignals) {
+      const i = Math.min(result.steps - 1, Math.max(0, Math.floor((s.ts - start) / stepMs)));
+      buckets[i]++;
+    }
+    return buckets;
+  }, [result, filteredSignals, ruleFocus, assetFilter]);
+
 
   const bySymbol = useMemo(() => {
     const map = new Map<string, ReplaySignal[]>();
