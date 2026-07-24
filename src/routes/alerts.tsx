@@ -1194,6 +1194,15 @@ function exportRuleImpactCsv(result: ReplayResult, rules: ScannerRules) {
   );
 }
 
+type TuningPreview = {
+  matchesBefore: number;
+  matchesAfter: number;
+  nearMissThisBefore: number;
+  nearMissThisAfter: number;
+  nearMissAnyBefore: number;
+  nearMissAnyAfter: number;
+};
+
 type RuleTuning = {
   key: RuleKey;
   current: number;
@@ -1202,6 +1211,7 @@ type RuleTuning = {
   candidatePool: number;
   fragile: number;
   avgOtherMinSlack: number;
+  preview: TuningPreview | null;
 };
 
 function snapshotValue(s: BucketSnapshot, k: RuleKey): number {
@@ -1237,6 +1247,7 @@ function computeTuning(
         candidatePool: 0,
         fragile: 0,
         avgOtherMinSlack: 0,
+        preview: null,
       };
       continue;
     }
@@ -1265,9 +1276,99 @@ function computeTuning(
       candidatePool: pool.length,
       fragile,
       avgOtherMinSlack: sumOther / unlocked.length,
+      preview: simulateApply(allSnaps, k, suggested),
     };
   }
   return out;
+}
+
+// Reclassify eligible (match/fail) snapshots as if rule `k`'s threshold were
+// replaced with `suggested`. Cooldown snapshots are left out of both sides.
+function simulateApply(
+  allSnaps: BucketSnapshot[],
+  k: RuleKey,
+  suggested: number,
+): TuningPreview {
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const meta = RULE_META[k];
+  const eligible = allSnaps.filter((s) => s.outcome !== "cooldown");
+  let matchesBefore = 0,
+    matchesAfter = 0;
+  let nearMissThisBefore = 0,
+    nearMissThisAfter = 0;
+  let nearMissAnyBefore = 0,
+    nearMissAnyAfter = 0;
+  for (const s of eligible) {
+    // Before
+    const beforeFailed = s.failedRules;
+    if (beforeFailed.length === 0) matchesBefore++;
+    if (beforeFailed.length === 1) {
+      nearMissAnyBefore++;
+      if (beforeFailed[0] === k) nearMissThisBefore++;
+    }
+    // After: recompute slack for k only
+    const val = snapshotValue(s, k);
+    const newSlackK =
+      meta.op === ">=" ? val - suggested : suggested - val;
+    const afterFailed: RuleKey[] = [];
+    for (const rk of keys) {
+      const sl = rk === k ? newSlackK : s.slack[rk];
+      if (sl < 0) afterFailed.push(rk);
+    }
+    if (afterFailed.length === 0) matchesAfter++;
+    if (afterFailed.length === 1) {
+      nearMissAnyAfter++;
+      if (afterFailed[0] === k) nearMissThisAfter++;
+    }
+  }
+  return {
+    matchesBefore,
+    matchesAfter,
+    nearMissThisBefore,
+    nearMissThisAfter,
+    nearMissAnyBefore,
+    nearMissAnyAfter,
+  };
+}
+
+function PreviewStat({
+  label,
+  before,
+  after,
+  goodUp,
+  goodDown,
+}: {
+  label: string;
+  before: number;
+  after: number;
+  goodUp?: boolean;
+  goodDown?: boolean;
+}) {
+  const delta = after - before;
+  const tone =
+    delta === 0
+      ? "text-muted-foreground"
+      : (delta > 0 && goodUp) || (delta < 0 && goodDown)
+        ? "text-emerald-300"
+        : (delta > 0 && goodDown) || (delta < 0 && goodUp)
+          ? "text-rose-300"
+          : "text-amber-300";
+  return (
+    <div className="rounded bg-muted/20 p-1.5">
+      <div className="truncate text-[9px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="flex items-baseline gap-1 font-mono text-[11px]">
+        <span className="text-muted-foreground">{before}</span>
+        <span className="text-muted-foreground">→</span>
+        <span className="font-semibold text-foreground">{after}</span>
+        <span className={cn("ml-auto text-[10px]", tone)}>
+          {delta > 0 ? "+" : ""}
+          {delta}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function RuleTuningPanel({
@@ -1379,6 +1480,36 @@ function RuleTuningPanel({
                       {t.avgOtherMinSlack.toFixed(1)} — lower means the
                       unlocked snapshots also nearly failed another rule.
                     </div>
+
+                    {t.preview && (
+                      <div className="mt-2 rounded border border-border/60 bg-background/40 p-2">
+                        <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wide text-muted-foreground">
+                          <span>Before → After preview</span>
+                          <span>this rule only</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-[11px]">
+                          <PreviewStat
+                            label="Matches"
+                            before={t.preview.matchesBefore}
+                            after={t.preview.matchesAfter}
+                            goodUp
+                          />
+                          <PreviewStat
+                            label="Near-miss (any)"
+                            before={t.preview.nearMissAnyBefore}
+                            after={t.preview.nearMissAnyAfter}
+                          />
+                          <PreviewStat
+                            label={`Near-miss (${meta.short})`}
+                            before={t.preview.nearMissThisBefore}
+                            after={t.preview.nearMissThisAfter}
+                            goodDown
+                          />
+                        </div>
+                      </div>
+                    )}
+
+
 
                     <Button
                       size="sm"
