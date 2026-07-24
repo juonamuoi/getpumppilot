@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
 import { getMyReferralCode, getMyReferralCount, getMyRewardMonths, getMyQualifiedReferralCount } from "@/lib/referral";
+import { nativeShare } from "@/lib/native";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
