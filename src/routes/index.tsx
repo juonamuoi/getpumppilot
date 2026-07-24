@@ -272,6 +272,9 @@ function LandingPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link to="/pricing">Pricing</Link>
             </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/blog">Blog</Link>
+            </Button>
             <Button size="sm" asChild>
               <Link to={launchHref}>{launchLabel}</Link>
             </Button>
