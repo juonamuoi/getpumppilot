@@ -17,6 +17,8 @@ import { PaperProvider } from "@/lib/paper-store";
 import { SecurityProvider } from "@/lib/security-store";
 import { OnboardingProvider } from "@/lib/onboarding-store";
 import { AuthProvider } from "@/lib/auth-store";
+import { AppLockProvider, useAppLock } from "@/lib/app-lock";
+import { AppLockScreen } from "@/components/app-lock-screen";
 
 function NotFoundComponent() {
   return (
