@@ -1070,6 +1070,130 @@ function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
 
+function csvEscape(v: unknown): string {
+  const s = v == null ? "" : String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function downloadCsv(filename: string, rows: (string | number)[][]) {
+  const body = rows.map((r) => r.map(csvEscape).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + body], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function exportReplaySignalsCsv(
+  result: ReplayResult,
+  signals: ReplaySignal[],
+  rules: ScannerRules,
+) {
+  const ranIso = new Date(result.ranAt).toISOString();
+  const th = {
+    momentum: ruleThreshold(rules, "momentum"),
+    volume: ruleThreshold(rules, "volume"),
+    volatility: ruleThreshold(rules, "volatility"),
+    change: ruleThreshold(rules, "change"),
+  };
+  const header = [
+    "run_at",
+    "window",
+    "timestamp",
+    "symbol",
+    "category",
+    "price",
+    "momentum",
+    "volume_score",
+    "volatility",
+    "change_pct",
+    "binding_rule",
+    "slack_momentum",
+    "slack_volume",
+    "slack_volatility",
+    "slack_change",
+    "threshold_momentum",
+    "threshold_volume",
+    "threshold_volatility",
+    "threshold_change_pct",
+  ];
+  const rows: (string | number)[][] = [header];
+  for (const s of signals) {
+    rows.push([
+      ranIso,
+      result.window,
+      new Date(s.ts).toISOString(),
+      s.symbol,
+      s.category,
+      s.price.toFixed(6),
+      s.momentum.toFixed(2),
+      s.volumeScore.toFixed(2),
+      s.volatility.toFixed(2),
+      s.change.toFixed(2),
+      RULE_META[s.binding].short,
+      s.slack.momentum.toFixed(2),
+      s.slack.volume.toFixed(2),
+      s.slack.volatility.toFixed(2),
+      s.slack.change.toFixed(2),
+      th.momentum,
+      th.volume,
+      th.volatility,
+      th.change,
+    ]);
+  }
+  downloadCsv(
+    `pumppilot-replay-signals-${ranIso.replace(/[:.]/g, "-")}.csv`,
+    rows,
+  );
+}
+
+function exportRuleImpactCsv(result: ReplayResult, rules: ScannerRules) {
+  const ranIso = new Date(result.ranAt).toISOString();
+  const totalMatches = result.signals.length;
+  const header = [
+    "run_at",
+    "window",
+    "rule",
+    "operator",
+    "threshold",
+    "binding_matches",
+    "binding_pct",
+    "failed_any",
+    "failed_only",
+    "avg_slack",
+    "total_matches",
+    "evaluations",
+  ];
+  const rows: (string | number)[][] = [header];
+  (Object.keys(RULE_META) as RuleKey[]).forEach((k) => {
+    const meta = RULE_META[k];
+    const imp = result.impact[k];
+    const pct = totalMatches ? (imp.bindingMatches / totalMatches) * 100 : 0;
+    rows.push([
+      ranIso,
+      result.window,
+      meta.short,
+      meta.op,
+      ruleThreshold(rules, k),
+      imp.bindingMatches,
+      pct.toFixed(1),
+      imp.failedAny,
+      imp.failedOnly,
+      Number.isFinite(imp.avgSlack) ? imp.avgSlack.toFixed(2) : "",
+      totalMatches,
+      result.evaluatedSnapshots,
+    ]);
+  });
+  downloadCsv(
+    `pumppilot-replay-impact-${ranIso.replace(/[:.]/g, "-")}.csv`,
+    rows,
+  );
+}
+
 function ReplayPanel() {
   const { scannerRules } = usePaper();
   const [windowKey, setWindowKey] = useState<WindowKey>("24h");
