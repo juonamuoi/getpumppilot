@@ -1,0 +1,214 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { AppShell } from "@/components/app-shell";
+import { DemoBadge, DisclaimerBanner } from "@/components/disclaimer";
+import { getAsset, fmtPct, fmtUsd } from "@/lib/mock-data";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MomentumBreakdown } from "@/components/momentum";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { usePaper } from "@/lib/paper-store";
+import { toast } from "sonner";
+import { ArrowLeft, Lock } from "lucide-react";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+export const Route = createFileRoute("/asset/$symbol")({
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.symbol.toUpperCase()} — PumpPilot AI` },
+      {
+        name: "description",
+        content: `${params.symbol.toUpperCase()} momentum, chart and paper trading. Demo data only.`,
+      },
+      { property: "og:title", content: `${params.symbol.toUpperCase()} — PumpPilot AI` },
+      {
+        property: "og:description",
+        content: "Explainable momentum and paper trading.",
+      },
+    ],
+  }),
+  component: AssetPage,
+});
+
+function AssetPage() {
+  const { symbol } = Route.useParams();
+  const asset = getAsset(symbol);
+  const navigate = useNavigate();
+  const paper = usePaper();
+  const [qty, setQty] = useState("");
+
+  if (!asset) {
+    return (
+      <AppShell>
+        <div className="rounded-xl border border-border/60 bg-card/60 p-8 text-center">
+          <div className="text-lg font-semibold">Asset not found</div>
+          <Button variant="link" onClick={() => navigate({ to: "/scanner" })}>
+            Back to scanner
+          </Button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const chartData = asset.sparkline.map((v, i) => ({ i, v }));
+  const positive = asset.change24h >= 0;
+
+  const doTrade = (side: "buy" | "sell") => {
+    const n = parseFloat(qty);
+    if (!n || n <= 0) return toast.error("Enter a positive quantity");
+    const r = paper.trade(asset.symbol, side, n);
+    if (r.ok) {
+      toast.success(r.msg);
+      setQty("");
+    } else {
+      toast.error(r.msg);
+    }
+  };
+
+  return (
+    <AppShell>
+      <div className="space-y-5">
+        <Link
+          to="/scanner"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Scanner
+        </Link>
+
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-2xl font-bold sm:text-3xl">{asset.symbol}</h1>
+              {asset.isDemo && <DemoBadge />}
+            </div>
+            <div className="truncate text-sm text-muted-foreground">{asset.name}</div>
+          </div>
+          <div className="text-right">
+            <div className="font-mono text-2xl font-bold">{fmtUsd(asset.price)}</div>
+            <div className={`font-mono text-sm ${positive ? "text-emerald-400" : "text-rose-400"}`}>
+              {fmtPct(asset.change24h)} 24h
+            </div>
+          </div>
+        </div>
+
+        <DisclaimerBanner />
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          <Card className="border-border/60 bg-card/60 lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Price (demo)</CardTitle>
+            </CardHeader>
+            <CardContent className="h-72 pl-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="oklch(0.78 0.17 160)" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="oklch(0.78 0.17 160)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="i" hide />
+                  <YAxis
+                    domain={["dataMin", "dataMax"]}
+                    tick={{ fill: "oklch(0.7 0.03 258)", fontSize: 11 }}
+                    width={60}
+                    tickFormatter={(v: number) => fmtUsd(v)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "oklch(0.2 0.025 260)",
+                      border: "1px solid oklch(0.3 0.02 260)",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                    formatter={(v: number) => fmtUsd(v)}
+                    labelFormatter={() => ""}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="v"
+                    stroke="oklch(0.78 0.17 160)"
+                    strokeWidth={2}
+                    fill="url(#g)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60 bg-card/60">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Momentum score</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MomentumBreakdown asset={asset} />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          <Card className="border-border/60 bg-card/60 lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Market stats</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+              <Stat label="Market cap" value={fmtUsd(asset.marketCap)} />
+              <Stat label="24h volume" value={fmtUsd(asset.volume24h)} />
+              <Stat label="Category" value={asset.category === "major" ? "Major" : "Demo small-cap"} />
+              <Stat label="Data source" value="Mock / Demo" />
+            </CardContent>
+          </Card>
+
+          <Card className="border-emerald-500/20 bg-emerald-500/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center justify-between text-base">
+                <span>Paper trade</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-normal text-amber-300">
+                  <Lock className="h-3 w-3" /> Live off
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="qty" className="text-xs">
+                  Quantity
+                </Label>
+                <Input
+                  id="qty"
+                  inputMode="decimal"
+                  value={qty}
+                  onChange={(e) => setQty(e.target.value)}
+                  placeholder="0.0"
+                />
+                <div className="text-[11px] text-muted-foreground">
+                  ≈ {qty ? fmtUsd((parseFloat(qty) || 0) * asset.price) : "$0.00"}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={() => doTrade("buy")} className="bg-emerald-500 text-black hover:bg-emerald-400">
+                  Buy
+                </Button>
+                <Button variant="outline" onClick={() => doTrade("sell")}>
+                  Sell
+                </Button>
+              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Simulated fills at last mock price. No real assets are moved.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-0.5 font-mono">{value}</div>
+    </div>
+  );
+}
