@@ -9,7 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "cap:sync": "cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android",
+    "cap:assets": "capacitor-assets generate --iconBackgroundColor '#0B0F19' --splashBackgroundColor '#0B0F19'"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
