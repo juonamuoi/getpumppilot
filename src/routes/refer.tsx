@@ -28,12 +28,16 @@ function ReferPage() {
   const { user, loading } = useAuth();
   const [code, setCode] = useState<string | null>(null);
   const [count, setCount] = useState<number>(0);
+  const [qualified, setQualified] = useState<number>(0);
+  const [rewardMonths, setRewardMonths] = useState<number>(0);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     getMyReferralCode(user.id).then(setCode);
     getMyReferralCount(user.id).then(setCount);
+    getMyQualifiedReferralCount(user.id).then(setQualified);
+    getMyRewardMonths().then(setRewardMonths);
   }, [user]);
 
   if (loading) {
