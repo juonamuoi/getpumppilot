@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StrategyRouteImport } from './routes/strategy'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as RiskRouteImport } from './routes/risk'
 import { Route as PaperRouteImport } from './routes/paper'
@@ -21,6 +22,11 @@ import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
 const StrategyRoute = StrategyRouteImport.update({
   id: '/strategy',
   path: '/strategy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScannerRoute = ScannerRouteImport.update({
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
+  '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
   '/asset/$symbol': typeof AssetSymbolRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
+  '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
   '/asset/$symbol': typeof AssetSymbolRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/paper': typeof PaperRoute
   '/risk': typeof RiskRoute
   '/scanner': typeof ScannerRoute
+  '/security': typeof SecurityRoute
   '/strategy': typeof StrategyRoute
   '/asset/$symbol': typeof AssetSymbolRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/paper'
     | '/risk'
     | '/scanner'
+    | '/security'
     | '/strategy'
     | '/asset/$symbol'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/paper'
     | '/risk'
     | '/scanner'
+    | '/security'
     | '/strategy'
     | '/asset/$symbol'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/paper'
     | '/risk'
     | '/scanner'
+    | '/security'
     | '/strategy'
     | '/asset/$symbol'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   PaperRoute: typeof PaperRoute
   RiskRoute: typeof RiskRoute
   ScannerRoute: typeof ScannerRoute
+  SecurityRoute: typeof SecurityRoute
   StrategyRoute: typeof StrategyRoute
   AssetSymbolRoute: typeof AssetSymbolRoute
 }
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/strategy'
       fullPath: '/strategy'
       preLoaderRoute: typeof StrategyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scanner': {
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaperRoute: PaperRoute,
   RiskRoute: RiskRoute,
   ScannerRoute: ScannerRoute,
+  SecurityRoute: SecurityRoute,
   StrategyRoute: StrategyRoute,
   AssetSymbolRoute: AssetSymbolRoute,
 }

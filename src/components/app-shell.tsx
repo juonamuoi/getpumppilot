@@ -7,6 +7,7 @@ import {
   FlaskConical,
   History,
   ShieldCheck,
+  ShieldAlert,
   Menu,
   Lock,
   Sparkles,
@@ -26,6 +27,7 @@ const nav = [
   { to: "/strategy", label: "Strategy Builder", icon: Sparkles },
   { to: "/backtest", label: "Backtest", icon: History },
   { to: "/risk", label: "Risk Controls", icon: ShieldCheck },
+  { to: "/security", label: "Security", icon: ShieldAlert },
 ] as const;
 
 function Brand() {
