@@ -1280,3 +1280,172 @@ function ReplayAssetRow({
     </div>
   );
 }
+
+/* ------------------------------ Rule Impact ------------------------------ */
+
+const RULE_META: Record<
+  RuleKey,
+  {
+    label: string;
+    short: string;
+    op: ">=" | "<=";
+    unit: string;
+    barClass: string;
+    textClass: string;
+    accent: string;
+  }
+> = {
+  momentum: {
+    label: "Momentum ≥",
+    short: "Momentum",
+    op: ">=",
+    unit: "",
+    barClass: "bg-emerald-500/70",
+    textClass: "text-emerald-300",
+    accent: "border-emerald-500/40",
+  },
+  volume: {
+    label: "Volume ≥",
+    short: "Volume",
+    op: ">=",
+    unit: "",
+    barClass: "bg-sky-500/70",
+    textClass: "text-sky-300",
+    accent: "border-sky-500/40",
+  },
+  volatility: {
+    label: "Volatility ≤",
+    short: "Volatility",
+    op: "<=",
+    unit: "",
+    barClass: "bg-violet-500/70",
+    textClass: "text-violet-300",
+    accent: "border-violet-500/40",
+  },
+  change: {
+    label: "24h change ≥",
+    short: "24h Δ",
+    op: ">=",
+    unit: "%",
+    barClass: "bg-amber-500/70",
+    textClass: "text-amber-300",
+    accent: "border-amber-500/40",
+  },
+};
+
+function ruleThreshold(rules: ScannerRules, k: RuleKey) {
+  if (k === "momentum") return rules.minMomentum;
+  if (k === "volume") return rules.minVolumeScore;
+  if (k === "volatility") return rules.maxVolatility;
+  return rules.min24hChangePct;
+}
+
+function RuleImpactPanel({
+  result,
+  rules,
+  focus,
+  onFocus,
+}: {
+  result: ReplayResult;
+  rules: ScannerRules;
+  focus: RuleKey | null;
+  onFocus: (k: RuleKey | null) => void;
+}) {
+  const totalMatches = result.signals.length;
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const maxBinding = Math.max(1, ...keys.map((k) => result.impact[k].bindingMatches));
+  const maxUnlock = Math.max(1, ...keys.map((k) => result.impact[k].failedOnly));
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <Label className="text-xs">Rule impact</Label>
+        {focus && (
+          <button
+            type="button"
+            onClick={() => onFocus(null)}
+            className="text-[10px] text-muted-foreground underline-offset-2 hover:underline"
+          >
+            Clear focus
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {keys.map((k) => {
+          const meta = RULE_META[k];
+          const imp = result.impact[k];
+          const bindPct = totalMatches ? (imp.bindingMatches / totalMatches) * 100 : 0;
+          const isFocus = focus === k;
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => onFocus(isFocus ? null : k)}
+              className={`group rounded-lg border p-3 text-left transition ${
+                isFocus
+                  ? `${meta.accent} bg-muted/40`
+                  : "border-border/60 bg-muted/20 hover:border-border"
+              }`}
+              title={
+                imp.failedOnly > 0
+                  ? `${imp.failedOnly} snapshot${imp.failedOnly === 1 ? "" : "s"} failed only this rule — loosening it would unlock them`
+                  : "No snapshots failed only this rule"
+              }
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-semibold ${meta.textClass}`}>{meta.short}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {meta.op} {ruleThreshold(rules, k)}
+                  {meta.unit}
+                </span>
+              </div>
+
+              <div className="mt-2 space-y-1.5">
+                <div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>Binding on matches</span>
+                    <span className="font-mono">
+                      {imp.bindingMatches} ({bindPct.toFixed(0)}%)
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted/60">
+                    <div
+                      className={`h-full rounded-full ${meta.barClass}`}
+                      style={{ width: `${(imp.bindingMatches / maxBinding) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>Near-miss (only-fail)</span>
+                    <span className="font-mono">{imp.failedOnly}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted/60">
+                    <div
+                      className={`h-full rounded-full ${meta.barClass} opacity-60`}
+                      style={{ width: `${(imp.failedOnly / maxUnlock) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>avg slack</span>
+                <span className={`font-mono ${meta.textClass}`}>
+                  {imp.avgSlack >= 0 ? "+" : ""}
+                  {imp.avgSlack.toFixed(1)}
+                  {meta.unit}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[10px] text-muted-foreground">
+        Tap a rule to filter the timeline and asset list to matches it bound. Near-miss counts
+        snapshots that failed only that rule — the biggest lever to unlock more signals.
+      </p>
+    </div>
+  );
+}
+
