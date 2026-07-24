@@ -220,9 +220,11 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE_URL },
       { property: "og:site_name", content: "PumpPilot AI" },
+      { property: "og:image", content: `${SITE_URL}/favicon.png` },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: TITLE },
       { name: "twitter:description", content: DESCRIPTION },
+      { name: "twitter:image", content: `${SITE_URL}/favicon.png` },
     ],
     links: [{ rel: "canonical", href: SITE_URL }],
     scripts: [
@@ -255,9 +257,11 @@ function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 text-black shadow-lg shadow-emerald-500/20">
-              <FlaskConical className="h-5 w-5" />
-            </div>
+            <img
+              src="/favicon.png"
+              alt="PumpPilot AI logo"
+              className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-lg shadow-emerald-500/20"
+            />
             <div>
               <div className="text-sm font-bold tracking-tight">PumpPilot AI</div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -283,9 +287,14 @@ function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 pt-16 pb-20">
+      <section className="relative overflow-hidden px-4 pt-12 pb-20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-4xl text-center">
+          <img
+            src="/favicon.png"
+            alt="PumpPilot AI mascot — AI robot pumping crypto into a wallet while you sleep"
+            className="mx-auto mb-6 h-32 w-32 rounded-3xl object-cover shadow-2xl shadow-emerald-500/10 sm:h-40 sm:w-40"
+          />
           <Badge
             variant="outline"
             className="mb-4 border-emerald-500/30 px-3 py-1 text-emerald-300"
