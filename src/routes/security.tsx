@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -37,6 +38,7 @@ import {
   XCircle,
   CalendarIcon,
   BarChart3,
+  Columns3,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -409,6 +411,55 @@ const KIND_LABEL: Record<ReportKind, string> = {
   other: "Other",
 };
 
+type CsvColumnKey =
+  | "id"
+  | "timestamp"
+  | "severity"
+  | "category"
+  | "kind"
+  | "matched_rule"
+  | "source"
+  | "origin_url"
+  | "blocked"
+  | "message"
+  | "detail";
+
+const CSV_COLUMNS: {
+  key: CsvColumnKey;
+  label: string;
+  value: (r: Report) => string;
+}[] = [
+  { key: "id", label: "ID", value: (r) => r.id },
+  { key: "timestamp", label: "Timestamp (ISO)", value: (r) => new Date(r.ts).toISOString() },
+  { key: "severity", label: "Severity", value: (r) => r.severity },
+  { key: "category", label: "Category", value: (r) => r.category ?? "" },
+  { key: "kind", label: "Kind", value: (r) => KIND_LABEL[r.kind] ?? r.kind },
+  { key: "matched_rule", label: "Matched rule", value: (r) => r.matchedRule ?? "" },
+  { key: "source", label: "Source", value: (r) => r.source },
+  { key: "origin_url", label: "Origin URL", value: (r) => r.originUrl ?? "" },
+  { key: "blocked", label: "Blocked", value: (r) => (r.blocked ? "yes" : "no") },
+  { key: "message", label: "Message", value: (r) => r.message },
+  { key: "detail", label: "Detail", value: (r) => r.detail ?? "" },
+];
+
+const DEFAULT_CSV_COLUMNS: CsvColumnKey[] = CSV_COLUMNS.map((c) => c.key);
+const CSV_COLUMNS_STORAGE_KEY = "pumppilot.security.csvColumns.v1";
+
+function loadCsvColumns(): CsvColumnKey[] {
+  if (typeof window === "undefined") return DEFAULT_CSV_COLUMNS;
+  try {
+    const raw = window.localStorage.getItem(CSV_COLUMNS_STORAGE_KEY);
+    if (!raw) return DEFAULT_CSV_COLUMNS;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return DEFAULT_CSV_COLUMNS;
+    const valid = new Set(DEFAULT_CSV_COLUMNS);
+    const picked = parsed.filter((k): k is CsvColumnKey => typeof k === "string" && valid.has(k as CsvColumnKey));
+    return picked.length > 0 ? picked : DEFAULT_CSV_COLUMNS;
+  } catch {
+    return DEFAULT_CSV_COLUMNS;
+  }
+}
+
 function IncidentsPanel() {
   const { reports, clearReports } = useSecurity();
   const [q, setQ] = useState("");
@@ -416,6 +467,25 @@ function IncidentsPanel() {
   const [kind, setKind] = useState<"all" | ReportKind>("all");
   const [category, setCategory] = useState<"all" | ReportCategory>("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [csvColumns, setCsvColumnsState] = useState<CsvColumnKey[]>(() => loadCsvColumns());
+  const setCsvColumns = (next: CsvColumnKey[]) => {
+    // Preserve canonical ordering from CSV_COLUMNS
+    const set = new Set(next);
+    const ordered = DEFAULT_CSV_COLUMNS.filter((k) => set.has(k));
+    setCsvColumnsState(ordered);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(CSV_COLUMNS_STORAGE_KEY, JSON.stringify(ordered));
+      } catch {
+        /* ignore quota */
+      }
+    }
+  };
+  const toggleCsvColumn = (key: CsvColumnKey) => {
+    setCsvColumns(
+      csvColumns.includes(key) ? csvColumns.filter((k) => k !== key) : [...csvColumns, key],
+    );
+  };
 
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -475,36 +545,17 @@ function IncidentsPanel() {
       toast.error("No incidents to export");
       return;
     }
+    if (csvColumns.length === 0) {
+      toast.error("Select at least one column to export");
+      return;
+    }
     const esc = (v: unknown) => {
       const s = v == null ? "" : String(v);
       return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    const header = [
-      "id",
-      "timestamp",
-      "severity",
-      "category",
-      "kind",
-      "matched_rule",
-      "source",
-      "origin_url",
-      "blocked",
-      "message",
-      "detail",
-    ];
-    const rows = filtered.map((r) => [
-      r.id,
-      new Date(r.ts).toISOString(),
-      r.severity,
-      r.category ?? "",
-      KIND_LABEL[r.kind] ?? r.kind,
-      r.matchedRule ?? "",
-      r.source,
-      r.originUrl ?? "",
-      r.blocked ? "yes" : "no",
-      r.message,
-      r.detail ?? "",
-    ]);
+    const cols = CSV_COLUMNS.filter((c) => csvColumns.includes(c.key));
+    const header = cols.map((c) => c.key);
+    const rows = filtered.map((r) => cols.map((c) => c.value(r)));
     const csv =
       "\ufeff" +
       [header, ...rows].map((row) => row.map(esc).join(",")).join("\r\n") +
@@ -520,7 +571,7 @@ function IncidentsPanel() {
     a.remove();
     URL.revokeObjectURL(url);
     toast.success(
-      `Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"}${
+      `Exported ${filtered.length} incident${filtered.length === 1 ? "" : "s"} · ${cols.length} column${cols.length === 1 ? "" : "s"}${
         activeFilterCount ? ` (${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"})` : ""
       }`,
     );
@@ -715,6 +766,74 @@ function IncidentsPanel() {
                     rows={stats.buckets.map((b) => ({ label: b.label, count: b.count }))}
                     total={stats.total}
                   />
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  title="Choose CSV columns"
+                >
+                  <Columns3 className="mr-1 h-3.5 w-3.5" /> Columns
+                  <Badge
+                    variant="outline"
+                    className="ml-2 border-border/60 text-[10px] text-muted-foreground"
+                  >
+                    {csvColumns.length}/{CSV_COLUMNS.length}
+                  </Badge>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-0">
+                <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                  <div className="text-xs font-medium">CSV columns</div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => setCsvColumns(DEFAULT_CSV_COLUMNS)}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => setCsvColumns([])}
+                    >
+                      None
+                    </Button>
+                  </div>
+                </div>
+                <div className="max-h-72 space-y-1 overflow-y-auto p-2">
+                  {CSV_COLUMNS.map((c) => {
+                    const checked = csvColumns.includes(c.key);
+                    return (
+                      <label
+                        key={c.key}
+                        className={cn(
+                          "flex cursor-pointer items-center justify-between gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted/40",
+                          checked && "bg-muted/30",
+                        )}
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleCsvColumn(c.key)}
+                          />
+                          <span className="truncate">{c.label}</span>
+                        </div>
+                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                          {c.key}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-border/60 px-3 py-2 text-[10px] text-muted-foreground">
+                  Saved to this browser
                 </div>
               </PopoverContent>
             </Popover>
