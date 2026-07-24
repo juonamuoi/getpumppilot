@@ -18,6 +18,7 @@ import { Route as PaperRouteImport } from './routes/paper'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as DoctorRouteImport } from './routes/doctor'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as BacktestRouteImport } from './routes/backtest'
@@ -72,6 +73,11 @@ const DoctorRoute = DoctorRouteImport.update({
   path: '/doctor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CopilotRoute = CopilotRouteImport.update({
   id: '/copilot',
   path: '/copilot',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
+  '/dashboard': typeof DashboardRoute
   '/doctor': typeof DoctorRoute
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
+  '/dashboard': typeof DashboardRoute
   '/doctor': typeof DoctorRoute
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
   '/copilot': typeof CopilotRoute
+  '/dashboard': typeof DashboardRoute
   '/doctor': typeof DoctorRoute
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/backtest'
     | '/community'
     | '/copilot'
+    | '/dashboard'
     | '/doctor'
     | '/journal'
     | '/learn'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/backtest'
     | '/community'
     | '/copilot'
+    | '/dashboard'
     | '/doctor'
     | '/journal'
     | '/learn'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/backtest'
     | '/community'
     | '/copilot'
+    | '/dashboard'
     | '/doctor'
     | '/journal'
     | '/learn'
@@ -239,6 +251,7 @@ export interface RootRouteChildren {
   BacktestRoute: typeof BacktestRoute
   CommunityRoute: typeof CommunityRoute
   CopilotRoute: typeof CopilotRoute
+  DashboardRoute: typeof DashboardRoute
   DoctorRoute: typeof DoctorRoute
   JournalRoute: typeof JournalRoute
   LearnRoute: typeof LearnRoute
@@ -317,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DoctorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/copilot': {
       id: '/copilot'
       path: '/copilot'
@@ -383,6 +403,7 @@ const rootRouteChildren: RootRouteChildren = {
   BacktestRoute: BacktestRoute,
   CommunityRoute: CommunityRoute,
   CopilotRoute: CopilotRoute,
+  DashboardRoute: DashboardRoute,
   DoctorRoute: DoctorRoute,
   JournalRoute: JournalRoute,
   LearnRoute: LearnRoute,
