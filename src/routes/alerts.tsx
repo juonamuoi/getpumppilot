@@ -1247,6 +1247,7 @@ function computeTuning(
         candidatePool: 0,
         fragile: 0,
         avgOtherMinSlack: 0,
+        preview: null,
       };
       continue;
     }
@@ -1275,9 +1276,59 @@ function computeTuning(
       candidatePool: pool.length,
       fragile,
       avgOtherMinSlack: sumOther / unlocked.length,
+      preview: simulateApply(allSnaps, k, suggested),
     };
   }
   return out;
+}
+
+// Reclassify eligible (match/fail) snapshots as if rule `k`'s threshold were
+// replaced with `suggested`. Cooldown snapshots are left out of both sides.
+function simulateApply(
+  allSnaps: BucketSnapshot[],
+  k: RuleKey,
+  suggested: number,
+): TuningPreview {
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const meta = RULE_META[k];
+  const eligible = allSnaps.filter((s) => s.outcome !== "cooldown");
+  let matchesBefore = 0,
+    matchesAfter = 0;
+  let nearMissThisBefore = 0,
+    nearMissThisAfter = 0;
+  let nearMissAnyBefore = 0,
+    nearMissAnyAfter = 0;
+  for (const s of eligible) {
+    // Before
+    const beforeFailed = s.failedRules;
+    if (beforeFailed.length === 0) matchesBefore++;
+    if (beforeFailed.length === 1) {
+      nearMissAnyBefore++;
+      if (beforeFailed[0] === k) nearMissThisBefore++;
+    }
+    // After: recompute slack for k only
+    const val = snapshotValue(s, k);
+    const newSlackK =
+      meta.op === ">=" ? val - suggested : suggested - val;
+    const afterFailed: RuleKey[] = [];
+    for (const rk of keys) {
+      const sl = rk === k ? newSlackK : s.slack[rk];
+      if (sl < 0) afterFailed.push(rk);
+    }
+    if (afterFailed.length === 0) matchesAfter++;
+    if (afterFailed.length === 1) {
+      nearMissAnyAfter++;
+      if (afterFailed[0] === k) nearMissThisAfter++;
+    }
+  }
+  return {
+    matchesBefore,
+    matchesAfter,
+    nearMissThisBefore,
+    nearMissThisAfter,
+    nearMissAnyBefore,
+    nearMissAnyAfter,
+  };
 }
 
 function RuleTuningPanel({
