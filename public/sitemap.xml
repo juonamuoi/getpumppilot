@@ -14,4 +14,6 @@
   <url><loc>https://crypto-spotter-pro.lovable.app/terms</loc><priority>0.3</priority></url>
   <url><loc>https://crypto-spotter-pro.lovable.app/privacy</loc><priority>0.3</priority></url>
   <url><loc>https://crypto-spotter-pro.lovable.app/refund</loc><priority>0.3</priority></url>
+  <url><loc>https://crypto-spotter-pro.lovable.app/developers</loc><priority>0.8</priority></url>
+
 </urlset>
