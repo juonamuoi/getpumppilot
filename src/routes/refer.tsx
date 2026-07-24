@@ -73,11 +73,9 @@ function ReferPage() {
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + link)}`;
   const emailUrl = `mailto:?subject=${encodeURIComponent("Try PumpPilot AI with me")}&body=${encodeURIComponent(shareText + "\n\n" + link)}`;
 
-  const nativeShare = async () => {
-    if (!navigator.share) { copy(); return; }
-    try {
-      await navigator.share({ title: "PumpPilot AI", text: shareText, url: link });
-    } catch {}
+  const handleNativeShare = async () => {
+    const ok = await nativeShare({ title: "PumpPilot AI", text: shareText, url: link });
+    if (!ok) copy();
   };
 
   return (
