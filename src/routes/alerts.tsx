@@ -1225,22 +1225,52 @@ function ReplayPanel() {
               </div>
 
               <div>
-                <Label className="text-xs">Signal timeline</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Signal timeline</Label>
+                  <span className="text-[10px] text-muted-foreground">Tap a bar to inspect</span>
+                </div>
                 <div className="mt-2 flex h-16 items-end gap-[2px] rounded-md border border-border/60 bg-muted/20 p-2">
-                  {filteredBuckets.map((n, i) => (
-                    <div
-                      key={i}
-                      className={`flex-1 rounded-sm ${ruleFocus ? RULE_META[ruleFocus].barClass : "bg-emerald-500/70"}`}
-                      style={{ height: `${(n / maxBucket) * 100}%`, minHeight: n ? 2 : 0 }}
-                      title={`${n} signal${n === 1 ? "" : "s"}`}
-                    />
-                  ))}
+                  {filteredBuckets.map((n, i) => {
+                    const snaps = result.perBucketSnapshots[i] ?? [];
+                    const hasAny = snaps.length > 0;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => hasAny && setOpenBucket(i)}
+                        disabled={!hasAny}
+                        className={`group relative flex-1 rounded-sm transition hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-emerald-400/60 disabled:cursor-not-allowed ${
+                          n > 0
+                            ? ruleFocus
+                              ? RULE_META[ruleFocus].barClass
+                              : "bg-emerald-500/70"
+                            : hasAny
+                              ? "bg-muted-foreground/25"
+                              : "bg-muted-foreground/10"
+                        }`}
+                        style={{
+                          height: n > 0 ? `${(n / maxBucket) * 100}%` : hasAny ? "6%" : "3%",
+                          minHeight: n ? 2 : hasAny ? 2 : 1,
+                        }}
+                        title={`${n} match${n === 1 ? "" : "es"} · ${snaps.length} evaluation${snaps.length === 1 ? "" : "s"}`}
+                        aria-label={`Bucket ${i + 1}: ${n} matches, ${snaps.length} evaluations`}
+                      />
+                    );
+                  })}
                 </div>
                 <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
                   <span>{format(new Date(result.ranAt - WINDOW_MS[result.window]), "MMM d HH:mm")}</span>
                   <span>{format(new Date(result.ranAt), "MMM d HH:mm")}</span>
                 </div>
               </div>
+
+              <SnapshotBucketDialog
+                open={openBucket !== null}
+                onOpenChange={(v) => !v && setOpenBucket(null)}
+                bucketIndex={openBucket}
+                result={result}
+                rules={scannerRules}
+              />
 
               <RuleImpactPanel
                 result={result}
