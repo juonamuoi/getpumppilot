@@ -41,6 +41,33 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_user_id: string
+          referrer_code: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_user_id: string
+          referrer_code: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_user_id?: string
+          referrer_code?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       strategies: {
         Row: {
           author_id: string
@@ -195,6 +222,7 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      resolve_referral_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
