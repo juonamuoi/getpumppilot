@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PaperProvider } from "@/lib/paper-store";
 import { SecurityProvider } from "@/lib/security-store";
+import { OnboardingProvider } from "@/lib/onboarding-store";
 
 function NotFoundComponent() {
   return (
