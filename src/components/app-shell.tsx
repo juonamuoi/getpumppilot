@@ -30,7 +30,7 @@ import { AICopilot } from "./ai-copilot";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/scanner", label: "Scanner", icon: Radar },
   { to: "/doctor", label: "Portfolio Doctor", icon: Stethoscope },
   { to: "/copilot", label: "AI Copilot", icon: Bot },
@@ -68,7 +68,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1">
       {nav.map((n) => {
-        const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+        const active = pathname === n.to || pathname.startsWith(n.to + "/");
         const Icon = n.icon;
         return (
           <Link

@@ -31,7 +31,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) nav({ to: "/community" });
+    if (!loading && session) nav({ to: "/dashboard" });
   }, [loading, session, nav]);
 
   async function signIn(e: React.FormEvent) {
@@ -41,7 +41,7 @@ function AuthPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Signed in");
-    nav({ to: "/community" });
+    nav({ to: "/dashboard" });
   }
 
   async function signUp(e: React.FormEvent) {
@@ -51,7 +51,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/community`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
         data: { display_name: displayName || email.split("@")[0] },
       },
     });
@@ -66,7 +66,7 @@ function AuthPage() {
     });
     if (result.error) return toast.error(result.error.message);
     if (result.redirected) return;
-    nav({ to: "/community" });
+    nav({ to: "/dashboard" });
   }
 
   return (
