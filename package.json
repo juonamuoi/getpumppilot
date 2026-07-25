@@ -105,6 +105,7 @@
     "vite": "^8.0.16"
   },
   "resolutions": {
-    "tar": "^7.5.1"
+    "tar": "^7.5.1",
+    "@tanstack/start-plugin-core/zod": "^4.4.3"
   }
 }
