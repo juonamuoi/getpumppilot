@@ -43,6 +43,7 @@ import {
   History,
   ArrowRight,
   Undo2,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Dialog,
@@ -1530,6 +1531,53 @@ function TuningHistoryPanel({
   );
 }
 
+type RiskBounds = {
+  enabled: boolean;
+  /** Max allowed increase in near-miss (any rule) snapshots. */
+  maxNearMissIncrease: number;
+  /** Max allowed share of unlocked snapshots that are fragile, in percent. */
+  maxFragilePct: number;
+};
+
+const DEFAULT_BOUNDS: RiskBounds = {
+  enabled: true,
+  maxNearMissIncrease: 5,
+  maxFragilePct: 50,
+};
+
+const BOUNDS_KEY = "pumppilot_tuning_bounds";
+
+function loadBounds(): RiskBounds {
+  if (typeof window === "undefined") return DEFAULT_BOUNDS;
+  try {
+    const raw = window.localStorage.getItem(BOUNDS_KEY);
+    return raw ? { ...DEFAULT_BOUNDS, ...(JSON.parse(raw) as Partial<RiskBounds>) } : DEFAULT_BOUNDS;
+  } catch {
+    return DEFAULT_BOUNDS;
+  }
+}
+
+/** Returns the list of bound violations for a recommendation; empty when it may be applied. */
+function checkBounds(t: RuleTuning, bounds: RiskBounds): string[] {
+  if (!bounds.enabled || t.suggested == null) return [];
+  const out: string[] = [];
+  const fragilePct = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+  if (fragilePct > bounds.maxFragilePct) {
+    out.push(
+      `Fragility ${fragilePct.toFixed(0)}% exceeds your ${bounds.maxFragilePct}% limit`,
+    );
+  }
+  if (t.preview) {
+    const inc = t.preview.nearMissAnyAfter - t.preview.nearMissAnyBefore;
+    if (inc > bounds.maxNearMissIncrease) {
+      out.push(
+        `Near-miss grows by ${inc} (limit +${bounds.maxNearMissIncrease})`,
+      );
+    }
+  }
+  return out;
+}
+
 function RuleTuningPanel({
   result,
   rules,
@@ -1545,6 +1593,13 @@ function RuleTuningPanel({
 }) {
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
+  const [bounds, setBounds] = useState<RiskBounds>(loadBounds);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(BOUNDS_KEY, JSON.stringify(bounds));
+    } catch {}
+  }, [bounds]);
   const fraction = preset === "conservative" ? 0.25 : preset === "aggressive" ? 0.9 : 0.5;
   const tuning = useMemo(
     () => computeTuning(result, rules, fraction),
@@ -1581,6 +1636,64 @@ function RuleTuningPanel({
         </ToggleGroup>
       </div>
       <div className="mb-2 text-[10px] text-muted-foreground">{presetHint}</div>
+
+      <div className="mb-3 rounded-md border border-border/60 bg-background/40 p-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium">
+            <ShieldAlert className="h-3.5 w-3.5 text-primary" />
+            Near-miss risk bounds
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground">
+              {bounds.enabled ? "Enforced" : "Off"}
+            </span>
+            <Switch
+              checked={bounds.enabled}
+              onCheckedChange={(v) => setBounds((b) => ({ ...b, enabled: v }))}
+            />
+          </div>
+        </div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground">
+              Max near-miss increase (snapshots)
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              className="h-7 text-xs"
+              value={bounds.maxNearMissIncrease}
+              disabled={!bounds.enabled}
+              onChange={(e) =>
+                setBounds((b) => ({
+                  ...b,
+                  maxNearMissIncrease: Math.max(0, Number(e.target.value) || 0),
+                }))
+              }
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] text-muted-foreground">Max fragility (%)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              className="h-7 text-xs"
+              value={bounds.maxFragilePct}
+              disabled={!bounds.enabled}
+              onChange={(e) =>
+                setBounds((b) => ({
+                  ...b,
+                  maxFragilePct: Math.min(100, Math.max(0, Number(e.target.value) || 0)),
+                }))
+              }
+            />
+          </div>
+        </div>
+        <p className="mt-1.5 text-[10px] text-muted-foreground">
+          Recommendations that breach these limits cannot be applied.
+        </p>
+      </div>
       {!anySuggestion ? (
         <div className="p-4 text-center text-xs text-muted-foreground">
           No near-miss snapshots in this window — current rules are the binding
@@ -1596,6 +1709,8 @@ function RuleTuningPanel({
             const fragilePct = t.unlocked
               ? (t.fragile / t.unlocked) * 100
               : 0;
+            const violations = checkBounds(t, bounds);
+            const blocked = violations.length > 0;
             const riskTone =
               fragilePct >= 60
                 ? "text-rose-300"
@@ -1701,14 +1816,29 @@ function RuleTuningPanel({
 
 
 
+                    {blocked && (
+                      <div className="mt-2 rounded border border-destructive/50 bg-destructive/10 p-2">
+                        <div className="flex items-center gap-1 text-[10px] font-medium text-destructive">
+                          <ShieldAlert className="h-3 w-3" />
+                          Blocked by your risk bounds
+                        </div>
+                        <ul className="mt-1 space-y-0.5 text-[10px] text-muted-foreground">
+                          {violations.map((v) => (
+                            <li key={v}>• {v}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     <Button
                       size="sm"
                       variant="outline"
                       className="mt-2 h-7 w-full text-xs"
+                      disabled={blocked}
+                      title={blocked ? violations.join("; ") : undefined}
                       onClick={() => setPending(k)}
                     >
-                      Apply {meta.short} {meta.op} {t.suggested}
-                      {meta.unit}
+                      {blocked ? "Apply blocked" : `Apply ${meta.short} ${meta.op} ${t.suggested}${meta.unit}`}
                     </Button>
                   </>
                 )}
@@ -1725,7 +1855,11 @@ function RuleTuningPanel({
         preset={preset}
         onCancel={() => setPending(null)}
         onConfirm={() => {
-          if (pending && tuning[pending].suggested != null) {
+          if (
+            pending &&
+            tuning[pending].suggested != null &&
+            checkBounds(tuning[pending], bounds).length === 0
+          ) {
             onApply(pending, tuning[pending].suggested!, {
               preset,
               preview: tuning[pending].preview,
