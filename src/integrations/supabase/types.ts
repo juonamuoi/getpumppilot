@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      mcp_audit_log: {
+        Row: {
+          client_id: string | null
+          correlation_id: string
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          request: Json
+          status: string
+          tool_name: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          correlation_id: string
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          request?: Json
+          status: string
+          tool_name: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          correlation_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          request?: Json
+          status?: string
+          tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_consent_grants: {
+        Row: {
+          call_count: number
+          client_id: string
+          first_granted_at: string
+          id: string
+          last_seen_at: string
+          revoked_at: string | null
+          tools_used: string[]
+          user_id: string
+        }
+        Insert: {
+          call_count?: number
+          client_id: string
+          first_granted_at?: string
+          id?: string
+          last_seen_at?: string
+          revoked_at?: string | null
+          tools_used?: string[]
+          user_id: string
+        }
+        Update: {
+          call_count?: number
+          client_id?: string
+          first_granted_at?: string
+          id?: string
+          last_seen_at?: string
+          revoked_at?: string | null
+          tools_used?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -280,6 +352,26 @@ export type Database = {
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
+      }
+      mcp_begin_call: {
+        Args: {
+          _client_id: string
+          _correlation_id: string
+          _limit?: number
+          _request?: Json
+          _tool_name: string
+          _window_seconds?: number
+        }
+        Returns: Json
+      }
+      mcp_finish_call: {
+        Args: {
+          _correlation_id: string
+          _duration_ms?: number
+          _error_message?: string
+          _status: string
+        }
+        Returns: undefined
       }
       my_referral_reward_months: { Args: never; Returns: number }
       process_referral_rewards: { Args: never; Returns: number }
