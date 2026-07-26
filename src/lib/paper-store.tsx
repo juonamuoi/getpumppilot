@@ -70,6 +70,8 @@ export type TuningLogEntry = {
   matchesAfter?: number;
   nearMissBefore?: number;
   nearMissAfter?: number;
+  /** Set once this change has been rolled back. */
+  revertedAt?: number;
 };
 
 type State = {
@@ -94,6 +96,7 @@ type State = {
   toggleAlert: (id: string) => void;
   setScannerRules: (r: ScannerRules) => void;
   logTuning: (e: Omit<TuningLogEntry, "id" | "ts">) => void;
+  markTuningReverted: (id: string) => void;
   clearTuningLog: () => void;
   simulateScannerRun: () => number; // returns count of new deliveries
   clearDeliveries: () => void;
@@ -308,6 +311,10 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     logTuning: (e) =>
       setTuningLog((prev) =>
         [{ ...e, id: Math.random().toString(36).slice(2), ts: Date.now() }, ...prev].slice(0, 200),
+      ),
+    markTuningReverted: (id) =>
+      setTuningLog((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, revertedAt: Date.now() } : e)),
       ),
     clearTuningLog: () => setTuningLog([]),
     simulateScannerRun,
