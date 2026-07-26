@@ -164,35 +164,15 @@ export const getGoLiveTestSession = createServerFn({ method: "POST" })
     if (!/^cs_[a-zA-Z0-9_]+$/.test(data.sessionId)) throw new Error("Invalid sessionId");
     return data;
   })
-  .handler(async ({ data, context }): Promise<
-    | { status: string | null; paymentStatus: string | null; amountTotal: number | null; currency: string | null; paymentIntentId: string | null; statementDescriptor: string | null; chargeId: string | null; receiptUrl: string | null; created: string | null; last4: string | null; brand: string | null }
-    | { error: string }
-  > => {
+  .handler(async ({ data, context }): Promise<GoLiveSessionResult> => {
     try {
       const stripe = createStripeClient(data.environment);
-      const session = await stripe.checkout.sessions.retrieve(data.sessionId, {
-        expand: ["payment_intent", "payment_intent.latest_charge"],
+      return await fetchGoLiveTestSession(stripe, {
+        sessionId: data.sessionId,
+        userId: context.userId,
       });
-      if (session.metadata?.userId !== context.userId) {
-        return { error: "Session not found" };
-      }
-      const pi: any = typeof session.payment_intent === "object" ? session.payment_intent : null;
-      const charge: any = pi && typeof pi.latest_charge === "object" ? pi.latest_charge : null;
-
-      return {
-        status: session.status ?? null,
-        paymentStatus: session.payment_status ?? null,
-        amountTotal: session.amount_total ?? null,
-        currency: session.currency ?? null,
-        paymentIntentId: pi?.id ?? null,
-        statementDescriptor: charge?.statement_descriptor ?? charge?.calculated_statement_descriptor ?? pi?.statement_descriptor ?? null,
-        chargeId: charge?.id ?? null,
-        receiptUrl: charge?.receipt_url ?? null,
-        created: charge?.created ? new Date(charge.created * 1000).toISOString() : null,
-        last4: charge?.payment_method_details?.card?.last4 ?? null,
-        brand: charge?.payment_method_details?.card?.brand ?? null,
-      };
     } catch (error) {
       return { error: getStripeErrorMessage(error) };
     }
   });
+
