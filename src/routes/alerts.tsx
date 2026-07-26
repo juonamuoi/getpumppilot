@@ -39,6 +39,7 @@ import {
   ChevronRight,
   X,
   Download,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Dialog,
@@ -47,6 +48,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type Alert, type AlertDelivery, type ScannerRules } from "@/lib/paper-store";
 import { toast } from "sonner";
@@ -1382,6 +1393,7 @@ function RuleTuningPanel({
   onApply: (k: RuleKey, value: number) => void;
 }) {
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
+  const [pending, setPending] = useState<RuleKey | null>(null);
   const fraction = preset === "conservative" ? 0.25 : preset === "aggressive" ? 0.9 : 0.5;
   const tuning = useMemo(
     () => computeTuning(result, rules, fraction),
@@ -1542,7 +1554,7 @@ function RuleTuningPanel({
                       size="sm"
                       variant="outline"
                       className="mt-2 h-7 w-full text-xs"
-                      onClick={() => onApply(k, t.suggested!)}
+                      onClick={() => setPending(k)}
                     >
                       Apply {meta.short} {meta.op} {t.suggested}
                       {meta.unit}
@@ -1554,7 +1566,173 @@ function RuleTuningPanel({
           })}
         </div>
       )}
+
+      <TuningConfirmDialog
+        open={pending !== null}
+        ruleKey={pending}
+        tuning={pending ? tuning[pending] : null}
+        preset={preset}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending && tuning[pending].suggested != null) {
+            onApply(pending, tuning[pending].suggested!);
+          }
+          setPending(null);
+        }}
+      />
     </div>
+  );
+}
+
+function TuningConfirmDialog({
+  open,
+  ruleKey,
+  tuning,
+  preset,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  ruleKey: RuleKey | null;
+  tuning: RuleTuning | null;
+  preset: "conservative" | "balanced" | "aggressive";
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!ruleKey || !tuning || tuning.suggested == null) {
+    return (
+      <AlertDialog open={false} onOpenChange={() => onCancel()}>
+        <AlertDialogContent />
+      </AlertDialog>
+    );
+  }
+  const meta = RULE_META[ruleKey];
+  const delta = tuning.suggested - tuning.current;
+  const looser =
+    (meta.op === ">=" && delta < 0) || (meta.op === "<=" && delta > 0);
+  const p = tuning.preview;
+  const nearMissDelta = p ? p.nearMissAnyAfter - p.nearMissAnyBefore : 0;
+  const matchDelta = p ? p.matchesAfter - p.matchesBefore : 0;
+  const fragilePct = tuning.unlocked
+    ? (tuning.fragile / tuning.unlocked) * 100
+    : 0;
+  const riskTone =
+    fragilePct >= 60
+      ? "text-rose-300"
+      : fragilePct >= 30
+        ? "text-amber-300"
+        : "text-emerald-300";
+
+  return (
+    <AlertDialog open={open} onOpenChange={(v) => !v && onCancel()}>
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm rule change</AlertDialogTitle>
+          <AlertDialogDescription>
+            This updates your live scanner rules. Alerts fired from now on use the
+            new threshold — past deliveries are not changed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="space-y-3 text-sm">
+          <div className="rounded-md border border-border/60 bg-muted/20 p-3">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Exact change
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-sm">
+              <span className="text-muted-foreground">
+                {meta.short} {meta.op} {tuning.current}
+                {meta.unit}
+              </span>
+              <span className="text-muted-foreground">→</span>
+              <span className={cn("font-semibold", meta.textClass)}>
+                {meta.short} {meta.op} {tuning.suggested}
+                {meta.unit}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                ({delta >= 0 ? "+" : ""}
+                {delta.toFixed(1)})
+              </span>
+            </div>
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              Operator stays <span className="font-mono">{meta.op}</span> — only the
+              threshold moves, {looser ? "loosening" : "tightening"} the rule (
+              {preset} preset).
+            </div>
+          </div>
+
+          {p && (
+            <div className="grid grid-cols-3 gap-2 rounded-md border border-border/60 bg-background/40 p-3 text-xs">
+              <div>
+                <div className="text-[10px] uppercase text-muted-foreground">Matches</div>
+                <div className="mt-0.5 font-semibold">
+                  {p.matchesBefore} → {p.matchesAfter}
+                  <span
+                    className={cn(
+                      "ml-1 text-[10px]",
+                      matchDelta > 0 ? "text-emerald-300" : "text-muted-foreground",
+                    )}
+                  >
+                    {matchDelta >= 0 ? "+" : ""}
+                    {matchDelta}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase text-muted-foreground">
+                  Near-miss (any)
+                </div>
+                <div className="mt-0.5 font-semibold">
+                  {p.nearMissAnyBefore} → {p.nearMissAnyAfter}
+                  <span
+                    className={cn(
+                      "ml-1 text-[10px]",
+                      nearMissDelta > 0 ? "text-rose-300" : "text-emerald-300",
+                    )}
+                  >
+                    {nearMissDelta >= 0 ? "+" : ""}
+                    {nearMissDelta}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase text-muted-foreground">Fragile</div>
+                <div className={cn("mt-0.5 font-semibold", riskTone)}>
+                  {tuning.fragile}/{tuning.unlocked}
+                  <span className="ml-1 text-[10px]">({fragilePct.toFixed(0)}%)</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200">
+            <div className="flex items-center gap-1.5 font-semibold">
+              <AlertTriangle className="h-3.5 w-3.5" /> Near-miss risk warning
+            </div>
+            <p className="mt-1 leading-relaxed">
+              {nearMissDelta > 0
+                ? `This loosening pushes ${nearMissDelta} more snapshot${nearMissDelta > 1 ? "s" : ""} into the near-miss band — they will sit one rule away from firing, so small market noise can flip them on and off.`
+                : "Near-miss count does not rise in this window, but a different window may behave differently."}{" "}
+              {fragilePct >= 30
+                ? `${fragilePct.toFixed(0)}% of the newly unlocked matches also nearly failed another rule (avg other-rule slack ${tuning.avgOtherMinSlack.toFixed(1)}), so expect noisier, less reliable alerts.`
+                : `Unlocked matches keep healthy margin on other rules (avg slack ${tuning.avgOtherMinSlack.toFixed(1)}).`}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-200/80">
+              More matches never means more profit. Signals are probabilistic on demo
+              data — you can still lose all capital.
+            </p>
+          </div>
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Save {meta.short} {meta.op} {tuning.suggested}
+            {meta.unit}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
