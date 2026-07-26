@@ -1390,7 +1390,11 @@ function RuleTuningPanel({
 }: {
   result: ReplayResult;
   rules: ScannerRules;
-  onApply: (k: RuleKey, value: number) => void;
+  onApply: (
+    k: RuleKey,
+    value: number,
+    meta: { preset: string; preview: TuningPreview | null },
+  ) => void;
 }) {
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
@@ -1575,7 +1579,10 @@ function RuleTuningPanel({
         onCancel={() => setPending(null)}
         onConfirm={() => {
           if (pending && tuning[pending].suggested != null) {
-            onApply(pending, tuning[pending].suggested!);
+            onApply(pending, tuning[pending].suggested!, {
+              preset,
+              preview: tuning[pending].preview,
+            });
           }
           setPending(null);
         }}
@@ -1974,21 +1981,42 @@ function ReplayPanel() {
               <RuleTuningPanel
                 result={result}
                 rules={scannerRules}
-                onApply={(k, value) => {
+                onApply={(k, value, meta) => {
                   const next: ScannerRules = { ...scannerRules };
+                  const current =
+                    k === "momentum"
+                      ? scannerRules.minMomentum
+                      : k === "volume"
+                        ? scannerRules.minVolumeScore
+                        : k === "volatility"
+                          ? scannerRules.maxVolatility
+                          : scannerRules.min24hChangePct;
                   if (k === "momentum") next.minMomentum = value;
                   else if (k === "volume") next.minVolumeScore = value;
                   else if (k === "volatility") next.maxVolatility = value;
                   else next.min24hChangePct = value;
                   setScannerRules(next);
+                  logTuning({
+                    rule: k,
+                    ruleLabel: RULE_META[k].short,
+                    operator: RULE_META[k].op === ">" || RULE_META[k].op === "≥" ? ">=" : "<=",
+                    unit: RULE_META[k].unit,
+                    oldValue: current,
+                    newValue: value,
+                    preset: meta.preset,
+                    window: result.window,
+                    matchesBefore: meta.preview?.matchesBefore,
+                    matchesAfter: meta.preview?.matchesAfter,
+                    nearMissBefore: meta.preview?.nearMissAnyBefore,
+                    nearMissAfter: meta.preview?.nearMissAnyAfter,
+                  });
                   toast.success(
                     `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
                   );
                 }}
               />
 
-
-
+              <TuningHistoryPanel log={tuningLog} onClear={clearTuningLog} />
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
