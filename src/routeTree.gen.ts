@@ -31,6 +31,7 @@ import { Route as RiskRouteImport } from './routes/risk'
 import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -154,6 +155,11 @@ const SecurityRoute = SecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StrategyRoute = StrategyRouteImport.update({
   id: '/strategy',
   path: '/strategy',
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/settings': typeof SettingsRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/settings': typeof SettingsRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -315,6 +323,7 @@ export interface FileRoutesById {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/settings': typeof SettingsRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/settings'
     | '/strategy'
     | '/terms'
     | '/.mcp/list-tools'
@@ -389,6 +399,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/settings'
     | '/strategy'
     | '/terms'
     | '/.mcp/list-tools'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/settings'
     | '/strategy'
     | '/terms'
     | '/.mcp/list-tools'
@@ -462,6 +474,7 @@ export interface RootRouteChildren {
   RiskDisclosureRoute: typeof RiskDisclosureRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
+  SettingsRoute: typeof SettingsRoute
   StrategyRoute: typeof StrategyRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -632,6 +645,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/strategy': {
       id: '/strategy'
       path: '/strategy'
@@ -742,6 +762,7 @@ const rootRouteChildren: RootRouteChildren = {
   RiskDisclosureRoute: RiskDisclosureRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
+  SettingsRoute: SettingsRoute,
   StrategyRoute: StrategyRoute,
   TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
