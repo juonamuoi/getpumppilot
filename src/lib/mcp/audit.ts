@@ -1,4 +1,5 @@
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
+import type { z } from "zod";
 import { supabaseForUser } from "./supabase";
 
 /** Requests allowed per user, per rolling window, across all MCP tools. */
@@ -29,15 +30,18 @@ function summarizeInput(input: unknown): Record<string, unknown> {
   return out;
 }
 
-type AuditedTool<TInput> = {
+type Shape = Record<string, z.ZodTypeAny>;
+type InputOf<TSchema extends Shape> = z.infer<z.ZodObject<TSchema>>;
+
+type AuditedTool<TSchema extends Shape> = {
   name: string;
   title: string;
   description: string;
-  inputSchema: Record<string, unknown>;
+  inputSchema: TSchema;
   annotations?: Record<string, unknown>;
   /** Set for tools that work without a signed-in caller (no audit trail possible). */
   allowAnonymous?: boolean;
-  handler: (input: TInput, ctx: ToolContext) => ToolResult | Promise<ToolResult>;
+  handler: (input: InputOf<TSchema>, ctx: ToolContext) => ToolResult | Promise<ToolResult>;
 };
 
 /**
@@ -45,7 +49,7 @@ type AuditedTool<TInput> = {
  * tracking, and start/finish audit rows. All bookkeeping runs through SECURITY
  * DEFINER routines keyed on the verified token's user, so callers cannot forge it.
  */
-export function defineAuditedTool<TInput>(config: AuditedTool<TInput>) {
+export function defineAuditedTool<TSchema extends Shape>(config: AuditedTool<TSchema>) {
   const { allowAnonymous, handler } = config;
   const rest: Record<string, unknown> = {
     name: config.name,
@@ -58,7 +62,7 @@ export function defineAuditedTool<TInput>(config: AuditedTool<TInput>) {
   return defineTool({
     ...rest,
 
-    handler: async (input: TInput, ctx: ToolContext) => {
+    handler: async (input: InputOf<TSchema>, ctx: ToolContext) => {
       const correlationId = crypto.randomUUID();
 
       if (!ctx.isAuthenticated()) {
