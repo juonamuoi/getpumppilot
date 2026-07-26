@@ -1578,6 +1578,196 @@ function checkBounds(t: RuleTuning, bounds: RiskBounds): string[] {
   return out;
 }
 
+/**
+ * Sweeps the loosening fraction for one rule and plots matches (recall) against
+ * near-miss count (risk) so the recall/risk frontier is visible while tuning.
+ */
+function FrontierChart({
+  result,
+  rules,
+  preset,
+  bounds,
+}: {
+  result: ReplayResult;
+  rules: ScannerRules;
+  preset: "conservative" | "balanced" | "aggressive";
+  bounds: RiskBounds;
+}) {
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const presetFraction = preset === "conservative" ? 0.25 : preset === "aggressive" ? 0.9 : 0.5;
+
+  const sweep = useMemo(() => {
+    const fractions = Array.from({ length: 20 }, (_, i) => (i + 1) / 20);
+    const perRule = {} as Record<
+      RuleKey,
+      {
+        pool: number;
+        points: {
+          fraction: number;
+          matches: number;
+          nearMiss: number;
+          suggested: number;
+          fragilePct: number;
+          inBounds: boolean;
+        }[];
+        base: { matches: number; nearMiss: number } | null;
+      }
+    >;
+    for (const k of keys) {
+      const points: (typeof perRule)[RuleKey]["points"] = [];
+      let pool = 0;
+      let base: { matches: number; nearMiss: number } | null = null;
+      for (const f of fractions) {
+        const t = computeTuning(result, rules, f)[k];
+        pool = t.candidatePool;
+        if (t.suggested == null || !t.preview) continue;
+        base ??= {
+          matches: t.preview.matchesBefore,
+          nearMiss: t.preview.nearMissAnyBefore,
+        };
+        const last = points[points.length - 1];
+        if (last && last.suggested === t.suggested) continue;
+        points.push({
+          fraction: f,
+          matches: t.preview.matchesAfter,
+          nearMiss: t.preview.nearMissAnyAfter,
+          suggested: t.suggested,
+          fragilePct: t.unlocked ? (t.fragile / t.unlocked) * 100 : 0,
+          inBounds: checkBounds(t, bounds).length === 0,
+        });
+      }
+      perRule[k] = { pool, points, base };
+    }
+    return perRule;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, rules, bounds.enabled, bounds.maxFragilePct, bounds.maxNearMissIncrease]);
+
+  const available = keys.filter((k) => sweep[k].points.length > 0);
+  const [rule, setRule] = useState<RuleKey | null>(null);
+  const active = rule && available.includes(rule) ? rule : (available[0] ?? null);
+
+  if (!active) return null;
+
+  const data = sweep[active];
+  const meta = RULE_META[active];
+  const pts = data.points;
+  const allX = [...pts.map((p) => p.matches), data.base?.matches ?? 0];
+  const allY = [...pts.map((p) => p.nearMiss), data.base?.nearMiss ?? 0];
+  const minX = Math.min(...allX);
+  const maxX = Math.max(...allX);
+  const minY = Math.min(...allY);
+  const maxY = Math.max(...allY);
+  const W = 260;
+  const H = 110;
+  const PAD = 14;
+  const sx = (v: number) =>
+    PAD + (maxX === minX ? (W - 2 * PAD) / 2 : ((v - minX) / (maxX - minX)) * (W - 2 * PAD));
+  const sy = (v: number) =>
+    H - PAD - (maxY === minY ? (H - 2 * PAD) / 2 : ((v - minY) / (maxY - minY)) * (H - 2 * PAD));
+  const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${sx(p.matches)},${sy(p.nearMiss)}`).join(" ");
+  const current =
+    pts.reduce<(typeof pts)[number] | null>(
+      (best, p) =>
+        !best || Math.abs(p.fraction - presetFraction) < Math.abs(best.fraction - presetFraction)
+          ? p
+          : best,
+      null,
+    ) ?? null;
+
+  return (
+    <div className="mb-3 rounded-md border border-border/60 bg-background/40 p-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-[11px] font-medium">Recall vs near-miss risk frontier</div>
+        <div className="flex flex-wrap gap-1">
+          {available.map((k) => (
+            <Button
+              key={k}
+              size="sm"
+              variant={k === active ? "secondary" : "ghost"}
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setRule(k)}
+            >
+              {RULE_META[k].short}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-1 flex flex-wrap items-start gap-3">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="h-[110px] w-full max-w-[280px] shrink-0"
+          role="img"
+          aria-label={`Matches versus near-miss frontier for ${meta.short}`}
+        >
+          <line x1={PAD} y1={H - PAD} x2={W - PAD} y2={H - PAD} className="stroke-border" strokeWidth={1} />
+          <line x1={PAD} y1={PAD} x2={PAD} y2={H - PAD} className="stroke-border" strokeWidth={1} />
+          {path && <path d={path} fill="none" className="stroke-primary/50" strokeWidth={1.5} />}
+          {data.base && (
+            <circle
+              cx={sx(data.base.matches)}
+              cy={sy(data.base.nearMiss)}
+              r={3.5}
+              className="fill-muted-foreground"
+            >
+              <title>{`Current rules — ${data.base.matches} matches, ${data.base.nearMiss} near-miss`}</title>
+            </circle>
+          )}
+          {pts.map((p) => (
+            <circle
+              key={p.fraction}
+              cx={sx(p.matches)}
+              cy={sy(p.nearMiss)}
+              r={current && p.fraction === current.fraction ? 4.5 : 2.5}
+              className={
+                !p.inBounds
+                  ? "fill-rose-400/80"
+                  : current && p.fraction === current.fraction
+                    ? "fill-emerald-300"
+                    : "fill-emerald-400/60"
+              }
+            >
+              <title>
+                {`${meta.short} ${meta.op} ${p.suggested}${meta.unit} — ${p.matches} matches, ${p.nearMiss} near-miss, ${p.fragilePct.toFixed(0)}% fragile${p.inBounds ? "" : " (out of bounds)"}`}
+              </title>
+            </circle>
+          ))}
+          <text x={W - PAD} y={H - 3} textAnchor="end" className="fill-muted-foreground text-[7px]">
+            matches →
+          </text>
+          <text x={3} y={PAD - 5} className="fill-muted-foreground text-[7px]">
+            near-miss ↑
+          </text>
+        </svg>
+
+        <div className="min-w-[140px] flex-1 space-y-1 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-muted-foreground" /> Current rules
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-300" /> Selected preset (
+            {(presetFraction * 100).toFixed(0)}%)
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-rose-400/80" /> Breaches your risk bounds
+          </div>
+          {current && (
+            <div className="pt-0.5 font-mono text-[10px] text-foreground">
+              {meta.short} {meta.op} {current.suggested}
+              {meta.unit} → {current.matches} matches / {current.nearMiss} near-miss
+            </div>
+          )}
+          <p className="pt-0.5 leading-relaxed">
+            Up and to the right means more signals but noisier ones — pick the knee, not the
+            extreme. Demo data; more matches never means more profit.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function RuleTuningPanel({
   result,
   rules,
