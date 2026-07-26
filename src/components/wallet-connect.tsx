@@ -30,7 +30,6 @@ import {
   DEMO_WALLET_ADDRESS,
   registerRescanHandler,
   setWalletSession,
-  useWalletSession,
 } from "@/lib/wallet-session";
 
 const WALLETS = ["MetaMask (mock)", "Phantom (mock)", "WalletConnect (mock)", "Coinbase (mock)"];
