@@ -46,10 +46,18 @@ type AuditedTool<TInput> = {
  * DEFINER routines keyed on the verified token's user, so callers cannot forge it.
  */
 export function defineAuditedTool<TInput>(config: AuditedTool<TInput>) {
-  const { allowAnonymous, handler, ...rest } = config;
+  const { allowAnonymous, handler } = config;
+  const rest: Record<string, unknown> = {
+    name: config.name,
+    title: config.title,
+    description: config.description,
+    inputSchema: config.inputSchema,
+    annotations: config.annotations,
+  };
 
   return defineTool({
-    ...(rest as never),
+    ...rest,
+
     handler: async (input: TInput, ctx: ToolContext) => {
       const correlationId = crypto.randomUUID();
 
