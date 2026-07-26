@@ -360,6 +360,7 @@ export type Database = {
           _limit?: number
           _request?: Json
           _tool_name: string
+          _user_id: string
           _window_seconds?: number
         }
         Returns: Json
@@ -370,6 +371,7 @@ export type Database = {
           _duration_ms?: number
           _error_message?: string
           _status: string
+          _user_id: string
         }
         Returns: undefined
       }
