@@ -40,6 +40,8 @@ import {
   X,
   Download,
   AlertTriangle,
+  History,
+  ArrowRight,
 } from "lucide-react";
 import {
   Dialog,
@@ -59,7 +61,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ASSETS } from "@/lib/mock-data";
-import { usePaper, type Alert, type AlertDelivery, type ScannerRules } from "@/lib/paper-store";
+import {
+  usePaper,
+  type Alert,
+  type AlertDelivery,
+  type ScannerRules,
+  type TuningLogEntry,
+} from "@/lib/paper-store";
 import { toast } from "sonner";
 
 type ChannelKey = AlertDelivery["channel"];
@@ -1383,6 +1391,106 @@ function PreviewStat({
   );
 }
 
+function TuningHistoryPanel({
+  log,
+  onClear,
+}: {
+  log: TuningLogEntry[];
+  onClear: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? log : log.slice(0, 5);
+
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/10 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-xs font-medium">
+          <History className="h-3.5 w-3.5 text-primary" />
+          <span>Tuning history</span>
+          <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+            {log.length}
+          </Badge>
+        </div>
+        {log.length > 0 && (
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onClear}>
+            Clear
+          </Button>
+        )}
+      </div>
+
+      {log.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">
+          No recommendations applied yet. Applied threshold changes are recorded here with their old
+          and new values.
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {shown.map((e) => {
+            const looser =
+              e.operator === ">=" ? e.newValue < e.oldValue : e.newValue > e.oldValue;
+            return (
+              <div
+                key={e.id}
+                className="rounded-md border border-border/50 bg-background/40 p-2 text-[11px]"
+              >
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="font-medium">{e.ruleLabel}</span>
+                  <span className="font-mono text-muted-foreground">
+                    {e.operator === ">=" ? "≥" : "≤"} {e.oldValue}
+                    {e.unit}
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span
+                    className={`font-mono font-medium ${looser ? "text-warning" : "text-success"}`}
+                  >
+                    {e.operator === ">=" ? "≥" : "≤"} {e.newValue}
+                    {e.unit}
+                  </span>
+                  <Badge variant="outline" className="h-4 px-1.5 text-[9px] capitalize">
+                    {e.preset}
+                  </Badge>
+                  {e.window && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                      {e.window}
+                    </Badge>
+                  )}
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    {format(new Date(e.ts), "MMM d, yyyy HH:mm:ss")}
+                  </span>
+                </div>
+                {(e.matchesBefore != null || e.nearMissBefore != null) && (
+                  <div className="mt-1 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+                    {e.matchesBefore != null && (
+                      <span>
+                        Matches {e.matchesBefore} → {e.matchesAfter}
+                      </span>
+                    )}
+                    {e.nearMissBefore != null && (
+                      <span>
+                        Near-miss {e.nearMissBefore} → {e.nearMissAfter}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {log.length > 5 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-full text-[10px]"
+              onClick={() => setExpanded((v) => !v)}
+            >
+              {expanded ? "Show less" : `Show all ${log.length}`}
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RuleTuningPanel({
   result,
   rules,
@@ -1390,7 +1498,11 @@ function RuleTuningPanel({
 }: {
   result: ReplayResult;
   rules: ScannerRules;
-  onApply: (k: RuleKey, value: number) => void;
+  onApply: (
+    k: RuleKey,
+    value: number,
+    meta: { preset: string; preview: TuningPreview | null },
+  ) => void;
 }) {
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
@@ -1575,7 +1687,10 @@ function RuleTuningPanel({
         onCancel={() => setPending(null)}
         onConfirm={() => {
           if (pending && tuning[pending].suggested != null) {
-            onApply(pending, tuning[pending].suggested!);
+            onApply(pending, tuning[pending].suggested!, {
+              preset,
+              preview: tuning[pending].preview,
+            });
           }
           setPending(null);
         }}
@@ -1737,7 +1852,7 @@ function TuningConfirmDialog({
 }
 
 function ReplayPanel() {
-  const { scannerRules, setScannerRules } = usePaper();
+  const { scannerRules, setScannerRules, tuningLog, logTuning, clearTuningLog } = usePaper();
   const [windowKey, setWindowKey] = useState<WindowKey>("24h");
   const [steps, setSteps] = useState(30);
   const [assetFilter, setAssetFilter] = useState<"all" | "major" | "demo-smallcap">("all");
@@ -1974,21 +2089,42 @@ function ReplayPanel() {
               <RuleTuningPanel
                 result={result}
                 rules={scannerRules}
-                onApply={(k, value) => {
+                onApply={(k, value, meta) => {
                   const next: ScannerRules = { ...scannerRules };
+                  const current =
+                    k === "momentum"
+                      ? scannerRules.minMomentum
+                      : k === "volume"
+                        ? scannerRules.minVolumeScore
+                        : k === "volatility"
+                          ? scannerRules.maxVolatility
+                          : scannerRules.min24hChangePct;
                   if (k === "momentum") next.minMomentum = value;
                   else if (k === "volume") next.minVolumeScore = value;
                   else if (k === "volatility") next.maxVolatility = value;
                   else next.min24hChangePct = value;
                   setScannerRules(next);
+                  logTuning({
+                    rule: k,
+                    ruleLabel: RULE_META[k].short,
+                    operator: RULE_META[k].op,
+                    unit: RULE_META[k].unit,
+                    oldValue: current,
+                    newValue: value,
+                    preset: meta.preset,
+                    window: result.window,
+                    matchesBefore: meta.preview?.matchesBefore,
+                    matchesAfter: meta.preview?.matchesAfter,
+                    nearMissBefore: meta.preview?.nearMissAnyBefore,
+                    nearMissAfter: meta.preview?.nearMissAnyAfter,
+                  });
                   toast.success(
                     `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
                   );
                 }}
               />
 
-
-
+              <TuningHistoryPanel log={tuningLog} onClear={clearTuningLog} />
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
