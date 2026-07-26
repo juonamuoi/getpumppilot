@@ -2040,6 +2040,16 @@ function ReplayPanel() {
   const [ruleFocus, setRuleFocus] = useState<RuleKey | null>(null);
   const [openBucket, setOpenBucket] = useState<number | null>(null);
 
+  const [auto, setAuto] = useState<AutoConfig>(loadAuto);
+  const lastAutoRef = useRef<number | null>(null);
+  const runRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(AUTO_KEY, JSON.stringify(auto));
+    } catch {}
+  }, [auto]);
+
   const run = () => {
     const r = runReplay(scannerRules, windowKey, steps);
     setResult(r);
@@ -2053,6 +2063,85 @@ function ReplayPanel() {
     }
     setRuleFocus(null);
   };
+  runRef.current = run;
+
+  const applyTuning = (
+    k: RuleKey,
+    value: number,
+    meta: { preset: string; preview: TuningPreview | null },
+    windowLabel: WindowKey,
+    base: ScannerRules,
+  ): ScannerRules => {
+    const next: ScannerRules = { ...base };
+    const current =
+      k === "momentum"
+        ? base.minMomentum
+        : k === "volume"
+          ? base.minVolumeScore
+          : k === "volatility"
+            ? base.maxVolatility
+            : base.min24hChangePct;
+    if (k === "momentum") next.minMomentum = value;
+    else if (k === "volume") next.minVolumeScore = value;
+    else if (k === "volatility") next.maxVolatility = value;
+    else next.min24hChangePct = value;
+    logTuning({
+      rule: k,
+      ruleLabel: RULE_META[k].short,
+      operator: RULE_META[k].op,
+      unit: RULE_META[k].unit,
+      oldValue: current,
+      newValue: value,
+      preset: meta.preset,
+      window: windowLabel,
+      matchesBefore: meta.preview?.matchesBefore,
+      matchesAfter: meta.preview?.matchesAfter,
+      nearMissBefore: meta.preview?.nearMissAnyBefore,
+      nearMissAfter: meta.preview?.nearMissAnyAfter,
+    });
+    return next;
+  };
+
+  // Scheduled auto-replay
+  useEffect(() => {
+    if (!auto.intervalMin) return;
+    const id = setInterval(() => runRef.current(), auto.intervalMin * 60_000);
+    return () => clearInterval(id);
+  }, [auto.intervalMin]);
+
+  // Auto-apply in-bounds recommendations after each replay
+  useEffect(() => {
+    if (!auto.apply || !result) return;
+    if (lastAutoRef.current === result.ranAt) return;
+    lastAutoRef.current = result.ranAt;
+    const bounds = loadBounds();
+    const fraction =
+      auto.preset === "conservative" ? 0.25 : auto.preset === "aggressive" ? 0.9 : 0.5;
+    const tuning = computeTuning(result, scannerRules, fraction);
+    const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+    let base = scannerRules;
+    const applied: string[] = [];
+    for (const k of keys) {
+      if (applied.length >= auto.maxPerRun) break;
+      const t = tuning[k];
+      if (t.suggested == null) continue;
+      if (checkBounds(t, bounds).length > 0) continue;
+      base = applyTuning(
+        k,
+        t.suggested,
+        { preset: `auto·${auto.preset}`, preview: t.preview },
+        result.window,
+        base,
+      );
+      applied.push(`${RULE_META[k].short} ${RULE_META[k].op} ${t.suggested}${RULE_META[k].unit}`);
+    }
+    if (applied.length) {
+      setScannerRules(base);
+      toast.success(`Automation applied ${applied.length} in-bounds change(s): ${applied.join(", ")}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, auto.apply, auto.preset, auto.maxPerRun]);
+
 
   const filteredSignals = useMemo(() => {
     if (!result) return [];
