@@ -164,7 +164,7 @@ export const getGoLiveTestSession = createServerFn({ method: "POST" })
     if (!/^cs_[a-zA-Z0-9_]+$/.test(data.sessionId)) throw new Error("Invalid sessionId");
     return data;
   })
-  .handler(async ({ data }): Promise<
+  .handler(async ({ data, context }): Promise<
     | { status: string | null; paymentStatus: string | null; amountTotal: number | null; currency: string | null; paymentIntentId: string | null; statementDescriptor: string | null; chargeId: string | null; receiptUrl: string | null; created: string | null; last4: string | null; brand: string | null }
     | { error: string }
   > => {
@@ -173,8 +173,12 @@ export const getGoLiveTestSession = createServerFn({ method: "POST" })
       const session = await stripe.checkout.sessions.retrieve(data.sessionId, {
         expand: ["payment_intent", "payment_intent.latest_charge"],
       });
+      if (session.metadata?.userId !== context.userId) {
+        return { error: "Session not found" };
+      }
       const pi: any = typeof session.payment_intent === "object" ? session.payment_intent : null;
       const charge: any = pi && typeof pi.latest_charge === "object" ? pi.latest_charge : null;
+
       return {
         status: session.status ?? null,
         paymentStatus: session.payment_status ?? null,
