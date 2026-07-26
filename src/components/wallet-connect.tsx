@@ -26,6 +26,11 @@ import { useSecurity } from "@/lib/security-store";
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
 import { scanWallet, shortAddress, type WalletScanResult } from "@/lib/wallet-scan";
 import { Link } from "@tanstack/react-router";
+import {
+  DEMO_WALLET_ADDRESS,
+  registerRescanHandler,
+  setWalletSession,
+} from "@/lib/wallet-session";
 
 const WALLETS = ["MetaMask (mock)", "Phantom (mock)", "WalletConnect (mock)", "Coinbase (mock)"];
 
@@ -38,16 +43,18 @@ export function WalletConnect() {
   const [scanning, setScanning] = useState(false);
   const [scan, setScan] = useState<WalletScanResult | null>(null);
 
-  const DEMO_ADDRESS = "0xDEMO00000000000000000000000000000000a1b2";
+  const DEMO_ADDRESS = DEMO_WALLET_ADDRESS;
 
   const runScan = useCallback(
     async (walletName: string) => {
       setScan(null);
       setScanning(true);
       setScanOpen(true);
+      setWalletSession({ scanning: true, scan: null });
       const result = await scanWallet(DEMO_ADDRESS);
       setScan(result);
       setScanning(false);
+      setWalletSession({ scanning: false, scan: result });
 
       for (const t of result.threats) {
         security.report({
@@ -80,7 +87,8 @@ export function WalletConnect() {
   );
 
   const handleRevoked = useCallback((id: string) => {
-    setScan((prev) =>
+    setScan((prev) => {
+      const next =
       prev
         ? {
             ...prev,
@@ -90,9 +98,21 @@ export function WalletConnect() {
               .filter((a) => a.id !== id)
               .reduce((s, a) => s + a.valueAtRiskUsd, 0),
           }
-        : prev,
-    );
+        : prev;
+      setWalletSession({ scan: next ?? null });
+      return next;
+    });
   }, []);
+
+  // Let other screens (Security Center) trigger a rescan of this wallet.
+  useEffect(() => {
+    if (!connected) {
+      registerRescanHandler(null);
+      return;
+    }
+    registerRescanHandler(() => void runScan(connected));
+    return () => registerRescanHandler(null);
+  }, [connected, runScan]);
 
   // Verify current origin whenever the dialog opens.
   const originCheck = useMemo(() => security.checkOriginSafe(), [security, open]);
@@ -131,6 +151,7 @@ export function WalletConnect() {
       return;
     }
     setConnected(name);
+    setWalletSession({ wallet: name, address: DEMO_ADDRESS, scan: null });
     setOpen(false);
     toast.success(`${name} — read-only demo connected`);
     void runScan(name);
@@ -140,7 +161,11 @@ export function WalletConnect() {
     return (
       <div className="space-y-2">
         <button
-          onClick={() => setConnected(null)}
+          onClick={() => {
+            setConnected(null);
+            setScan(null);
+            setWalletSession({ wallet: null, address: null, scanning: false, scan: null });
+          }}
           className="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-left transition hover:bg-emerald-500/10"
         >
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300">

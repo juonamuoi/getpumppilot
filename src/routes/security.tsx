@@ -38,6 +38,9 @@ import {
   XCircle,
   CalendarIcon,
   BarChart3,
+  Radar,
+  ShieldOff,
+  Wallet,
   Columns3,
   X,
 } from "lucide-react";
@@ -49,6 +52,12 @@ import {
   type ReportCategory,
   type Severity,
 } from "@/lib/security-store";
+import {
+  requestWalletRescan,
+  useWalletSession,
+} from "@/lib/wallet-session";
+import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
+import { shortAddress } from "@/lib/wallet-scan";
 
 export const Route = createFileRoute("/security")({
   head: () => ({
@@ -86,6 +95,8 @@ function SecurityPage() {
         </div>
 
         <DisclaimerBanner />
+
+        <WalletRescanCard />
 
         <div className="grid gap-3 sm:grid-cols-3">
           <StatusTile
@@ -1107,5 +1118,100 @@ function StatBlock({
         })}
       </div>
     </div>
+  );
+}
+
+function WalletRescanCard() {
+  const { wallet, address, scanning, scan } = useWalletSession();
+  const [open, setOpen] = useState(false);
+
+  if (!wallet) {
+    return (
+      <Card className="border-border/60">
+        <CardContent className="flex flex-col gap-1 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Wallet className="h-4 w-4 text-muted-foreground" /> No wallet connected
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Connect a wallet (demo, read-only) to scan token approvals for phishing spenders.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const threats = scan?.threats.length ?? 0;
+  const clear = !!scan && threats === 0;
+
+  return (
+    <Card
+      className={cn(
+        "border-border/60",
+        threats > 0 && "border-rose-500/40 bg-rose-500/5",
+        clear && "border-emerald-500/30 bg-emerald-500/5",
+      )}
+    >
+      <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Wallet className="h-4 w-4" /> {wallet}
+            {address && (
+              <span className="font-mono text-[11px] font-normal text-muted-foreground">
+                {shortAddress(address)}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {scanning ? (
+              <span className="flex items-center gap-1.5 text-foreground">
+                <Radar className="h-3.5 w-3.5 animate-pulse" /> Scanning approvals…
+              </span>
+            ) : threats > 0 ? (
+              <span className="flex items-center gap-1.5 text-rose-300">
+                <ShieldOff className="h-3.5 w-3.5" /> {threats} risky approval
+                {threats > 1 ? "s" : ""} found — revoke to stay safe
+              </span>
+            ) : clear ? (
+              <span className="flex items-center gap-1.5 text-emerald-300">
+                <ShieldCheck className="h-3.5 w-3.5" /> Last scan clear — no phishing spenders
+              </span>
+            ) : (
+              "No scan yet for this session."
+            )}
+            {scan && !scanning && (
+              <span className="ml-1 text-muted-foreground">
+                · {format(new Date(scan.scannedAt), "d MMM HH:mm")}
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          {scan && !scanning && (
+            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+              View report
+            </Button>
+          )}
+          <Button
+            size="sm"
+            className="gap-2"
+            disabled={scanning}
+            onClick={() => {
+              requestWalletRescan();
+              toast.info("Rescanning your wallet approvals…");
+            }}
+          >
+            <Radar className={cn("h-4 w-4", scanning && "animate-pulse")} />
+            {scanning ? "Scanning…" : "Rescan my wallet"}
+          </Button>
+        </div>
+      </CardContent>
+      <WalletThreatDialog
+        open={open}
+        onOpenChange={setOpen}
+        scanning={scanning}
+        result={scan}
+        onRevoked={() => {}}
+      />
+    </Card>
   );
 }
