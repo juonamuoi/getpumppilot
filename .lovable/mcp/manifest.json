@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://rkiocormsppcbxyzbjsg.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "pumppilot-ai-mcp",
+      "version": "0.1.0",
+      "title": "PumpPilot AI"
+    },
+    "tools": [
+      {
+        "name": "momentum_scan",
+        "title": "Momentum scan",
+        "description": "Scan PumpPilot AI's tracked assets and return explainable momentum scores (trend, volume, volatility, social, breakout) with a plain-English reason. Educational data only — not investment advice.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "description": "Optional ticker filter, e.g. BTC.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max rows to return (1-25, default 10).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_strategies",
+        "title": "List strategies",
+        "description": "List the signed-in user's saved PumpPilot strategies, or browse the public community feed.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "scope": {
+              "description": "'mine' (default) for your strategies, 'public' for the community feed.",
+              "type": "string",
+              "enum": [
+                "mine",
+                "public"
+              ]
+            },
+            "limit": {
+              "description": "Max rows (1-50, default 20).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_strategy",
+        "title": "Create strategy",
+        "description": "Save a new paper-trading strategy for the signed-in user. Strategies never execute live trades.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Strategy name."
+            },
+            "description": {
+              "description": "What the strategy does.",
+              "type": "string"
+            },
+            "tags": {
+              "description": "Optional tags, e.g. ['momentum','swing'].",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "is_public": {
+              "description": "Publish to the community feed (default false).",
+              "type": "boolean"
+            },
+            "config": {
+              "description": "Optional strategy rule configuration object.",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "title"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "subscription_status",
+        "title": "Subscription status",
+        "description": "Report the signed-in user's current PumpPilot AI plan and billing period.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
