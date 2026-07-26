@@ -36,33 +36,22 @@ export function clearStoredReferralCode(): void {
  * Safe to call repeatedly — the unique constraint on referred_user_id
  * prevents duplicates, and existing users are skipped.
  */
-export async function recordReferralIfPresent(userId: string): Promise<void> {
+export async function recordReferralIfPresent(_userId: string): Promise<void> {
   const code = getStoredReferralCode();
   if (!code) return;
 
-  // Resolve the referrer via a SECURITY DEFINER RPC so the codes table
-  // stays private (no bulk enumeration of user IDs).
-  const { data: referrerId } = await supabase.rpc("resolve_referral_code", {
-    _code: code,
-  });
-
-  if (!referrerId || referrerId === userId) {
-    clearStoredReferralCode();
+  // Attribution runs entirely server-side: the referral-code lookup routine is
+  // not callable by clients, and the referred user is taken from the verified
+  // session, so a caller cannot attribute a signup to someone else.
+  try {
+    const { recordReferral } = await import("@/lib/referral.functions");
+    await recordReferral({ data: { code } });
+  } catch {
+    // Network/auth hiccup — keep the code so it can retry on next sign-in.
     return;
   }
 
-
-  const { error } = await supabase.from("referrals").insert({
-    referrer_id: referrerId,
-    referred_user_id: userId,
-    referrer_code: code,
-    status: "signed_up",
-  });
-
-  // If it was a duplicate, silently ignore. Either way clear the code.
-  if (!error || error.code === "23505") {
-    clearStoredReferralCode();
-  }
+  clearStoredReferralCode();
 }
 
 /** Get the current user's own referral code. */
