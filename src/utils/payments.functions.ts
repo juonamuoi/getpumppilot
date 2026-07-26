@@ -138,7 +138,7 @@ export const createGoLiveTestCheckout = createServerFn({ method: "POST" })
 export const getGoLiveTestSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { sessionId: string; environment: StripeEnv }) => {
-    if (!/^cs_[a-zA-Z0-9_]+$/.test(data.sessionId)) throw new Error("Invalid sessionId");
+    assertValidCheckoutSessionId(data.sessionId);
     return data;
   })
   .handler(async ({ data, context }): Promise<GoLiveSessionResult> => {
