@@ -2270,9 +2270,85 @@ function ReplayPanel() {
             asset.
           </div>
 
+          <div className="space-y-3 rounded-lg border border-border/60 bg-background/40 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Automation</Label>
+              {auto.intervalMin > 0 && (
+                <Badge variant="outline" className="text-[10px]">
+                  every {auto.intervalMin}m
+                </Badge>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[11px] text-muted-foreground">Auto-replay schedule</Label>
+              <ToggleGroup
+                type="single"
+                value={String(auto.intervalMin)}
+                onValueChange={(v) => v && setAuto((a) => ({ ...a, intervalMin: Number(v) }))}
+                size="sm"
+                className="flex-wrap justify-start"
+              >
+                <ToggleGroupItem value="0">Off</ToggleGroupItem>
+                <ToggleGroupItem value="5">5m</ToggleGroupItem>
+                <ToggleGroupItem value="15">15m</ToggleGroupItem>
+                <ToggleGroupItem value="60">1h</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs">Auto-apply in-bounds tuning</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Only recommendations that pass your near-miss risk bounds
+                </div>
+              </div>
+              <Switch
+                checked={auto.apply}
+                onCheckedChange={(v) => setAuto((a) => ({ ...a, apply: v }))}
+              />
+            </div>
+
+            {auto.apply && (
+              <div className="space-y-2 border-t border-border/60 pt-2">
+                <ToggleGroup
+                  type="single"
+                  value={auto.preset}
+                  onValueChange={(v) =>
+                    v && setAuto((a) => ({ ...a, preset: v as AutoConfig["preset"] }))
+                  }
+                  size="sm"
+                  className="flex-wrap justify-start"
+                >
+                  <ToggleGroupItem value="conservative">Conservative</ToggleGroupItem>
+                  <ToggleGroupItem value="balanced">Balanced</ToggleGroupItem>
+                  <ToggleGroupItem value="aggressive">Aggressive</ToggleGroupItem>
+                </ToggleGroup>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Max changes per replay
+                  </Label>
+                  <span className="font-mono text-xs text-emerald-300">{auto.maxPerRun}</span>
+                </div>
+                <Slider
+                  value={[auto.maxPerRun]}
+                  onValueChange={(v) => setAuto((a) => ({ ...a, maxPerRun: v[0] }))}
+                  min={1}
+                  max={4}
+                  step={1}
+                />
+                <p className="text-[11px] text-amber-200/80">
+                  Automated changes are logged in Tuning history and can be reverted. Demo data
+                  only — signals are probabilistic and you can lose all capital.
+                </p>
+              </div>
+            )}
+          </div>
+
           <Button onClick={run} className="w-full">
             <PlayCircle className="mr-2 h-4 w-4" /> Run replay
           </Button>
+
         </CardContent>
       </Card>
 
