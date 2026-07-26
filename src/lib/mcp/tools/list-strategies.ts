@@ -1,8 +1,8 @@
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineAuditedTool } from "../audit";
 import { z } from "zod";
 import { NOT_AUTHENTICATED, supabaseForUser } from "../supabase";
 
-export default defineTool({
+export default defineAuditedTool({
   name: "list_strategies",
   title: "List strategies",
   description:
