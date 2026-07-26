@@ -36,6 +36,7 @@ import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as EmbedMomentumRouteImport } from './routes/embed.momentum'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicMomentumRouteImport } from './routes/api/public/momentum'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
@@ -174,6 +175,11 @@ const EmbedMomentumRoute = EmbedMomentumRouteImport.update({
   path: '/embed/momentum',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMomentumRoute = ApiPublicMomentumRouteImport.update({
   id: '/api/public/momentum',
   path: '/api/public/momentum',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
   '/blog/': typeof BlogIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
   '/blog': typeof BlogIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
   '/blog/': typeof BlogIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/embed/momentum'
     | '/blog/'
+    | '/.lovable/oauth/consent'
     | '/api/public/momentum'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/embed/momentum'
     | '/blog'
+    | '/.lovable/oauth/consent'
     | '/api/public/momentum'
     | '/api/public/payments/webhook'
   id:
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/embed/momentum'
     | '/blog/'
+    | '/.lovable/oauth/consent'
     | '/api/public/momentum'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -404,6 +416,7 @@ export interface RootRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
   EmbedMomentumRoute: typeof EmbedMomentumRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   ApiPublicMomentumRoute: typeof ApiPublicMomentumRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -599,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbedMomentumRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/momentum': {
       id: '/api/public/momentum'
       path: '/api/public/momentum'
@@ -644,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogSlugRoute: BlogSlugRoute,
   EmbedMomentumRoute: EmbedMomentumRoute,
   BlogIndexRoute: BlogIndexRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   ApiPublicMomentumRoute: ApiPublicMomentumRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
