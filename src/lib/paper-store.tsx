@@ -49,6 +49,29 @@ export type AlertDelivery = {
   detail: string;
 };
 
+/** One applied rule-tuning recommendation, kept for auditability. */
+export type TuningLogEntry = {
+  id: string;
+  ts: number;
+  /** Rule key: momentum | volume | volatility | change */
+  rule: string;
+  /** Human label, e.g. "Momentum". */
+  ruleLabel: string;
+  operator: ">=" | "<=";
+  unit: string;
+  oldValue: number;
+  newValue: number;
+  /** Preset used when the recommendation was generated. */
+  preset: string;
+  /** Replay window the recommendation came from, e.g. "24h". */
+  window?: string;
+  /** Expected match count before/after, from the preview at apply time. */
+  matchesBefore?: number;
+  matchesAfter?: number;
+  nearMissBefore?: number;
+  nearMissAfter?: number;
+};
+
 type State = {
   cash: number;
   positions: Position[];
@@ -56,6 +79,7 @@ type State = {
   alerts: Alert[];
   scannerRules: ScannerRules;
   deliveries: AlertDelivery[];
+  tuningLog: TuningLogEntry[];
   liveExecutionEnabled: boolean; // always false — locked
   masterSwitchLocked: boolean;
   risk: {
@@ -69,6 +93,8 @@ type State = {
   removeAlert: (id: string) => void;
   toggleAlert: (id: string) => void;
   setScannerRules: (r: ScannerRules) => void;
+  logTuning: (e: Omit<TuningLogEntry, "id" | "ts">) => void;
+  clearTuningLog: () => void;
   simulateScannerRun: () => number; // returns count of new deliveries
   clearDeliveries: () => void;
   setRisk: (r: State["risk"]) => void;
@@ -78,6 +104,7 @@ type State = {
 
 
 const STARTING_CASH = 100_000;
+const TUNING_LOG_KEY = "pumppilot_tuning_log";
 
 const Ctx = createContext<State | null>(null);
 
@@ -109,6 +136,23 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     channels: { inApp: true, email: false, push: true },
     cooldownMinutes: 30,
   });
+
+  const [tuningLog, setTuningLog] = useState<TuningLogEntry[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(TUNING_LOG_KEY);
+      return raw ? (JSON.parse(raw) as TuningLogEntry[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(TUNING_LOG_KEY, JSON.stringify(tuningLog.slice(0, 200)));
+    } catch {}
+  }, [tuningLog]);
 
   const now = Date.now();
   const [deliveries, setDeliveries] = useState<AlertDelivery[]>([
@@ -247,6 +291,7 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     alerts,
     scannerRules,
     deliveries,
+    tuningLog,
     liveExecutionEnabled: false,
     masterSwitchLocked: true,
     risk,
@@ -260,6 +305,11 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     toggleAlert: (id) =>
       setAlerts((prev) => prev.map((x) => (x.id === id ? { ...x, active: !x.active } : x))),
     setScannerRules,
+    logTuning: (e) =>
+      setTuningLog((prev) =>
+        [{ ...e, id: Math.random().toString(36).slice(2), ts: Date.now() }, ...prev].slice(0, 200),
+      ),
+    clearTuningLog: () => setTuningLog([]),
     simulateScannerRun,
     clearDeliveries: () => setDeliveries([]),
     setRisk,
