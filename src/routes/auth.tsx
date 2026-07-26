@@ -11,6 +11,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FlaskConical, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — PumpPilot AI" },
@@ -22,17 +25,33 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+/** Only same-origin relative paths may be used as a post-login redirect. */
+function safeNext(next?: string) {
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+}
+
 function AuthPage() {
   const nav = useNavigate();
+  const { next } = Route.useSearch();
   const { session, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const target = safeNext(next);
+
+  function goNext() {
+    if (target) {
+      window.location.href = target;
+      return;
+    }
+    nav({ to: "/dashboard" });
+  }
 
   useEffect(() => {
-    if (!loading && session) nav({ to: "/dashboard" });
-  }, [loading, session, nav]);
+    if (!loading && session) goNext();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, session]);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +60,7 @@ function AuthPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Signed in");
-    nav({ to: "/dashboard" });
+    goNext();
   }
 
   async function signUp(e: React.FormEvent) {
@@ -51,7 +70,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}${target ?? "/dashboard"}`,
         data: { display_name: displayName || email.split("@")[0] },
       },
     });
@@ -62,12 +81,13 @@ function AuthPage() {
 
   async function google() {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}${target ?? ""}`,
     });
     if (result.error) return toast.error(result.error.message);
     if (result.redirected) return;
-    nav({ to: "/dashboard" });
+    goNext();
   }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
