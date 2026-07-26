@@ -12,5 +12,17 @@ export default defineConfig({
     environment: "node",
     include: ["src/tests/security/**/*.test.ts"],
     passWithNoTests: false,
+    coverage: {
+      provider: "v8",
+      reportsDirectory: "coverage/security",
+      reporter: ["text-summary", "json-summary", "json", "html"],
+      include: [
+        "src/lib/go-live-session.server.ts",
+        "src/lib/payments-validation.ts",
+        "src/lib/stripe-customer.server.ts",
+      ],
+      all: true,
+    },
   },
+
 });
