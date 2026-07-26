@@ -42,6 +42,7 @@ import {
   AlertTriangle,
   History,
   ArrowRight,
+  Undo2,
 } from "lucide-react";
 import {
   Dialog,
@@ -1394,12 +1395,15 @@ function PreviewStat({
 function TuningHistoryPanel({
   log,
   onClear,
+  onRevert,
 }: {
   log: TuningLogEntry[];
   onClear: () => void;
+  onRevert: (e: TuningLogEntry) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? log : log.slice(0, 5);
+  const lastActive = log.find((e) => !e.revertedAt) ?? null;
 
   return (
     <div className="rounded-md border border-border/60 bg-muted/10 p-3">
@@ -1411,11 +1415,24 @@ function TuningHistoryPanel({
             {log.length}
           </Badge>
         </div>
-        {log.length > 0 && (
-          <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onClear}>
-            Clear
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {lastActive && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 gap-1 px-2 text-[10px]"
+              onClick={() => onRevert(lastActive)}
+            >
+              <Undo2 className="h-3 w-3" />
+              Undo last
+            </Button>
+          )}
+          {log.length > 0 && (
+            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onClear}>
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       {log.length === 0 ? (
@@ -1454,6 +1471,11 @@ function TuningHistoryPanel({
                       {e.window}
                     </Badge>
                   )}
+                  {e.revertedAt && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[9px] text-muted-foreground">
+                      Reverted
+                    </Badge>
+                  )}
                   <span className="ml-auto text-[10px] text-muted-foreground">
                     {format(new Date(e.ts), "MMM d, yyyy HH:mm:ss")}
                   </span>
@@ -1470,6 +1492,23 @@ function TuningHistoryPanel({
                         Near-miss {e.nearMissBefore} → {e.nearMissAfter}
                       </span>
                     )}
+                  </div>
+                )}
+                {!e.revertedAt && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-1 h-6 gap-1 px-2 text-[10px]"
+                    onClick={() => onRevert(e)}
+                  >
+                    <Undo2 className="h-3 w-3" />
+                    Revert to {e.operator === ">=" ? "≥" : "≤"} {e.oldValue}
+                    {e.unit}
+                  </Button>
+                )}
+                {e.revertedAt && (
+                  <div className="mt-1 text-[10px] text-muted-foreground">
+                    Rolled back {format(new Date(e.revertedAt), "MMM d, HH:mm")}
                   </div>
                 )}
               </div>
@@ -1852,7 +1891,14 @@ function TuningConfirmDialog({
 }
 
 function ReplayPanel() {
-  const { scannerRules, setScannerRules, tuningLog, logTuning, clearTuningLog } = usePaper();
+  const {
+    scannerRules,
+    setScannerRules,
+    tuningLog,
+    logTuning,
+    clearTuningLog,
+    markTuningReverted,
+  } = usePaper();
   const [windowKey, setWindowKey] = useState<WindowKey>("24h");
   const [steps, setSteps] = useState(30);
   const [assetFilter, setAssetFilter] = useState<"all" | "major" | "demo-smallcap">("all");
@@ -2124,7 +2170,23 @@ function ReplayPanel() {
                 }}
               />
 
-              <TuningHistoryPanel log={tuningLog} onClear={clearTuningLog} />
+              <TuningHistoryPanel
+                log={tuningLog}
+                onClear={clearTuningLog}
+                onRevert={(e) => {
+                  const next: ScannerRules = { ...scannerRules };
+                  const k = e.rule as RuleKey;
+                  if (k === "momentum") next.minMomentum = e.oldValue;
+                  else if (k === "volume") next.minVolumeScore = e.oldValue;
+                  else if (k === "volatility") next.maxVolatility = e.oldValue;
+                  else next.min24hChangePct = e.oldValue;
+                  setScannerRules(next);
+                  markTuningReverted(e.id);
+                  toast.success(
+                    `Reverted ${e.ruleLabel} back to ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
+                  );
+                }}
+              />
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
