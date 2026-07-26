@@ -1,6 +1,6 @@
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import type { z } from "zod";
-import { supabaseForUser } from "./supabase";
+import { supabaseAdminForAudit } from "./supabase";
 
 /** Requests allowed per user, per rolling window, across all MCP tools. */
 export const RATE_LIMIT = 60;
@@ -70,11 +70,19 @@ export function defineAuditedTool<TSchema extends Shape>(config: AuditedTool<TSc
         return errorResult("Not authenticated", { correlation_id: correlationId });
       }
 
-      const supabase = supabaseForUser(ctx);
+      const userId = ctx.getUserId();
+      if (!userId) {
+        return errorResult("Not authenticated", { correlation_id: correlationId });
+      }
+
+      // Audit + rate limiting run through server-only routines with the
+      // verified token subject, so a client can never forge or bypass them.
+      const supabase = supabaseAdminForAudit();
       const request = summarizeInput(input);
       const clientId = ctx.getClientId?.() ?? null;
 
       const { data: gate, error: gateError } = await supabase.rpc("mcp_begin_call", {
+        _user_id: userId,
         _correlation_id: correlationId,
         _client_id: clientId,
         _tool_name: config.name,
@@ -124,6 +132,7 @@ export function defineAuditedTool<TSchema extends Shape>(config: AuditedTool<TSc
       }
 
       await supabase.rpc("mcp_finish_call", {
+        _user_id: userId,
         _correlation_id: correlationId,
         _status: status,
         _duration_ms: Date.now() - startedAt,
