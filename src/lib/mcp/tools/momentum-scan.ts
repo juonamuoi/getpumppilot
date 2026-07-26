@@ -1,8 +1,8 @@
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineAuditedTool } from "../audit";
 import { z } from "zod";
 import { ASSETS } from "@/lib/mock-data";
 
-export default defineTool({
+export default defineAuditedTool({
   name: "momentum_scan",
   title: "Momentum scan",
   description:
@@ -11,6 +11,7 @@ export default defineTool({
     symbol: z.string().optional().describe("Optional ticker filter, e.g. BTC."),
     limit: z.number().int().optional().describe("Max rows to return (1-25, default 10)."),
   },
+  allowAnonymous: true,
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: ({ symbol, limit }) => {
     const max = Math.min(Math.max(limit ?? 10, 1), 25);

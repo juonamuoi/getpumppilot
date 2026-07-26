@@ -1,7 +1,7 @@
-import { defineTool } from "@lovable.dev/mcp-js";
+import { defineAuditedTool } from "../audit";
 import { NOT_AUTHENTICATED, supabaseForUser } from "../supabase";
 
-export default defineTool({
+export default defineAuditedTool({
   name: "subscription_status",
   title: "Subscription status",
   description: "Report the signed-in user's current PumpPilot AI plan and billing period.",
