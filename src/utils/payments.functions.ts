@@ -2,41 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 import { fetchGoLiveTestSession, type GoLiveSessionResult } from "@/lib/go-live-session.server";
-
+import { resolveOrCreateCustomer } from "@/lib/stripe-customer.server";
+import {
+  assertValidCheckoutSessionId,
+  assertValidGoLiveAmount,
+  assertValidPriceId,
+} from "@/lib/payments-validation";
 
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
-
-async function resolveOrCreateCustomer(
-  stripe: ReturnType<typeof createStripeClient>,
-  options: { email?: string; userId?: string },
-): Promise<string> {
-  if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) {
-    throw new Error("Invalid userId");
-  }
-  if (options.userId) {
-    const found = await stripe.customers.search({
-      query: `metadata['userId']:'${options.userId}'`,
-      limit: 1,
-    });
-    if (found.data.length) return found.data[0].id;
-  }
-  if (options.email) {
-    const existing = await stripe.customers.list({ email: options.email, limit: 1 });
-    if (existing.data.length) {
-      const c = existing.data[0];
-      if (options.userId && c.metadata?.userId !== options.userId) {
-        await stripe.customers.update(c.id, { metadata: { ...c.metadata, userId: options.userId } });
-      }
-      return c.id;
-    }
-  }
-  const created = await stripe.customers.create({
-    ...(options.email && { email: options.email }),
-    ...(options.userId && { metadata: { userId: options.userId } }),
-  });
-  return created.id;
-}
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -45,9 +19,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     returnUrl: string;
     environment: StripeEnv;
   }) => {
-    if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
+    assertValidPriceId(data.priceId);
     return data;
   })
+
   .handler(async ({ data, context }): Promise<CheckoutSessionResult> => {
     try {
       const { userId, supabase } = context;
