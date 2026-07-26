@@ -2024,6 +2024,37 @@ function TuningConfirmDialog({
   );
 }
 
+type AutoConfig = {
+  /** Auto-replay interval in minutes; 0 = off. */
+  intervalMin: number;
+  /** Auto-apply in-bounds recommendations after each replay. */
+  apply: boolean;
+  preset: "conservative" | "balanced" | "aggressive";
+  maxPerRun: number;
+};
+
+const DEFAULT_AUTO: AutoConfig = {
+  intervalMin: 0,
+  apply: false,
+  preset: "conservative",
+  maxPerRun: 1,
+};
+
+const AUTO_KEY = "pumppilot_replay_automation";
+
+function loadAuto(): AutoConfig {
+  if (typeof window === "undefined") return DEFAULT_AUTO;
+  try {
+    const raw = window.localStorage.getItem(AUTO_KEY);
+    return raw
+      ? { ...DEFAULT_AUTO, ...(JSON.parse(raw) as Partial<AutoConfig>) }
+      : DEFAULT_AUTO;
+  } catch {
+    return DEFAULT_AUTO;
+  }
+}
+
+
 function ReplayPanel() {
   const {
     scannerRules,
