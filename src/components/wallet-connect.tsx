@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ClipboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,9 +18,13 @@ import {
   ShieldCheck,
   AlertTriangle,
   Flag,
+  Radar,
+  ShieldOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSecurity } from "@/lib/security-store";
+import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
+import { scanWallet, shortAddress, type WalletScanResult } from "@/lib/wallet-scan";
 import { Link } from "@tanstack/react-router";
 
 const WALLETS = ["MetaMask (mock)", "Phantom (mock)", "WalletConnect (mock)", "Coinbase (mock)"];
@@ -30,6 +34,65 @@ export function WalletConnect() {
   const [connected, setConnected] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scan, setScan] = useState<WalletScanResult | null>(null);
+
+  const DEMO_ADDRESS = "0xDEMO00000000000000000000000000000000a1b2";
+
+  const runScan = useCallback(
+    async (walletName: string) => {
+      setScan(null);
+      setScanning(true);
+      setScanOpen(true);
+      const result = await scanWallet(DEMO_ADDRESS);
+      setScan(result);
+      setScanning(false);
+
+      for (const t of result.threats) {
+        security.report({
+          kind: t.rules.includes("phishing-address-list")
+            ? "phishing-domain"
+            : "suspicious-address",
+          severity: t.risk === "critical" ? "critical" : "warn",
+          source: "wallet-scan",
+          message: `${t.risk === "critical" ? "Phishing" : "Risky"} approval on ${walletName}: ${t.token} → ${shortAddress(t.spender)}`,
+          detail: t.reasons.join(" "),
+          matchedRule: t.rules[0],
+          blocked: false,
+        });
+      }
+
+      if (result.threats.length === 0) {
+        toast.success("Wallet scan clear — no phishing approvals found");
+      } else {
+        toast.error(
+          `${result.threats.length} risky approval${result.threats.length > 1 ? "s" : ""} found on your wallet`,
+          {
+            description: "Phishing spenders can drain approved tokens. Revoke them now.",
+            duration: 10000,
+            action: { label: "Review", onClick: () => setScanOpen(true) },
+          },
+        );
+      }
+    },
+    [security],
+  );
+
+  const handleRevoked = useCallback((id: string) => {
+    setScan((prev) =>
+      prev
+        ? {
+            ...prev,
+            approvals: prev.approvals.filter((a) => a.id !== id),
+            threats: prev.threats.filter((a) => a.id !== id),
+            totalValueAtRiskUsd: prev.threats
+              .filter((a) => a.id !== id)
+              .reduce((s, a) => s + a.valueAtRiskUsd, 0),
+          }
+        : prev,
+    );
+  }, []);
 
   // Verify current origin whenever the dialog opens.
   const originCheck = useMemo(() => security.checkOriginSafe(), [security, open]);
@@ -70,6 +133,7 @@ export function WalletConnect() {
     setConnected(name);
     setOpen(false);
     toast.success(`${name} — read-only demo connected`);
+    void runScan(name);
   };
 
   if (connected) {
@@ -96,7 +160,41 @@ export function WalletConnect() {
             Report scam
           </button>
         </div>
+        {(scanning || scan) && (
+          <button
+            onClick={() => setScanOpen(true)}
+            className={`w-full rounded-lg border px-2.5 py-1.5 text-left text-[11px] transition ${
+              scan && scan.threats.length > 0
+                ? "border-rose-500/50 bg-rose-500/10 text-rose-200 hover:bg-rose-500/15"
+                : "border-emerald-500/30 bg-emerald-500/5 text-emerald-300 hover:bg-emerald-500/10"
+            }`}
+          >
+            <span className="flex items-center gap-1.5 font-semibold">
+              {scanning ? (
+                <>
+                  <Radar className="h-3.5 w-3.5 animate-pulse" /> Scanning wallet…
+                </>
+              ) : scan && scan.threats.length > 0 ? (
+                <>
+                  <ShieldOff className="h-3.5 w-3.5" /> {scan.threats.length} risky approval
+                  {scan.threats.length > 1 ? "s" : ""} — revoke
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="h-3.5 w-3.5" /> Wallet scan clear
+                </>
+              )}
+            </span>
+          </button>
+        )}
         <ReportDialog open={reportOpen} onOpenChange={setReportOpen} />
+        <WalletThreatDialog
+          open={scanOpen}
+          onOpenChange={setScanOpen}
+          scanning={scanning}
+          result={scan}
+          onRevoked={handleRevoked}
+        />
       </div>
     );
   }
