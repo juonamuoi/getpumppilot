@@ -40,6 +40,8 @@ import {
   X,
   Download,
   AlertTriangle,
+  History,
+  ArrowRight,
 } from "lucide-react";
 import {
   Dialog,
@@ -59,7 +61,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ASSETS } from "@/lib/mock-data";
-import { usePaper, type Alert, type AlertDelivery, type ScannerRules } from "@/lib/paper-store";
+import {
+  usePaper,
+  type Alert,
+  type AlertDelivery,
+  type ScannerRules,
+  type TuningLogEntry,
+} from "@/lib/paper-store";
 import { toast } from "sonner";
 
 type ChannelKey = AlertDelivery["channel"];
