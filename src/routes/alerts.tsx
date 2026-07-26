@@ -1694,6 +1694,9 @@ function RuleTuningPanel({
           Recommendations that breach these limits cannot be applied.
         </p>
       </div>
+
+      <FrontierChart result={result} rules={rules} preset={preset} bounds={bounds} />
+
       {!anySuggestion ? (
         <div className="p-4 text-center text-xs text-muted-foreground">
           No near-miss snapshots in this window — current rules are the binding
