@@ -100,8 +100,8 @@ export const createGoLiveTestCheckout = createServerFn({ method: "POST" })
     returnUrl: string;
     environment: StripeEnv;
   }) => {
-    if (!data.amountInCents || data.amountInCents < 50) throw new Error("Amount must be at least 50 cents");
-    if (data.amountInCents > 500) throw new Error("Go-live test is capped at $5.00");
+    assertValidGoLiveAmount(data.amountInCents);
+
     return data;
   })
   .handler(async ({ data, context }): Promise<CheckoutSessionResult & { sessionId?: string }> => {
