@@ -13,7 +13,8 @@ const usd = (n: number) =>
 const stamp = (ms: number) =>
   `${new Date(ms).toLocaleString()}  (UTC ${new Date(ms).toISOString()})`;
 
-export async function exportWalletReportPdf(result: WalletScanResult): Promise<string> {
+/** Builds the report document (exported for tests/QA). */
+export async function buildWalletReportDoc(result: WalletScanResult) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
@@ -194,6 +195,11 @@ export async function exportWalletReportPdf(result: WalletScanResult): Promise<s
   }
 
   const filename = `pumppilot-wallet-threat-report-${result.correlationId}.pdf`;
+  return { doc, filename };
+}
+
+export async function exportWalletReportPdf(result: WalletScanResult): Promise<string> {
+  const { doc, filename } = await buildWalletReportDoc(result);
   doc.save(filename);
   return filename;
 }
