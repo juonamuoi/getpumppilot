@@ -158,6 +158,37 @@ const AUDITED_RULES = [
   { key: "change", label: "24h change", field: "min24hChangePct", op: ">=", unit: "%" },
 ] as const;
 
+/** Writes a single rule's threshold onto a ruleset, keeping its fixed operator. */
+function withRuleValue(rules: ScannerRules, key: string, value: number): ScannerRules {
+  const next: ScannerRules = { ...rules };
+  if (key === "momentum") next.minMomentum = value;
+  else if (key === "volume") next.minVolumeScore = value;
+  else if (key === "volatility") next.maxVolatility = value;
+  else if (key === "change") next.min24hChangePct = value;
+  return next;
+}
+
+/**
+ * The most recent still-active save. One "Save rules" or auto-apply run can touch
+ * several rules at once, so entries logged within a short window count as one batch.
+ */
+function lastTuningBatch(log: TuningLogEntry[]): TuningLogEntry[] {
+  const active = log.filter((e) => !e.revertedAt);
+  if (active.length === 0) return [];
+  const newest = active.reduce((a, b) => (a.ts >= b.ts ? a : b));
+  return active
+    .filter((e) => Math.abs(newest.ts - e.ts) <= 2000 && e.source === newest.source)
+    .sort((a, b) => b.ts - a.ts);
+}
+
+/** Restores every threshold in the batch to its pre-change value (oldest change last wins). */
+function rollbackBatch(rules: ScannerRules, batch: TuningLogEntry[]): ScannerRules {
+  let next = rules;
+  for (const e of batch) next = withRuleValue(next, e.rule, e.oldValue);
+  return next;
+}
+
+
 /** Matches + near-miss risk metrics for a ruleset across current mock assets. */
 function ruleMetrics(rules: ScannerRules) {
   let matches = 0;
