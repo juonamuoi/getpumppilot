@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -17,6 +17,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAuth } from "@/lib/auth-store";
+import {
+  assignCreative,
+  trackCreativeEvent,
+  type AdCreative,
+  type Assignment,
+} from "@/lib/ad-creatives";
 import {
   COMPLIANCE_FOOTER,
   getVariant,
@@ -64,33 +70,28 @@ function AdLandingVariant() {
     document.documentElement.classList.add("dark");
   }, []);
 
-  // Record which ad variant brought the visitor in, for later attribution.
+  const [creative, setCreative] = useState<AdCreative | null>(null);
+  const assignmentRef = useRef<Assignment | null>(null);
+
+  // Assign an ad creative, persist attribution and log the impression.
   useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      localStorage.setItem(
-        "pp_landing_attribution",
-        JSON.stringify({
-          variant: v.slug,
-          utm_source: params.get("utm_source"),
-          utm_medium: params.get("utm_medium"),
-          utm_campaign: params.get("utm_campaign"),
-          utm_content: params.get("utm_content"),
-          at: new Date().toISOString(),
-        }),
-      );
-    } catch {
-      /* storage unavailable — attribution is best-effort */
-    }
+    const { creative: c, assignment } = assignCreative(v.slug);
+    assignmentRef.current = assignment;
+    setCreative(c);
+    void trackCreativeEvent("impression", assignment);
   }, [v.slug]);
 
+  const trackClick = () => {
+    if (assignmentRef.current) void trackCreativeEvent("click", assignmentRef.current);
+  };
+
   const ctaHref = user ? "/dashboard" : "/auth";
-  const ctaLabel = user ? "Launch dashboard" : v.ctaPrimary;
+  const ctaLabel = user ? "Launch dashboard" : creative?.cta ?? v.ctaPrimary;
 
   const Cta = ({ size = "lg" }: { size?: "lg" | "default" }) => (
     <div className="flex flex-col items-center gap-3">
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button size={size} asChild>
+        <Button size={size} asChild onClick={trackClick}>
           <Link to={ctaHref}>
             {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
@@ -117,7 +118,7 @@ function AdLandingVariant() {
             />
             <span className="text-sm font-bold tracking-tight">PumpPilot AI</span>
           </Link>
-          <Button size="sm" asChild>
+          <Button size="sm" asChild onClick={trackClick}>
             <Link to={ctaHref}>{ctaLabel}</Link>
           </Button>
         </div>
@@ -135,13 +136,13 @@ function AdLandingVariant() {
               <Sparkles className="mr-1.5 h-3 w-3" /> {v.badge}
             </Badge>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-              {v.headline}{" "}
+              {(creative?.headline ?? v.headline)}{" "}
               <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                {v.headlineAccent}
+                {creative?.headlineAccent ?? v.headlineAccent}
               </span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-              {v.subhead}
+              {creative?.description ?? v.subhead}
             </p>
             <div className="mt-8">
               <Cta />
