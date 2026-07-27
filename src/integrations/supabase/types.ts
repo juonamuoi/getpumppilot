@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_creative_events: {
+        Row: {
+          created_at: string
+          creative_id: string
+          event: string
+          experiment: string
+          id: string
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          variant: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          creative_id: string
+          event: string
+          experiment: string
+          id?: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          variant: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          creative_id?: string
+          event?: string
+          experiment?: string
+          id?: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          variant?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       mcp_audit_log: {
         Row: {
           client_id: string | null
@@ -349,6 +391,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ad_creative_report: {
+        Args: { _days?: number; _experiment?: string }
+        Returns: {
+          clicks: number
+          creative_id: string
+          impressions: number
+          signups: number
+          variant: string
+          visitors: number
+        }[]
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
