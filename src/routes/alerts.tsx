@@ -398,6 +398,22 @@ function ScannerRulesPanel() {
               <PlayCircle className="mr-2 h-4 w-4" /> Simulate scan
             </Button>
           </div>
+
+          {lastBatch.length > 0 && (
+            <Button
+              variant="ghost"
+              className="w-full gap-2 text-xs text-muted-foreground"
+              onClick={() => rollbackLast(lastBatch)}
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+              Roll back last change (
+              {lastBatch
+                .map((e) => `${e.ruleLabel} → ${e.oldValue}${e.unit}`)
+                .join(", ")}
+              )
+            </Button>
+          )}
+
         </CardContent>
       </Card>
 
