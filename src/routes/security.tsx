@@ -1127,7 +1127,9 @@ function StatBlock({
 
 function WalletRescanCard() {
   const { wallet, address, scanning, scan } = useWalletSession();
+  const monitor = useWalletMonitor();
   const [open, setOpen] = useState(false);
+
 
   if (!wallet) {
     return (
