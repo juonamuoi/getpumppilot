@@ -30,11 +30,15 @@ export type WalletApproval = {
   reasons: string[];
   /** Heuristic identifiers that matched. */
   rules: string[];
+  /** Per-finding correlation ID, unique to this approval within a scan. */
+  correlationId?: string;
 };
 
 export type WalletScanResult = {
   address: string;
   scannedAt: number;
+  /** Correlation ID for this scan run — quoted in exports and reports. */
+  correlationId: string;
   approvals: WalletApproval[];
   threats: WalletApproval[];
   /** Highest severity found. */
@@ -147,6 +151,12 @@ function classify(
   return { ...a, risk, reasons, rules };
 }
 
+/** Correlation ID format: WSC-<base36 time>-<random>. */
+export function newCorrelationId() {
+  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `WSC-${Date.now().toString(36).toUpperCase()}-${rand}`;
+}
+
 export const RISK_ORDER: ApprovalRisk[] = ["safe", "medium", "high", "critical"];
 
 /**
@@ -206,7 +216,10 @@ export async function scanWallet(
       base.push({ ...extra, approvedAt: now - 30 * 60_000 });
     }
   }
-  const approvals = base.map((a) => classify(a, now));
+  const correlationId = newCorrelationId();
+  const approvals = base
+    .map((a) => classify(a, now))
+    .map((a, i) => ({ ...a, correlationId: `${correlationId}-F${String(i + 1).padStart(2, "0")}` }));
 
   const threats = approvals.filter((a) => a.risk !== "safe");
   const worst = threats.reduce<ApprovalRisk>(
@@ -216,6 +229,7 @@ export async function scanWallet(
   return {
     address,
     scannedAt: now,
+    correlationId,
     approvals,
     threats,
     worst,
