@@ -474,7 +474,9 @@ function ScannerRulesPanel() {
       log={paper.tuningLog}
       onClear={paper.clearTuningLog}
       onRevert={revertEntry}
+      onRollbackLast={rollbackLast}
     />
+
 
     </div>
   );
