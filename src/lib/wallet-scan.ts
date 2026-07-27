@@ -149,11 +149,65 @@ function classify(
 
 export const RISK_ORDER: ApprovalRisk[] = ["safe", "medium", "high", "critical"];
 
-/** Simulated on-chain approval scan. Async so the UI can show progress. */
-export async function scanWallet(address: string): Promise<WalletScanResult> {
+/**
+ * Freshly-seen (demo) malicious spenders that background monitoring can
+ * surface between scans, so periodic monitoring has something to catch.
+ */
+const EMERGING_APPROVALS: Omit<WalletApproval, "risk" | "reasons" | "rules">[] = [
+  {
+    id: "ap-e1",
+    token: "DEMOCAT",
+    spender: "0xDEmo0000pHishSpender0000000000000000002",
+    spenderLabel: '"PumpPilot Reward Claim" (new)',
+    allowance: null,
+    valueAtRiskUsd: 4210,
+    approvedAt: 0,
+  },
+  {
+    id: "ap-e2",
+    token: "USDC",
+    spender: "0xDEmo0000newDra1ner00000000000000000007",
+    spenderLabel: "Contract deployed 2h ago",
+    allowance: null,
+    valueAtRiskUsd: 6750,
+    approvedAt: 0,
+  },
+  {
+    id: "ap-e3",
+    token: "WETH",
+    spender: "0xDEmo0000supp0rtVerify00000000000000008",
+    spenderLabel: '"Wallet Support Verify" portal',
+    allowance: null,
+    valueAtRiskUsd: 1980,
+    approvedAt: 0,
+  },
+];
+
+let emergingCursor = 0;
+
+/**
+ * Simulated on-chain approval scan. Async so the UI can show progress.
+ *
+ * `includeEmerging` is used by background monitoring: roughly every other
+ * background sweep surfaces a newly-granted malicious approval (demo data)
+ * so the new-threat notification path is exercised.
+ */
+export async function scanWallet(
+  address: string,
+  opts?: { includeEmerging?: boolean },
+): Promise<WalletScanResult> {
   await new Promise((r) => setTimeout(r, 900));
   const now = Date.now();
-  const approvals = mockApprovals(now).map((a) => classify(a, now));
+  const base = mockApprovals(now);
+  if (opts?.includeEmerging) {
+    const extra = EMERGING_APPROVALS[emergingCursor % EMERGING_APPROVALS.length];
+    emergingCursor += 1;
+    if (emergingCursor % 2 === 1) {
+      base.push({ ...extra, approvedAt: now - 30 * 60_000 });
+    }
+  }
+  const approvals = base.map((a) => classify(a, now));
+
   const threats = approvals.filter((a) => a.risk !== "safe");
   const worst = threats.reduce<ApprovalRisk>(
     (acc, t) => (RISK_ORDER.indexOf(t.risk) > RISK_ORDER.indexOf(acc) ? t.risk : acc),
