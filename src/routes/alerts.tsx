@@ -2573,11 +2573,24 @@ function TuningConfirmDialog({
               data — you can still lose all capital.
             </p>
           </div>
+
+          <MitigationChecklist
+            ruleKey={ruleKey}
+            tuning={tuning}
+            result={result}
+            rules={rules}
+            bounds={bounds}
+            onSetBounds={onSetBounds}
+            onApplyAlternative={onApplyAlternative}
+          />
         </div>
 
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={checkBounds(tuning, bounds).length > 0}
+          >
             Save {meta.short} {meta.op} {tuning.suggested}
             {meta.unit}
           </AlertDialogAction>
