@@ -19,7 +19,9 @@ import {
   ShieldOff,
   Radar,
   CheckCircle2,
+  FileDown,
 } from "lucide-react";
+import { exportWalletReportPdf } from "@/lib/wallet-report-pdf";
 import {
   revokeApproval,
   shortAddress,
@@ -53,6 +55,22 @@ export function WalletThreatDialog({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const exportPdf = useCallback(async () => {
+    if (!result) return;
+    setExporting(true);
+    try {
+      const file = await exportWalletReportPdf(result);
+      toast.success("Threat report exported", {
+        description: `${file} · correlation ID ${result.correlationId}`,
+      });
+    } catch {
+      toast.error("Could not generate the PDF report");
+    } finally {
+      setExporting(false);
+    }
+  }, [result]);
 
   const revoke = useCallback(
     async (a: WalletApproval) => {
@@ -193,6 +211,26 @@ export function WalletThreatDialog({
         )}
 
         <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
+          {!scanning && result && (
+            <>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                disabled={exporting}
+                onClick={() => void exportPdf()}
+              >
+                {exporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                Export threat report (PDF)
+              </Button>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Scan ID {result.correlationId} · {new Date(result.scannedAt).toLocaleString()}
+              </p>
+            </>
+          )}
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             Simulated scan on mock approval data for this demo build. Revoking is simulated and
             signs nothing. PumpPilot AI never asks for seed phrases or private keys.

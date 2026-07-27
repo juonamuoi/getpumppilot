@@ -43,6 +43,7 @@ import {
   Wallet,
   Columns3,
   X,
+  FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -1129,6 +1130,7 @@ function WalletRescanCard() {
   const { wallet, address, scanning, scan } = useWalletSession();
   const monitor = useWalletMonitor();
   const [open, setOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
 
   if (!wallet) {
@@ -1190,12 +1192,42 @@ function WalletRescanCard() {
               </span>
             )}
           </p>
+          {scan && !scanning && (
+            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+              Scan ID {scan.correlationId}
+            </p>
+          )}
         </div>
         <div className="flex shrink-0 gap-2">
           {scan && !scanning && (
-            <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-              View report
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+                View report
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={exporting}
+                onClick={async () => {
+                  setExporting(true);
+                  try {
+                    const { exportWalletReportPdf } = await import("@/lib/wallet-report-pdf");
+                    const file = await exportWalletReportPdf(scan);
+                    toast.success("Threat report exported", {
+                      description: `${file} · correlation ID ${scan.correlationId}`,
+                    });
+                  } catch {
+                    toast.error("Could not generate the PDF report");
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+              >
+                <FileDown className="h-4 w-4" />
+                {exporting ? "Building PDF…" : "Export PDF"}
+              </Button>
+            </>
           )}
           <Button
             size="sm"
