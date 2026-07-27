@@ -39,6 +39,8 @@ const WALLETS = ["MetaMask (mock)", "Phantom (mock)", "WalletConnect (mock)", "C
 
 export function WalletConnect() {
   const security = useSecurity();
+  const monitor = useWalletMonitor();
+
   const [connected, setConnected] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
