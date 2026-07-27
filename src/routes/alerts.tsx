@@ -331,7 +331,13 @@ function ScannerRulesPanel() {
         </CardContent>
       </Card>
     </div>
+
+    {impact && (
+      <RuleImpactPreview change={impact} onDismiss={() => setImpact(null)} />
+    )}
+    </div>
   );
+
 }
 
 function SliderRow({
