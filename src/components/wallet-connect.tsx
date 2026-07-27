@@ -28,9 +28,12 @@ import { scanWallet, shortAddress, type WalletScanResult } from "@/lib/wallet-sc
 import { Link } from "@tanstack/react-router";
 import {
   DEMO_WALLET_ADDRESS,
+  getWalletMonitor,
   registerRescanHandler,
   setWalletSession,
+  useWalletMonitor,
 } from "@/lib/wallet-session";
+
 
 const WALLETS = ["MetaMask (mock)", "Phantom (mock)", "WalletConnect (mock)", "Coinbase (mock)"];
 
