@@ -17,6 +17,8 @@ import { getCreativeReport } from "@/lib/ad-report.functions";
 import { AD_CREATIVES } from "@/lib/ad-creatives";
 import { LANDING_VARIANTS } from "@/lib/landing-variants";
 import { useAuth } from "@/lib/auth-store";
+import { FunnelReport } from "@/components/funnel-report";
+
 
 export const Route = createFileRoute("/ads-report")({
   head: () => ({
