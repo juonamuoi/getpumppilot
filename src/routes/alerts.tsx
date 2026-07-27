@@ -2476,7 +2476,7 @@ function TuningConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <AlertDialogContent className="max-w-md">
+      <AlertDialogContent className="max-h-[88vh] max-w-md overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm rule change</AlertDialogTitle>
           <AlertDialogDescription>
