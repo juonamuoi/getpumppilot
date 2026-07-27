@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdsReportRouteImport } from './routes/ads-report'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BacktestRouteImport } from './routes/backtest'
@@ -49,6 +50,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdsReportRoute = AdsReportRouteImport.update({
+  id: '/ads-report',
+  path: '/ads-report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlertsRoute = AlertsRouteImport.update({
@@ -233,6 +239,7 @@ const ApiPublicPaymentsWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
@@ -310,6 +318,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
@@ -350,6 +359,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ads-report'
     | '/alerts'
     | '/auth'
     | '/backtest'
@@ -388,6 +398,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ads-report'
     | '/alerts'
     | '/auth'
     | '/backtest'
@@ -426,6 +437,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/ads-report'
     | '/alerts'
     | '/auth'
     | '/backtest'
@@ -465,6 +477,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdsReportRoute: typeof AdsReportRoute
   AlertsRoute: typeof AlertsRoute
   AuthRoute: typeof AuthRoute
   BacktestRoute: typeof BacktestRoute
@@ -509,6 +522,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ads-report': {
+      id: '/ads-report'
+      path: '/ads-report'
+      fullPath: '/ads-report'
+      preLoaderRoute: typeof AdsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/alerts': {
@@ -761,6 +781,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdsReportRoute: AdsReportRoute,
   AlertsRoute: AlertsRoute,
   AuthRoute: AuthRoute,
   BacktestRoute: BacktestRoute,
