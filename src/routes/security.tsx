@@ -1209,7 +1209,58 @@ function WalletRescanCard() {
           </Button>
         </div>
       </CardContent>
+      <div className="flex flex-col gap-3 border-t border-border/60 px-6 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={monitor.enabled}
+            onCheckedChange={(v) => {
+              setWalletMonitor({ enabled: v });
+              toast.info(
+                v
+                  ? `Background wallet monitoring on — every ${monitor.intervalMinutes} min`
+                  : "Background wallet monitoring off",
+              );
+            }}
+            aria-label="Background wallet monitoring"
+          />
+          <span className="font-medium">Background monitoring</span>
+          <span className="text-muted-foreground">
+            {monitor.enabled
+              ? `scans approvals every ${monitor.intervalMinutes} min while the app is open`
+              : "paused"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select
+            value={String(monitor.intervalMinutes)}
+            onValueChange={(v) => setWalletMonitor({ intervalMinutes: Number(v) })}
+            disabled={!monitor.enabled}
+          >
+            <SelectTrigger className="h-8 w-[130px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MONITOR_INTERVALS.map((m) => (
+                <SelectItem key={m} value={String(m)}>
+                  Every {m} min
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <label className="flex items-center gap-2">
+            <Switch
+              checked={monitor.notifyOnNewThreats}
+              disabled={!monitor.enabled}
+              onCheckedChange={(v) => setWalletMonitor({ notifyOnNewThreats: v })}
+              aria-label="Notify on new threats"
+            />
+            <span className="text-muted-foreground">Notify on new threats</span>
+          </label>
+        </div>
+      </div>
       <WalletThreatDialog
+        open={open}
+
         open={open}
         onOpenChange={setOpen}
         scanning={scanning}
