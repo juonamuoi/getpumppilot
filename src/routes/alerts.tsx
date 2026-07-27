@@ -1558,6 +1558,14 @@ function TuningHistoryPanel({
                   <Badge variant="outline" className="h-4 px-1.5 text-[9px] capitalize">
                     {e.preset}
                   </Badge>
+                  <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                    {e.source === "manual-save"
+                      ? "Manual save"
+                      : e.source === "auto"
+                        ? "Automated"
+                        : "Recommendation"}
+                  </Badge>
+
                   {e.window && (
                     <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
                       {e.window}
