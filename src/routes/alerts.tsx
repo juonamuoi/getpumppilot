@@ -158,6 +158,37 @@ const AUDITED_RULES = [
   { key: "change", label: "24h change", field: "min24hChangePct", op: ">=", unit: "%" },
 ] as const;
 
+/** Writes a single rule's threshold onto a ruleset, keeping its fixed operator. */
+function withRuleValue(rules: ScannerRules, key: string, value: number): ScannerRules {
+  const next: ScannerRules = { ...rules };
+  if (key === "momentum") next.minMomentum = value;
+  else if (key === "volume") next.minVolumeScore = value;
+  else if (key === "volatility") next.maxVolatility = value;
+  else if (key === "change") next.min24hChangePct = value;
+  return next;
+}
+
+/**
+ * The most recent still-active save. One "Save rules" or auto-apply run can touch
+ * several rules at once, so entries logged within a short window count as one batch.
+ */
+function lastTuningBatch(log: TuningLogEntry[]): TuningLogEntry[] {
+  const active = log.filter((e) => !e.revertedAt);
+  if (active.length === 0) return [];
+  const newest = active.reduce((a, b) => (a.ts >= b.ts ? a : b));
+  return active
+    .filter((e) => Math.abs(newest.ts - e.ts) <= 2000 && e.source === newest.source)
+    .sort((a, b) => b.ts - a.ts);
+}
+
+/** Restores every threshold in the batch to its pre-change value (oldest change last wins). */
+function rollbackBatch(rules: ScannerRules, batch: TuningLogEntry[]): ScannerRules {
+  let next = rules;
+  for (const e of batch) next = withRuleValue(next, e.rule, e.oldValue);
+  return next;
+}
+
+
 /** Matches + near-miss risk metrics for a ruleset across current mock assets. */
 function ruleMetrics(rules: ScannerRules) {
   let matches = 0;
@@ -239,6 +270,26 @@ function ScannerRulesPanel() {
     paper.markTuningReverted(e.id);
     toast.success(`${e.ruleLabel} reverted to ${e.oldValue}${e.unit}`);
   };
+
+  /** One-click rollback of the whole last save (all thresholds it touched). */
+  const rollbackLast = (batch: TuningLogEntry[]) => {
+    if (batch.length === 0) return;
+    const before = paper.scannerRules;
+    const next = rollbackBatch(before, batch);
+    setR(next);
+    paper.setScannerRules(next);
+    for (const e of batch) paper.markTuningReverted(e.id);
+    setImpact({ before, after: next, ts: Date.now() });
+    toast.success(
+      `Rolled back last change — restored ${batch
+        .map((e) => `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`)
+        .join(", ")}`,
+    );
+  };
+
+  const lastBatch = useMemo(() => lastTuningBatch(paper.tuningLog), [paper.tuningLog]);
+
+
 
 
 
@@ -350,6 +401,22 @@ function ScannerRulesPanel() {
               <PlayCircle className="mr-2 h-4 w-4" /> Simulate scan
             </Button>
           </div>
+
+          {lastBatch.length > 0 && (
+            <Button
+              variant="ghost"
+              className="w-full gap-2 text-xs text-muted-foreground"
+              onClick={() => rollbackLast(lastBatch)}
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+              Roll back last change (
+              {lastBatch
+                .map((e) => `${e.ruleLabel} → ${e.oldValue}${e.unit}`)
+                .join(", ")}
+              )
+            </Button>
+          )}
+
         </CardContent>
       </Card>
 
@@ -407,7 +474,9 @@ function ScannerRulesPanel() {
       log={paper.tuningLog}
       onClear={paper.clearTuningLog}
       onRevert={revertEntry}
+      onRollbackLast={rollbackLast}
     />
+
 
     </div>
   );
@@ -1488,14 +1557,16 @@ function TuningHistoryPanel({
   log,
   onClear,
   onRevert,
+  onRollbackLast,
 }: {
   log: TuningLogEntry[];
   onClear: () => void;
   onRevert: (e: TuningLogEntry) => void;
+  onRollbackLast: (batch: TuningLogEntry[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? log : log.slice(0, 5);
-  const lastActive = log.find((e) => !e.revertedAt) ?? null;
+  const batch = useMemo(() => lastTuningBatch(log), [log]);
 
   return (
     <div className="rounded-md border border-border/60 bg-muted/10 p-3">
@@ -1508,15 +1579,22 @@ function TuningHistoryPanel({
           </Badge>
         </div>
         <div className="flex items-center gap-1">
-          {lastActive && (
+          {batch.length > 0 && (
             <Button
               size="sm"
               variant="outline"
               className="h-6 gap-1 px-2 text-[10px]"
-              onClick={() => onRevert(lastActive)}
+              onClick={() => onRollbackLast(batch)}
+              title={batch
+                .map(
+                  (e) =>
+                    `${e.ruleLabel} ${e.operator} ${e.newValue}${e.unit} → ${e.oldValue}${e.unit}`,
+                )
+                .join("; ")}
             >
               <Undo2 className="h-3 w-3" />
-              Undo last
+              Roll back last change
+              {batch.length > 1 ? ` (${batch.length})` : ""}
             </Button>
           )}
           {log.length > 0 && (
@@ -1526,6 +1604,22 @@ function TuningHistoryPanel({
           )}
         </div>
       </div>
+
+      {batch.length > 0 && (
+        <div className="mb-2 rounded border border-border/50 bg-background/40 p-2 text-[10px] text-muted-foreground">
+          One click restores the previous thresholds and operator settings from the last
+          save:{" "}
+          <span className="font-mono text-foreground">
+            {batch
+              .map(
+                (e) =>
+                  `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
+              )
+              .join(", ")}
+          </span>
+        </div>
+      )}
+
 
       {log.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">
@@ -3094,7 +3188,21 @@ function ReplayPanel() {
                     `Reverted ${e.ruleLabel} back to ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
                   );
                 }}
+                onRollbackLast={(batch) => {
+                  if (batch.length === 0) return;
+                  setScannerRules(rollbackBatch(scannerRules, batch));
+                  for (const e of batch) markTuningReverted(e.id);
+                  toast.success(
+                    `Rolled back last change — restored ${batch
+                      .map(
+                        (e) =>
+                          `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
+                      )
+                      .join(", ")}`,
+                  );
+                }}
               />
+
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
