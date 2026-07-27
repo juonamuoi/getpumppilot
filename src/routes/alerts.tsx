@@ -184,7 +184,9 @@ function ScannerRulesPanel() {
   };
 
   return (
+    <div className="space-y-5">
     <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+
       <Card className="border-border/60 bg-card/60">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Thresholds</CardTitle>
