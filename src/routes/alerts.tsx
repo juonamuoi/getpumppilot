@@ -2426,6 +2426,11 @@ function TuningConfirmDialog({
   ruleKey,
   tuning,
   preset,
+  result,
+  rules,
+  bounds,
+  onSetBounds,
+  onApplyAlternative,
   onCancel,
   onConfirm,
 }: {
@@ -2433,6 +2438,15 @@ function TuningConfirmDialog({
   ruleKey: RuleKey | null;
   tuning: RuleTuning | null;
   preset: "conservative" | "balanced" | "aggressive";
+  result: ReplayResult;
+  rules: ScannerRules;
+  bounds: RiskBounds;
+  onSetBounds: (fn: (b: RiskBounds) => RiskBounds) => void;
+  onApplyAlternative: (
+    value: number,
+    preview: TuningPreview | null,
+    label: string,
+  ) => void;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
