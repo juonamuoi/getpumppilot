@@ -45,29 +45,54 @@ export function WalletConnect() {
 
   const DEMO_ADDRESS = DEMO_WALLET_ADDRESS;
 
+  const lastThreatIds = useRef<Set<string>>(new Set());
+
   const runScan = useCallback(
-    async (walletName: string) => {
-      setScan(null);
+    async (walletName: string, opts?: { background?: boolean }) => {
+      const background = !!opts?.background;
+      if (!background) {
+        setScan(null);
+        setScanOpen(true);
+      }
       setScanning(true);
-      setScanOpen(true);
-      setWalletSession({ scanning: true, scan: null });
-      const result = await scanWallet(DEMO_ADDRESS);
+      setWalletSession({ scanning: true, ...(background ? {} : { scan: null }) });
+      const result = await scanWallet(DEMO_ADDRESS, { includeEmerging: background });
       setScan(result);
       setScanning(false);
       setWalletSession({ scanning: false, scan: result });
 
-      for (const t of result.threats) {
+      const previous = lastThreatIds.current;
+      const newThreats = result.threats.filter((t) => !previous.has(t.id));
+      lastThreatIds.current = new Set(result.threats.map((t) => t.id));
+
+      const toLog = background ? newThreats : result.threats;
+      for (const t of toLog) {
         security.report({
           kind: t.rules.includes("phishing-address-list")
             ? "phishing-domain"
             : "suspicious-address",
           severity: t.risk === "critical" ? "critical" : "warn",
           source: "wallet-scan",
-          message: `${t.risk === "critical" ? "Phishing" : "Risky"} approval on ${walletName}: ${t.token} → ${shortAddress(t.spender)}`,
+          message: `${background ? "New " : ""}${t.risk === "critical" ? "Phishing" : "Risky"} approval on ${walletName}: ${t.token} → ${shortAddress(t.spender)}`,
           detail: t.reasons.join(" "),
           matchedRule: t.rules[0],
           blocked: false,
         });
+      }
+
+      if (background) {
+        if (newThreats.length > 0 && getWalletMonitor().notifyOnNewThreats) {
+          toast.error(
+            `${newThreats.length} new risky approval${newThreats.length > 1 ? "s" : ""} detected on your wallet`,
+            {
+              description:
+                "Background monitor found a newly granted spender. Review and revoke it now.",
+              duration: 15000,
+              action: { label: "Review", onClick: () => setScanOpen(true) },
+            },
+          );
+        }
+        return;
       }
 
       if (result.threats.length === 0) {
@@ -87,6 +112,7 @@ export function WalletConnect() {
   );
 
   const handleRevoked = useCallback((id: string) => {
+    lastThreatIds.current.delete(id);
     setScan((prev) => {
       const next =
       prev
@@ -110,9 +136,23 @@ export function WalletConnect() {
       registerRescanHandler(null);
       return;
     }
-    registerRescanHandler(() => void runScan(connected));
+    registerRescanHandler((opts) => void runScan(connected, opts));
     return () => registerRescanHandler(null);
   }, [connected, runScan]);
+
+  // Periodic background monitoring while a wallet is connected.
+  useEffect(() => {
+    if (!connected || !monitor.enabled) return;
+    const id = window.setInterval(
+      () => {
+        if (document.hidden) return;
+        void runScan(connected, { background: true });
+      },
+      Math.max(1, monitor.intervalMinutes) * 60_000,
+    );
+    return () => window.clearInterval(id);
+  }, [connected, monitor.enabled, monitor.intervalMinutes, runScan]);
+
 
   // Verify current origin whenever the dialog opens.
   const originCheck = useMemo(() => security.checkOriginSafe(), [security, open]);
