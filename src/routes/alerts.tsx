@@ -271,6 +271,23 @@ function ScannerRulesPanel() {
     toast.success(`${e.ruleLabel} reverted to ${e.oldValue}${e.unit}`);
   };
 
+  /** One-click rollback of the whole last save (all thresholds it touched). */
+  const rollbackLast = (batch: TuningLogEntry[]) => {
+    if (batch.length === 0) return;
+    const before = paper.scannerRules;
+    const next = rollbackBatch(before, batch);
+    setR(next);
+    paper.setScannerRules(next);
+    for (const e of batch) paper.markTuningReverted(e.id);
+    setImpact({ before, after: next, ts: Date.now() });
+    toast.success(
+      `Rolled back last change — restored ${batch
+        .map((e) => `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`)
+        .join(", ")}`,
+    );
+  };
+
+
 
 
 
