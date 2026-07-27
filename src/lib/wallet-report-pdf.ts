@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ *
- * Wallet threat report → PDF export.
+ * Wallet threat report -> PDF export.
  *
  * Renders the latest approval scan (demo data) as a downloadable PDF
  * containing the scan correlation ID, timestamps (local + UTC ISO) and
@@ -124,7 +124,7 @@ export async function buildWalletReportDoc(result: WalletScanResult) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(20, 24, 34);
-    doc.text(`${i + 1}. ${t.risk.toUpperCase()} — ${t.token} → ${t.spenderLabel}`, M + 12, y);
+    doc.text(`${i + 1}. ${t.risk.toUpperCase()} — ${t.token} -> ${t.spenderLabel}`, M + 12, y);
     y += 16;
 
     doc.setFont("helvetica", "normal");
@@ -165,7 +165,7 @@ export async function buildWalletReportDoc(result: WalletScanResult) {
     doc.setFontSize(8.5);
     doc.setTextColor(60, 66, 80);
     doc.text(
-      `${(a.correlationId ?? "—").padEnd(0)}  ·  ${a.risk.toUpperCase()}  ·  ${a.token} → ${shortAddress(
+      `${(a.correlationId ?? "—").padEnd(0)}  ·  ${a.risk.toUpperCase()}  ·  ${a.token} -> ${shortAddress(
         a.spender,
       )}  ·  ${a.allowance === null ? "unlimited" : a.allowance}  ·  ${usd(a.valueAtRiskUsd)}`,
       M,
