@@ -2145,6 +2145,15 @@ function RuleTuningPanel({
         ruleKey={pending}
         tuning={pending ? tuning[pending] : null}
         preset={preset}
+        result={result}
+        rules={rules}
+        bounds={bounds}
+        onSetBounds={setBounds}
+        onApplyAlternative={(value, preview, label) => {
+          if (!pending) return;
+          onApply(pending, value, { preset: `${preset} · ${label}`, preview });
+          setPending(null);
+        }}
         onCancel={() => setPending(null)}
         onConfirm={() => {
           if (
@@ -2164,11 +2173,264 @@ function RuleTuningPanel({
   );
 }
 
+/** A safer variant of the current recommendation, produced by sweeping smaller loosening fractions. */
+type SaferOption = {
+  id: string;
+  title: string;
+  detail: string;
+  value: number;
+  fraction: number;
+  preview: TuningPreview | null;
+  fragilePct: number;
+  inBounds: boolean;
+};
+
+function useSaferAlternatives(
+  result: ReplayResult,
+  rules: ScannerRules,
+  ruleKey: RuleKey | null,
+  currentValue: number | null,
+  bounds: RiskBounds,
+) {
+  return useMemo(() => {
+    if (!ruleKey || currentValue == null) return [] as SaferOption[];
+    const meta = RULE_META[ruleKey];
+    const seen = new Set<number>([currentValue]);
+    const out: SaferOption[] = [];
+    for (let i = 1; i <= 19; i++) {
+      const f = i / 20;
+      const t = computeTuning(result, rules, f)[ruleKey];
+      if (t.suggested == null || !t.preview) continue;
+      if (seen.has(t.suggested)) continue;
+      seen.add(t.suggested);
+      const fragilePct = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+      out.push({
+        id: `f${i}`,
+        title: `${meta.short} ${meta.op} ${t.suggested}${meta.unit}`,
+        detail: `${t.preview.matchesAfter} matches · ${t.preview.nearMissAnyAfter} near-miss · ${fragilePct.toFixed(0)}% fragile`,
+        value: t.suggested,
+        fraction: f,
+        preview: t.preview,
+        fragilePct,
+        inBounds: checkBounds(t, bounds).length === 0,
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, rules, ruleKey, currentValue, bounds.enabled, bounds.maxFragilePct, bounds.maxNearMissIncrease]);
+}
+
+/**
+ * In-dialog mitigation checklist: surfaces every risk the change introduces and,
+ * for each, a one-tap safer action (tighten the threshold, widen the buffer, or
+ * adjust the fragility tolerance).
+ */
+function MitigationChecklist({
+  ruleKey,
+  tuning,
+  result,
+  rules,
+  bounds,
+  onSetBounds,
+  onApplyAlternative,
+}: {
+  ruleKey: RuleKey;
+  tuning: RuleTuning;
+  result: ReplayResult;
+  rules: ScannerRules;
+  bounds: RiskBounds;
+  onSetBounds: (fn: (b: RiskBounds) => RiskBounds) => void;
+  onApplyAlternative: (value: number, preview: TuningPreview | null, label: string) => void;
+}) {
+  const meta = RULE_META[ruleKey];
+  const suggested = tuning.suggested!;
+  const alternatives = useSaferAlternatives(result, rules, ruleKey, suggested, bounds);
+  const fragilePct = tuning.unlocked ? (tuning.fragile / tuning.unlocked) * 100 : 0;
+  const nearMissDelta = tuning.preview
+    ? tuning.preview.nearMissAnyAfter - tuning.preview.nearMissAnyBefore
+    : 0;
+
+  // "Tighter" = closer to the current threshold than the recommendation.
+  const tighter = alternatives
+    .filter((a) => Math.abs(a.value - tuning.current) < Math.abs(suggested - tuning.current))
+    .sort((a, b) => Math.abs(b.value - tuning.current) - Math.abs(a.value - tuning.current));
+  const safestInBounds = tighter.find((a) => a.inBounds) ?? null;
+  const lowestFragility =
+    [...tighter].sort((a, b) => a.fragilePct - b.fragilePct)[0] ?? null;
+  const buffered =
+    tighter.find(
+      (a) =>
+        Math.abs(a.value - tuning.current) <= Math.abs(suggested - tuning.current) * 0.6,
+    ) ?? null;
+
+  const boundsViolations = checkBounds(tuning, bounds);
+  const suggestedTolerance = Math.min(100, Math.ceil((fragilePct + 5) / 5) * 5);
+
+  type Item = {
+    key: string;
+    label: string;
+    hint: string;
+    done: boolean;
+    action?: { label: string; run: () => void };
+  };
+
+  const items: Item[] = [];
+
+  items.push({
+    key: "tighten",
+    label: "Tighten the filter instead of fully loosening it",
+    hint: safestInBounds
+      ? `Safer alternative: ${safestInBounds.title} — ${safestInBounds.detail}`
+      : "No tighter alternative unlocks anything in this window.",
+    done: !safestInBounds,
+    action: safestInBounds
+      ? {
+          label: `Apply ${safestInBounds.title}`,
+          run: () =>
+            onApplyAlternative(safestInBounds.value, safestInBounds.preview, "tightened"),
+        }
+      : undefined,
+  });
+
+  items.push({
+    key: "buffer",
+    label: "Widen the buffer to other rules",
+    hint:
+      tuning.avgOtherMinSlack >= 2
+        ? `Unlocked matches already keep avg slack ${tuning.avgOtherMinSlack.toFixed(1)} on other rules.`
+        : buffered
+          ? `Step back to ${buffered.title} — ${buffered.detail}`
+          : `Avg other-rule slack is only ${tuning.avgOtherMinSlack.toFixed(1)}; no wider-buffer variant available.`,
+    done: tuning.avgOtherMinSlack >= 2,
+    action:
+      tuning.avgOtherMinSlack < 2 && buffered
+        ? {
+            label: `Apply ${buffered.title}`,
+            run: () => onApplyAlternative(buffered.value, buffered.preview, "buffered"),
+          }
+        : undefined,
+  });
+
+  items.push({
+    key: "fragility",
+    label: "Keep fragility inside your tolerance",
+    hint:
+      fragilePct <= bounds.maxFragilePct || !bounds.enabled
+        ? `${fragilePct.toFixed(0)}% fragile vs your ${bounds.maxFragilePct}% tolerance.`
+        : lowestFragility
+          ? `${fragilePct.toFixed(0)}% exceeds your ${bounds.maxFragilePct}% tolerance. Lowest-fragility alternative: ${lowestFragility.title} (${lowestFragility.fragilePct.toFixed(0)}%).`
+          : `${fragilePct.toFixed(0)}% exceeds your ${bounds.maxFragilePct}% tolerance — raise it only if you accept noisier alerts.`,
+    done: !bounds.enabled || fragilePct <= bounds.maxFragilePct,
+    action:
+      bounds.enabled && fragilePct > bounds.maxFragilePct
+        ? lowestFragility && lowestFragility.fragilePct <= bounds.maxFragilePct
+          ? {
+              label: `Apply ${lowestFragility.title}`,
+              run: () =>
+                onApplyAlternative(
+                  lowestFragility.value,
+                  lowestFragility.preview,
+                  "low-fragility",
+                ),
+            }
+          : {
+              label: `Raise tolerance to ${suggestedTolerance}%`,
+              run: () =>
+                onSetBounds((b) => ({ ...b, maxFragilePct: suggestedTolerance })),
+            }
+        : undefined,
+  });
+
+  items.push({
+    key: "nearmiss",
+    label: "Hold near-miss growth within your limit",
+    hint:
+      !bounds.enabled || nearMissDelta <= bounds.maxNearMissIncrease
+        ? `Near-miss changes by ${nearMissDelta >= 0 ? "+" : ""}${nearMissDelta} (limit +${bounds.maxNearMissIncrease}).`
+        : `Near-miss grows by ${nearMissDelta}, above your +${bounds.maxNearMissIncrease} limit.`,
+    done: !bounds.enabled || nearMissDelta <= bounds.maxNearMissIncrease,
+    action:
+      bounds.enabled && nearMissDelta > bounds.maxNearMissIncrease
+        ? {
+            label: `Allow +${nearMissDelta}`,
+            run: () =>
+              onSetBounds((b) => ({ ...b, maxNearMissIncrease: nearMissDelta })),
+          }
+        : undefined,
+  });
+
+  const open = items.filter((i) => !i.done).length;
+
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-xs font-medium">
+          <ShieldAlert className="h-3.5 w-3.5 text-primary" />
+          Mitigation checklist
+        </div>
+        <Badge variant="outline" className="border-border/60 text-[10px]">
+          {open === 0 ? "All clear" : `${open} to review`}
+        </Badge>
+      </div>
+
+      <ul className="mt-2 space-y-2">
+        {items.map((item) => (
+          <li key={item.key} className="flex items-start gap-2">
+            <span
+              className={cn(
+                "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[9px]",
+                item.done
+                  ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
+                  : "border-amber-400/60 bg-amber-400/10 text-amber-300",
+              )}
+              aria-hidden
+            >
+              {item.done ? "✓" : "!"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-medium leading-snug">{item.label}</div>
+              <div className="text-[10px] leading-relaxed text-muted-foreground">
+                {item.hint}
+              </div>
+              {item.action && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-1 h-6 px-2 text-[10px]"
+                  onClick={item.action.run}
+                >
+                  {item.action.label}
+                </Button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {boundsViolations.length > 0 && (
+        <p className="mt-2 text-[10px] text-destructive">
+          Saving is blocked until these are resolved: {boundsViolations.join("; ")}.
+        </p>
+      )}
+      <p className="mt-2 text-[10px] text-muted-foreground">
+        Applying a safer alternative saves it immediately and closes this dialog. Demo
+        data — safer never means profitable.
+      </p>
+    </div>
+  );
+}
+
+
 function TuningConfirmDialog({
   open,
   ruleKey,
   tuning,
   preset,
+  result,
+  rules,
+  bounds,
+  onSetBounds,
+  onApplyAlternative,
   onCancel,
   onConfirm,
 }: {
@@ -2176,6 +2438,15 @@ function TuningConfirmDialog({
   ruleKey: RuleKey | null;
   tuning: RuleTuning | null;
   preset: "conservative" | "balanced" | "aggressive";
+  result: ReplayResult;
+  rules: ScannerRules;
+  bounds: RiskBounds;
+  onSetBounds: (fn: (b: RiskBounds) => RiskBounds) => void;
+  onApplyAlternative: (
+    value: number,
+    preview: TuningPreview | null,
+    label: string,
+  ) => void;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -2205,7 +2476,7 @@ function TuningConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <AlertDialogContent className="max-w-md">
+      <AlertDialogContent className="max-h-[88vh] max-w-md overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>Confirm rule change</AlertDialogTitle>
           <AlertDialogDescription>
@@ -2302,11 +2573,24 @@ function TuningConfirmDialog({
               data — you can still lose all capital.
             </p>
           </div>
+
+          <MitigationChecklist
+            ruleKey={ruleKey}
+            tuning={tuning}
+            result={result}
+            rules={rules}
+            bounds={bounds}
+            onSetBounds={onSetBounds}
+            onApplyAlternative={onApplyAlternative}
+          />
         </div>
 
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={checkBounds(tuning, bounds).length > 0}
+          >
             Save {meta.short} {meta.op} {tuning.suggested}
             {meta.unit}
           </AlertDialogAction>
