@@ -53,9 +53,13 @@ import {
   type Severity,
 } from "@/lib/security-store";
 import {
+  MONITOR_INTERVALS,
   requestWalletRescan,
+  setWalletMonitor,
+  useWalletMonitor,
   useWalletSession,
 } from "@/lib/wallet-session";
+
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
 import { shortAddress } from "@/lib/wallet-scan";
 
