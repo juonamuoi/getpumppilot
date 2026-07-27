@@ -49,10 +49,13 @@ export type AlertDelivery = {
   detail: string;
 };
 
-/** One applied rule-tuning recommendation, kept for auditability. */
+/** One applied rule-tuning change, kept for auditability. */
 export type TuningLogEntry = {
   id: string;
+  /** Where the change came from. */
+  source?: "manual-save" | "recommendation" | "auto";
   ts: number;
+
   /** Rule key: momentum | volume | volatility | change */
   rule: string;
   /** Human label, e.g. "Momentum". */
