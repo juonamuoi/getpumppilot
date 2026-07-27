@@ -237,7 +237,10 @@ function AdsReport() {
             </CardContent>
           </Card>
 
+          <FunnelReport days={days} />
+
           <Card>
+
             <CardHeader>
               <CardTitle className="text-base">Test URLs</CardTitle>
             </CardHeader>
