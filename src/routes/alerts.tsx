@@ -148,6 +148,7 @@ function AlertsPage() {
 function ScannerRulesPanel() {
   const paper = usePaper();
   const [r, setR] = useState<ScannerRules>(paper.scannerRules);
+  const [impact, setImpact] = useState<RuleChangeSnapshot | null>(null);
 
   const previewMatches = useMemo(() => {
     return ASSETS.filter((a) => {
@@ -163,9 +164,12 @@ function ScannerRulesPanel() {
   }, [r]);
 
   const save = () => {
+    const before = paper.scannerRules;
     paper.setScannerRules(r);
-    toast.success("Scanner rules saved");
+    setImpact({ before, after: r, ts: Date.now() });
+    toast.success("Scanner rules saved — see impact preview below");
   };
+
 
   const run = () => {
     paper.setScannerRules(r);
