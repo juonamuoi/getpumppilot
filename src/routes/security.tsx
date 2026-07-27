@@ -1261,7 +1261,6 @@ function WalletRescanCard() {
       <WalletThreatDialog
         open={open}
 
-        open={open}
         onOpenChange={setOpen}
         scanning={scanning}
         result={scan}
