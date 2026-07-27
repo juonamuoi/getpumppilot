@@ -402,6 +402,13 @@ function ScannerRulesPanel() {
     {impact && (
       <RuleImpactPreview change={impact} onDismiss={() => setImpact(null)} />
     )}
+
+    <TuningHistoryPanel
+      log={paper.tuningLog}
+      onClear={paper.clearTuningLog}
+      onRevert={revertEntry}
+    />
+
     </div>
   );
 
