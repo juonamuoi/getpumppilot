@@ -198,10 +198,49 @@ function ScannerRulesPanel() {
 
   const save = () => {
     const before = paper.scannerRules;
+    const mBefore = ruleMetrics(before);
+    const mAfter = ruleMetrics(r);
+    let logged = 0;
+    for (const rule of AUDITED_RULES) {
+      const oldValue = before[rule.field];
+      const newValue = r[rule.field];
+      if (oldValue === newValue) continue;
+      logged += 1;
+      paper.logTuning({
+        source: "manual-save",
+        rule: rule.key,
+        ruleLabel: rule.label,
+        operator: rule.op,
+        unit: rule.unit,
+        oldValue,
+        newValue,
+        preset: "manual",
+        matchesBefore: mBefore.matches,
+        matchesAfter: mAfter.matches,
+        nearMissBefore: mBefore.nearMiss,
+        nearMissAfter: mAfter.nearMiss,
+      });
+    }
     paper.setScannerRules(r);
     setImpact({ before, after: r, ts: Date.now() });
-    toast.success("Scanner rules saved — see impact preview below");
+    toast.success(
+      logged > 0
+        ? `Scanner rules saved — ${logged} change${logged === 1 ? "" : "s"} recorded in the audit log`
+        : "Scanner rules saved — see impact preview below",
+    );
   };
+
+  const revertEntry = (e: TuningLogEntry) => {
+    const rule = AUDITED_RULES.find((x) => x.key === e.rule);
+    if (!rule) return;
+    const next: ScannerRules = { ...paper.scannerRules, [rule.field]: e.oldValue };
+    setR(next);
+    paper.setScannerRules(next);
+    paper.markTuningReverted(e.id);
+    toast.success(`${e.ruleLabel} reverted to ${e.oldValue}${e.unit}`);
+  };
+
+
 
 
   const run = () => {
