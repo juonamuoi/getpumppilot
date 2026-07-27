@@ -287,6 +287,9 @@ function ScannerRulesPanel() {
     );
   };
 
+  const lastBatch = useMemo(() => lastTuningBatch(paper.tuningLog), [paper.tuningLog]);
+
+
 
 
 
