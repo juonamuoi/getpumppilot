@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.ad_creative_report(text, integer) FROM authenticated;
