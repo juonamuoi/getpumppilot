@@ -29,7 +29,7 @@ export const Route = createFileRoute("/lp/$variant")({
   loader: ({ params }) => {
     const variant = getVariant(params.variant);
     if (!variant) throw notFound();
-    return { variant };
+    return { slug: variant.slug };
   },
   head: ({ params }) => {
     const v = getVariant(params.variant) ?? LANDING_VARIANTS[0];
@@ -56,7 +56,8 @@ export const Route = createFileRoute("/lp/$variant")({
 });
 
 function AdLandingVariant() {
-  const { variant: v } = Route.useLoaderData();
+  const params = Route.useParams();
+  const v = getVariant(params.variant) ?? LANDING_VARIANTS[0];
   const { user } = useAuth();
 
   useEffect(() => {
