@@ -23,6 +23,7 @@ import {
   type AdCreative,
   type Assignment,
 } from "@/lib/ad-creatives";
+import { trackFunnelStep } from "@/lib/funnel";
 import {
   COMPLIANCE_FOOTER,
   getVariant,
@@ -83,6 +84,7 @@ function AdLandingVariant() {
 
   const trackClick = () => {
     if (assignmentRef.current) void trackCreativeEvent("click", assignmentRef.current);
+    void trackFunnelStep("cta_click");
   };
 
   const ctaHref = user ? "/dashboard" : "/auth";

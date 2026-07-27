@@ -402,6 +402,20 @@ export type Database = {
           visitors: number
         }[]
       }
+      ad_funnel_report: {
+        Args: { _days?: number }
+        Returns: {
+          activations: number
+          avg_minutes_to_chart: number
+          campaign: string
+          cta_clicks: number
+          medium: string
+          signups: number
+          source: string
+          variant: string
+          visitors: number
+        }[]
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean

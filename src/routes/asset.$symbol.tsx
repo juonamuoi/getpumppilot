@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DemoBadge, DisclaimerBanner } from "@/components/disclaimer";
 import { getAsset, fmtPct, fmtUsd } from "@/lib/mock-data";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePaper } from "@/lib/paper-store";
+import { trackFunnelStep } from "@/lib/funnel";
 import { toast } from "sonner";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -37,6 +38,11 @@ function AssetPage() {
   const navigate = useNavigate();
   const paper = usePaper();
   const [qty, setQty] = useState("");
+
+  // Activation milestone: the visitor reached their first asset chart.
+  useEffect(() => {
+    void trackFunnelStep("first_chart");
+  }, []);
 
   if (!asset) {
     return (
