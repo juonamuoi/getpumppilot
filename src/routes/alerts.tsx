@@ -71,6 +71,11 @@ import {
   type TuningLogEntry,
 } from "@/lib/paper-store";
 import { toast } from "sonner";
+import {
+  RuleImpactPreview,
+  type RuleChangeSnapshot,
+} from "@/components/rule-impact-preview";
+
 
 type ChannelKey = AlertDelivery["channel"];
 type StatusKey = AlertDelivery["status"];
@@ -148,6 +153,7 @@ function AlertsPage() {
 function ScannerRulesPanel() {
   const paper = usePaper();
   const [r, setR] = useState<ScannerRules>(paper.scannerRules);
+  const [impact, setImpact] = useState<RuleChangeSnapshot | null>(null);
 
   const previewMatches = useMemo(() => {
     return ASSETS.filter((a) => {
@@ -163,9 +169,12 @@ function ScannerRulesPanel() {
   }, [r]);
 
   const save = () => {
+    const before = paper.scannerRules;
     paper.setScannerRules(r);
-    toast.success("Scanner rules saved");
+    setImpact({ before, after: r, ts: Date.now() });
+    toast.success("Scanner rules saved — see impact preview below");
   };
+
 
   const run = () => {
     paper.setScannerRules(r);
@@ -175,7 +184,9 @@ function ScannerRulesPanel() {
   };
 
   return (
+    <div className="space-y-5">
     <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+
       <Card className="border-border/60 bg-card/60">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Thresholds</CardTitle>
@@ -320,7 +331,13 @@ function ScannerRulesPanel() {
         </CardContent>
       </Card>
     </div>
+
+    {impact && (
+      <RuleImpactPreview change={impact} onDismiss={() => setImpact(null)} />
+    )}
+    </div>
   );
+
 }
 
 function SliderRow({
