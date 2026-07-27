@@ -150,10 +150,38 @@ function AlertsPage() {
 
 /* -------------------------------- Scanner rules ------------------------------- */
 
+/** Threshold rules tracked in the tuning audit log. */
+const AUDITED_RULES = [
+  { key: "momentum", label: "Momentum", field: "minMomentum", op: ">=", unit: "" },
+  { key: "volume", label: "Volume", field: "minVolumeScore", op: ">=", unit: "" },
+  { key: "volatility", label: "Volatility", field: "maxVolatility", op: "<=", unit: "" },
+  { key: "change", label: "24h change", field: "min24hChangePct", op: ">=", unit: "%" },
+] as const;
+
+/** Matches + near-miss risk metrics for a ruleset across current mock assets. */
+function ruleMetrics(rules: ScannerRules) {
+  let matches = 0;
+  let nearMiss = 0;
+  for (const a of ASSETS) {
+    if (!rules.includeMajors && a.category === "major") continue;
+    if (!rules.includeDemoSmallCaps && a.category === "demo-smallcap") continue;
+    const fails = [
+      a.momentum.total >= rules.minMomentum,
+      a.momentum.volume >= rules.minVolumeScore,
+      a.momentum.volatility <= rules.maxVolatility,
+      a.change24h >= rules.min24hChangePct,
+    ].filter((ok) => !ok).length;
+    if (fails === 0) matches += 1;
+    else if (fails === 1) nearMiss += 1;
+  }
+  return { matches, nearMiss };
+}
+
 function ScannerRulesPanel() {
   const paper = usePaper();
   const [r, setR] = useState<ScannerRules>(paper.scannerRules);
   const [impact, setImpact] = useState<RuleChangeSnapshot | null>(null);
+
 
   const previewMatches = useMemo(() => {
     return ASSETS.filter((a) => {
@@ -170,10 +198,49 @@ function ScannerRulesPanel() {
 
   const save = () => {
     const before = paper.scannerRules;
+    const mBefore = ruleMetrics(before);
+    const mAfter = ruleMetrics(r);
+    let logged = 0;
+    for (const rule of AUDITED_RULES) {
+      const oldValue = before[rule.field];
+      const newValue = r[rule.field];
+      if (oldValue === newValue) continue;
+      logged += 1;
+      paper.logTuning({
+        source: "manual-save",
+        rule: rule.key,
+        ruleLabel: rule.label,
+        operator: rule.op,
+        unit: rule.unit,
+        oldValue,
+        newValue,
+        preset: "manual",
+        matchesBefore: mBefore.matches,
+        matchesAfter: mAfter.matches,
+        nearMissBefore: mBefore.nearMiss,
+        nearMissAfter: mAfter.nearMiss,
+      });
+    }
     paper.setScannerRules(r);
     setImpact({ before, after: r, ts: Date.now() });
-    toast.success("Scanner rules saved — see impact preview below");
+    toast.success(
+      logged > 0
+        ? `Scanner rules saved — ${logged} change${logged === 1 ? "" : "s"} recorded in the audit log`
+        : "Scanner rules saved — see impact preview below",
+    );
   };
+
+  const revertEntry = (e: TuningLogEntry) => {
+    const rule = AUDITED_RULES.find((x) => x.key === e.rule);
+    if (!rule) return;
+    const next: ScannerRules = { ...paper.scannerRules, [rule.field]: e.oldValue };
+    setR(next);
+    paper.setScannerRules(next);
+    paper.markTuningReverted(e.id);
+    toast.success(`${e.ruleLabel} reverted to ${e.oldValue}${e.unit}`);
+  };
+
+
 
 
   const run = () => {
@@ -335,6 +402,13 @@ function ScannerRulesPanel() {
     {impact && (
       <RuleImpactPreview change={impact} onDismiss={() => setImpact(null)} />
     )}
+
+    <TuningHistoryPanel
+      log={paper.tuningLog}
+      onClear={paper.clearTuningLog}
+      onRevert={revertEntry}
+    />
+
     </div>
   );
 
@@ -1484,6 +1558,14 @@ function TuningHistoryPanel({
                   <Badge variant="outline" className="h-4 px-1.5 text-[9px] capitalize">
                     {e.preset}
                   </Badge>
+                  <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">
+                    {e.source === "manual-save"
+                      ? "Manual save"
+                      : e.source === "auto"
+                        ? "Automated"
+                        : "Recommendation"}
+                  </Badge>
+
                   {e.window && (
                     <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
                       {e.window}
@@ -2327,7 +2409,9 @@ function ReplayPanel() {
     else if (k === "volatility") next.maxVolatility = value;
     else next.min24hChangePct = value;
     logTuning({
+      source: meta.preset.startsWith("auto") ? "auto" : "recommendation",
       rule: k,
+
       ruleLabel: RULE_META[k].short,
       operator: RULE_META[k].op,
       unit: RULE_META[k].unit,
