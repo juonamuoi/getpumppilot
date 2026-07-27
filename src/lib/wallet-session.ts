@@ -21,7 +21,7 @@ let state: WalletSession = { wallet: null, address: null, scanning: false, scan:
 
 const listeners = new Set<() => void>();
 /** Set by <WalletConnect/> so other screens can trigger a rescan. */
-let rescanHandler: (() => void) | null = null;
+let rescanHandler: ((opts?: { background?: boolean }) => void) | null = null;
 
 function emit() {
   for (const l of listeners) l();
@@ -32,12 +32,14 @@ export function setWalletSession(patch: Partial<WalletSession>) {
   emit();
 }
 
-export function registerRescanHandler(fn: (() => void) | null) {
+export function registerRescanHandler(
+  fn: ((opts?: { background?: boolean }) => void) | null,
+) {
   rescanHandler = fn;
 }
 
-export function requestWalletRescan() {
-  rescanHandler?.();
+export function requestWalletRescan(opts?: { background?: boolean }) {
+  rescanHandler?.(opts);
 }
 
 export function useWalletSession(): WalletSession {
@@ -50,3 +52,63 @@ export function useWalletSession(): WalletSession {
     () => state,
   );
 }
+
+/* ----------------------- Background monitoring settings ---------------------- */
+
+export type WalletMonitorSettings = {
+  enabled: boolean;
+  /** Scan interval in minutes. */
+  intervalMinutes: number;
+  /** Toast immediately when a new threat appears. */
+  notifyOnNewThreats: boolean;
+};
+
+export const MONITOR_INTERVALS = [5, 15, 30, 60] as const;
+
+const MONITOR_KEY = "pp_wallet_monitor_v1";
+
+const defaultMonitor: WalletMonitorSettings = {
+  enabled: true,
+  intervalMinutes: 15,
+  notifyOnNewThreats: true,
+};
+
+function loadMonitor(): WalletMonitorSettings {
+  if (typeof window === "undefined") return defaultMonitor;
+  try {
+    const raw = window.localStorage.getItem(MONITOR_KEY);
+    if (!raw) return defaultMonitor;
+    return { ...defaultMonitor, ...(JSON.parse(raw) as Partial<WalletMonitorSettings>) };
+  } catch {
+    return defaultMonitor;
+  }
+}
+
+let monitor: WalletMonitorSettings = loadMonitor();
+const monitorListeners = new Set<() => void>();
+
+export function setWalletMonitor(patch: Partial<WalletMonitorSettings>) {
+  monitor = { ...monitor, ...patch };
+  try {
+    window.localStorage.setItem(MONITOR_KEY, JSON.stringify(monitor));
+  } catch {
+    /* ignore */
+  }
+  for (const l of monitorListeners) l();
+}
+
+export function getWalletMonitor(): WalletMonitorSettings {
+  return monitor;
+}
+
+export function useWalletMonitor(): WalletMonitorSettings {
+  return useSyncExternalStore(
+    (cb) => {
+      monitorListeners.add(cb);
+      return () => monitorListeners.delete(cb);
+    },
+    () => monitor,
+    () => defaultMonitor,
+  );
+}
+
