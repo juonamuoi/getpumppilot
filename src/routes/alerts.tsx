@@ -1519,14 +1519,16 @@ function TuningHistoryPanel({
   log,
   onClear,
   onRevert,
+  onRollbackLast,
 }: {
   log: TuningLogEntry[];
   onClear: () => void;
   onRevert: (e: TuningLogEntry) => void;
+  onRollbackLast: (batch: TuningLogEntry[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const shown = expanded ? log : log.slice(0, 5);
-  const lastActive = log.find((e) => !e.revertedAt) ?? null;
+  const batch = useMemo(() => lastTuningBatch(log), [log]);
 
   return (
     <div className="rounded-md border border-border/60 bg-muted/10 p-3">
@@ -1539,15 +1541,22 @@ function TuningHistoryPanel({
           </Badge>
         </div>
         <div className="flex items-center gap-1">
-          {lastActive && (
+          {batch.length > 0 && (
             <Button
               size="sm"
               variant="outline"
               className="h-6 gap-1 px-2 text-[10px]"
-              onClick={() => onRevert(lastActive)}
+              onClick={() => onRollbackLast(batch)}
+              title={batch
+                .map(
+                  (e) =>
+                    `${e.ruleLabel} ${e.operator} ${e.newValue}${e.unit} → ${e.oldValue}${e.unit}`,
+                )
+                .join("; ")}
             >
               <Undo2 className="h-3 w-3" />
-              Undo last
+              Roll back last change
+              {batch.length > 1 ? ` (${batch.length})` : ""}
             </Button>
           )}
           {log.length > 0 && (
@@ -1557,6 +1566,22 @@ function TuningHistoryPanel({
           )}
         </div>
       </div>
+
+      {batch.length > 0 && (
+        <div className="mb-2 rounded border border-border/50 bg-background/40 p-2 text-[10px] text-muted-foreground">
+          One click restores the previous thresholds and operator settings from the last
+          save:{" "}
+          <span className="font-mono text-foreground">
+            {batch
+              .map(
+                (e) =>
+                  `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
+              )
+              .join(", ")}
+          </span>
+        </div>
+      )}
+
 
       {log.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">
