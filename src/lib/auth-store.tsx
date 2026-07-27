@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { captureReferralFromUrl, recordReferralIfPresent } from "@/lib/referral";
+import { trackSignupOnce } from "@/lib/ad-creatives";
 
 type Ctx = {
   session: Session | null;
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === "SIGNED_IN" && s?.user?.id) {
         setTimeout(() => {
           recordReferralIfPresent(s.user.id).catch(() => {});
+          trackSignupOnce(s.user.id).catch(() => {});
         }, 0);
       }
     });
