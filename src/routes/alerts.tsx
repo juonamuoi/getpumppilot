@@ -2409,7 +2409,9 @@ function ReplayPanel() {
     else if (k === "volatility") next.maxVolatility = value;
     else next.min24hChangePct = value;
     logTuning({
+      source: meta.preset.startsWith("auto") ? "auto" : "recommendation",
       rule: k,
+
       ruleLabel: RULE_META[k].short,
       operator: RULE_META[k].op,
       unit: RULE_META[k].unit,
