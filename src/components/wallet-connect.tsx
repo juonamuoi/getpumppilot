@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ClipboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
