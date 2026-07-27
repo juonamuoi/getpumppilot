@@ -71,6 +71,11 @@ import {
   type TuningLogEntry,
 } from "@/lib/paper-store";
 import { toast } from "sonner";
+import {
+  RuleImpactPreview,
+  type RuleChangeSnapshot,
+} from "@/components/rule-impact-preview";
+
 
 type ChannelKey = AlertDelivery["channel"];
 type StatusKey = AlertDelivery["status"];
