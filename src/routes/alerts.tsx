@@ -150,10 +150,38 @@ function AlertsPage() {
 
 /* -------------------------------- Scanner rules ------------------------------- */
 
+/** Threshold rules tracked in the tuning audit log. */
+const AUDITED_RULES = [
+  { key: "momentum", label: "Momentum", field: "minMomentum", op: ">=", unit: "" },
+  { key: "volume", label: "Volume", field: "minVolumeScore", op: ">=", unit: "" },
+  { key: "volatility", label: "Volatility", field: "maxVolatility", op: "<=", unit: "" },
+  { key: "change", label: "24h change", field: "min24hChangePct", op: ">=", unit: "%" },
+] as const;
+
+/** Matches + near-miss risk metrics for a ruleset across current mock assets. */
+function ruleMetrics(rules: ScannerRules) {
+  let matches = 0;
+  let nearMiss = 0;
+  for (const a of ASSETS) {
+    if (!rules.includeMajors && a.category === "major") continue;
+    if (!rules.includeDemoSmallCaps && a.category === "demo-smallcap") continue;
+    const fails = [
+      a.momentum.total >= rules.minMomentum,
+      a.momentum.volume >= rules.minVolumeScore,
+      a.momentum.volatility <= rules.maxVolatility,
+      a.change24h >= rules.min24hChangePct,
+    ].filter((ok) => !ok).length;
+    if (fails === 0) matches += 1;
+    else if (fails === 1) nearMiss += 1;
+  }
+  return { matches, nearMiss };
+}
+
 function ScannerRulesPanel() {
   const paper = usePaper();
   const [r, setR] = useState<ScannerRules>(paper.scannerRules);
   const [impact, setImpact] = useState<RuleChangeSnapshot | null>(null);
+
 
   const previewMatches = useMemo(() => {
     return ASSETS.filter((a) => {
