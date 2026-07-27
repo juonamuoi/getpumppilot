@@ -3188,7 +3188,21 @@ function ReplayPanel() {
                     `Reverted ${e.ruleLabel} back to ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
                   );
                 }}
+                onRollbackLast={(batch) => {
+                  if (batch.length === 0) return;
+                  setScannerRules(rollbackBatch(scannerRules, batch));
+                  for (const e of batch) markTuningReverted(e.id);
+                  toast.success(
+                    `Rolled back last change — restored ${batch
+                      .map(
+                        (e) =>
+                          `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
+                      )
+                      .join(", ")}`,
+                  );
+                }}
               />
+
 
               {bySymbol.length === 0 ? (
                 <div className="rounded-md border border-border/60 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
