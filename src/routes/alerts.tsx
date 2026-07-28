@@ -45,6 +45,7 @@ import {
   ArrowRight,
   Undo2,
   ShieldAlert,
+  BellRing,
 } from "lucide-react";
 import {
   Dialog,
@@ -107,6 +108,8 @@ export const Route = createFileRoute("/alerts")({
 });
 
 function AlertsPage() {
+  const { tuningLog } = usePaper();
+  useNearMissRiskAlerts(tuningLog);
   return (
     <AppShell>
       <div className="space-y-5">
@@ -1901,12 +1904,21 @@ type RiskBounds = {
   maxNearMissIncrease: number;
   /** Max allowed share of unlocked snapshots that are fragile, in percent. */
   maxFragilePct: number;
+  /** Raise an in-app alert when a save pushes near-miss risk up. */
+  alertEnabled: boolean;
+  /** Near-miss increase (snapshots) that triggers the in-app alert. */
+  alertNearMissIncrease: number;
+  /** Which asset scope the alert watches. */
+  alertScope: "any" | "majors" | "demo" | "both";
 };
 
 const DEFAULT_BOUNDS: RiskBounds = {
   enabled: true,
   maxNearMissIncrease: 5,
   maxFragilePct: 50,
+  alertEnabled: true,
+  alertNearMissIncrease: 3,
+  alertScope: "any",
 };
 
 const BOUNDS_KEY = "pumppilot_tuning_bounds";
@@ -1920,6 +1932,52 @@ function loadBounds(): RiskBounds {
     return DEFAULT_BOUNDS;
   }
 }
+
+function saveBounds(b: RiskBounds) {
+  try {
+    window.localStorage.setItem(BOUNDS_KEY, JSON.stringify(b));
+  } catch {}
+}
+
+const SCOPE_LABEL: Record<string, string> = {
+  majors: "Majors",
+  demo: "DEMO",
+  both: "Majors + DEMO",
+  none: "No assets",
+};
+
+/**
+ * Watches the tuning audit log and raises an in-app alert whenever a saved
+ * rule/operator change increases near-miss risk beyond the configured threshold
+ * for the selected asset scope.
+ */
+function useNearMissRiskAlerts(log: TuningLogEntry[]) {
+  const seen = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (seen.current === null) {
+      // Skip entries that already existed when the page mounted.
+      seen.current = new Set(log.map((e) => e.id));
+      return;
+    }
+    const bounds = loadBounds();
+    for (const e of log) {
+      if (seen.current.has(e.id)) continue;
+      seen.current.add(e.id);
+      if (!bounds.alertEnabled) continue;
+      if (e.nearMissBefore == null || e.nearMissAfter == null) continue;
+      const scope = e.scope ?? "both";
+      if (bounds.alertScope !== "any" && scope !== bounds.alertScope) continue;
+      const delta = e.nearMissAfter - e.nearMissBefore;
+      if (delta <= bounds.alertNearMissIncrease) continue;
+      toast.error(`Near-miss risk up +${delta} on ${e.ruleLabel}`, {
+        description: `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit} → ${e.newValue}${e.unit} pushed near-miss from ${e.nearMissBefore} to ${e.nearMissAfter} (limit +${bounds.alertNearMissIncrease}, scope ${SCOPE_LABEL[scope] ?? scope}). Review the audit log or roll back.`,
+        duration: 10_000,
+      });
+    }
+  }, [log]);
+}
+
+
 
 /** Returns the list of bound violations for a recommendation; empty when it may be applied. */
 function checkBounds(t: RuleTuning, bounds: RiskBounds): string[] {
@@ -2247,6 +2305,64 @@ function RuleTuningPanel({
         <p className="mt-1.5 text-[10px] text-muted-foreground">
           Recommendations that breach these limits cannot be applied.
         </p>
+
+        <div className="mt-3 border-t border-border/60 pt-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium">
+              <BellRing className="h-3.5 w-3.5 text-primary" />
+              Alert me when a save raises near-miss risk
+            </div>
+            <Switch
+              checked={bounds.alertEnabled}
+              onCheckedChange={(v) => setBounds((b) => ({ ...b, alertEnabled: v }))}
+            />
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-[10px] text-muted-foreground">
+                Alert threshold (near-miss increase)
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                className="h-7 text-xs"
+                value={bounds.alertNearMissIncrease}
+                disabled={!bounds.alertEnabled}
+                onChange={(e) =>
+                  setBounds((b) => ({
+                    ...b,
+                    alertNearMissIncrease: Math.max(0, Number(e.target.value) || 0),
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] text-muted-foreground">Watched scope</Label>
+              <Select
+                value={bounds.alertScope}
+                disabled={!bounds.alertEnabled}
+                onValueChange={(v) =>
+                  setBounds((b) => ({ ...b, alertScope: v as RiskBounds["alertScope"] }))
+                }
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any scope</SelectItem>
+                  <SelectItem value="both">Majors + DEMO</SelectItem>
+                  <SelectItem value="majors">Majors only</SelectItem>
+                  <SelectItem value="demo">DEMO only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="mt-1.5 text-[10px] text-muted-foreground">
+            Fires an in-app alert right after any rule/operator save whose near-miss count grows by
+            more than this in the watched scope.
+          </p>
+        </div>
+
       </div>
 
       <FrontierChart result={result} rules={rules} preset={preset} bounds={bounds} />
