@@ -2551,11 +2551,33 @@ function RuleTuningPanel({
         rules={rules}
         bounds={bounds}
         onSetBounds={setBounds}
-        onApplyAlternative={(value, preview, label) => {
+        onApplyAlternative={(value, preview, label, meta) => {
           if (!pending) return;
-          onApply(pending, value, { preset: `${preset} · ${label}`, preview });
+          onApply(pending, value, {
+            preset: `${preset} · ${label}`,
+            preview,
+            mitigation: meta.mitigation,
+            trigger: meta.trigger,
+            recommendedValue: meta.recommendedValue,
+            fragilePct: meta.fragilePct,
+          });
           setPending(null);
         }}
+        onLogBounds={(e) =>
+          onLogBoundsChange({
+            label: e.label,
+            unit: e.unit,
+            oldValue: e.oldValue,
+            newValue: e.newValue,
+            preview: e.preview,
+            mitigation: e.meta.mitigation,
+            trigger: e.meta.trigger,
+            recommendedValue: e.meta.recommendedValue,
+            fragilePct: e.meta.fragilePct,
+            window: result.window,
+          })
+        }
+
         onCancel={() => setPending(null)}
         onConfirm={() => {
           if (
