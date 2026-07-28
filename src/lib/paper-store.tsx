@@ -120,6 +120,8 @@ export type TuningLogEntry = {
 
   /** Stable id linking a mitigation preview, its applied entry and the alert outcome. */
   correlationId?: string;
+  /** Set on replayed entries: the correlation id of the mitigation that was re-run. */
+  replayOf?: string;
   /** Alert outcome recorded after the mitigation took effect. */
   outcome?: MitigationOutcome;
 
