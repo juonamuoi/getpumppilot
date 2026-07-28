@@ -108,6 +108,8 @@ export const Route = createFileRoute("/alerts")({
 });
 
 function AlertsPage() {
+  const { tuningLog } = usePaper();
+  useNearMissRiskAlerts(tuningLog);
   return (
     <AppShell>
       <div className="space-y-5">
