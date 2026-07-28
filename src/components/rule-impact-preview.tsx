@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, ChevronDown, Sparkles, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Download, Loader2, Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type ScannerRules } from "@/lib/paper-store";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,18 @@ const SCOPES: { key: ScopeKey; label: string }[] = [
   { key: "demo", label: "DEMO small-caps" },
   { key: "all", label: "All mock assets" },
 ];
+
+/** Human-readable before/after deltas for each scanner threshold. */
+function ruleDeltas(b: ScannerRules, a: ScannerRules) {
+  return [
+    { label: "Min momentum", before: String(b.minMomentum), after: String(a.minMomentum), changed: b.minMomentum !== a.minMomentum },
+    { label: "Min volume score", before: String(b.minVolumeScore), after: String(a.minVolumeScore), changed: b.minVolumeScore !== a.minVolumeScore },
+    { label: "Max volatility", before: String(b.maxVolatility), after: String(a.maxVolatility), changed: b.maxVolatility !== a.maxVolatility },
+    { label: "Min 24h change", before: `${b.min24hChangePct}%`, after: `${a.min24hChangePct}%`, changed: b.min24hChangePct !== a.min24hChangePct },
+    { label: "Include majors", before: b.includeMajors ? "yes" : "no", after: a.includeMajors ? "yes" : "no", changed: b.includeMajors !== a.includeMajors },
+    { label: "Include DEMO small-caps", before: b.includeDemoSmallCaps ? "yes" : "no", after: a.includeDemoSmallCaps ? "yes" : "no", changed: b.includeDemoSmallCaps !== a.includeDemoSmallCaps },
+  ];
+}
 
 function signals(rules: ScannerRules, a: Asset) {
   const checks = {
@@ -97,6 +110,51 @@ export function RuleImpactPreview({
     ? Math.round(rows.reduce((s, x) => s + x.after.strength, 0) / rows.length)
     : 0;
 
+  const [exporting, setExporting] = useState(false);
+  const [lastExport, setLastExport] = useState<{ id: string; at: number } | null>(null);
+
+  const handleExportPdf = async () => {
+    if (!rows.length) return;
+    setExporting(true);
+    try {
+      const { exportImpactReportPdf } = await import("@/lib/impact-report-pdf");
+      const built = await exportImpactReportPdf({
+        scopeLabel: SCOPES.find((s) => s.key === scope)?.label ?? "All mock assets",
+        savedAt: change.ts,
+        ruleDeltas: ruleDeltas(change.before, change.after),
+        rows: rows.map((r) => ({
+          symbol: r.asset.symbol,
+          category: r.asset.category,
+          held: held.has(r.asset.symbol),
+          status: r.status,
+          strengthBefore: r.before.strength,
+          strengthAfter: r.after.strength,
+          matchedBefore: r.before.matched,
+          matchedAfter: r.after.matched,
+          reasons: explainAsset(r.asset, change.before, change.after).map((x) => ({
+            label: x.label,
+            input: x.input,
+            thresholdBefore: x.thresholdBefore,
+            thresholdAfter: x.thresholdAfter,
+            before: x.before,
+            after: x.after,
+            sentence: x.sentence,
+          })),
+        })),
+      });
+      setLastExport({ id: built.correlationId, at: built.generatedAt });
+      toast.success("Impact report exported", {
+        description: `${built.filename} · correlation ID ${built.correlationId}`,
+      });
+    } catch (e) {
+      toast.error("Could not generate the impact PDF", {
+        description: e instanceof Error ? e.message : "Unexpected error",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card className="border-emerald-500/30 bg-emerald-500/[0.04]">
       <CardHeader className="pb-3">
@@ -105,10 +163,26 @@ export function RuleImpactPreview({
             <Sparkles className="h-4 w-4 text-emerald-300" />
             Impact of your saved rule change
           </span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDismiss}>
-            <X className="h-4 w-4" />
-            <span className="sr-only">Dismiss impact preview</span>
-          </Button>
+          <span className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={handleExportPdf}
+              disabled={exporting || rows.length === 0}
+            >
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Export impact (PDF)
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDismiss}>
+              <X className="h-4 w-4" />
+              <span className="sr-only">Dismiss impact preview</span>
+            </Button>
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -128,9 +202,15 @@ export function RuleImpactPreview({
               </SelectContent>
             </Select>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            Mock/demo data. Signals are probabilistic — not investment advice.
-          </p>
+          <div className="text-[11px] text-muted-foreground sm:text-right">
+            <p>Mock/demo data. Signals are probabilistic — not investment advice.</p>
+            {lastExport && (
+              <p className="font-mono text-[10px]">
+                Last PDF: {lastExport.id} · {new Date(lastExport.at).toLocaleString()} (UTC{" "}
+                {new Date(lastExport.at).toISOString()})
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-4">
