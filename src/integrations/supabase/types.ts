@@ -738,6 +738,10 @@ export type Database = {
         Returns: undefined
       }
       mcp_plan_defaults: { Args: { _user_id: string }; Returns: Json }
+      mcp_rate_limit_status: {
+        Args: { _client_id?: string; _user_id?: string }
+        Returns: Json
+      }
       mcp_set_agent_rate_limit: {
         Args: { _call_limit?: number; _client_id: string; _reason?: string }
         Returns: Json
