@@ -2803,7 +2803,14 @@ function MitigationChecklist({
       tuning.avgOtherMinSlack < 2 && buffered
         ? {
             label: `Apply ${buffered.title}`,
-            run: () => onApplyAlternative(buffered.value, buffered.preview, "buffered"),
+            run: () =>
+              onApplyAlternative(buffered.value, buffered.preview, "buffered", {
+                mitigation: `Widen buffer — ${buffered.title}`,
+                trigger: triggerText,
+                recommendedValue: suggested,
+                fragilePct: buffered.fragilePct,
+              }),
+
           }
         : undefined,
     option:
