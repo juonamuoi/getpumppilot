@@ -1930,6 +1930,52 @@ function loadBounds(): RiskBounds {
   }
 }
 
+function saveBounds(b: RiskBounds) {
+  try {
+    window.localStorage.setItem(BOUNDS_KEY, JSON.stringify(b));
+  } catch {}
+}
+
+const SCOPE_LABEL: Record<string, string> = {
+  majors: "Majors",
+  demo: "DEMO",
+  both: "Majors + DEMO",
+  none: "No assets",
+};
+
+/**
+ * Watches the tuning audit log and raises an in-app alert whenever a saved
+ * rule/operator change increases near-miss risk beyond the configured threshold
+ * for the selected asset scope.
+ */
+function useNearMissRiskAlerts(log: TuningLogEntry[]) {
+  const seen = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (seen.current === null) {
+      // Skip entries that already existed when the page mounted.
+      seen.current = new Set(log.map((e) => e.id));
+      return;
+    }
+    const bounds = loadBounds();
+    for (const e of log) {
+      if (seen.current.has(e.id)) continue;
+      seen.current.add(e.id);
+      if (!bounds.alertEnabled) continue;
+      if (e.nearMissBefore == null || e.nearMissAfter == null) continue;
+      const scope = e.scope ?? "both";
+      if (bounds.alertScope !== "any" && scope !== bounds.alertScope) continue;
+      const delta = e.nearMissAfter - e.nearMissBefore;
+      if (delta <= bounds.alertNearMissIncrease) continue;
+      toast.error(`Near-miss risk up +${delta} on ${e.ruleLabel}`, {
+        description: `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit} → ${e.newValue}${e.unit} pushed near-miss from ${e.nearMissBefore} to ${e.nearMissAfter} (limit +${bounds.alertNearMissIncrease}, scope ${SCOPE_LABEL[scope] ?? scope}). Review the audit log or roll back.`,
+        duration: 10_000,
+      });
+    }
+  }, [log]);
+}
+
+
+
 /** Returns the list of bound violations for a recommendation; empty when it may be applied. */
 function checkBounds(t: RuleTuning, bounds: RiskBounds): string[] {
   if (!bounds.enabled || t.suggested == null) return [];
