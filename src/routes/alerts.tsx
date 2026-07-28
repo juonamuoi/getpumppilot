@@ -1871,7 +1871,25 @@ function TuningHistoryPanel({
                     nearMissAfter={e.nearMissAfter}
                   />
                 )}
-                {!e.revertedAt && (
+                {(e.mitigation || e.trigger) && (
+                  <div className="mt-1 rounded-md border border-border/50 bg-muted/20 p-1.5 text-[10px] text-muted-foreground">
+                    {e.mitigation && (
+                      <div className="text-foreground">
+                        One-tap mitigation: {e.mitigation}
+                        {e.recommendedValue != null && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            (replaced recommended {e.operator === ">=" ? "≥" : "≤"}{" "}
+                            {e.recommendedValue}
+                            {e.unit})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {e.trigger && <div className="mt-0.5">Triggered by → {e.trigger}</div>}
+                  </div>
+                )}
+                {!e.revertedAt && e.kind !== "bounds" && (
                   <Button
                     size="sm"
                     variant="ghost"
@@ -1883,6 +1901,7 @@ function TuningHistoryPanel({
                     {e.unit}
                   </Button>
                 )}
+
                 {e.revertedAt && (
                   <div className="mt-1 text-[10px] text-muted-foreground">
                     Rolled back {format(new Date(e.revertedAt), "MMM d, HH:mm")}
