@@ -6,7 +6,7 @@
  * the file is downloaded.
  * ------------------------------------------------------------------ */
 import { useCallback, useEffect, useState } from "react";
-import { Download, FileDown, Loader2, RefreshCw } from "lucide-react";
+import { Check, Copy, Download, FileDown, Link2, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { buildWalletReportDoc } from "@/lib/wallet-report-pdf";
+import { createThreatReportShareLink } from "@/lib/threat-share.functions";
 import type { WalletScanResult } from "@/lib/wallet-scan";
 
 export function WalletReportPreviewDialog({
@@ -36,6 +45,11 @@ export function WalletReportPreviewDialog({
   const [building, setBuilding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
+  const [base64, setBase64] = useState<string | null>(null);
+  const [ttl, setTtl] = useState("24h");
+  const [sharing, setSharing] = useState(false);
+  const [share, setShare] = useState<{ url: string; expiresAt: number } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!open || !result) return;
@@ -49,6 +63,8 @@ export function WalletReportPreviewDialog({
         const { doc, filename: name } = await buildWalletReportDoc(result);
         if (cancelled) return;
         objectUrl = URL.createObjectURL(doc.output("blob") as Blob);
+        setBase64(doc.output("datauristring"));
+        setShare(null);
         setPages(doc.getNumberOfPages());
         setFilename(name);
         setUrl(objectUrl);
@@ -65,6 +81,35 @@ export function WalletReportPreviewDialog({
       setUrl(null);
     };
   }, [open, result, nonce]);
+
+  const makeShareLink = useCallback(async () => {
+    if (!base64 || !result) return;
+    setSharing(true);
+    try {
+      const res = await createThreatReportShareLink({
+        data: { pdfBase64: base64, correlationId: result.correlationId, ttl },
+      });
+      if (!res.ok || !res.url) {
+        toast.error("Could not create the share link", {
+          description:
+            res.reason === "no_account_email" || res.reason === "share_failed"
+              ? "Sign in to generate a signed link for your report."
+              : res.reason,
+        });
+        return;
+      }
+      setShare({ url: res.url, expiresAt: res.expiresAt ?? Date.now() });
+      toast.success("Signed share link created", {
+        description: `Expires ${new Date(res.expiresAt ?? Date.now()).toLocaleString()} · correlation ID ${result.correlationId}`,
+      });
+    } catch {
+      toast.error("Could not create the share link", {
+        description: "You need to be signed in to store and share the report.",
+      });
+    } finally {
+      setSharing(false);
+    }
+  }, [base64, result, ttl]);
 
   const download = useCallback(() => {
     if (!url || !result) return;
@@ -116,6 +161,73 @@ export function WalletReportPreviewDialog({
             {pages > 0 && ` · ${pages} page${pages > 1 ? "s" : ""}`}
           </p>
         )}
+
+        <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <Label className="text-xs">Share link expiry</Label>
+              <Select value={ttl} onValueChange={setTtl}>
+                <SelectTrigger className="mt-1 h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">1 hour</SelectItem>
+                  <SelectItem value="24h">24 hours</SelectItem>
+                  <SelectItem value="7d">7 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={!base64 || building || sharing}
+              onClick={() => void makeShareLink()}
+            >
+              {sharing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Link2 className="h-4 w-4" />
+              )}
+              Create signed link
+            </Button>
+          </div>
+
+          {share ? (
+            <div className="mt-3 space-y-1">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={share.url}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="h-8 flex-1 rounded-md border border-border/60 bg-background px-2 font-mono text-[11px]"
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-1"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(share.url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                    toast.success("Share link copied");
+                  }}
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  Copy
+                </Button>
+              </div>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Expires {new Date(share.expiresAt).toLocaleString()} · correlation ID{" "}
+                {result?.correlationId}
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Creates a private, time-limited signed download link. It expires automatically and is
+              never public.
+            </p>
+          )}
+        </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <Button

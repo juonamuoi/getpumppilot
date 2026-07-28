@@ -21,11 +21,25 @@ function base64ToBytes(b64: string): Uint8Array {
   return out;
 }
 
+/** Allowed signed-link lifetimes for user-created share links (seconds). */
+export const SHARE_TTL_OPTIONS = [
+  { id: "1h", label: "1 hour", seconds: 60 * 60 },
+  { id: "24h", label: "24 hours", seconds: 60 * 60 * 24 },
+  { id: "7d", label: "7 days", seconds: 60 * 60 * 24 * 7 },
+] as const;
+
+export type ShareTtlId = (typeof SHARE_TTL_OPTIONS)[number]["id"];
+
+export function ttlSeconds(id: string | undefined): number {
+  return SHARE_TTL_OPTIONS.find((o) => o.id === id)?.seconds ?? EXPIRES_SECONDS;
+}
+
 export async function uploadThreatReport(
   userId: string,
   correlationId: string,
   pdfBase64: string,
-): Promise<{ url: string | null; reason?: string }> {
+  expiresSeconds: number = EXPIRES_SECONDS,
+): Promise<{ url: string | null; reason?: string; path?: string; expiresAt?: number }> {
   try {
     const bytes = base64ToBytes(pdfBase64);
     if (bytes.length === 0) return { url: null, reason: "empty_pdf" };
@@ -43,11 +57,17 @@ export async function uploadThreatReport(
       return { url: null, reason: "upload_failed" };
     }
 
-    const signed = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(path, EXPIRES_SECONDS);
+    const signed = await supabaseAdmin.storage
+      .from(BUCKET)
+      .createSignedUrl(path, expiresSeconds);
     if (signed.error || !signed.data?.signedUrl) {
       return { url: null, reason: "sign_failed" };
     }
-    return { url: signed.data.signedUrl };
+    return {
+      url: signed.data.signedUrl,
+      path,
+      expiresAt: Date.now() + expiresSeconds * 1000,
+    };
   } catch (e) {
     console.error("[threat-report] unexpected failure", e instanceof Error ? e.message : e);
     return { url: null, reason: "report_failed" };
