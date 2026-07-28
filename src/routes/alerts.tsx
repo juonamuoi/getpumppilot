@@ -3547,7 +3547,7 @@ function MitigationChecklist({
                   size="sm"
                   variant="outline"
                   className="mt-1 h-6 px-2 text-[10px]"
-                  onClick={item.action.run}
+                  onClick={() => setPendingItem(item)}
                 >
                   {item.action.label}
                 </Button>
@@ -3556,6 +3556,7 @@ function MitigationChecklist({
           </li>
         ))}
       </ul>
+
 
       {boundsViolations.length > 0 && (
         <p className="mt-2 text-[10px] text-destructive">
