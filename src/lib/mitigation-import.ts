@@ -113,24 +113,96 @@ const list = (v: unknown) =>
 
 type Raw = Record<string, unknown>;
 
-/** Map one exported record (either export shape) onto a review-only entry. */
-function toEntry(r: Raw, index: number): TuningLogEntry | null {
+const short = (v: unknown) => {
+  const s = String(v ?? "");
+  return s.length > 60 ? `${s.slice(0, 57)}…` : s;
+};
+
+const VALID_STATUS = ["alerts-fired", "no-matches", "channels-muted", "pending"];
+
+/**
+ * Map one exported record onto a review-only entry, recording every field
+ * problem found on the way. Returns null when the row is unusable.
+ */
+function toEntry(
+  r: Raw,
+  index: number,
+  lineOffset: number,
+  issues: ImportIssue[],
+): TuningLogEntry | null {
+  const row = index + 1;
+  const line = lineOffset > 0 ? lineOffset + index + 1 : undefined;
+  const ref = String(r.decisionId ?? r.correlationId ?? "") || undefined;
+  const add = (
+    level: ImportIssueLevel,
+    code: string,
+    message: string,
+    field?: string,
+    value?: unknown,
+  ) =>
+    issues.push({
+      row,
+      line,
+      level,
+      code,
+      message,
+      field,
+      value: value === undefined ? undefined : short(value),
+      ref,
+    });
+
   const ruleLabel = String(r.rule ?? r.ruleLabel ?? "").trim();
+  const rawTs = r.timestamp ?? r.appliedAt ?? r.previewedAt ?? r.outcomeAt;
   const ts =
-    tsOr(r.timestamp) ??
-    tsOr(r.appliedAt) ??
-    tsOr(r.previewedAt) ??
-    tsOr(r.outcomeAt);
-  if (!ruleLabel && !r.correlationId && !r.mitigation) return null;
+    tsOr(r.timestamp) ?? tsOr(r.appliedAt) ?? tsOr(r.previewedAt) ?? tsOr(r.outcomeAt);
+
+  if (!ruleLabel && !r.correlationId && !r.mitigation) {
+    add(
+      "error",
+      "unrecognised-row",
+      "Row skipped — none of rule, mitigation or correlationId could be read.",
+    );
+    return null;
+  }
+
+  if (!ruleLabel) add("warning", "missing-rule", "No rule name — shown as “(unknown rule)”.", "rule");
+  if (!ts) {
+    if (rawTs) add("warning", "bad-timestamp", "Timestamp could not be parsed — using import time.", "timestamp", rawTs);
+    else add("warning", "missing-timestamp", "No timestamp on this record — using import time.", "timestamp");
+  }
+  if (!r.correlationId) {
+    add("warning", "missing-correlation", "No correlationId — this record can't be linked to a batch.", "correlationId");
+  }
 
   const decision = String(r.decision ?? "");
   const phase: "preview" | "applied" =
     r.phase === "preview" || decision === "preview-only" ? "preview" : "applied";
+  if (r.phase && r.phase !== "preview" && r.phase !== "applied") {
+    add("warning", "bad-phase", `Unknown phase “${short(r.phase)}” — treated as applied.`, "phase", r.phase);
+  }
 
   const outcomeStatus = String(r.outcomeStatus ?? "");
+  if (outcomeStatus && !VALID_STATUS.includes(outcomeStatus)) {
+    add("warning", "bad-outcome-status", `Unrecognised outcome status “${short(outcomeStatus)}”.`, "outcomeStatus", outcomeStatus);
+  }
   const hasOutcome = outcomeStatus && outcomeStatus !== "pending";
 
+  if (r.operator && r.operator !== ">=" && r.operator !== "<=") {
+    add("warning", "bad-operator", `Unknown operator “${short(r.operator)}” — defaulted to “>=”.`, "operator", r.operator);
+  }
   const operator = r.operator === "<=" ? "<=" : ">=";
+
+  for (const f of ["oldValue", "newValue"] as const) {
+    if (r[f] === "" || r[f] == null) {
+      add("warning", "missing-value", `${f} missing — defaulted to 0.`, f);
+    } else if (numOr(r[f]) === undefined) {
+      add("warning", "bad-number", `${f} is not a number — defaulted to 0.`, f, r[f]);
+    }
+  }
+
+  if (r.scope && !(["majors", "demo", "both", "none"] as const).includes(r.scope as never)) {
+    add("warning", "bad-scope", `Unknown scope “${short(r.scope)}” — dropped.`, "scope", r.scope);
+  }
 
   return {
     id: `${IMPORT_PREFIX}${index}-${r.decisionId ?? r.correlationId ?? Math.random().toString(36).slice(2)}`,
@@ -184,12 +256,13 @@ function finalize(
   records: Raw[],
   format: "csv" | "json",
   warnings: string[],
-  meta?: ImportResult["meta"],
+  opts: { fileName?: string; lineOffset?: number; meta?: ImportResult["meta"] } = {},
 ): ImportResult {
   const entries: TuningLogEntry[] = [];
+  const issues: ImportIssue[] = [];
   let skipped = 0;
   records.forEach((r, i) => {
-    const e = toEntry(r, i);
+    const e = toEntry(r, i, opts.lineOffset ?? 0, issues);
     if (e) entries.push(e);
     else skipped++;
   });
@@ -199,8 +272,21 @@ function finalize(
       ? { from: entries[entries.length - 1].ts, to: entries[0].ts }
       : undefined;
   if (skipped > 0) warnings.push(`${skipped} row(s) skipped — no recognisable mitigation fields.`);
-  return { entries, skipped, warnings, format, meta, range };
+  const warned = new Set(issues.filter((i) => i.level === "warning").map((i) => i.row)).size;
+  return {
+    entries,
+    skipped,
+    total: records.length,
+    warned,
+    issues,
+    warnings,
+    format,
+    fileName: opts.fileName,
+    meta: opts.meta,
+    range,
+  };
 }
+
 
 /** Parse a previously exported mitigation file. Throws on unusable input. */
 export function parseMitigationExport(filename: string, text: string): ImportResult {
