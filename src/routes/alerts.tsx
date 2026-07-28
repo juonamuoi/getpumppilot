@@ -4864,11 +4864,16 @@ function ReplayPanel() {
                     else next.min24hChangePct = e.value;
                   }
                   setScannerRules(next);
+                  const bulkCorrId = newCorrelationId("MITB");
                   const ids: string[] = [];
                   for (const e of entries) {
                     ids.push(logTuning({
+                      correlationId: bulkCorrId,
                       source: "mitigation",
                       kind: "rule",
+                      phase: "applied",
+                      appliedAt: Date.now(),
+
                       rule: e.key,
                       ruleLabel: RULE_META[e.key].short,
                       operator: RULE_META[e.key].op,
