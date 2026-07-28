@@ -10,6 +10,7 @@ import { StripeEmbeddedCheckout } from "@/components/stripe-embedded-checkout";
 import { useAuth } from "@/lib/auth-store";
 import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS, CREDIT_LABELS, CREDIT_PACKS, costPerDollar, packByPriceId } from "@/lib/credits";
+import { SITE_URL, ORG_ID, LOGO_URL, breadcrumbSchema, ldScript } from "@/lib/structured-data";
 import { toast } from "sonner";
 
 type SearchParams = { checkout?: string; session_id?: string; plan?: string };
