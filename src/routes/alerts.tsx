@@ -3529,6 +3529,27 @@ type MitigationMeta = {
   trigger: string;
   recommendedValue: number;
   fragilePct?: number;
+  /** Audit id of the preview entry the user reviewed before applying. */
+  previewId?: string;
+};
+
+/** Before/after metrics recorded when a mitigation preview is opened. */
+export type MitigationPreviewLog = {
+  ruleKey: RuleKey;
+  label: string;
+  mitigation: string;
+  trigger: string;
+  recommendedValue: number;
+  fragilePct?: number;
+  targetValue?: number;
+  preview: TuningPreview | null;
+  scope?: {
+    matchesBefore: number;
+    matchesAfter: number;
+    nearMissBefore: number;
+    nearMissAfter: number;
+    assetsAffected: number;
+  };
 };
 
 function MitigationChecklist({
