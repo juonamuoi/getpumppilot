@@ -25,6 +25,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { exportWalletReportPdf } from "@/lib/wallet-report-pdf";
+import { exportWalletFindingsCsv } from "@/lib/wallet-report-csv";
 import {
   revokeApproval,
   shortAddress,
