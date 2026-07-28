@@ -321,7 +321,7 @@ export function parseMitigationExport(filename: string, text: string): ImportRes
     if (!Array.isArray(records) || records.length === 0) {
       throw new Error("No mitigation records found in this JSON export.");
     }
-    return finalize(records, "json", warnings, meta);
+    return finalize(records, "json", warnings, { fileName: filename, meta });
   }
 
   // CSV: the quick export prefixes a "filter,value" metadata block, then a
