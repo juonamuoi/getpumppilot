@@ -4914,8 +4914,13 @@ function ReplayPanel() {
 
                 }}
                 onLogBoundsChange={(e) => {
+                  const boundsCorrId =
+                    (e.previewId ? tuningLog.find((t) => t.id === e.previewId)?.correlationId : undefined) ??
+                    newCorrelationId("MITB");
                   logTuning({
+                    correlationId: boundsCorrId,
                     source: "mitigation",
+
                     kind: "bounds",
                     rule: `bounds:${e.label.toLowerCase().replace(/\s+/g, "-")}`,
                     ruleLabel: e.label,
