@@ -110,6 +110,7 @@ function JournalPage() {
           />
         </div>
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Equity curve</h2>
         <Card className="border-border/60 bg-card/60">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
