@@ -515,8 +515,18 @@ export function MitigationAuditTrail({
           </p>
         ) : (
           <div className="space-y-2">
-            {entries.map((e) => (
-              <div key={e.id} className="rounded-md border border-border/60 bg-card/40 p-3">
+            {entries.map((e, i) => {
+              const focused = !!focusCorrelationId && e.correlationId === focusCorrelationId;
+              return (
+              <div
+                key={e.id}
+                ref={focused && i === 0 ? focusRef : undefined}
+                className={cn(
+                  "rounded-md border border-border/60 bg-card/40 p-3",
+                  focused && "border-primary/60 ring-1 ring-primary/40",
+                )}
+              >
+
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-[10px]">
                     {e.phase === "preview" ? "Preview only" : "Applied"}
