@@ -166,6 +166,12 @@ type State = {
 
 
 const STARTING_CASH = 100_000;
+
+/** Human-readable correlation id shared by a mitigation preview, apply and outcome. */
+export function newCorrelationId(prefix = "MIT") {
+  return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+}
+
 const TUNING_LOG_KEY = "pumppilot_tuning_log";
 
 const Ctx = createContext<State | null>(null);
