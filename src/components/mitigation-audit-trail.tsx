@@ -19,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
+import { useScanHistory } from "@/lib/wallet-session";
+
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
@@ -51,6 +53,12 @@ type AuditFilterState = {
   outcome: OutcomeFilter;
   range: RangeFilter;
   correlationIds: string[];
+  /** Token symbols the mitigation's alert outcome touched (empty = all). */
+  tokens: string[];
+  /** Wallet addresses scanned around the mitigation (empty = all). */
+  wallets: string[];
+  /** Alert delivery channels, e.g. email / push / in-app (empty = all). */
+  alertTypes: string[];
 };
 
 type SavedAuditFilter = AuditFilterState & { id: string; name: string };
@@ -60,7 +68,14 @@ const EMPTY_FILTER: AuditFilterState = {
   outcome: "all",
   range: "all",
   correlationIds: [],
+  tokens: [],
+  wallets: [],
+  alertTypes: [],
 };
+
+/** A mitigation is attributed to wallets scanned within this window of it. */
+const WALLET_LINK_MS = 60 * 60 * 1000;
+
 
 const SAVED_FILTERS_KEY = "pumppilot_audit_saved_filters";
 
@@ -146,6 +161,66 @@ function UndoLastMitigationBar() {
   );
 }
 
+/** Generic checkbox multi-select used for token / wallet / alert-type scoping. */
+function MultiFilter({
+  label,
+  options,
+  selected,
+  onToggle,
+  onClear,
+  emptyText,
+  mono,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  onClear: () => void;
+  emptyText: string;
+  mono?: boolean;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="outline" className="h-8 text-xs">
+          <Filter className="mr-1 h-3 w-3" />
+          {label}
+          {selected.length > 0 ? ` (${selected.length})` : ": all"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-2" align="start">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs font-medium">Scope export to {label.toLowerCase()}</span>
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={onClear}>
+            Select all
+          </Button>
+        </div>
+        <ScrollArea className="h-48 pr-2">
+          {options.length === 0 ? (
+            <p className="p-2 text-xs text-muted-foreground">{emptyText}</p>
+          ) : (
+            <div className="space-y-1">
+              {options.map((opt) => (
+                <label
+                  key={opt}
+                  className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 hover:bg-muted/50"
+                >
+                  <Checkbox
+                    checked={selected.includes(opt)}
+                    onCheckedChange={() => onToggle(opt)}
+                  />
+                  <span className={cn("text-[11px]", mono && "font-mono")}>{opt}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+
 /**
  * Mitigation audit trail: every one-tap mitigation with the before/after deltas
 
@@ -166,7 +241,12 @@ export function MitigationAuditTrail({
   const [correlationIds, setCorrelationIds] = useState<string[]>(
     focusCorrelationId ? [focusCorrelationId] : [],
   );
+  const [tokens, setTokens] = useState<string[]>([]);
+  const [wallets, setWallets] = useState<string[]>([]);
+  const [alertTypes, setAlertTypes] = useState<string[]>([]);
+  const runs = useScanHistory();
   const focusRef = useRef<HTMLDivElement | null>(null);
+
 
   // A deep link from the impact timeline focuses one correlation batch:
   // filter to it, show previews, and scroll it into view.
@@ -176,6 +256,9 @@ export function MitigationAuditTrail({
     setRange("all");
     setOutcome("all");
     setQ("");
+    setTokens([]);
+    setWallets([]);
+    setAlertTypes([]);
     const t = window.setTimeout(
       () => focusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
       120,
@@ -193,14 +276,26 @@ export function MitigationAuditTrail({
     } catch {}
   };
 
-  const current: AuditFilterState = { q, outcome, range, correlationIds };
+  const current: AuditFilterState = {
+    q,
+    outcome,
+    range,
+    correlationIds,
+    tokens,
+    wallets,
+    alertTypes,
+  };
 
   const applyFilter = (f: AuditFilterState) => {
     setQ(f.q);
     setOutcome(f.outcome);
     setRange(f.range);
     setCorrelationIds(f.correlationIds ?? []);
+    setTokens(f.tokens ?? []);
+    setWallets(f.wallets ?? []);
+    setAlertTypes(f.alertTypes ?? []);
   };
+
 
   const saveCurrentFilter = () => {
     const name = filterName.trim();
@@ -233,6 +328,56 @@ export function MitigationAuditTrail({
     setCorrelationIds((prev) =>
       prev.includes(cid) ? prev.filter((x) => x !== cid) : [...prev, cid],
     );
+
+  const toggleIn = (setter: (fn: (prev: string[]) => string[]) => void) => (value: string) =>
+    setter((prev) => (prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]));
+
+  /** Token symbols seen in mitigation outcomes. */
+  const availableTokens = useMemo(() => {
+    const seen = new Set<string>();
+    for (const e of log) {
+      if (e.source !== "mitigation") continue;
+      e.outcome?.symbols.forEach((s) => seen.add(s));
+    }
+    return [...seen].sort();
+  }, [log]);
+
+  /** Alert delivery channels seen in mitigation outcomes. */
+  const availableAlertTypes = useMemo(() => {
+    const seen = new Set<string>();
+    for (const e of log) {
+      if (e.source !== "mitigation") continue;
+      e.outcome?.channels.forEach((c) => seen.add(c));
+    }
+    return [...seen].sort();
+  }, [log]);
+
+  /** Wallets with scan history, used to attribute mitigations to a wallet. */
+  const availableWallets = useMemo(
+    () => [...new Set(runs.map((r) => r.address))],
+    [runs],
+  );
+
+  /**
+   * A mitigation is attributed to every wallet scanned within an hour of it
+   * (or sharing its correlation ID) — the same linkage the impact timeline uses.
+   */
+  const walletsForEntry = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const e of log) {
+      if (e.source !== "mitigation") continue;
+      const hit = runs
+        .filter(
+          (r) =>
+            r.correlationId === e.correlationId ||
+            Math.abs(r.scannedAt - e.ts) <= WALLET_LINK_MS,
+        )
+        .map((r) => r.address);
+      map.set(e.id, [...new Set(hit)]);
+    }
+    return map;
+  }, [log, runs]);
+
 
   /** Re-run a recorded mitigation with identical parameters and stored preview context. */
   const replay = (entry: TuningLogEntry) => {
@@ -269,6 +414,18 @@ export function MitigationAuditTrail({
         return !!e.correlationId && correlationIds.includes(e.correlationId);
       })
       .filter((e) => {
+        if (tokens.length === 0) return true;
+        return (e.outcome?.symbols ?? []).some((s) => tokens.includes(s));
+      })
+      .filter((e) => {
+        if (alertTypes.length === 0) return true;
+        return (e.outcome?.channels ?? []).some((c) => alertTypes.includes(c));
+      })
+      .filter((e) => {
+        if (wallets.length === 0) return true;
+        return (walletsForEntry.get(e.id) ?? []).some((w) => wallets.includes(w));
+      })
+      .filter((e) => {
         if (!q.trim()) return true;
         const hay = [
           e.mitigation,
@@ -282,7 +439,7 @@ export function MitigationAuditTrail({
           .toLowerCase();
         return hay.includes(q.trim().toLowerCase());
       });
-  }, [log, q, outcome, range, correlationIds]);
+  }, [log, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
@@ -314,31 +471,71 @@ export function MitigationAuditTrail({
       outcomeDelivered: e.outcome?.delivered ?? "",
       outcomeSymbols: e.outcome?.symbols.join("|") ?? "",
       outcomeChannels: e.outcome?.channels.join("|") ?? "",
+      wallets: (walletsForEntry.get(e.id) ?? []).join("|"),
       outcomeAt: e.outcome ? new Date(e.outcome.ts).toISOString() : "",
       revertedAt: e.revertedAt ? new Date(e.revertedAt).toISOString() : "",
     }));
 
+  /** The filter scope stamped into every export so it matches this view. */
+  const exportFilters = () => ({
+    quickSearch: q.trim() || "none",
+    outcome,
+    timeRange: RANGE_LABEL[range],
+    from:
+      range === "all" ? null : new Date(Date.now() - RANGE_MS[range]).toISOString(),
+    to: new Date().toISOString(),
+    tokens: tokens.length ? tokens : "all",
+    wallets: wallets.length ? wallets : "all",
+    alertTypes: alertTypes.length ? alertTypes : "all",
+    correlationIds: correlationIds.length ? correlationIds : "all",
+    includePreviews: paper.retention.includePreviewsInExport,
+  });
+
+
   const download = (kind: "csv" | "json") => {
     const data = rows();
+    const filters = exportFilters();
     if (data.length === 0) {
       toast.error("Nothing to export — no mitigation entries match the current filters");
       return;
     }
     let blob: Blob;
     if (kind === "json") {
-      blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      blob = new Blob(
+        [
+          JSON.stringify(
+            {
+              export: "mitigation-audit-trail",
+              generatedAt: new Date().toISOString(),
+              dataSource: "demo/mock data — not financial advice",
+              filters,
+              recordCount: data.length,
+              records: data,
+            },
+            null,
+            2,
+          ),
+        ],
+        { type: "application/json" },
+      );
     } else {
+      const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const meta = Object.entries(filters)
+        .map(([k, v]) => [cell(k), cell(Array.isArray(v) ? v.join(" | ") : v)].join(","))
+        .join("\n");
       const headers = Object.keys(data[0]);
       const csv = [
+        `${cell("filter")},${cell("value")}`,
+        meta,
+        "",
         headers.join(","),
         ...data.map((r) =>
-          headers
-            .map((h) => `"${String((r as Record<string, unknown>)[h] ?? "").replace(/"/g, '""')}"`)
-            .join(","),
+          headers.map((h) => cell((r as Record<string, unknown>)[h])).join(","),
         ),
       ].join("\n");
       blob = new Blob([csv], { type: "text/csv" });
     }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -457,6 +654,33 @@ export function MitigationAuditTrail({
               </ScrollArea>
             </PopoverContent>
           </Popover>
+
+          <MultiFilter
+            label="Tokens"
+            emptyText="No tokens in alert outcomes yet."
+            options={availableTokens}
+            selected={tokens}
+            onToggle={toggleIn(setTokens)}
+            onClear={() => setTokens([])}
+          />
+          <MultiFilter
+            label="Wallets"
+            emptyText="No scanned wallets yet."
+            options={availableWallets}
+            selected={wallets}
+            onToggle={toggleIn(setWallets)}
+            onClear={() => setWallets([])}
+            mono
+          />
+          <MultiFilter
+            label="Alert type"
+            emptyText="No alert deliveries yet."
+            options={availableAlertTypes}
+            selected={alertTypes}
+            onToggle={toggleIn(setAlertTypes)}
+            onClear={() => setAlertTypes([])}
+          />
+
 
           <Button
             size="sm"
