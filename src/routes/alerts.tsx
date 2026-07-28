@@ -2455,6 +2455,39 @@ function RuleTuningPanel({
           constraint on no failed evaluation, so there is nothing to unlock.
         </div>
       ) : (
+        <>
+        {selectable.length > 0 && (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-background/40 p-2">
+            <div className="flex items-center gap-2 text-[11px]">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+              <span className="font-medium">Bulk safer apply</span>
+              <span className="text-muted-foreground">
+                {chosen.length} of {selectable.length} rules selected
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-[11px]"
+                onClick={() =>
+                  setSelected(chosen.length === selectable.length ? [] : selectable)
+                }
+              >
+                {chosen.length === selectable.length ? "Clear" : "Select all"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px]"
+                disabled={chosen.length === 0}
+                onClick={() => setBulkOpen(true)}
+              >
+                Apply safer alternatives ({chosen.length})
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="grid gap-2 sm:grid-cols-2">
           {keys.map((k) => {
             const meta = RULE_META[k];
@@ -2482,7 +2515,19 @@ function RuleTuningPanel({
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className={cn("text-xs font-medium", meta.textClass)}>
+                  <span className={cn("flex items-center gap-2 text-xs font-medium", meta.textClass)}>
+                    {safest[k] && (
+                      <Checkbox
+                        className="h-3.5 w-3.5"
+                        checked={selected.includes(k)}
+                        aria-label={`Select ${meta.short} for bulk safer apply`}
+                        onCheckedChange={(v) =>
+                          setSelected((prev) =>
+                            v ? [...prev.filter((x) => x !== k), k] : prev.filter((x) => x !== k),
+                          )
+                        }
+                      />
+                    )}
                     {meta.short}
                   </span>
                   <Badge
@@ -2601,7 +2646,38 @@ function RuleTuningPanel({
             );
           })}
         </div>
+        </>
       )}
+
+      <BulkSaferApplyDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        keys={chosen}
+        safest={safest}
+        tuning={tuning}
+        preset={preset}
+        onConfirm={() => {
+          onApplyBulk(
+            chosen.map((k) => {
+              const opt = safest[k]!;
+              const t = tuning[k];
+              const fragile = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+              return {
+                key: k,
+                value: opt.value,
+                preset: `${preset} · safest in-bounds (bulk)`,
+                preview: opt.preview,
+                mitigation: "Bulk safer alternative",
+                trigger: `Recommendation ${RULE_META[k].short} ${RULE_META[k].op} ${t.suggested}${RULE_META[k].unit} carried ${fragile.toFixed(0)}% fragility; applied safest in-bounds value at ${opt.fragilePct.toFixed(0)}%`,
+                recommendedValue: t.suggested ?? undefined,
+                fragilePct: opt.fragilePct,
+              };
+            }),
+          );
+          setSelected([]);
+          setBulkOpen(false);
+        }}
+      />
 
       <TuningConfirmDialog
         open={pending !== null}
