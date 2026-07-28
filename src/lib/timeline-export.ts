@@ -129,6 +129,8 @@ export function buildTimelineCsv(
       ["to", new Date(filters.to).toISOString()],
       ["wallets", filters.wallets.length ? filters.wallets.join(" | ") : "all"],
       ["tokens", filters.tokens.length ? filters.tokens.join(" | ") : "all"],
+      ["actions", filters.actions?.length ? filters.actions.join(" | ") : "all"],
+      ["outcomes", filters.outcomes?.length ? filters.outcomes.join(" | ") : "all"],
     ],
   );
 
