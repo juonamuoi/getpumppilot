@@ -452,7 +452,53 @@ export function PaperProvider({ children }: { children: ReactNode }) {
             : e,
         ),
       ),
+    lastMitigation: lastMitigationBatch,
+    undoLastMitigation: (reason) => {
+      const batch = lastMitigationBatch;
+      if (!batch) return null;
+      const restored = { ...scannerRules };
+      for (const e of batch.entries) applyRuleValue(restored, e.rule, e.oldValue);
+      setScannerRules(restored);
+      const at = Date.now();
+      const ids = new Set(batch.entries.map((e) => e.id));
+      const undoId = Math.random().toString(36).slice(2);
+      const detail = batch.entries
+        .map((e) => `${e.ruleLabel} ${e.newValue}${e.unit} → ${e.oldValue}${e.unit}`)
+        .join(", ");
+      setTuningLog((prev) =>
+        [
+          {
+            id: undoId,
+            ts: at,
+            correlationId: batch.correlationId,
+            source: "mitigation" as const,
+            kind: "rule" as const,
+            phase: "applied" as const,
+            mitigation: `Undo: ${batch.label}`,
+            trigger: reason
+              ? `One-click undo — ${reason}`
+              : "One-click undo of the last mitigation",
+            rule: "undo",
+            ruleLabel: "Undo mitigation",
+            operator: ">=" as const,
+            unit: "",
+            oldValue: 0,
+            newValue: 0,
+            preset: "undo",
+            appliedAt: at,
+            revertReason: reason,
+          },
+          ...prev.map((e) =>
+            ids.has(e.id)
+              ? { ...e, revertedAt: at, ...(reason ? { revertReason: reason } : {}) }
+              : e,
+          ),
+        ].slice(0, 200),
+      );
+      return { correlationId: batch.correlationId, label: batch.label, entries: batch.entries };
+    },
     clearTuningLog: () => setTuningLog([]),
+
     simulateScannerRun,
     clearDeliveries: () => setDeliveries([]),
     setRisk,
