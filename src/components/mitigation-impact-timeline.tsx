@@ -67,6 +67,22 @@ const RANGES = [
 ] as const;
 type RangeKey = (typeof RANGES)[number]["key"];
 
+/** How the mitigation was applied. */
+type MitigationAction = "single" | "bulk" | "risk-bounds";
+const ACTION_OPTIONS: { key: MitigationAction; label: string }[] = [
+  { key: "single", label: "Single" },
+  { key: "bulk", label: "Bulk" },
+  { key: "risk-bounds", label: "Risk bounds" },
+];
+
+/** Alert outcome recorded right after the mitigation. */
+type OutcomeKey = "alerts-fired" | "no-matches" | "channels-muted";
+const OUTCOME_OPTIONS: { key: OutcomeKey; label: string }[] = [
+  { key: "alerts-fired", label: "Alerts fired" },
+  { key: "no-matches", label: "No matches" },
+  { key: "channels-muted", label: "Channels muted" },
+];
+
 type RiskPoint = {
   ts: number;
   score: number;
