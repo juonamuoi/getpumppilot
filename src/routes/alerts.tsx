@@ -2843,13 +2843,34 @@ function MitigationChecklist({
                   lowestFragility.value,
                   lowestFragility.preview,
                   "low-fragility",
+                  {
+                    mitigation: `Lowest fragility — ${lowestFragility.title}`,
+                    trigger: triggerText,
+                    recommendedValue: suggested,
+                    fragilePct: lowestFragility.fragilePct,
+                  },
                 ),
             }
           : {
               label: `Raise tolerance to ${suggestedTolerance}%`,
-              run: () =>
-                onSetBounds((b) => ({ ...b, maxFragilePct: suggestedTolerance })),
+              run: () => {
+                onSetBounds((b) => ({ ...b, maxFragilePct: suggestedTolerance }));
+                onLogBounds({
+                  label: "Fragility tolerance",
+                  unit: "%",
+                  oldValue: bounds.maxFragilePct,
+                  newValue: suggestedTolerance,
+                  preview: tuning.preview,
+                  meta: {
+                    mitigation: `Raise fragility tolerance to ${suggestedTolerance}%`,
+                    trigger: triggerText,
+                    recommendedValue: suggested,
+                    fragilePct,
+                  },
+                });
+              },
             }
+
         : undefined,
     option:
       bounds.enabled && fragilePct > bounds.maxFragilePct
