@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { RotateCw, Undo2 } from "lucide-react";
 import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
+import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 
 
 type OutcomeFilter = "all" | "alerts-fired" | "no-matches" | "channels-muted" | "pending";
@@ -144,8 +145,13 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
       });
   }, [log, q, outcome]);
 
+  /** Export scope honours the retention policy's preview toggle. */
+  const exportEntries = paper.retention.includePreviewsInExport
+    ? entries
+    : entries.filter((e) => e.phase !== "preview");
+
   const rows = () =>
-    entries.map((e) => ({
+    exportEntries.map((e) => ({
       correlationId: e.correlationId ?? "",
       timestamp: new Date(e.ts).toISOString(),
       phase: e.phase ?? "applied",
@@ -215,7 +221,14 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
             </p>
           </div>
           <div className="flex gap-2">
-            <MitigationDecisionExport log={log} />
+            <MitigationRetentionSettings />
+            <MitigationDecisionExport
+              log={
+                paper.retention.includePreviewsInExport
+                  ? log
+                  : log.filter((e) => e.phase !== "preview")
+              }
+            />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
               Quick CSV
             </Button>
