@@ -155,7 +155,12 @@ type State = {
   markTuningReverted: (id: string, reason?: string) => void;
   /** Evaluate alert outcome for a mitigation and attach it to every entry sharing the correlation id. */
   recordMitigationOutcome: (correlationId: string, rules?: ScannerRules) => MitigationOutcome;
+  /** The most recent applied, not-yet-reverted mitigation batch (entries share a correlation id). */
+  lastMitigation: { correlationId: string; ts: number; label: string; entries: TuningLogEntry[] } | null;
+  /** One-click revert of the last applied mitigation. Returns the restored batch, or null. */
+  undoLastMitigation: (reason?: string) => { correlationId: string; label: string; entries: TuningLogEntry[] } | null;
   clearTuningLog: () => void;
+
 
   simulateScannerRun: () => number; // returns count of new deliveries
   clearDeliveries: () => void;
