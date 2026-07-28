@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
+import { McpAuditExport } from "@/components/mcp-audit-export";
 import { toast } from "sonner";
 import {
   Bot,
@@ -397,6 +398,18 @@ function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {filteredLogs.length} of {logs.length} entries shown
+                  </p>
+                  <McpAuditExport
+                    rows={filteredLogs}
+                    totalCount={logs.length}
+                    userId={user?.id}
+                  />
+                </div>
+
 
                 {filteredLogs.length === 0 ? (
                   <Card>
