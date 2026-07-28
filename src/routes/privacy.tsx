@@ -10,6 +10,12 @@ export const Route = createFileRoute("/privacy")({
         name: "description",
         content: "Privacy Policy for PumpPilot AI. We do not store seed phrases or private keys.",
       },
+      { property: "og:title", content: "Privacy Policy — PumpPilot AI" },
+      {
+        property: "og:description",
+        content:
+          "What PumpPilot AI collects, how wallet scan data is handled, and why we never request seed phrases or private keys.",
+      },
     ],
   }),
   component: PrivacyPage,
@@ -27,7 +33,7 @@ function PrivacyPage() {
             <span className="font-bold tracking-tight">PumpPilot AI</span>
           </Link>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/">Back home</Link>
+            <Link to="/">Back to PumpPilot AI home</Link>
           </Button>
         </div>
       </header>

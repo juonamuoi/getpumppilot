@@ -103,7 +103,7 @@ function PricingPage() {
           <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
             <Sparkles className="mr-1 h-3 w-3" /> No subscription — pay as you trade
           </Badge>
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Recharge with credits</h1>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">PumpPilot AI Pricing — Credits for AI Crypto Trading</h1>
           <p className="mx-auto max-w-xl text-muted-foreground">
             Every AI prediction, backtest and bot execution burns credits. When your balance hits zero the bot stops
             predicting and stops executing — nothing is charged in the background. Credits never expire.

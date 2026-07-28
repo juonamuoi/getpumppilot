@@ -133,6 +133,44 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "cta", text: "Try the explainable approach with 100 free credits", href: "/pricing", label: "Start free" },
     ],
   },
+  {
+    slug: "pumppilot-vs-tradingview-paper-trading",
+    title: "PumpPilot AI vs TradingView Paper Trading: Charts vs the 'Why'",
+    description:
+      "TradingView gives you the charts; PumpPilot AI gives you the reasoning. A head-to-head on crypto paper trading, explainable AI momentum signals and risk coaching.",
+    date: "2026-07-28",
+    readMinutes: 7,
+    keywords: [
+      "paper trading",
+      "crypto paper trading",
+      "tradingview paper trading",
+      "trading simulator",
+      "pumppilot vs tradingview",
+    ],
+    tags: ["Guides", "Comparisons"],
+    body: [
+      { type: "p", text: "TradingView is the default charting tool for most traders, and its paper trading module is a solid simulator: you can place simulated orders straight from a chart and watch a hypothetical balance move. What it deliberately does not do is tell you why a setup is worth taking, or whether your risk is sane. That gap is exactly where PumpPilot AI lives." },
+      { type: "h2", text: "The core difference: execution surface vs explanation layer" },
+      { type: "p", text: "TradingView's simulator answers 'what happened when I clicked buy'. PumpPilot AI answers 'why did this token score 84, which rules fired, which nearly failed, and what does that mean for your downside'. One is a canvas; the other is a coach." },
+      { type: "h2", text: "Side-by-side for crypto paper trading" },
+      { type: "ul", items: [
+        "Charting depth — TradingView: best in class, hundreds of indicators. PumpPilot AI: focused momentum views, not a charting replacement.",
+        "Signal explanation — TradingView: you build and interpret indicators yourself. PumpPilot AI: plain-English reasons behind every momentum score.",
+        "Risk coaching — TradingView: manual. PumpPilot AI: exposure caps, position sizing and fragility bounds enforced before a simulated fill.",
+        "Rule tuning — TradingView: Pine Script. PumpPilot AI: threshold sliders with before/after impact previews and an audit trail.",
+        "Journaling — TradingView: basic trade list. PumpPilot AI: expectancy, profit factor and per-trade reasoning in the journal.",
+        "Wallet safety — TradingView: not applicable. PumpPilot AI: read-only wallet scanning for drainer approvals, never a seed phrase.",
+      ]},
+      { type: "h2", text: "Use both: chart on TradingView, rehearse and reason in PumpPilot AI" },
+      { type: "p", text: "These are not mutually exclusive. Many traders chart on TradingView and use PumpPilot AI to sanity-check momentum quality, size the position, and rehearse the strategy across at least 100 simulated trades before risking anything real." },
+      { type: "quote", text: "A simulator tells you what a trade did. An explainable system tells you whether you should have taken it." },
+      { type: "h2", text: "Why explainability changes how fast you improve" },
+      { type: "p", text: "When a simulated trade loses, a bare P&L number teaches almost nothing. When the log says the entry cleared momentum by 2 points but failed the volume filter, and volatility was in the top decile, you have a concrete rule to tighten. That feedback loop is the entire point of paper trading." },
+      { type: "h2", text: "Important disclaimer" },
+      { type: "p", text: "PumpPilot AI is educational. All in-app market data is mock/demo data, predictions are probabilistic, returns are not guaranteed, and you can lose all your capital. Nothing here is financial advice." },
+      { type: "cta", text: "Rehearse your next setup risk-free", href: "/paper", label: "Open paper trading" },
+    ],
+  },
 ];
 
 

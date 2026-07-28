@@ -8,7 +8,14 @@ export const Route = createFileRoute("/refund")({
       { title: "Refund Policy — PumpPilot AI" },
       {
         name: "description",
-        content: "Refund policy for PumpPilot AI subscriptions.",
+        content:
+          "How PumpPilot AI handles refunds for credit purchases: eligibility windows, unused credit balances, failed payments and how to request a refund from support.",
+      },
+      { property: "og:title", content: "Refund Policy — PumpPilot AI Credits" },
+      {
+        property: "og:description",
+        content:
+          "Refund eligibility, unused credit balances and how to request a refund for PumpPilot AI credit purchases.",
       },
     ],
   }),
@@ -27,7 +34,7 @@ function RefundPage() {
             <span className="font-bold tracking-tight">PumpPilot AI</span>
           </Link>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/">Back home</Link>
+            <Link to="/">Back to PumpPilot AI home</Link>
           </Button>
         </div>
       </header>
