@@ -141,6 +141,8 @@ const defaultMonitor: WalletMonitorSettings = {
   emailOnNewThreats: false,
   emailPdfReport: true,
   reportSchedule: defaultReportSchedule,
+  alertTokens: [],
+  alertWallets: [],
 };
 
 function loadMonitor(): WalletMonitorSettings {
