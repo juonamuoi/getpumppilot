@@ -12,7 +12,7 @@
 
 import { isNativeApp } from "@/lib/native";
 import { sendThreatEmail } from "@/lib/threat-alerts.functions";
-import type { WalletApproval } from "@/lib/wallet-scan";
+import type { WalletApproval, WalletScanResult } from "@/lib/wallet-scan";
 import { shortAddress } from "@/lib/wallet-scan";
 
 export type PushPermission = "granted" | "denied" | "unsupported" | "default";
@@ -116,8 +116,25 @@ export function threatSummary(threats: WalletApproval[]) {
 /* Dispatch                                                            */
 /* ------------------------------------------------------------------ */
 
-export type NotifyChannels = { push: boolean; email: boolean };
-export type NotifyOutcome = { push: boolean; email: boolean; emailReason?: string };
+export type NotifyChannels = { push: boolean; email: boolean; pdfReport?: boolean };
+export type NotifyOutcome = {
+  push: boolean;
+  email: boolean;
+  emailReason?: string;
+  reportAttached?: boolean;
+};
+
+/** Renders the threat report PDF in the browser and returns it as base64. */
+async function buildReportBase64(result: WalletScanResult | null): Promise<string | undefined> {
+  if (!result) return undefined;
+  try {
+    const { buildWalletReportDoc } = await import("@/lib/wallet-report-pdf");
+    const { doc } = await buildWalletReportDoc(result);
+    return doc.output("datauristring");
+  } catch {
+    return undefined;
+  }
+}
 
 /** Dedupe so the same finding never notifies twice in one session. */
 const notified = new Set<string>();
@@ -126,6 +143,7 @@ export async function notifyNewThreats(
   address: string,
   threats: WalletApproval[],
   channels: NotifyChannels,
+  scan?: WalletScanResult | null,
 ): Promise<NotifyOutcome> {
   const fresh = threats.filter((t) => !notified.has(`${address}:${t.id}`));
   for (const t of fresh) notified.add(`${address}:${t.id}`);
@@ -142,10 +160,12 @@ export async function notifyNewThreats(
 
   if (channels.email) {
     try {
+      const pdfBase64 = channels.pdfReport ? await buildReportBase64(scan ?? null) : undefined;
       const res = await sendThreatEmail({
         data: {
           address,
           correlationId,
+          pdfBase64,
           findings: fresh.slice(0, 10).map((t) => ({
             token: t.token,
             spender: t.spender,
@@ -159,6 +179,7 @@ export async function notifyNewThreats(
       });
       outcome.email = res.sent;
       outcome.emailReason = res.reason;
+      outcome.reportAttached = !!res.reportUrl;
     } catch (e) {
       outcome.emailReason = e instanceof Error ? e.message : "send failed";
     }
@@ -168,7 +189,10 @@ export async function notifyNewThreats(
 }
 
 /** Test delivery from the settings UI. */
-export async function sendTestNotification(channels: NotifyChannels): Promise<NotifyOutcome> {
+export async function sendTestNotification(
+  channels: NotifyChannels,
+  scan?: WalletScanResult | null,
+): Promise<NotifyOutcome> {
   const outcome: NotifyOutcome = { push: false, email: false };
   if (channels.push) {
     outcome.push = await showPush(
@@ -179,9 +203,13 @@ export async function sendTestNotification(channels: NotifyChannels): Promise<No
   }
   if (channels.email) {
     try {
-      const res = await sendThreatEmail({ data: { test: true } });
+      const pdfBase64 = channels.pdfReport ? await buildReportBase64(scan ?? null) : undefined;
+      const res = await sendThreatEmail({
+        data: { test: true, pdfBase64, correlationId: scan?.correlationId },
+      });
       outcome.email = res.sent;
       outcome.emailReason = res.reason;
+      outcome.reportAttached = !!res.reportUrl;
     } catch (e) {
       outcome.emailReason = e instanceof Error ? e.message : "send failed";
     }
