@@ -56,6 +56,75 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_balances: {
+        Row: {
+          balance: number
+          created_at: string
+          lifetime_purchased: number
+          lifetime_spent: number
+          low_balance_notified_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          lifetime_purchased?: number
+          lifetime_spent?: number
+          low_balance_notified_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          lifetime_purchased?: number
+          lifetime_spent?: number
+          low_balance_notified_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          balance_after: number
+          created_at: string
+          delta: number
+          description: string | null
+          external_ref: string | null
+          feature: string | null
+          id: string
+          kind: string
+          metadata: Json
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          delta: number
+          description?: string | null
+          external_ref?: string | null
+          feature?: string | null
+          id?: string
+          kind: string
+          metadata?: Json
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          delta?: number
+          description?: string | null
+          external_ref?: string | null
+          feature?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       mcp_audit_log: {
         Row: {
           client_id: string | null
@@ -457,6 +526,30 @@ export type Database = {
           variant: string
           visitors: number
         }[]
+      }
+      consume_credits: {
+        Args: {
+          _amount: number
+          _description?: string
+          _feature: string
+          _metadata?: Json
+        }
+        Returns: Json
+      }
+      ensure_credit_account: {
+        Args: { _user_id: string; _welcome?: number }
+        Returns: undefined
+      }
+      grant_credits: {
+        Args: {
+          _amount: number
+          _description?: string
+          _external_ref?: string
+          _kind: string
+          _metadata?: Json
+          _user_id: string
+        }
+        Returns: Json
       }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
