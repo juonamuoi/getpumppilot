@@ -4310,6 +4310,8 @@ function ReplayPanel() {
     setScannerRules,
     tuningLog,
     logTuning,
+    recordMitigationOutcome,
+
     clearTuningLog,
     markTuningReverted,
   } = usePaper();
