@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SITE_URL, breadcrumbSchema, webPageSchema, ldScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/refund")({
   head: () => ({
@@ -17,6 +18,21 @@ export const Route = createFileRoute("/refund")({
         content:
           "Refund eligibility, unused credit balances and how to request a refund for PumpPilot AI credit purchases.",
       },
+      { property: "og:type", content: "article" },
+      { property: "og:url", content: `${SITE_URL}/refund` },
+      { name: "twitter:card", content: "summary" },
+    ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/refund` }],
+    scripts: [
+      ldScript(
+        webPageSchema({
+          name: "Refund Policy — PumpPilot AI Credits",
+          description:
+            "Refund eligibility, unused credit balances and how to request a refund for PumpPilot AI credit purchases.",
+          path: "/refund",
+        }),
+      ),
+      ldScript(breadcrumbSchema([{ name: "Refund Policy", path: "/refund" }])),
     ],
   }),
   component: RefundPage,
