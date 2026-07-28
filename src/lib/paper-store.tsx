@@ -87,6 +87,21 @@ export type TuningLogEntry = {
   matchesAfter?: number;
   nearMissBefore?: number;
   nearMissAfter?: number;
+
+  /** "preview" = reviewed in the confirm dialog only; "applied" = saved to the rules. */
+  phase?: "preview" | "applied";
+  /** For applied entries: the id of the preview entry that was reviewed first. */
+  previewId?: string;
+  /** Timestamp the preview was generated / the change was applied. */
+  previewedAt?: number;
+  appliedAt?: number;
+  /** Scope-wide (portfolio) metrics captured from the preview panel. */
+  scopeMatchesBefore?: number;
+  scopeMatchesAfter?: number;
+  scopeNearMissBefore?: number;
+  scopeNearMissAfter?: number;
+  scopeAssetsAffected?: number;
+
   /** Set once this change has been rolled back. */
   revertedAt?: number;
   /** Optional user-entered reason captured at rollback time. */
