@@ -4905,13 +4905,64 @@ function ReplayPanel() {
                     matchesAfter: e.preview?.matchesAfter,
                     nearMissBefore: e.preview?.nearMissAnyBefore,
                     nearMissAfter: e.preview?.nearMissAnyAfter,
+                    phase: "applied",
+                    appliedAt: Date.now(),
+                    previewId: e.previewId,
+                    previewedAt: e.previewId
+                      ? tuningLog.find((t) => t.id === e.previewId)?.ts
+                      : undefined,
                   });
                   toast.success(`${e.label} updated to ${e.newValue}${e.unit}`, {
                     description: `Logged to the tuning audit trail (was ${e.oldValue}${e.unit}).`,
                   });
                 }}
-
+                onLogMitigationPreview={(p) =>
+                  logTuning({
+                    source: "mitigation",
+                    kind: "rule",
+                    phase: "preview",
+                    previewedAt: Date.now(),
+                    rule: p.ruleKey,
+                    ruleLabel: RULE_META[p.ruleKey].short,
+                    operator: RULE_META[p.ruleKey].op,
+                    unit: RULE_META[p.ruleKey].unit,
+                    oldValue:
+                      p.ruleKey === "momentum"
+                        ? scannerRules.minMomentum
+                        : p.ruleKey === "volume"
+                          ? scannerRules.minVolumeScore
+                          : p.ruleKey === "volatility"
+                            ? scannerRules.maxVolatility
+                            : scannerRules.min24hChangePct,
+                    newValue:
+                      p.targetValue ??
+                      (p.ruleKey === "momentum"
+                        ? scannerRules.minMomentum
+                        : p.ruleKey === "volume"
+                          ? scannerRules.minVolumeScore
+                          : p.ruleKey === "volatility"
+                            ? scannerRules.maxVolatility
+                            : scannerRules.min24hChangePct),
+                    preset: `preview · ${p.label}`,
+                    scope: scopeOf(scannerRules),
+                    mitigation: p.mitigation,
+                    trigger: p.trigger,
+                    recommendedValue: p.recommendedValue,
+                    fragilePct: p.fragilePct,
+                    window: result.window,
+                    matchesBefore: p.preview?.matchesBefore,
+                    matchesAfter: p.preview?.matchesAfter,
+                    nearMissBefore: p.preview?.nearMissAnyBefore,
+                    nearMissAfter: p.preview?.nearMissAnyAfter,
+                    scopeMatchesBefore: p.scope?.matchesBefore,
+                    scopeMatchesAfter: p.scope?.matchesAfter,
+                    scopeNearMissBefore: p.scope?.nearMissBefore,
+                    scopeNearMissAfter: p.scope?.nearMissAfter,
+                    scopeAssetsAffected: p.scope?.assetsAffected,
+                  })
+                }
               />
+
 
               <TuningHistoryPanel
                 log={tuningLog}
