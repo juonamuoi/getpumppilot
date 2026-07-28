@@ -283,7 +283,20 @@ function SettingsPage() {
                 <TabsTrigger value="audit">
                   <ScrollText className="mr-2 h-4 w-4" /> Audit trail
                 </TabsTrigger>
+                <TabsTrigger value="limits">
+                  <Gauge className="mr-2 h-4 w-4" /> Rate limits
+                </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="limits" className="mt-4">
+                {user && (
+                  <McpRateLimits
+                    userId={user.id}
+                    agentIds={grants.map((g) => g.client_id).filter(Boolean)}
+                  />
+                )}
+              </TabsContent>
+
 
               <TabsContent value="agents" className="mt-4 space-y-3">
                 {grants.length === 0 && (
