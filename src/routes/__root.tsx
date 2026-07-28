@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { ldScript, siteGraph } from "@/lib/structured-data";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
