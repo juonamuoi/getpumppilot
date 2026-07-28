@@ -189,7 +189,9 @@ function scopeOf(r: ScannerRules): "majors" | "demo" | "both" | "none" {
 
 function lastTuningBatch(log: TuningLogEntry[]): TuningLogEntry[] {
 
-  const active = log.filter((e) => !e.revertedAt);
+  // Risk-bounds entries are audit-only — they don't map to a scanner threshold.
+  const active = log.filter((e) => !e.revertedAt && e.kind !== "bounds");
+
   if (active.length === 0) return [];
   const newest = active.reduce((a, b) => (a.ts >= b.ts ? a : b));
   return active
@@ -1617,6 +1619,9 @@ function TuningHistoryPanel({
         e.window ?? "",
         e.source ?? "manual-save",
         e.scope ?? "",
+        e.mitigation ?? "",
+        e.trigger ?? "",
+
         `${e.oldValue}${e.unit}`,
         `${e.newValue}${e.unit}`,
       ]
@@ -1754,6 +1759,8 @@ function TuningHistoryPanel({
                 <SelectItem value="manual-save">Manual save</SelectItem>
                 <SelectItem value="recommendation">Recommendation</SelectItem>
                 <SelectItem value="auto">Automated</SelectItem>
+                <SelectItem value="mitigation">Mitigation</SelectItem>
+
               </SelectContent>
             </Select>
             <Select value={scopeFilter} onValueChange={setScopeFilter}>
@@ -1824,8 +1831,16 @@ function TuningHistoryPanel({
                       ? "Manual save"
                       : e.source === "auto"
                         ? "Automated"
-                        : "Recommendation"}
+                        : e.source === "mitigation"
+                          ? "Mitigation"
+                          : "Recommendation"}
                   </Badge>
+                  {e.kind === "bounds" && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                      Risk bound
+                    </Badge>
+                  )}
+
 
                   {e.window && (
                     <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
@@ -1861,7 +1876,25 @@ function TuningHistoryPanel({
                     nearMissAfter={e.nearMissAfter}
                   />
                 )}
-                {!e.revertedAt && (
+                {(e.mitigation || e.trigger) && (
+                  <div className="mt-1 rounded-md border border-border/50 bg-muted/20 p-1.5 text-[10px] text-muted-foreground">
+                    {e.mitigation && (
+                      <div className="text-foreground">
+                        One-tap mitigation: {e.mitigation}
+                        {e.recommendedValue != null && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            (replaced recommended {e.operator === ">=" ? "≥" : "≤"}{" "}
+                            {e.recommendedValue}
+                            {e.unit})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {e.trigger && <div className="mt-0.5">Triggered by → {e.trigger}</div>}
+                  </div>
+                )}
+                {!e.revertedAt && e.kind !== "bounds" && (
                   <Button
                     size="sm"
                     variant="ghost"
@@ -1873,6 +1906,7 @@ function TuningHistoryPanel({
                     {e.unit}
                   </Button>
                 )}
+
                 {e.revertedAt && (
                   <div className="mt-1 text-[10px] text-muted-foreground">
                     Rolled back {format(new Date(e.revertedAt), "MMM d, HH:mm")}
@@ -2194,15 +2228,36 @@ function RuleTuningPanel({
   result,
   rules,
   onApply,
+  onLogBoundsChange,
 }: {
   result: ReplayResult;
   rules: ScannerRules;
   onApply: (
     k: RuleKey,
     value: number,
-    meta: { preset: string; preview: TuningPreview | null },
+    meta: {
+      preset: string;
+      preview: TuningPreview | null;
+      mitigation?: string;
+      trigger?: string;
+      recommendedValue?: number;
+      fragilePct?: number;
+    },
   ) => void;
+  onLogBoundsChange: (e: {
+    label: string;
+    unit: string;
+    oldValue: number;
+    newValue: number;
+    preview: TuningPreview | null;
+    mitigation: string;
+    trigger: string;
+    recommendedValue: number;
+    fragilePct?: number;
+    window: WindowKey;
+  }) => void;
 }) {
+
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
   const [bounds, setBounds] = useState<RiskBounds>(loadBounds);
@@ -2530,11 +2585,33 @@ function RuleTuningPanel({
         rules={rules}
         bounds={bounds}
         onSetBounds={setBounds}
-        onApplyAlternative={(value, preview, label) => {
+        onApplyAlternative={(value, preview, label, meta) => {
           if (!pending) return;
-          onApply(pending, value, { preset: `${preset} · ${label}`, preview });
+          onApply(pending, value, {
+            preset: `${preset} · ${label}`,
+            preview,
+            mitigation: meta.mitigation,
+            trigger: meta.trigger,
+            recommendedValue: meta.recommendedValue,
+            fragilePct: meta.fragilePct,
+          });
           setPending(null);
         }}
+        onLogBounds={(e) =>
+          onLogBoundsChange({
+            label: e.label,
+            unit: e.unit,
+            oldValue: e.oldValue,
+            newValue: e.newValue,
+            preview: e.preview,
+            mitigation: e.meta.mitigation,
+            trigger: e.meta.trigger,
+            recommendedValue: e.meta.recommendedValue,
+            fragilePct: e.meta.fragilePct,
+            window: result.window,
+          })
+        }
+
         onCancel={() => setPending(null)}
         onConfirm={() => {
           if (
@@ -2675,6 +2752,14 @@ function MitigationOptionPreview({
  * for each, a one-tap safer action (tighten the threshold, widen the buffer, or
  * adjust the fragility tolerance).
  */
+/** Extra audit context attached to every one-tap mitigation. */
+type MitigationMeta = {
+  mitigation: string;
+  trigger: string;
+  recommendedValue: number;
+  fragilePct?: number;
+};
+
 function MitigationChecklist({
   ruleKey,
   tuning,
@@ -2683,6 +2768,7 @@ function MitigationChecklist({
   bounds,
   onSetBounds,
   onApplyAlternative,
+  onLogBounds,
 }: {
   ruleKey: RuleKey;
   tuning: RuleTuning;
@@ -2690,8 +2776,22 @@ function MitigationChecklist({
   rules: ScannerRules;
   bounds: RiskBounds;
   onSetBounds: (fn: (b: RiskBounds) => RiskBounds) => void;
-  onApplyAlternative: (value: number, preview: TuningPreview | null, label: string) => void;
+  onApplyAlternative: (
+    value: number,
+    preview: TuningPreview | null,
+    label: string,
+    meta: MitigationMeta,
+  ) => void;
+  onLogBounds: (e: {
+    label: string;
+    unit: string;
+    oldValue: number;
+    newValue: number;
+    meta: MitigationMeta;
+    preview: TuningPreview | null;
+  }) => void;
 }) {
+
   const meta = RULE_META[ruleKey];
   const suggested = tuning.suggested!;
   const alternatives = useSaferAlternatives(result, rules, ruleKey, suggested, bounds);
@@ -2731,7 +2831,11 @@ function MitigationChecklist({
     };
   };
 
+  /** Risk deltas that triggered the pending recommendation — recorded on every mitigation. */
+  const triggerText = `Recommendation ${meta.op} ${suggested}${meta.unit}: near-miss ${tuning.preview?.nearMissAnyBefore ?? 0} → ${tuning.preview?.nearMissAnyAfter ?? 0} (${nearMissDelta >= 0 ? "+" : ""}${nearMissDelta}), signals ${tuning.preview?.matchesBefore ?? 0} → ${tuning.preview?.matchesAfter ?? 0}, fragility ${fragilePct.toFixed(0)}% (${tuning.fragile}/${tuning.unlocked}), avg other-rule slack ${tuning.avgOtherMinSlack.toFixed(1)}`;
+
   const items: Item[] = [];
+
 
   items.push({
     key: "tighten",
@@ -2744,7 +2848,13 @@ function MitigationChecklist({
       ? {
           label: `Apply ${safestInBounds.title}`,
           run: () =>
-            onApplyAlternative(safestInBounds.value, safestInBounds.preview, "tightened"),
+            onApplyAlternative(safestInBounds.value, safestInBounds.preview, "tightened", {
+              mitigation: `Tighten filter — ${safestInBounds.title}`,
+              trigger: triggerText,
+              recommendedValue: suggested,
+              fragilePct: safestInBounds.fragilePct,
+            }),
+
         }
       : undefined,
     option: safestInBounds
@@ -2770,7 +2880,14 @@ function MitigationChecklist({
       tuning.avgOtherMinSlack < 2 && buffered
         ? {
             label: `Apply ${buffered.title}`,
-            run: () => onApplyAlternative(buffered.value, buffered.preview, "buffered"),
+            run: () =>
+              onApplyAlternative(buffered.value, buffered.preview, "buffered", {
+                mitigation: `Widen buffer — ${buffered.title}`,
+                trigger: triggerText,
+                recommendedValue: suggested,
+                fragilePct: buffered.fragilePct,
+              }),
+
           }
         : undefined,
     option:
@@ -2803,13 +2920,34 @@ function MitigationChecklist({
                   lowestFragility.value,
                   lowestFragility.preview,
                   "low-fragility",
+                  {
+                    mitigation: `Lowest fragility — ${lowestFragility.title}`,
+                    trigger: triggerText,
+                    recommendedValue: suggested,
+                    fragilePct: lowestFragility.fragilePct,
+                  },
                 ),
             }
           : {
               label: `Raise tolerance to ${suggestedTolerance}%`,
-              run: () =>
-                onSetBounds((b) => ({ ...b, maxFragilePct: suggestedTolerance })),
+              run: () => {
+                onSetBounds((b) => ({ ...b, maxFragilePct: suggestedTolerance }));
+                onLogBounds({
+                  label: "Fragility tolerance",
+                  unit: "%",
+                  oldValue: bounds.maxFragilePct,
+                  newValue: suggestedTolerance,
+                  preview: tuning.preview,
+                  meta: {
+                    mitigation: `Raise fragility tolerance to ${suggestedTolerance}%`,
+                    trigger: triggerText,
+                    recommendedValue: suggested,
+                    fragilePct,
+                  },
+                });
+              },
             }
+
         : undefined,
     option:
       bounds.enabled && fragilePct > bounds.maxFragilePct
@@ -2838,9 +2976,24 @@ function MitigationChecklist({
       bounds.enabled && nearMissDelta > bounds.maxNearMissIncrease
         ? {
             label: `Allow +${nearMissDelta}`,
-            run: () =>
-              onSetBounds((b) => ({ ...b, maxNearMissIncrease: nearMissDelta })),
+            run: () => {
+              onSetBounds((b) => ({ ...b, maxNearMissIncrease: nearMissDelta }));
+              onLogBounds({
+                label: "Near-miss increase limit",
+                unit: "",
+                oldValue: bounds.maxNearMissIncrease,
+                newValue: nearMissDelta,
+                preview: tuning.preview,
+                meta: {
+                  mitigation: `Allow near-miss increase of +${nearMissDelta}`,
+                  trigger: triggerText,
+                  recommendedValue: suggested,
+                  fragilePct,
+                },
+              });
+            },
           }
+
         : undefined,
     option:
       bounds.enabled && nearMissDelta > bounds.maxNearMissIncrease
@@ -2934,6 +3087,8 @@ function TuningConfirmDialog({
   bounds,
   onSetBounds,
   onApplyAlternative,
+  onLogBounds,
+
   onCancel,
   onConfirm,
 }: {
@@ -2949,7 +3104,17 @@ function TuningConfirmDialog({
     value: number,
     preview: TuningPreview | null,
     label: string,
+    meta: MitigationMeta,
   ) => void;
+  onLogBounds: (e: {
+    label: string;
+    unit: string;
+    oldValue: number;
+    newValue: number;
+    meta: MitigationMeta;
+    preview: TuningPreview | null;
+  }) => void;
+
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -3085,6 +3250,8 @@ function TuningConfirmDialog({
             bounds={bounds}
             onSetBounds={onSetBounds}
             onApplyAlternative={onApplyAlternative}
+            onLogBounds={onLogBounds}
+
           />
         </div>
 
@@ -3564,6 +3731,8 @@ function ReplayPanel() {
                   else next.min24hChangePct = value;
                   setScannerRules(next);
                   logTuning({
+                    source: meta.mitigation ? "mitigation" : "recommendation",
+                    kind: "rule",
                     rule: k,
                     ruleLabel: RULE_META[k].short,
                     operator: RULE_META[k].op,
@@ -3572,6 +3741,10 @@ function ReplayPanel() {
                     newValue: value,
                     preset: meta.preset,
                     scope: scopeOf(next),
+                    mitigation: meta.mitigation,
+                    trigger: meta.trigger,
+                    recommendedValue: meta.recommendedValue,
+                    fragilePct: meta.fragilePct,
 
                     window: result.window,
                     matchesBefore: meta.preview?.matchesBefore,
@@ -3581,8 +3754,38 @@ function ReplayPanel() {
                   });
                   toast.success(
                     `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
+                    meta.mitigation
+                      ? { description: `Mitigation logged: ${meta.mitigation}` }
+                      : undefined,
                   );
                 }}
+                onLogBoundsChange={(e) => {
+                  logTuning({
+                    source: "mitigation",
+                    kind: "bounds",
+                    rule: `bounds:${e.label.toLowerCase().replace(/\s+/g, "-")}`,
+                    ruleLabel: e.label,
+                    operator: ">=",
+                    unit: e.unit,
+                    oldValue: e.oldValue,
+                    newValue: e.newValue,
+                    preset: "risk-bounds",
+                    scope: scopeOf(scannerRules),
+                    mitigation: e.mitigation,
+                    trigger: e.trigger,
+                    recommendedValue: e.recommendedValue,
+                    fragilePct: e.fragilePct,
+                    window: e.window,
+                    matchesBefore: e.preview?.matchesBefore,
+                    matchesAfter: e.preview?.matchesAfter,
+                    nearMissBefore: e.preview?.nearMissAnyBefore,
+                    nearMissAfter: e.preview?.nearMissAnyAfter,
+                  });
+                  toast.success(`${e.label} updated to ${e.newValue}${e.unit}`, {
+                    description: `Logged to the tuning audit trail (was ${e.oldValue}${e.unit}).`,
+                  });
+                }}
+
               />
 
               <TuningHistoryPanel
