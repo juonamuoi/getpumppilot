@@ -105,7 +105,26 @@ function TokenChip({
   );
 }
 
+/**
+ * Deep link from a timeline marker to the exact preview + reviewed mitigation
+ * entries for that correlation ID in the audit trail.
+ */
+function CorrelationLink({ id }: { id: string }) {
+  return (
+    <Link
+      to="/alerts"
+      search={{ tab: "replay", audit: id }}
+      className="inline-flex items-center gap-1 font-mono text-[10px] text-primary underline-offset-2 hover:underline"
+      title="Open the matching audit entries"
+    >
+      {id}
+      <ExternalLink className="h-3 w-3" />
+    </Link>
+  );
+}
+
 export function MitigationImpactTimeline() {
+
   const runs = useScanHistory();
   const { tuningLog } = usePaper();
 
