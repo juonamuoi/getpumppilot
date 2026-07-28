@@ -3564,10 +3564,138 @@ function MitigationChecklist({
         </p>
       )}
       <p className="mt-2 text-[10px] text-muted-foreground">
-        Applying a safer alternative saves it immediately and closes this dialog. Demo
-        data — safer never means profitable.
+        Applying a safer alternative asks you to confirm the before/after deltas first.
+        Demo data — safer never means profitable.
       </p>
+
+      <AlertDialog
+        open={pendingItem !== null}
+        onOpenChange={(o) => !o && setPendingItem(null)}
+      >
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm mitigation</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingItem?.label} — review the near-miss risk and signal change before
+              applying.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {pendingItem && (
+            <div className="space-y-2">
+              <div className="rounded-md border border-border/60 bg-muted/20 p-2 text-[11px] text-muted-foreground">
+                {pendingItem.hint}
+              </div>
+
+              {(() => {
+                const p = pendingItem.option?.preview ?? null;
+                if (!p) {
+                  return (
+                    <div className="rounded-md border border-border/60 bg-background/40 p-2 text-[11px] text-muted-foreground">
+                      {pendingItem.option?.note ??
+                        "No signal change — this only adjusts your risk tolerance settings."}
+                    </div>
+                  );
+                }
+                const dMatch = p.matchesAfter - p.matchesBefore;
+                const dNear = p.nearMissAnyAfter - p.nearMissAnyBefore;
+                const vsNear = tuning.preview
+                  ? p.nearMissAnyAfter - tuning.preview.nearMissAnyAfter
+                  : null;
+                const vsMatch = tuning.preview
+                  ? p.matchesAfter - tuning.preview.matchesAfter
+                  : null;
+                return (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="rounded-md border border-border/60 bg-background/40 p-2">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Signals
+                        </div>
+                        <div className="text-sm font-semibold">
+                          {p.matchesBefore} → {p.matchesAfter}{" "}
+                          <span
+                            className={cn(
+                              "text-xs",
+                              dMatch >= 0 ? "text-emerald-400" : "text-destructive",
+                            )}
+                          >
+                            ({dMatch >= 0 ? "+" : ""}
+                            {dMatch})
+                          </span>
+                        </div>
+                      </div>
+                      <div className="rounded-md border border-border/60 bg-background/40 p-2">
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Near-miss risk
+                        </div>
+                        <div className="text-sm font-semibold">
+                          {p.nearMissAnyBefore} → {p.nearMissAnyAfter}{" "}
+                          <span
+                            className={cn(
+                              "text-xs",
+                              dNear <= 0 ? "text-emerald-400" : "text-destructive",
+                            )}
+                          >
+                            ({dNear >= 0 ? "+" : ""}
+                            {dNear})
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <TuningDeltaChart
+                      matchesBefore={p.matchesBefore}
+                      matchesAfter={p.matchesAfter}
+                      nearMissBefore={p.nearMissAnyBefore}
+                      nearMissAfter={p.nearMissAnyAfter}
+                    />
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+                      {pendingItem.option?.targetValue != null && (
+                        <span>
+                          New threshold: {meta.short} {meta.op === ">=" ? "≥" : "≤"}{" "}
+                          {pendingItem.option.targetValue}
+                          {meta.unit} (was {tuning.current}
+                          {meta.unit})
+                        </span>
+                      )}
+                      {pendingItem.option?.fragilePct != null && (
+                        <span>Fragility {pendingItem.option.fragilePct.toFixed(0)}%</span>
+                      )}
+                      {vsMatch != null && vsNear != null && (
+                        <span>
+                          vs pending recommendation: signals {vsMatch >= 0 ? "+" : ""}
+                          {vsMatch}, near-miss {vsNear >= 0 ? "+" : ""}
+                          {vsNear}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <p className="text-[10px] text-muted-foreground">
+                Confirming saves this change immediately and logs it to the tuning audit
+                trail. Demo data — safer never means profitable.
+              </p>
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const item = pendingItem;
+                setPendingItem(null);
+                item?.action?.run();
+              }}
+            >
+              {pendingItem?.action?.label ?? "Apply"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }
 
