@@ -69,6 +69,7 @@ import {
 } from "@/lib/wallet-session";
 
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
+import { WalletScanTimeline } from "@/components/wallet-scan-timeline";
 import { shortAddress } from "@/lib/wallet-scan";
 
 export const Route = createFileRoute("/security")({
@@ -109,6 +110,8 @@ function SecurityPage() {
         <DisclaimerBanner />
 
         <WalletRescanCard />
+
+        <WalletScanTimeline />
 
         <div className="grid gap-3 sm:grid-cols-3">
           <StatusTile
