@@ -1664,7 +1664,7 @@ function TuningHistoryPanel({
               {batch.length > 1 ? ` (${batch.length})` : ""}
             </Button>
           )}
-          <TuningAuditExport log={log} />
+          <TuningAuditExport log={filtered} />
           {log.length > 0 && (
             <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onClear}>
               Clear
