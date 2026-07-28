@@ -25,6 +25,7 @@ PumpPilot AI never requests or stores seed phrases or private keys. Wallet conne
 - [AI Crypto Trading, Explained](/blog/ai-crypto-trading-explained): How momentum signals work and what realistic returns look like.
 - [Paper Trading vs Live Trading](/blog/paper-trading-vs-live-trading): Why rehearsing first beats learning with real capital.
 - [PumpPilot AI vs Autopilot App](/blog/pumppilot-vs-autopilot-comparison): Explainable momentum versus automated copy trading.
+- [PumpPilot AI vs TradingView Paper Trading](/blog/pumppilot-vs-tradingview-paper-trading): Crypto paper trading with explainable AI signals and risk coaching versus charts alone.
 
 ## Optional
 
