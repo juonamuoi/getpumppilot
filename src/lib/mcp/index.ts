@@ -4,6 +4,7 @@ import momentumExplain from "./tools/momentum-explain";
 import listStrategies from "./tools/list-strategies";
 import createStrategy from "./tools/create-strategy";
 import subscriptionStatus from "./tools/subscription-status";
+import rateLimitStatus from "./tools/rate-limit-status";
 
 // The OAuth issuer must be the direct Supabase host; the project ref is inlined
 // by Vite at build time and survives publish unchanged.
@@ -14,10 +15,10 @@ export default defineMcp({
   title: "PumpPilot AI",
   version: "0.1.0",
   instructions:
-    "Tools for PumpPilot AI, a paper-trading crypto momentum dashboard. Use `momentum_scan` for explainable momentum scores, `momentum_explain` for one token's full momentum reasoning and near-miss risk breakdown against a threshold preset, `list_strategies` to read saved or community strategies, `create_strategy` to save a new paper strategy, and `subscription_status` for the user's plan. All data is educational — never present it as investment advice, and no tool can execute live trades.",
+    "Tools for PumpPilot AI, a paper-trading crypto momentum dashboard. Use `momentum_scan` for explainable momentum scores, `momentum_explain` for one token's full momentum reasoning and near-miss risk breakdown against a threshold preset, `list_strategies` to read saved or community strategies, `create_strategy` to save a new paper strategy, and `subscription_status` for the user's plan. Call `rate_limit_status` to check remaining account and per-agent calls and the next retry time before retrying a throttled call — it does not consume quota. All data is educational — never present it as investment advice, and no tool can execute live trades.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [momentumScan, momentumExplain, listStrategies, createStrategy, subscriptionStatus],
+  tools: [momentumScan, momentumExplain, listStrategies, createStrategy, subscriptionStatus, rateLimitStatus],
 });

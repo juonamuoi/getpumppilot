@@ -23,6 +23,7 @@ import {
   type ConsoleQuotaView,
   type ConsoleThrottleView,
 } from "@/components/mcp-quota";
+import { McpRateLimitStatusCard } from "@/components/mcp-rate-limit-status";
 
 export const Route = createFileRoute("/mcp-console")({
   head: () => ({
@@ -216,6 +217,9 @@ function McpConsolePage() {
             </CardContent>
           </Card>
 
+          <div className="space-y-6">
+          <McpRateLimitStatusCard defaultClientId="pumppilot-test-console" />
+
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -275,6 +279,7 @@ function McpConsolePage() {
               ))}
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
     </AppShell>

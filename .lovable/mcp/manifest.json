@@ -193,6 +193,39 @@
           "properties": {}
         },
         "outputSchema": null
+      },
+      {
+        "name": "rate_limit_status",
+        "title": "Rate limit status",
+        "description": "Report remaining MCP tool calls for the signed-in account and for a given agent client, plus the seconds until the next call is allowed. Reading this does not consume quota.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Agent client ID to report per-agent quota for. Null uses the calling agent."
+            }
+          },
+          "required": [
+            "client_id"
+          ]
+        },
+        "outputSchema": null
       }
     ]
   }
