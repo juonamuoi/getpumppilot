@@ -3864,7 +3864,34 @@ function MitigationChecklist({
                   size="sm"
                   variant="outline"
                   className="mt-1 h-6 px-2 text-[10px]"
-                  onClick={() => setPendingItem(item)}
+                  onClick={() => {
+                    const target = item.option?.targetValue;
+                    const scopeImpact =
+                      target != null
+                        ? simulateScopeImpact(result.perBucketSnapshots.flat(), ruleKey, target)
+                        : null;
+                    previewIdRef.current =
+                      onLogPreview?.({
+                        ruleKey,
+                        label: item.label,
+                        mitigation: item.action?.label ?? item.label,
+                        trigger: triggerText,
+                        recommendedValue: suggested,
+                        fragilePct: item.option?.fragilePct,
+                        targetValue: target,
+                        preview: item.option?.preview ?? null,
+                        scope: scopeImpact
+                          ? {
+                              matchesBefore: scopeImpact.totals.matchesBefore,
+                              matchesAfter: scopeImpact.totals.matchesAfter,
+                              nearMissBefore: scopeImpact.totals.nearMissBefore,
+                              nearMissAfter: scopeImpact.totals.nearMissAfter,
+                              assetsAffected: scopeImpact.totals.assetsAffected,
+                            }
+                          : undefined,
+                      }) ?? null;
+                    setPendingItem(item);
+                  }}
                 >
                   {item.action.label}
                 </Button>
