@@ -68,6 +68,9 @@ export type TuningLogEntry = {
   preset: string;
   /** Replay window the recommendation came from, e.g. "24h". */
   window?: string;
+  /** Asset scope the rules covered at apply time. */
+  scope?: "majors" | "demo" | "both" | "none";
+
   /** Expected match count before/after, from the preview at apply time. */
   matchesBefore?: number;
   matchesAfter?: number;
