@@ -31,7 +31,15 @@ import { useAuth } from "@/lib/auth-store";
 import { WaitlistForm } from "@/components/waitlist-form";
 
 
-const SITE_URL = "https://crypto-spotter-pro.lovable.app";
+import { CREDIT_PACKS } from "@/lib/credits";
+import {
+  SITE_URL,
+  ORG_ID,
+  WEBSITE_ID,
+  LOGO_URL,
+  faqSchema as buildFaqSchema,
+  ldScript,
+} from "@/lib/structured-data";
 const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =
   "Explainable AI for crypto: momentum scanner, paper trading, AI coaching and strict risk controls. Start free with demo data — no seed phrases required.";
