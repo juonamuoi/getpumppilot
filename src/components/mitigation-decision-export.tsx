@@ -137,21 +137,104 @@ function saveBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function MitigationDecisionExport({
+/* ------------------------------ presets ------------------------------ */
+
+const PRESETS_KEY = "pumppilot_export_presets";
+
+export type ExportPreset<F = unknown> = {
+  id: string;
+  name: string;
+  fields: string[];
+  includePreviewOnly: boolean;
+  /** Snapshot of the audit-trail filter scope active when the preset was saved. */
+  filters?: F;
+  savedAt: number;
+};
+
+function loadPresets(): ExportPreset[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(PRESETS_KEY);
+    return raw ? (JSON.parse(raw) as ExportPreset[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function MitigationDecisionExport<F,>({
   log,
   label = "Export decisions",
+  filters,
+  onApplyFilters,
 }: {
   log: TuningLogEntry[];
   label?: string;
+  /** Current filter scope, stored with a preset so it can be restored. */
+  filters?: F;
+  /** Called when a preset with a stored filter scope is applied. */
+  onApplyFilters?: (filters: F) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(DEFAULT_FIELDS);
   const [includePreviewOnly, setIncludePreviewOnly] = useState(true);
+  const [presets, setPresets] = useState<ExportPreset<F>[]>(() => loadPresets() as ExportPreset<F>[]);
+  const [presetName, setPresetName] = useState("");
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+
+  const persistPresets = (next: ExportPreset<F>[]) => {
+    setPresets(next);
+    try {
+      window.localStorage.setItem(PRESETS_KEY, JSON.stringify(next));
+    } catch {}
+  };
+
+  const savePreset = () => {
+    const name = presetName.trim();
+    if (!name) {
+      toast.error("Name your export preset first");
+      return;
+    }
+    if (selected.length === 0) {
+      toast.error("Select at least one field to save");
+      return;
+    }
+    const existing = presets.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    const preset: ExportPreset<F> = {
+      id: existing?.id ?? `${Date.now()}`,
+      name,
+      fields: selected,
+      includePreviewOnly,
+      filters,
+      savedAt: Date.now(),
+    };
+    persistPresets(existing ? presets.map((p) => (p.id === existing.id ? preset : p)) : [...presets, preset]);
+    setActivePreset(preset.id);
+    setPresetName("");
+    toast.success(existing ? `Updated preset "${name}"` : `Saved preset "${name}"`, {
+      description: `${selected.length} fields${filters ? " · filter scope included" : ""}`,
+    });
+  };
+
+  const applyPreset = (p: ExportPreset<F>) => {
+    setSelected(p.fields.filter((k) => FIELDS.some((f) => f.key === k)));
+    setIncludePreviewOnly(p.includePreviewOnly);
+    setActivePreset(p.id);
+    if (p.filters && onApplyFilters) onApplyFilters(p.filters);
+    toast.success(`Applied preset "${p.name}"`, {
+      description: p.filters && onApplyFilters ? "Fields, toggle and filter scope restored" : "Fields and toggle restored",
+    });
+  };
+
+  const deletePreset = (id: string) => {
+    persistPresets(presets.filter((p) => p.id !== id));
+    if (activePreset === id) setActivePreset(null);
+  };
 
   const decisions = useMemo(() => {
     const all = buildDecisions(log);
     return includePreviewOnly ? all : all.filter((d) => !!d.applied);
   }, [log, includePreviewOnly]);
+
 
   const rows = (): MitigationDecisionRow[] =>
     decisions.map((d) => {
