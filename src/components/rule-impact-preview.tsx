@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type ScannerRules } from "@/lib/paper-store";
 import { cn } from "@/lib/utils";
+import { RuleBacktestPanel } from "@/components/rule-backtest-panel";
+
 
 type Asset = (typeof ASSETS)[number];
 
