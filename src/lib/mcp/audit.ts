@@ -91,6 +91,7 @@ export function defineAuditedTool<TSchema extends Shape>(config: AuditedTool<TSc
         _request: request,
         _limit: RATE_LIMIT,
         _window_seconds: RATE_WINDOW_SECONDS,
+        _client_limit: CLIENT_RATE_LIMIT,
       });
 
       if (gateError) {
@@ -102,19 +103,38 @@ export function defineAuditedTool<TSchema extends Shape>(config: AuditedTool<TSc
       const verdict = (gate ?? {}) as {
         allowed?: boolean;
         reason?: string;
+        scope?: "account" | "client";
+        limit?: number;
+        used?: number;
+        window_seconds?: number;
         retry_after_seconds?: number;
         remaining?: number;
+        client_limit?: number;
+        client_remaining?: number;
+        client_id?: string;
       };
 
       if (!verdict.allowed) {
-        const text =
-          verdict.reason === "rate_limited"
-            ? `Rate limit exceeded: max ${RATE_LIMIT} MCP requests per ${RATE_WINDOW_SECONDS}s. Retry in ${verdict.retry_after_seconds ?? RATE_WINDOW_SECONDS}s. (correlation_id ${correlationId})`
-            : verdict.reason === "revoked"
-              ? `Access for this agent client was revoked in PumpPilot AI. Reconnect from Settings to continue. (correlation_id ${correlationId})`
-              : `Request denied (${verdict.reason ?? "unknown"}). (correlation_id ${correlationId})`;
-        return errorResult(text, { correlation_id: correlationId, ...verdict });
+        const retryAfter = verdict.retry_after_seconds ?? RATE_WINDOW_SECONDS;
+        const who = verdict.client_id ?? clientId ?? "unknown";
+        let text: string;
+        if (verdict.reason === "rate_limited") {
+          text =
+            verdict.scope === "client"
+              ? `Throttled: agent client "${who}" exceeded its limit of ${verdict.limit ?? CLIENT_RATE_LIMIT} MCP tool calls per ${verdict.window_seconds ?? RATE_WINDOW_SECONDS}s (${verdict.used ?? "?"} used). Retry after ${retryAfter}s, or slow this integration down — other agents on your account are unaffected. (correlation_id ${correlationId})`
+              : `Throttled: your account exceeded ${verdict.limit ?? RATE_LIMIT} MCP tool calls per ${verdict.window_seconds ?? RATE_WINDOW_SECONDS}s across all connected agents (${verdict.used ?? "?"} used). Retry after ${retryAfter}s. (correlation_id ${correlationId})`;
+        } else if (verdict.reason === "revoked") {
+          text = `Access for agent client "${who}" was revoked in PumpPilot AI. Reconnect from Settings → Connected agents to continue. (correlation_id ${correlationId})`;
+        } else {
+          text = `Request denied (${verdict.reason ?? "unknown"}). (correlation_id ${correlationId})`;
+        }
+        return errorResult(text, {
+          correlation_id: correlationId,
+          retry_after_seconds: verdict.reason === "rate_limited" ? retryAfter : undefined,
+          ...verdict,
+        });
       }
+
 
       const startedAt = Date.now();
       let result: ToolResult;
