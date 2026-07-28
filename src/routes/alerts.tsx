@@ -2302,6 +2302,64 @@ function RuleTuningPanel({
         <p className="mt-1.5 text-[10px] text-muted-foreground">
           Recommendations that breach these limits cannot be applied.
         </p>
+
+        <div className="mt-3 border-t border-border/60 pt-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-medium">
+              <BellRing className="h-3.5 w-3.5 text-primary" />
+              Alert me when a save raises near-miss risk
+            </div>
+            <Switch
+              checked={bounds.alertEnabled}
+              onCheckedChange={(v) => setBounds((b) => ({ ...b, alertEnabled: v }))}
+            />
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-[10px] text-muted-foreground">
+                Alert threshold (near-miss increase)
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                className="h-7 text-xs"
+                value={bounds.alertNearMissIncrease}
+                disabled={!bounds.alertEnabled}
+                onChange={(e) =>
+                  setBounds((b) => ({
+                    ...b,
+                    alertNearMissIncrease: Math.max(0, Number(e.target.value) || 0),
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] text-muted-foreground">Watched scope</Label>
+              <Select
+                value={bounds.alertScope}
+                disabled={!bounds.alertEnabled}
+                onValueChange={(v) =>
+                  setBounds((b) => ({ ...b, alertScope: v as RiskBounds["alertScope"] }))
+                }
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any scope</SelectItem>
+                  <SelectItem value="both">Majors + DEMO</SelectItem>
+                  <SelectItem value="majors">Majors only</SelectItem>
+                  <SelectItem value="demo">DEMO only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="mt-1.5 text-[10px] text-muted-foreground">
+            Fires an in-app alert right after any rule/operator save whose near-miss count grows by
+            more than this in the watched scope.
+          </p>
+        </div>
+
       </div>
 
       <FrontierChart result={result} rules={rules} preset={preset} bounds={bounds} />
