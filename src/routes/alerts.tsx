@@ -2734,6 +2734,111 @@ function RuleTuningPanel({
   );
 }
 
+/** Review-then-apply dialog for applying safest in-bounds alternatives to several rules at once. */
+function BulkSaferApplyDialog({
+  open,
+  onOpenChange,
+  keys,
+  safest,
+  tuning,
+  preset,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  keys: RuleKey[];
+  safest: Record<RuleKey, SaferOption | null>;
+  tuning: Record<RuleKey, ReturnType<typeof computeTuning>[RuleKey]>;
+  preset: string;
+  onConfirm: () => void;
+}) {
+  const rows = keys
+    .map((k) => ({ k, opt: safest[k], t: tuning[k] }))
+    .filter((r) => r.opt) as Array<{ k: RuleKey; opt: SaferOption; t: (typeof tuning)[RuleKey] }>;
+  const matchesBefore = rows.reduce((a, r) => a + (r.opt.preview?.matchesBefore ?? 0), 0);
+  const matchesAfter = rows.reduce((a, r) => a + (r.opt.preview?.matchesAfter ?? 0), 0);
+  const nmBefore = rows.reduce((a, r) => a + (r.opt.preview?.nearMissAnyBefore ?? 0), 0);
+  const nmAfter = rows.reduce((a, r) => a + (r.opt.preview?.nearMissAnyAfter ?? 0), 0);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-sm">
+            <ShieldCheck className="h-4 w-4 text-emerald-300" />
+            Apply safer alternatives to {rows.length} rule{rows.length === 1 ? "" : "s"}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            Each rule gets its safest in-bounds value (lowest fragility) instead of the{" "}
+            {preset} recommendation. Every change is logged to the tuning audit trail. Demo data —
+            more matches never means more profit.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+          {rows.map(({ k, opt, t }) => {
+            const meta = RULE_META[k];
+            const recFragile = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+            return (
+              <div key={k} className="rounded-md border border-border/60 bg-muted/10 p-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className={cn("font-medium", meta.textClass)}>{meta.short}</span>
+                  <span className="font-mono text-muted-foreground">
+                    {t.current}
+                    {meta.unit} → {opt.value}
+                    {meta.unit}
+                  </span>
+                </div>
+                <div className="mt-1 grid grid-cols-3 gap-1 text-[10px]">
+                  <PreviewStat
+                    label="Matches"
+                    before={opt.preview?.matchesBefore ?? 0}
+                    after={opt.preview?.matchesAfter ?? 0}
+                    goodUp
+                  />
+                  <PreviewStat
+                    label="Near-miss"
+                    before={opt.preview?.nearMissAnyBefore ?? 0}
+                    after={opt.preview?.nearMissAnyAfter ?? 0}
+                  />
+                  <div>
+                    <div className="text-muted-foreground">Fragility</div>
+                    <div className="text-emerald-300">
+                      {recFragile.toFixed(0)}% → {opt.fragilePct.toFixed(0)}%
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  Replaces recommendation {meta.short} {meta.op} {t.suggested}
+                  {meta.unit}.
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="rounded-md border border-border/60 bg-background/40 p-2 text-[11px]">
+          <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            Combined preview
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <PreviewStat label="Matches" before={matchesBefore} after={matchesAfter} goodUp />
+            <PreviewStat label="Near-miss (any)" before={nmBefore} after={nmAfter} />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button size="sm" disabled={rows.length === 0} onClick={onConfirm}>
+            Apply all {rows.length}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** A safer variant of the current recommendation, produced by sweeping smaller loosening fractions. */
 type SaferOption = {
   id: string;
@@ -3903,6 +4008,58 @@ function ReplayPanel() {
                     meta.mitigation
                       ? { description: `Mitigation logged: ${meta.mitigation}` }
                       : undefined,
+                  );
+                }}
+                onApplyBulk={(entries) => {
+                  if (entries.length === 0) return;
+                  const next: ScannerRules = { ...scannerRules };
+                  const olds: Record<string, number> = {};
+                  for (const e of entries) {
+                    const k = e.key;
+                    olds[k] =
+                      k === "momentum"
+                        ? scannerRules.minMomentum
+                        : k === "volume"
+                          ? scannerRules.minVolumeScore
+                          : k === "volatility"
+                            ? scannerRules.maxVolatility
+                            : scannerRules.min24hChangePct;
+                    if (k === "momentum") next.minMomentum = e.value;
+                    else if (k === "volume") next.minVolumeScore = e.value;
+                    else if (k === "volatility") next.maxVolatility = e.value;
+                    else next.min24hChangePct = e.value;
+                  }
+                  setScannerRules(next);
+                  for (const e of entries) {
+                    logTuning({
+                      source: "mitigation",
+                      kind: "rule",
+                      rule: e.key,
+                      ruleLabel: RULE_META[e.key].short,
+                      operator: RULE_META[e.key].op,
+                      unit: RULE_META[e.key].unit,
+                      oldValue: olds[e.key],
+                      newValue: e.value,
+                      preset: e.preset,
+                      scope: scopeOf(next),
+                      mitigation: e.mitigation,
+                      trigger: e.trigger,
+                      recommendedValue: e.recommendedValue,
+                      fragilePct: e.fragilePct,
+                      window: result.window,
+                      matchesBefore: e.preview?.matchesBefore,
+                      matchesAfter: e.preview?.matchesAfter,
+                      nearMissBefore: e.preview?.nearMissAnyBefore,
+                      nearMissAfter: e.preview?.nearMissAnyAfter,
+                    });
+                  }
+                  toast.success(
+                    `Applied safer alternatives to ${entries.length} rule${entries.length === 1 ? "" : "s"}`,
+                    {
+                      description: `${entries
+                        .map((e) => `${RULE_META[e.key].short} ${RULE_META[e.key].op} ${e.value}${RULE_META[e.key].unit}`)
+                        .join(" · ")} — logged to the audit trail.`,
+                    },
                   );
                 }}
                 onLogBoundsChange={(e) => {
