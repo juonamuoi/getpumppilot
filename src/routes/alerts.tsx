@@ -302,15 +302,46 @@ function ScannerRulesPanel() {
     paper.setScannerRules(next);
     for (const e of batch) paper.markTuningReverted(e.id);
     setImpact({ before, after: next, ts: Date.now() });
-    toast.success(
-      `Rolled back last change — restored ${batch
-        .map((e) => `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`)
-        .join(", ")}`,
-    );
+    const label = batch
+      .map((e) => `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`)
+      .join(", ");
+    setRollbackUndo({
+      rules: before,
+      label: batch
+        .map((e) => `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.newValue}${e.unit}`)
+        .join(", "),
+      ts: Date.now(),
+    });
+    toast.success(`Rolled back last change — restored ${label}`, {
+      action: { label: "Undo", onClick: () => undoRollback(before) },
+      duration: 10000,
+    });
+  };
+
+  /** Undo the rollback itself — reapplies the values that were rolled back. */
+  const undoRollback = (snapshot: ScannerRules) => {
+    const before = paper.scannerRules;
+    setR(snapshot);
+    paper.setScannerRules(snapshot);
+    setImpact({ before, after: snapshot, ts: Date.now() });
+    setRollbackUndo(null);
+    toast.success("Rollback undone — your tuned thresholds are back");
   };
 
   const lastBatch = useMemo(() => lastTuningBatch(paper.tuningLog), [paper.tuningLog]);
   const [rollbackOpen, setRollbackOpen] = useState(false);
+  const [rollbackUndo, setRollbackUndo] = useState<{
+    rules: ScannerRules;
+    label: string;
+    ts: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!rollbackUndo) return;
+    const t = setTimeout(() => setRollbackUndo(null), 30000);
+    return () => clearTimeout(t);
+  }, [rollbackUndo]);
+
 
 
 
