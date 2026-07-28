@@ -303,9 +303,9 @@ export function MitigationImpactTimeline() {
     })
     .join(" ");
 
-  const activeFilters = wallets.length + tokens.length;
+  const activeFilters = wallets.length + tokens.length + actions.length + outcomes.length;
 
-  // Exports exactly the filtered view (wallets, tokens, time range).
+  // Exports exactly the filtered view (wallets, tokens, actions, outcomes, range).
   const exportTimeline = (fmt: "csv" | "json") => {
     const filters = {
       range,
@@ -314,6 +314,8 @@ export function MitigationImpactTimeline() {
       to: Date.now(),
       wallets,
       tokens,
+      actions,
+      outcomes,
     };
     const body =
       fmt === "csv"
