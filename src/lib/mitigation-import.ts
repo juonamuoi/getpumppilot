@@ -342,7 +342,9 @@ export function parseMitigationExport(filename: string, text: string): ImportRes
   }
 
   const headers = rows[headerIdx].map((h) => h.trim());
+  let ragged = 0;
   const records: Raw[] = rows.slice(headerIdx + 1).map((r) => {
+    if (r.length !== headers.length) ragged++;
     const o: Raw = {};
     headers.forEach((h, i) => {
       o[h] = r[i] ?? "";
@@ -350,8 +352,15 @@ export function parseMitigationExport(filename: string, text: string): ImportRes
     return o;
   });
   if (records.length === 0) throw new Error("That CSV has no data rows.");
+  if (ragged > 0) {
+    warnings.push(`${ragged} row(s) had a different column count than the header.`);
+  }
   if (!filename.toLowerCase().endsWith(".csv")) {
     warnings.push("File parsed as CSV based on its contents.");
   }
-  return finalize(records, "csv", warnings);
+  return finalize(records, "csv", warnings, {
+    fileName: filename,
+    lineOffset: headerIdx + 1,
+  });
 }
+
