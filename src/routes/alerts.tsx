@@ -3010,6 +3010,8 @@ function TuningConfirmDialog({
   bounds,
   onSetBounds,
   onApplyAlternative,
+  onLogBounds,
+
   onCancel,
   onConfirm,
 }: {
