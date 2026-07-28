@@ -1689,13 +1689,107 @@ function TuningHistoryPanel({
         </div>
       )}
 
+      {log.length > 0 && (
+        <div className="mb-2 space-y-2 rounded border border-border/50 bg-background/40 p-2">
+          <div className="flex items-center gap-2">
+            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(ev) => setQuery(ev.target.value)}
+              placeholder="Search rule, preset, window or values…"
+              className="h-7 text-[11px]"
+            />
+            {filtersActive && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 shrink-0 px-2 text-[10px]"
+                onClick={() => {
+                  setQuery("");
+                  setRuleFilter("all");
+                  setOpFilter("all");
+                  setSourceFilter("all");
+                  setScopeFilter("all");
+                  setRangeFilter("all");
+                }}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <Select value={ruleFilter} onValueChange={setRuleFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Rule" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All rules</SelectItem>
+                {ruleOptions.map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={opFilter} onValueChange={setOpFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Operator" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any operator</SelectItem>
+                <SelectItem value=">=">≥ (minimum)</SelectItem>
+                <SelectItem value="<=">≤ (maximum)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any source</SelectItem>
+                <SelectItem value="manual-save">Manual save</SelectItem>
+                <SelectItem value="recommendation">Recommendation</SelectItem>
+                <SelectItem value="auto">Automated</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={scopeFilter} onValueChange={setScopeFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Asset scope" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any scope</SelectItem>
+                <SelectItem value="both">Majors + DEMO</SelectItem>
+                <SelectItem value="majors">Majors only</SelectItem>
+                <SelectItem value="demo">DEMO small-caps only</SelectItem>
+                <SelectItem value="none">No assets included</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={rangeFilter} onValueChange={setRangeFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="24h">Last 24 hours</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
 
       {log.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">
           No recommendations applied yet. Applied threshold changes are recorded here with their old
           and new values.
         </p>
+      ) : filtered.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">
+          No tuning entries match these filters — try resetting the search or time range.
+        </p>
       ) : (
+
         <div className="space-y-1.5">
           {shown.map((e) => {
             const looser =
