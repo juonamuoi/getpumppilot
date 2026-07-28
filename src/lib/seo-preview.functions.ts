@@ -1,0 +1,185 @@
+import { createServerFn } from "@tanstack/react-start";
+
+export interface SeoRouteAudit {
+  path: string;
+  status: number | null;
+  title: string | null;
+  canonical: string | null;
+  ogUrl: string | null;
+  robots: string | null;
+  /** Canonical + og:url agree with each other */
+  selfConsistent: boolean;
+  /** Both tags point at the expected production host */
+  hostMatches: boolean;
+  /** Canonical/og:url resolve to this exact route path */
+  pathMatches: boolean;
+  issues: string[];
+  error?: string;
+}
+
+export interface SeoPreviewResult {
+  expectedOrigin: string;
+  checkedOrigin: string;
+  generatedAt: string;
+  routes: SeoRouteAudit[];
+}
+
+const EXPECTED_ORIGIN = "https://www.getpumppilot.app";
+
+function pick(html: string, re: RegExp): string | null {
+  const m = html.match(re);
+  return m ? m[1].trim() : null;
+}
+
+function parseHead(html: string) {
+  return {
+    title: pick(html, /<title[^>]*>([\s\S]*?)<\/title>/i),
+    canonical:
+      pick(html, /<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["']/i) ??
+      pick(html, /<link[^>]+href=["']([^"']+)["'][^>]*rel=["']canonical["']/i),
+    ogUrl:
+      pick(html, /<meta[^>]+property=["']og:url["'][^>]*content=["']([^"']+)["']/i) ??
+      pick(html, /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:url["']/i),
+    robots: pick(html, /<meta[^>]+name=["']robots["'][^>]*content=["']([^"']+)["']/i),
+    canonicalCount: (html.match(/rel=["']canonical["']/gi) ?? []).length,
+  };
+}
+
+function normalisePath(p: string) {
+  if (p === "/") return "/";
+  return p.replace(/\/+$/, "");
+}
+
+async function auditPath(origin: string, path: string): Promise<SeoRouteAudit> {
+  const base: SeoRouteAudit = {
+    path,
+    status: null,
+    title: null,
+    canonical: null,
+    ogUrl: null,
+    robots: null,
+    selfConsistent: false,
+    hostMatches: false,
+    pathMatches: false,
+    issues: [],
+  };
+
+  try {
+    const res = await fetch(`${origin}${path}`, {
+      headers: { accept: "text/html" },
+    });
+    const html = await res.text();
+    const head = parseHead(html);
+    const issues: string[] = [];
+
+    if (!res.ok) issues.push(`HTTP ${res.status}`);
+    if (!head.canonical) issues.push("Missing canonical");
+    if (!head.ogUrl) issues.push("Missing og:url");
+    if (head.canonicalCount > 1) issues.push(`${head.canonicalCount} canonical tags`);
+    if (head.robots?.includes("noindex")) issues.push("robots: noindex");
+
+    const canonicalUrl = head.canonical ? safeUrl(head.canonical, EXPECTED_ORIGIN) : null;
+    const ogUrlUrl = head.ogUrl ? safeUrl(head.ogUrl, EXPECTED_ORIGIN) : null;
+
+    const selfConsistent =
+      !!canonicalUrl && !!ogUrlUrl && canonicalUrl.href === ogUrlUrl.href;
+    if (canonicalUrl && ogUrlUrl && !selfConsistent)
+      issues.push("canonical and og:url differ");
+
+    const expected = new URL(EXPECTED_ORIGIN);
+    const hostMatches =
+      !!canonicalUrl &&
+      canonicalUrl.host === expected.host &&
+      canonicalUrl.protocol === expected.protocol &&
+      (!ogUrlUrl || (ogUrlUrl.host === expected.host && ogUrlUrl.protocol === expected.protocol));
+    if (canonicalUrl && !hostMatches)
+      issues.push(`Host mismatch (${canonicalUrl.host} ≠ ${expected.host})`);
+
+    const pathMatches =
+      !!canonicalUrl && normalisePath(canonicalUrl.pathname) === normalisePath(path);
+    if (canonicalUrl && !pathMatches)
+      issues.push(`Canonical points at ${canonicalUrl.pathname}`);
+
+    return {
+      ...base,
+      status: res.status,
+      title: head.title,
+      canonical: head.canonical,
+      ogUrl: head.ogUrl,
+      robots: head.robots,
+      selfConsistent,
+      hostMatches,
+      pathMatches,
+      issues,
+    };
+  } catch (err) {
+    return {
+      ...base,
+      issues: ["Fetch failed"],
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+function safeUrl(value: string, base: string): URL | null {
+  try {
+    return new URL(value, base);
+  } catch {
+    return null;
+  }
+}
+
+async function readSitemapPaths(origin: string): Promise<string[]> {
+  try {
+    const res = await fetch(`${origin}/sitemap.xml`);
+    if (!res.ok) return ["/"];
+    const xml = await res.text();
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].trim());
+    const paths = locs
+      .map((loc) => safeUrl(loc, EXPECTED_ORIGIN)?.pathname)
+      .filter((p): p is string => !!p);
+    return [...new Set(paths)];
+  } catch {
+    return ["/"];
+  }
+}
+
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>) {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (cursor < items.length) {
+        const index = cursor++;
+        results[index] = await fn(items[index]);
+      }
+    }),
+  );
+  return results;
+}
+
+/**
+ * Fetches every sitemap route from the currently running deployment and
+ * extracts its canonical / og:url so host + path mismatches are visible
+ * before publishing.
+ */
+export const auditSeoUrls = createServerFn({ method: "GET" }).handler(
+  async (): Promise<SeoPreviewResult> => {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const request = getRequest();
+    const requestUrl = new URL(request.url);
+    const proto = request.headers.get("x-forwarded-proto") ?? requestUrl.protocol.replace(":", "");
+    const host = request.headers.get("host") ?? requestUrl.host;
+    const checkedOrigin = `${proto}://${host}`;
+
+    const paths = await readSitemapPaths(checkedOrigin);
+    const routes = await mapLimit(paths, 6, (p) => auditPath(checkedOrigin, p));
+
+    return {
+      expectedOrigin: EXPECTED_ORIGIN,
+      checkedOrigin,
+      generatedAt: new Date().toISOString(),
+      routes,
+    };
+  },
+);
