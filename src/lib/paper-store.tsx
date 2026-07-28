@@ -120,6 +120,8 @@ export type TuningLogEntry = {
 
   /** Stable id linking a mitigation preview, its applied entry and the alert outcome. */
   correlationId?: string;
+  /** Set on replayed entries: the correlation id of the mitigation that was re-run. */
+  replayOf?: string;
   /** Alert outcome recorded after the mitigation took effect. */
   outcome?: MitigationOutcome;
 
@@ -159,6 +161,14 @@ type State = {
   lastMitigation: { correlationId: string; ts: number; label: string; entries: TuningLogEntry[] } | null;
   /** One-click revert of the last applied mitigation. Returns the restored batch, or null. */
   undoLastMitigation: (reason?: string) => { correlationId: string; label: string; entries: TuningLogEntry[] } | null;
+  /**
+   * One-click replay: re-run a recorded mitigation with the exact same parameters,
+   * reusing its stored preview context. Returns the new batch, or null when the
+   * correlation id has no replayable rule entries.
+   */
+  replayMitigation: (
+    correlationId: string,
+  ) => { correlationId: string; label: string; entries: TuningLogEntry[]; outcome: MitigationOutcome } | null;
   clearTuningLog: () => void;
 
 
@@ -535,6 +545,47 @@ export function PaperProvider({ children }: { children: ReactNode }) {
         ].slice(0, 200),
       );
       return { correlationId: batch.correlationId, label: batch.label, entries: batch.entries };
+    },
+    replayMitigation: (correlationId) => {
+      // Source of truth = the stored audit entries for this correlation id.
+      const source = tuningLog.filter(
+        (e) =>
+          e.correlationId === correlationId &&
+          e.source === "mitigation" &&
+          e.kind === "rule" &&
+          e.rule !== "undo",
+      );
+      // Prefer the applied entries; fall back to the preview context when the
+      // mitigation was only ever reviewed.
+      const applied = source.filter((e) => e.phase !== "preview");
+      const batch = applied.length > 0 ? applied : source;
+      if (batch.length === 0) return null;
+
+      const label = batch[0].mitigation ?? "Mitigation";
+      const nextRules = { ...scannerRules };
+      for (const e of batch) applyRuleValue(nextRules, e.rule, e.newValue);
+      setScannerRules(nextRules);
+
+      const at = Date.now();
+      const replayId = `${correlationId}-R${at.toString(36).slice(-4)}`;
+      const replayEntries: TuningLogEntry[] = batch.map((e, i) => ({
+        ...e,
+        id: `${at.toString(36)}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        ts: at,
+        appliedAt: at,
+        correlationId: replayId,
+        replayOf: correlationId,
+        phase: "applied" as const,
+        mitigation: `Replay: ${label}`,
+        trigger: `One-click replay of ${correlationId} — same parameters, stored preview context`,
+        outcome: undefined,
+        revertedAt: undefined,
+        revertReason: undefined,
+      }));
+
+      setTuningLog((prev) => [...replayEntries, ...prev].slice(0, 200));
+      const outcome = value.recordMitigationOutcome(replayId, nextRules);
+      return { correlationId: replayId, label, entries: replayEntries, outcome };
     },
     clearTuningLog: () => setTuningLog([]),
 
