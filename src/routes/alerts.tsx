@@ -2812,6 +2812,8 @@ function ReplayPanel() {
       oldValue: current,
       newValue: value,
       preset: meta.preset,
+      scope: scopeOf(next),
+
       window: windowLabel,
       matchesBefore: meta.preview?.matchesBefore,
       matchesAfter: meta.preview?.matchesAfter,
