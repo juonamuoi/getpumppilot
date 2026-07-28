@@ -1,7 +1,19 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Activity, ShieldAlert, Filter, X, ExternalLink } from "lucide-react";
+import { Activity, ShieldAlert, Filter, X, ExternalLink, Download } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  buildTimelineCsv,
+  buildTimelineJson,
+  downloadTimelineExport,
+} from "@/lib/timeline-export";
+
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
