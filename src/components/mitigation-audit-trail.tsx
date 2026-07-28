@@ -50,6 +50,47 @@ function DeltaBadge({ label, before, after }: { label: string; before?: number; 
 }
 
 /**
+ * One-click undo for the most recent applied mitigation: restores every threshold
+ * it changed, marks the batch reverted and records the undo in the audit trail.
+ */
+function UndoLastMitigationBar() {
+  const paper = usePaper();
+  const last = paper.lastMitigation;
+  if (!last || last.entries.length === 0) return null;
+
+  const undo = () => {
+    const done = paper.undoLastMitigation();
+    if (!done) return;
+    toast.success(`Undid "${done.label}" — original thresholds restored`, {
+      description: done.entries
+        .map((e) => `${e.ruleLabel} ${e.newValue}${e.unit} → ${e.oldValue}${e.unit}`)
+        .join(" · "),
+    });
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-400/40 bg-amber-400/10 p-2">
+      <div className="min-w-0 text-[11px]">
+        <div className="flex items-center gap-1.5 font-medium text-amber-200">
+          <Undo2 className="h-3.5 w-3.5" />
+          Last mitigation: {last.label}
+        </div>
+        <div className="truncate text-[10px] text-muted-foreground">
+          {format(new Date(last.ts), "MMM d, HH:mm:ss")} · {last.correlationId} ·{" "}
+          {last.entries
+            .map((e) => `${e.ruleLabel} ${e.newValue}${e.unit} → ${e.oldValue}${e.unit}`)
+            .join(", ")}
+        </div>
+      </div>
+      <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={undo}>
+        <Undo2 className="mr-1 h-3 w-3" />
+        Undo last mitigation
+      </Button>
+    </div>
+  );
+}
+
+
  * Mitigation audit trail: every one-tap mitigation with the before/after deltas
  * shown in its confirmation dialog and the alert outcome it produced, all tied
  * together by a correlation ID.
