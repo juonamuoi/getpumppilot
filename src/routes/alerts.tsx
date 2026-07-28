@@ -4231,8 +4231,9 @@ function TuningConfirmDialog({
             onSetBounds={onSetBounds}
             onApplyAlternative={onApplyAlternative}
             onLogBounds={onLogBounds}
-
+            onLogPreview={onLogPreview}
           />
+
         </div>
 
         <AlertDialogFooter>
