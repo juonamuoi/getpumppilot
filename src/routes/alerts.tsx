@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
+import { TuningDeltaChart } from "@/components/tuning-delta-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1850,18 +1851,12 @@ function TuningHistoryPanel({
                   </span>
                 </div>
                 {(e.matchesBefore != null || e.nearMissBefore != null) && (
-                  <div className="mt-1 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
-                    {e.matchesBefore != null && (
-                      <span>
-                        Matches {e.matchesBefore} → {e.matchesAfter}
-                      </span>
-                    )}
-                    {e.nearMissBefore != null && (
-                      <span>
-                        Near-miss {e.nearMissBefore} → {e.nearMissAfter}
-                      </span>
-                    )}
-                  </div>
+                  <TuningDeltaChart
+                    matchesBefore={e.matchesBefore}
+                    matchesAfter={e.matchesAfter}
+                    nearMissBefore={e.nearMissBefore}
+                    nearMissAfter={e.nearMissAfter}
+                  />
                 )}
                 {!e.revertedAt && (
                   <Button
