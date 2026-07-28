@@ -465,6 +465,7 @@ export type Database = {
       mcp_begin_call: {
         Args: {
           _client_id: string
+          _client_limit?: number
           _correlation_id: string
           _limit?: number
           _request?: Json

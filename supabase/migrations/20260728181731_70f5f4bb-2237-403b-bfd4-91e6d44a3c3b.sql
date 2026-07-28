@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.mcp_finish_call(uuid, uuid, text, integer, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.mcp_finish_call(uuid, uuid, text, integer, text) TO service_role;
