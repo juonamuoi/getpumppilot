@@ -12,21 +12,38 @@ import { Award, ArrowDownRight, ArrowUpRight, LineChart, TrendingUp } from "luci
 
 const STARTING_CASH = 100_000;
 
+const J_TITLE = "Trade Journal — PumpPilot AI";
+const J_DESC =
+  "Paper trading performance analytics: win rate, expectancy, profit factor, equity curve and per-asset attribution. Demo data.";
+const J_OG_DESC = "Win rate, expectancy, equity curve — measure your paper trading edge.";
+const J_IMAGE = "https://www.getpumppilot.app/og-cover.jpg";
+
 export const Route = createFileRoute("/journal")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/journal" }],
     meta: [
+      { title: J_TITLE },
+      { name: "description", content: J_DESC },
+      { property: "og:title", content: J_TITLE },
+      { property: "og:description", content: J_OG_DESC },
+      { property: "og:type", content: "website" },
       { property: "og:url", content: "https://www.getpumppilot.app/journal" },
-      { title: "Trade Journal — PumpPilot AI" },
+      { property: "og:site_name", content: "PumpPilot AI" },
+      { property: "og:locale", content: "en_US" },
+      { property: "og:image", content: J_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       {
-        name: "description",
-        content:
-          "Paper trading performance analytics: win rate, expectancy, profit factor, equity curve and per-asset attribution. Demo data.",
+        property: "og:image:alt",
+        content: "PumpPilot AI trade journal with equity curve and win-rate stats",
       },
-      { property: "og:title", content: "Trade Journal — PumpPilot AI" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: J_TITLE },
+      { name: "twitter:description", content: J_OG_DESC },
+      { name: "twitter:image", content: J_IMAGE },
       {
-        property: "og:description",
-        content: "Win rate, expectancy, equity curve — measure your paper trading edge.",
+        name: "twitter:image:alt",
+        content: "PumpPilot AI trade journal with equity curve and win-rate stats",
       },
     ],
   }),

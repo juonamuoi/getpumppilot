@@ -15,21 +15,39 @@ import { LiveMarket } from "@/components/live-market";
 import { Term } from "@/components/glossary";
 import { useOnboarding } from "@/lib/onboarding-store";
 
+const DASH_TITLE = "Dashboard — PumpPilot AI";
+const DASH_DESC =
+  "Portfolio overview, top momentum signals and market pulse. Paper trading only — demo data.";
+const DASH_OG_DESC =
+  "Explainable momentum, portfolio, and market pulse in one premium dark UI.";
+const DASH_IMAGE = "https://www.getpumppilot.app/og-cover.jpg";
+
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/dashboard" }],
     meta: [
-      { property: "og:url", content: "https://www.getpumppilot.app/dashboard" },
-      { title: "Dashboard — PumpPilot AI" },
-      {
-        name: "description",
-        content:
-          "Portfolio overview, top momentum signals and market pulse. Paper trading only — demo data.",
-      },
+      { title: DASH_TITLE },
+      { name: "description", content: DASH_DESC },
       { property: "og:title", content: "PumpPilot AI Dashboard" },
+      { property: "og:description", content: DASH_OG_DESC },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://www.getpumppilot.app/dashboard" },
+      { property: "og:site_name", content: "PumpPilot AI" },
+      { property: "og:locale", content: "en_US" },
+      { property: "og:image", content: DASH_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       {
-        property: "og:description",
-        content: "Explainable momentum, portfolio, and market pulse in one premium dark UI.",
+        property: "og:image:alt",
+        content: "PumpPilot AI dashboard with momentum signals and portfolio overview",
+      },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "PumpPilot AI Dashboard" },
+      { name: "twitter:description", content: DASH_OG_DESC },
+      { name: "twitter:image", content: DASH_IMAGE },
+      {
+        name: "twitter:image:alt",
+        content: "PumpPilot AI dashboard with momentum signals and portfolio overview",
       },
     ],
   }),
