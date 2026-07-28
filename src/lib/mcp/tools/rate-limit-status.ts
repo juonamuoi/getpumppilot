@@ -23,7 +23,7 @@ export default defineTool({
       .describe("Agent client ID to report per-agent quota for. Null uses the calling agent."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ client_id }: { client_id: string | null }, ctx) => {
+  handler: async ({ client_id }: { client_id: string | null }, ctx: ToolContext) => {
     if (!ctx.isAuthenticated()) return NOT_AUTHENTICATED;
 
     const clientId = client_id ?? ctx.getClientId?.() ?? null;
