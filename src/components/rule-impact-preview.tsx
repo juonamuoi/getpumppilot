@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, Sparkles, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Sparkles, X } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type ScannerRules } from "@/lib/paper-store";
 import { cn } from "@/lib/utils";
@@ -166,44 +166,13 @@ export function RuleImpactPreview({
           </div>
         ) : (
           <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60">
-            {rows.map(({ asset, before, after, status }) => (
-              <div
-                key={asset.symbol}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold">{asset.symbol}</span>
-                    {asset.category === "demo-smallcap" && (
-                      <Badge variant="outline" className="h-4 px-1 text-[9px]">
-                        DEMO
-                      </Badge>
-                    )}
-                    {held.has(asset.symbol) && (
-                      <Badge variant="outline" className="h-4 border-sky-500/40 px-1 text-[9px] text-sky-300">
-                        HELD
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="truncate text-[11px] text-muted-foreground">
-                    {before.matched ? "signal" : "no signal"}
-                    {" → "}
-                    {after.matched ? "signal" : "no signal"} · strength {before.strength}% →{" "}
-                    {after.strength}%
-                  </div>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px]",
-                    status === "gained" && "border-emerald-500/40 text-emerald-300",
-                    status === "lost" && "border-rose-500/40 text-rose-300",
-                    status === "same" && "text-muted-foreground",
-                  )}
-                >
-                  {status === "gained" ? "New signal" : status === "lost" ? "Signal lost" : "Unchanged"}
-                </Badge>
-              </div>
+            {rows.map((row) => (
+              <AssetImpactRow
+                key={row.asset.symbol}
+                row={row}
+                change={change}
+                held={held.has(row.asset.symbol)}
+              />
             ))}
           </div>
         )}
@@ -251,6 +220,244 @@ const CHECK_LABELS: Record<keyof ReturnType<typeof signals>["checks"], string> =
   volatility: "Volatility cap",
   change: "24h change",
 };
+
+type CheckKey = keyof ReturnType<typeof signals>["checks"];
+
+type Reason = {
+  key: CheckKey;
+  label: string;
+  /** the asset input this rule reads */
+  input: string;
+  thresholdBefore: string;
+  thresholdAfter: string;
+  thresholdChanged: boolean;
+  before: boolean;
+  after: boolean;
+  sentence: string;
+};
+
+const fmt = (n: number, suffix = "") => `${Number(n.toFixed(2))}${suffix}`;
+
+/** Explains, per asset, which rules and inputs drove the before/after delta. */
+function explainAsset(asset: Asset, b: ScannerRules, a: ScannerRules): Reason[] {
+  const rows: Reason[] = [
+    {
+      key: "momentum",
+      label: CHECK_LABELS.momentum,
+      input: `momentum ${fmt(asset.momentum.total)}`,
+      thresholdBefore: `≥ ${fmt(b.minMomentum)}`,
+      thresholdAfter: `≥ ${fmt(a.minMomentum)}`,
+      thresholdChanged: b.minMomentum !== a.minMomentum,
+      before: asset.momentum.total >= b.minMomentum,
+      after: asset.momentum.total >= a.minMomentum,
+      sentence: "",
+    },
+    {
+      key: "volume",
+      label: CHECK_LABELS.volume,
+      input: `volume score ${fmt(asset.momentum.volume)}`,
+      thresholdBefore: `≥ ${fmt(b.minVolumeScore)}`,
+      thresholdAfter: `≥ ${fmt(a.minVolumeScore)}`,
+      thresholdChanged: b.minVolumeScore !== a.minVolumeScore,
+      before: asset.momentum.volume >= b.minVolumeScore,
+      after: asset.momentum.volume >= a.minVolumeScore,
+      sentence: "",
+    },
+    {
+      key: "volatility",
+      label: CHECK_LABELS.volatility,
+      input: `volatility ${fmt(asset.momentum.volatility)}`,
+      thresholdBefore: `≤ ${fmt(b.maxVolatility)}`,
+      thresholdAfter: `≤ ${fmt(a.maxVolatility)}`,
+      thresholdChanged: b.maxVolatility !== a.maxVolatility,
+      before: asset.momentum.volatility <= b.maxVolatility,
+      after: asset.momentum.volatility <= a.maxVolatility,
+      sentence: "",
+    },
+    {
+      key: "change",
+      label: CHECK_LABELS.change,
+      input: `24h change ${fmt(asset.change24h, "%")}`,
+      thresholdBefore: `≥ ${fmt(b.min24hChangePct, "%")}`,
+      thresholdAfter: `≥ ${fmt(a.min24hChangePct, "%")}`,
+      thresholdChanged: b.min24hChangePct !== a.min24hChangePct,
+      before: asset.change24h >= b.min24hChangePct,
+      after: asset.change24h >= a.min24hChangePct,
+      sentence: "",
+    },
+    {
+      key: "category",
+      label: CHECK_LABELS.category,
+      input: asset.category === "major" ? "major" : "DEMO small-cap",
+      thresholdBefore:
+        asset.category === "major"
+          ? b.includeMajors
+            ? "included"
+            : "excluded"
+          : b.includeDemoSmallCaps
+            ? "included"
+            : "excluded",
+      thresholdAfter:
+        asset.category === "major"
+          ? a.includeMajors
+            ? "included"
+            : "excluded"
+          : a.includeDemoSmallCaps
+            ? "included"
+            : "excluded",
+      thresholdChanged:
+        asset.category === "major"
+          ? b.includeMajors !== a.includeMajors
+          : b.includeDemoSmallCaps !== a.includeDemoSmallCaps,
+      before:
+        asset.category === "major" ? b.includeMajors : b.includeDemoSmallCaps,
+      after: asset.category === "major" ? a.includeMajors : a.includeDemoSmallCaps,
+      sentence: "",
+    },
+  ];
+
+  return rows.map((r) => {
+    if (r.before === r.after) {
+      r.sentence = r.thresholdChanged
+        ? `Threshold moved (${r.thresholdBefore} → ${r.thresholdAfter}) but ${r.input} still ${r.after ? "clears" : "misses"} it.`
+        : `Unchanged — ${r.input} ${r.after ? "clears" : "misses"} ${r.thresholdAfter}.`;
+    } else if (r.after) {
+      r.sentence = `Now passes: ${r.input} clears the new bar ${r.thresholdAfter} (was ${r.thresholdBefore}).`;
+    } else {
+      r.sentence = `Now fails: ${r.input} no longer clears ${r.thresholdAfter} (was ${r.thresholdBefore}).`;
+    }
+    return r;
+  });
+}
+
+function AssetImpactRow({
+  row,
+  change,
+  held,
+}: {
+  row: Row;
+  change: RuleChangeSnapshot;
+  held: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const { asset, before, after, status } = row;
+  const reasons = useMemo(
+    () => explainAsset(asset, change.before, change.after),
+    [asset, change],
+  );
+  const drivers = reasons.filter((r) => r.before !== r.after);
+
+  return (
+    <div className="px-3 py-2.5">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold">{asset.symbol}</span>
+            {asset.category === "demo-smallcap" && (
+              <Badge variant="outline" className="h-4 px-1 text-[9px]">
+                DEMO
+              </Badge>
+            )}
+            {held && (
+              <Badge variant="outline" className="h-4 border-sky-500/40 px-1 text-[9px] text-sky-300">
+                HELD
+              </Badge>
+            )}
+          </div>
+          <div className="truncate text-[11px] text-muted-foreground">
+            {before.matched ? "signal" : "no signal"}
+            {" → "}
+            {after.matched ? "signal" : "no signal"} · strength {before.strength}% →{" "}
+            {after.strength}%
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-[10px]",
+              status === "gained" && "border-emerald-500/40 text-emerald-300",
+              status === "lost" && "border-rose-500/40 text-rose-300",
+              status === "same" && "text-muted-foreground",
+            )}
+          >
+            {status === "gained" ? "New signal" : status === "lost" ? "Signal lost" : "Unchanged"}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-[11px]"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+          >
+            Why this changed
+            <ChevronDown className={cn("h-3 w-3 transition-transform", open && "rotate-180")} />
+          </Button>
+        </div>
+      </div>
+
+      {open && (
+        <div className="mt-2 space-y-2 rounded-md border border-border/60 bg-background/50 p-2.5">
+          <p className="text-[11px] text-muted-foreground">
+            {drivers.length === 0
+              ? "No rule check flipped for this asset — the strength delta comes only from threshold slack, not a pass/fail change."
+              : `${drivers.length} rule check${drivers.length > 1 ? "s" : ""} flipped: ${drivers
+                  .map((d) => d.label.toLowerCase())
+                  .join(", ")}.`}
+          </p>
+          <div className="space-y-1.5">
+            {reasons.map((r) => (
+              <div
+                key={r.key}
+                className={cn(
+                  "rounded border px-2 py-1.5",
+                  r.before !== r.after
+                    ? r.after
+                      ? "border-emerald-500/30 bg-emerald-500/5"
+                      : "border-rose-500/30 bg-rose-500/5"
+                    : "border-border/50",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2 text-[11px]">
+                  <span className="font-medium">{r.label}</span>
+                  <span
+                    className={cn(
+                      "font-mono",
+                      r.before !== r.after
+                        ? r.after
+                          ? "text-emerald-300"
+                          : "text-rose-300"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {r.before ? "pass" : "fail"} → {r.after ? "pass" : "fail"}
+                  </span>
+                </div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-muted-foreground">
+                  <span>input: {r.input}</span>
+                  <span>
+                    rule: {r.thresholdBefore}
+                    {r.thresholdChanged && (
+                      <>
+                        {" → "}
+                        <span className="text-foreground">{r.thresholdAfter}</span>
+                      </>
+                    )}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">{r.sentence}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Mock/demo data. Explanations are probabilistic signals, not investment advice.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 /** Interactive grouped bar chart: signal strength before vs after, per asset. */
 function BeforeAfterChart({ rows }: { rows: Row[] }) {
