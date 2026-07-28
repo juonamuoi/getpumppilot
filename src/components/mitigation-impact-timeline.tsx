@@ -1,7 +1,19 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Activity, ShieldAlert, Filter, X, ExternalLink } from "lucide-react";
+import { Activity, ShieldAlert, Filter, X, ExternalLink, Download } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  buildTimelineCsv,
+  buildTimelineJson,
+  downloadTimelineExport,
+} from "@/lib/timeline-export";
+
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -250,6 +262,24 @@ export function MitigationImpactTimeline() {
 
   const activeFilters = wallets.length + tokens.length;
 
+  // Exports exactly the filtered view (wallets, tokens, time range).
+  const exportTimeline = (fmt: "csv" | "json") => {
+    const filters = {
+      range,
+      rangeLabel: RANGES.find((r) => r.key === range)!.label,
+      from: cutoff || null,
+      to: Date.now(),
+      wallets,
+      tokens,
+    };
+    const body =
+      fmt === "csv"
+        ? buildTimelineCsv(filters, riskPoints, signalPoints)
+        : buildTimelineJson(filters, riskPoints, signalPoints);
+    downloadTimelineExport(body, fmt);
+  };
+
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -264,6 +294,26 @@ export function MitigationImpactTimeline() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1 text-xs"
+                  disabled={!hasData}
+                >
+                  <Download className="h-3 w-3" /> Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("csv")}>
+                  Download CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("json")}>
+                  Download JSON
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {activeFilters > 0 && (
               <Button
                 size="sm"
@@ -277,6 +327,7 @@ export function MitigationImpactTimeline() {
                 <X className="h-3 w-3" /> Clear ({activeFilters})
               </Button>
             )}
+
             <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
               <SelectTrigger className="h-8 w-[140px] text-xs">
                 <SelectValue />
