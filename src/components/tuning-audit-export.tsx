@@ -36,6 +36,7 @@ const FIELDS = [
   "near_miss_after",
   "reverted_at_local",
   "reverted_at_utc",
+  "revert_reason",
 ] as const;
 
 function toRow(e: TuningLogEntry): Record<string, string | number> {
@@ -65,6 +66,7 @@ function toRow(e: TuningLogEntry): Record<string, string | number> {
     near_miss_after: e.nearMissAfter ?? "",
     reverted_at_local: e.revertedAt ? new Date(e.revertedAt).toLocaleString() : "",
     reverted_at_utc: e.revertedAt ? new Date(e.revertedAt).toISOString() : "",
+    revert_reason: e.revertReason ?? "",
   };
 }
 

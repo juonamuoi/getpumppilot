@@ -294,13 +294,13 @@ function ScannerRulesPanel() {
   };
 
   /** One-click rollback of the whole last save (all thresholds it touched). */
-  const rollbackLast = (batch: TuningLogEntry[]) => {
+  const rollbackLast = (batch: TuningLogEntry[], reason?: string) => {
     if (batch.length === 0) return;
     const before = paper.scannerRules;
     const next = rollbackBatch(before, batch);
     setR(next);
     paper.setScannerRules(next);
-    for (const e of batch) paper.markTuningReverted(e.id);
+    for (const e of batch) paper.markTuningReverted(e.id, reason);
     setImpact({ before, after: next, ts: Date.now() });
     const label = batch
       .map((e) => `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`)
@@ -497,9 +497,9 @@ function ScannerRulesPanel() {
             batch={lastBatch}
             open={rollbackOpen}
             onOpenChange={setRollbackOpen}
-            onConfirm={() => {
+            onConfirm={(reason) => {
               setRollbackOpen(false);
-              rollbackLast(lastBatch);
+              rollbackLast(lastBatch, reason);
             }}
           />
 
@@ -1649,9 +1649,13 @@ function RollbackConfirmDialog({
   batch: TuningLogEntry[];
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: (reason: string) => void;
 }) {
   const op = (o: string) => (o === ">=" ? "≥" : "≤");
+  const [reason, setReason] = useState("");
+  useEffect(() => {
+    if (open) setReason("");
+  }, [open]);
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
@@ -1736,9 +1740,26 @@ function RollbackConfirmDialog({
           })}
 
         </div>
+        <div className="space-y-1">
+          <Label className="text-[11px] text-muted-foreground">
+            Reason for rollback (optional)
+          </Label>
+          <Input
+            value={reason}
+            onChange={(ev) => setReason(ev.target.value)}
+            placeholder="e.g. too many false signals on DEMO tokens"
+            maxLength={200}
+            className="h-8 text-[12px]"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Stored with each reverted audit log entry and included in CSV/JSON exports.
+          </p>
+        </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Roll back</AlertDialogAction>
+          <AlertDialogAction onClick={() => onConfirm(reason.trim())}>
+            Roll back
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -1755,7 +1776,7 @@ function TuningHistoryPanel({
   log: TuningLogEntry[];
   onClear: () => void;
   onRevert: (e: TuningLogEntry) => void;
-  onRollbackLast: (batch: TuningLogEntry[]) => void;
+  onRollbackLast: (batch: TuningLogEntry[], reason?: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [rollbackOpen, setRollbackOpen] = useState(false);
@@ -1796,6 +1817,7 @@ function TuningHistoryPanel({
         e.scope ?? "",
         e.mitigation ?? "",
         e.trigger ?? "",
+        e.revertReason ?? "",
 
         `${e.oldValue}${e.unit}`,
         `${e.newValue}${e.unit}`,
@@ -1852,9 +1874,9 @@ function TuningHistoryPanel({
             batch={batch}
             open={rollbackOpen}
             onOpenChange={setRollbackOpen}
-            onConfirm={() => {
+            onConfirm={(reason) => {
               setRollbackOpen(false);
-              onRollbackLast(batch);
+              onRollbackLast(batch, reason);
             }}
           />
 
@@ -2106,6 +2128,9 @@ function TuningHistoryPanel({
                 {e.revertedAt && (
                   <div className="mt-1 text-[10px] text-muted-foreground">
                     Rolled back {format(new Date(e.revertedAt), "MMM d, HH:mm")}
+                    {e.revertReason && (
+                      <span className="text-foreground"> — “{e.revertReason}”</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -4380,11 +4405,11 @@ function ReplayPanel() {
                     `Reverted ${e.ruleLabel} back to ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
                   );
                 }}
-                onRollbackLast={(batch) => {
+                onRollbackLast={(batch, reason) => {
                   if (batch.length === 0) return;
                   const snapshot = scannerRules;
                   setScannerRules(rollbackBatch(scannerRules, batch));
-                  for (const e of batch) markTuningReverted(e.id);
+                  for (const e of batch) markTuningReverted(e.id, reason);
                   toast.success(
                     `Rolled back last change — restored ${batch
                       .map(
