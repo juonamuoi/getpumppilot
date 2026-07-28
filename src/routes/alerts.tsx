@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ import {
   ArrowRight,
   Undo2,
   ShieldAlert,
+  ShieldCheck,
   BellRing,
 } from "lucide-react";
 import {
@@ -2228,6 +2230,7 @@ function RuleTuningPanel({
   result,
   rules,
   onApply,
+  onApplyBulk,
   onLogBoundsChange,
 }: {
   result: ReplayResult;
@@ -2243,6 +2246,18 @@ function RuleTuningPanel({
       recommendedValue?: number;
       fragilePct?: number;
     },
+  ) => void;
+  onApplyBulk: (
+    entries: Array<{
+      key: RuleKey;
+      value: number;
+      preset: string;
+      preview: TuningPreview | null;
+      mitigation: string;
+      trigger: string;
+      recommendedValue?: number;
+      fragilePct?: number;
+    }>,
   ) => void;
   onLogBoundsChange: (e: {
     label: string;
@@ -2260,6 +2275,8 @@ function RuleTuningPanel({
 
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
+  const [selected, setSelected] = useState<RuleKey[]>([]);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [bounds, setBounds] = useState<RiskBounds>(loadBounds);
 
   useEffect(() => {
@@ -2273,6 +2290,16 @@ function RuleTuningPanel({
     [result, rules, fraction],
   );
   const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const safest = useMemo(() => {
+    const out = {} as Record<RuleKey, SaferOption | null>;
+    for (const k of ["momentum", "volume", "volatility", "change"] as RuleKey[]) {
+      out[k] = tuning[k].suggested == null ? null : safestAlternativeFor(result, rules, k, bounds);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, rules, tuning, bounds.enabled, bounds.maxFragilePct, bounds.maxNearMissIncrease]);
+  const selectable = keys.filter((k) => safest[k] != null);
+  const chosen = selected.filter((k) => safest[k] != null);
   const anySuggestion = keys.some((k) => tuning[k].suggested != null);
   const presetHint =
     preset === "conservative"
@@ -2428,6 +2455,39 @@ function RuleTuningPanel({
           constraint on no failed evaluation, so there is nothing to unlock.
         </div>
       ) : (
+        <>
+        {selectable.length > 0 && (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-background/40 p-2">
+            <div className="flex items-center gap-2 text-[11px]">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
+              <span className="font-medium">Bulk safer apply</span>
+              <span className="text-muted-foreground">
+                {chosen.length} of {selectable.length} rules selected
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-[11px]"
+                onClick={() =>
+                  setSelected(chosen.length === selectable.length ? [] : selectable)
+                }
+              >
+                {chosen.length === selectable.length ? "Clear" : "Select all"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[11px]"
+                disabled={chosen.length === 0}
+                onClick={() => setBulkOpen(true)}
+              >
+                Apply safer alternatives ({chosen.length})
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="grid gap-2 sm:grid-cols-2">
           {keys.map((k) => {
             const meta = RULE_META[k];
@@ -2455,7 +2515,19 @@ function RuleTuningPanel({
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className={cn("text-xs font-medium", meta.textClass)}>
+                  <span className={cn("flex items-center gap-2 text-xs font-medium", meta.textClass)}>
+                    {safest[k] && (
+                      <Checkbox
+                        className="h-3.5 w-3.5"
+                        checked={selected.includes(k)}
+                        aria-label={`Select ${meta.short} for bulk safer apply`}
+                        onCheckedChange={(v) =>
+                          setSelected((prev) =>
+                            v ? [...prev.filter((x) => x !== k), k] : prev.filter((x) => x !== k),
+                          )
+                        }
+                      />
+                    )}
                     {meta.short}
                   </span>
                   <Badge
@@ -2574,7 +2646,38 @@ function RuleTuningPanel({
             );
           })}
         </div>
+        </>
       )}
+
+      <BulkSaferApplyDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        keys={chosen}
+        safest={safest}
+        tuning={tuning}
+        preset={preset}
+        onConfirm={() => {
+          onApplyBulk(
+            chosen.map((k) => {
+              const opt = safest[k]!;
+              const t = tuning[k];
+              const fragile = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+              return {
+                key: k,
+                value: opt.value,
+                preset: `${preset} · safest in-bounds (bulk)`,
+                preview: opt.preview,
+                mitigation: "Bulk safer alternative",
+                trigger: `Recommendation ${RULE_META[k].short} ${RULE_META[k].op} ${t.suggested}${RULE_META[k].unit} carried ${fragile.toFixed(0)}% fragility; applied safest in-bounds value at ${opt.fragilePct.toFixed(0)}%`,
+                recommendedValue: t.suggested ?? undefined,
+                fragilePct: opt.fragilePct,
+              };
+            }),
+          );
+          setSelected([]);
+          setBulkOpen(false);
+        }}
+      />
 
       <TuningConfirmDialog
         open={pending !== null}
@@ -2631,6 +2734,111 @@ function RuleTuningPanel({
   );
 }
 
+/** Review-then-apply dialog for applying safest in-bounds alternatives to several rules at once. */
+function BulkSaferApplyDialog({
+  open,
+  onOpenChange,
+  keys,
+  safest,
+  tuning,
+  preset,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  keys: RuleKey[];
+  safest: Record<RuleKey, SaferOption | null>;
+  tuning: Record<RuleKey, ReturnType<typeof computeTuning>[RuleKey]>;
+  preset: string;
+  onConfirm: () => void;
+}) {
+  const rows = keys
+    .map((k) => ({ k, opt: safest[k], t: tuning[k] }))
+    .filter((r) => r.opt) as Array<{ k: RuleKey; opt: SaferOption; t: (typeof tuning)[RuleKey] }>;
+  const matchesBefore = rows.reduce((a, r) => a + (r.opt.preview?.matchesBefore ?? 0), 0);
+  const matchesAfter = rows.reduce((a, r) => a + (r.opt.preview?.matchesAfter ?? 0), 0);
+  const nmBefore = rows.reduce((a, r) => a + (r.opt.preview?.nearMissAnyBefore ?? 0), 0);
+  const nmAfter = rows.reduce((a, r) => a + (r.opt.preview?.nearMissAnyAfter ?? 0), 0);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-sm">
+            <ShieldCheck className="h-4 w-4 text-emerald-300" />
+            Apply safer alternatives to {rows.length} rule{rows.length === 1 ? "" : "s"}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            Each rule gets its safest in-bounds value (lowest fragility) instead of the{" "}
+            {preset} recommendation. Every change is logged to the tuning audit trail. Demo data —
+            more matches never means more profit.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+          {rows.map(({ k, opt, t }) => {
+            const meta = RULE_META[k];
+            const recFragile = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+            return (
+              <div key={k} className="rounded-md border border-border/60 bg-muted/10 p-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className={cn("font-medium", meta.textClass)}>{meta.short}</span>
+                  <span className="font-mono text-muted-foreground">
+                    {t.current}
+                    {meta.unit} → {opt.value}
+                    {meta.unit}
+                  </span>
+                </div>
+                <div className="mt-1 grid grid-cols-3 gap-1 text-[10px]">
+                  <PreviewStat
+                    label="Matches"
+                    before={opt.preview?.matchesBefore ?? 0}
+                    after={opt.preview?.matchesAfter ?? 0}
+                    goodUp
+                  />
+                  <PreviewStat
+                    label="Near-miss"
+                    before={opt.preview?.nearMissAnyBefore ?? 0}
+                    after={opt.preview?.nearMissAnyAfter ?? 0}
+                  />
+                  <div>
+                    <div className="text-muted-foreground">Fragility</div>
+                    <div className="text-emerald-300">
+                      {recFragile.toFixed(0)}% → {opt.fragilePct.toFixed(0)}%
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-1 text-[10px] text-muted-foreground">
+                  Replaces recommendation {meta.short} {meta.op} {t.suggested}
+                  {meta.unit}.
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="rounded-md border border-border/60 bg-background/40 p-2 text-[11px]">
+          <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            Combined preview
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <PreviewStat label="Matches" before={matchesBefore} after={matchesAfter} goodUp />
+            <PreviewStat label="Near-miss (any)" before={nmBefore} after={nmAfter} />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button size="sm" disabled={rows.length === 0} onClick={onConfirm}>
+            Apply all {rows.length}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** A safer variant of the current recommendation, produced by sweeping smaller loosening fractions. */
 type SaferOption = {
   id: string;
@@ -2642,6 +2850,49 @@ type SaferOption = {
   fragilePct: number;
   inBounds: boolean;
 };
+
+/**
+ * Safest in-bounds alternative for a single rule: sweeps loosening fractions and
+ * keeps the option with the lowest fragility (ties broken by more matches).
+ */
+function safestAlternativeFor(
+  result: ReplayResult,
+  rules: ScannerRules,
+  ruleKey: RuleKey,
+  bounds: RiskBounds,
+): SaferOption | null {
+  const meta = RULE_META[ruleKey];
+  const seen = new Set<number>();
+  let best: SaferOption | null = null;
+  for (let i = 1; i <= 19; i++) {
+    const f = i / 20;
+    const t = computeTuning(result, rules, f)[ruleKey];
+    if (t.suggested == null || !t.preview) continue;
+    if (seen.has(t.suggested)) continue;
+    seen.add(t.suggested);
+    if (checkBounds(t, bounds).length > 0) continue;
+    const fragilePct = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+    const opt: SaferOption = {
+      id: `f${i}`,
+      title: `${meta.short} ${meta.op} ${t.suggested}${meta.unit}`,
+      detail: `${t.preview.matchesAfter} matches · ${t.preview.nearMissAnyAfter} near-miss · ${fragilePct.toFixed(0)}% fragile`,
+      value: t.suggested,
+      fraction: f,
+      preview: t.preview,
+      fragilePct,
+      inBounds: true,
+    };
+    if (
+      !best ||
+      opt.fragilePct < best.fragilePct - 0.001 ||
+      (Math.abs(opt.fragilePct - best.fragilePct) <= 0.001 &&
+        (opt.preview?.matchesAfter ?? 0) > (best.preview?.matchesAfter ?? 0))
+    ) {
+      best = opt;
+    }
+  }
+  return best;
+}
 
 function useSaferAlternatives(
   result: ReplayResult,
@@ -3757,6 +4008,58 @@ function ReplayPanel() {
                     meta.mitigation
                       ? { description: `Mitigation logged: ${meta.mitigation}` }
                       : undefined,
+                  );
+                }}
+                onApplyBulk={(entries) => {
+                  if (entries.length === 0) return;
+                  const next: ScannerRules = { ...scannerRules };
+                  const olds: Record<string, number> = {};
+                  for (const e of entries) {
+                    const k = e.key;
+                    olds[k] =
+                      k === "momentum"
+                        ? scannerRules.minMomentum
+                        : k === "volume"
+                          ? scannerRules.minVolumeScore
+                          : k === "volatility"
+                            ? scannerRules.maxVolatility
+                            : scannerRules.min24hChangePct;
+                    if (k === "momentum") next.minMomentum = e.value;
+                    else if (k === "volume") next.minVolumeScore = e.value;
+                    else if (k === "volatility") next.maxVolatility = e.value;
+                    else next.min24hChangePct = e.value;
+                  }
+                  setScannerRules(next);
+                  for (const e of entries) {
+                    logTuning({
+                      source: "mitigation",
+                      kind: "rule",
+                      rule: e.key,
+                      ruleLabel: RULE_META[e.key].short,
+                      operator: RULE_META[e.key].op,
+                      unit: RULE_META[e.key].unit,
+                      oldValue: olds[e.key],
+                      newValue: e.value,
+                      preset: e.preset,
+                      scope: scopeOf(next),
+                      mitigation: e.mitigation,
+                      trigger: e.trigger,
+                      recommendedValue: e.recommendedValue,
+                      fragilePct: e.fragilePct,
+                      window: result.window,
+                      matchesBefore: e.preview?.matchesBefore,
+                      matchesAfter: e.preview?.matchesAfter,
+                      nearMissBefore: e.preview?.nearMissAnyBefore,
+                      nearMissAfter: e.preview?.nearMissAnyAfter,
+                    });
+                  }
+                  toast.success(
+                    `Applied safer alternatives to ${entries.length} rule${entries.length === 1 ? "" : "s"}`,
+                    {
+                      description: `${entries
+                        .map((e) => `${RULE_META[e.key].short} ${RULE_META[e.key].op} ${e.value}${RULE_META[e.key].unit}`)
+                        .join(" · ")} — logged to the audit trail.`,
+                    },
                   );
                 }}
                 onLogBoundsChange={(e) => {
