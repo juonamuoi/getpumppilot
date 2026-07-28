@@ -126,6 +126,26 @@ export function getWalletMonitor(): WalletMonitorSettings {
   return monitor;
 }
 
+/** Effective scan interval for a wallet: its override, else the default. */
+export function getWalletInterval(address: string | null | undefined): number {
+  if (!address) return monitor.intervalMinutes;
+  const custom = monitor.walletIntervals[address.toLowerCase()];
+  return custom ? clampInterval(custom) : monitor.intervalMinutes;
+}
+
+export function hasWalletIntervalOverride(address: string | null | undefined) {
+  return !!address && monitor.walletIntervals[address.toLowerCase()] !== undefined;
+}
+
+/** Set (or with null, clear) a per-wallet custom interval. */
+export function setWalletInterval(address: string, minutes: number | null) {
+  const key = address.toLowerCase();
+  const next = { ...monitor.walletIntervals };
+  if (minutes === null) delete next[key];
+  else next[key] = clampInterval(minutes);
+  setWalletMonitor({ walletIntervals: next });
+}
+
 export function useWalletMonitor(): WalletMonitorSettings {
   return useSyncExternalStore(
     (cb) => {
