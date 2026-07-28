@@ -564,7 +564,9 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
                     </Badge>
                   )}
                   <div className="ml-auto flex items-center gap-2">
+                    <MitigationDiffView entry={e} />
                     <Button
+
                       size="sm"
                       variant="outline"
                       className="h-6 px-2 text-[10px]"
