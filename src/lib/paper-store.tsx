@@ -153,7 +153,10 @@ type State = {
   setScannerRules: (r: ScannerRules) => void;
   logTuning: (e: Omit<TuningLogEntry, "id" | "ts">) => string;
   markTuningReverted: (id: string, reason?: string) => void;
+  /** Evaluate alert outcome for a mitigation and attach it to every entry sharing the correlation id. */
+  recordMitigationOutcome: (correlationId: string, rules?: ScannerRules) => MitigationOutcome;
   clearTuningLog: () => void;
+
   simulateScannerRun: () => number; // returns count of new deliveries
   clearDeliveries: () => void;
   setRisk: (r: State["risk"]) => void;
