@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Check, Sparkles, ArrowLeft, ExternalLink } from "lucide-react";
+import { Check, Sparkles, ArrowLeft, Zap, History } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { StripeEmbeddedCheckout } from "@/components/stripe-embedded-checkout";
 import { useAuth } from "@/lib/auth-store";
-import { useSubscription } from "@/hooks/useSubscription";
-import { createPortalSession } from "@/utils/payments.functions";
-import { getStripeEnvironment } from "@/lib/stripe";
+import { useCredits } from "@/hooks/useCredits";
+import { CREDIT_COSTS, CREDIT_LABELS, CREDIT_PACKS, costPerDollar, packByPriceId } from "@/lib/credits";
 import { toast } from "sonner";
 
 type SearchParams = { checkout?: string; session_id?: string; plan?: string };
@@ -18,10 +17,14 @@ type SearchParams = { checkout?: string; session_id?: string; plan?: string };
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing — PumpPilot AI" },
-      { name: "description", content: "Choose the plan that fits your trading. Free forever paper trading, Pro unlocks the AI toolkit, Quant adds live data and API access." },
-      { property: "og:title", content: "PumpPilot AI Pricing" },
-      { property: "og:description", content: "Free, Pro, and Quant plans for smarter momentum trading." },
+      { title: "Credits & Pricing — PumpPilot AI" },
+      {
+        name: "description",
+        content:
+          "No subscription. Recharge PumpPilot AI with credits and pay only for the predictions, backtests and bot executions you run. Credits never expire.",
+      },
+      { property: "og:title", content: "PumpPilot AI Credits — pay as you trade" },
+      { property: "og:description", content: "Top up credits, run AI momentum predictions, stop paying when you stop trading." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -34,124 +37,56 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-type PlanKey = "pumppilot_pro_monthly" | "pumppilot_pro_yearly" | "pumppilot_quant_monthly" | "pumppilot_quant_yearly";
-
-const TIERS = [
-  {
-    name: "Free",
-    tag: "For learning",
-    priceMonthly: "$0",
-    priceYearly: "$0",
-    priceIdMonthly: null,
-    priceIdYearly: null,
-    features: [
-      "Dashboard & scanner",
-      "3 alert rules",
-      "Paper trading",
-      "Community & leaderboards",
-      "Security Center",
-    ],
-    cta: "Current plan",
-    highlight: false,
-  },
-  {
-    name: "Pro",
-    tag: "Most popular",
-    priceMonthly: "$19",
-    priceYearly: "$190",
-    priceIdMonthly: "pumppilot_pro_monthly" as PlanKey,
-    priceIdYearly: "pumppilot_pro_yearly" as PlanKey,
-    features: [
-      "Everything in Free",
-      "AI Copilot (Gemini 2.5)",
-      "Portfolio Doctor",
-      "Trade Journal & analytics",
-      "Unlimited alerts",
-      "Full backtesting engine",
-    ],
-    cta: "Upgrade to Pro",
-    highlight: true,
-  },
-  {
-    name: "Quant",
-    tag: "Advanced",
-    priceMonthly: "$99",
-    priceYearly: "$990",
-    priceIdMonthly: "pumppilot_quant_monthly" as PlanKey,
-    priceIdYearly: "pumppilot_quant_yearly" as PlanKey,
-    features: [
-      "Everything in Pro",
-      "Live market data feeds",
-      "Priority scanner",
-      "Strategy marketplace revenue share",
-      "API access to momentum scores",
-      "Early access to new signals",
-    ],
-    cta: "Go Quant",
-    highlight: false,
-  },
-];
+const USAGE_ROWS = (Object.keys(CREDIT_COSTS) as (keyof typeof CREDIT_COSTS)[]).map((k) => ({
+  label: CREDIT_LABELS[k],
+  cost: CREDIT_COSTS[k],
+}));
 
 function PricingPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/pricing" });
   const { user } = useAuth();
-  const { tier, subscription, isActive, refetch } = useSubscription();
-  const [interval, setInterval] = useState<"monthly" | "yearly">("monthly");
+  const { balance, row, ledger, refetch } = useCredits();
   const [checkoutPrice, setCheckoutPrice] = useState<string | null>(null);
-  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     if (search.checkout === "success") {
-      toast.success("Welcome aboard — your plan is activating.");
-      // subscription webhook can take a couple seconds; poll a few times
+      toast.success("Payment received — credits are landing in your account.");
       let tries = 0;
       const iv = window.setInterval(() => {
         refetch();
         tries++;
-        if (tries >= 6) window.clearInterval(iv);
+        if (tries >= 8) window.clearInterval(iv);
       }, 1500);
-      // strip params
       navigate({ to: "/pricing", search: {}, replace: true });
       return () => window.clearInterval(iv);
     }
   }, [search.checkout, navigate, refetch]);
 
-  const startCheckout = (priceId: string | null) => {
-    if (!priceId) return;
+  const startCheckout = (priceId: string) => {
     if (!user) {
-      toast.info("Sign in to subscribe.");
+      toast.info("Sign in to buy credits.");
       navigate({ to: "/auth" });
       return;
     }
     setCheckoutPrice(priceId);
   };
 
-  const openPortal = async () => {
-    setPortalLoading(true);
-    try {
-      const result = await createPortalSession({
-        data: { returnUrl: `${window.location.origin}/pricing`, environment: getStripeEnvironment() },
-      });
-      if ("error" in result) throw new Error(result.error);
-      window.open(result.url, "_blank");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to open billing portal");
-    } finally {
-      setPortalLoading(false);
-    }
-  };
-
-  const currentPriceId = subscription?.price_id;
-
   if (checkoutPrice) {
+    const pack = packByPriceId(checkoutPrice);
     return (
       <AppShell>
         <PaymentTestModeBanner />
         <div className="mx-auto max-w-3xl py-6">
           <Button variant="ghost" size="sm" onClick={() => setCheckoutPrice(null)} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to plans
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to credit packs
           </Button>
+          {pack && (
+            <p className="mb-3 text-sm text-muted-foreground">
+              Buying <span className="text-foreground font-medium">{pack.credits.toLocaleString()} credits</span> ({pack.name} pack).
+              Pick a quantity in checkout to buy multiple packs at once.
+            </p>
+          )}
           <Card className="p-2 md:p-4">
             <StripeEmbeddedCheckout priceId={checkoutPrice} />
           </Card>
@@ -163,90 +98,144 @@ function PricingPage() {
   return (
     <AppShell>
       <PaymentTestModeBanner />
-      <div className="mx-auto max-w-6xl py-6 space-y-8">
-        <div className="text-center space-y-3">
+      <div className="mx-auto max-w-6xl space-y-8 py-6">
+        <div className="space-y-3 text-center">
           <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
-            <Sparkles className="mr-1 h-3 w-3" /> Simple pricing
+            <Sparkles className="mr-1 h-3 w-3" /> No subscription — pay as you trade
           </Badge>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Trade smarter, on your terms</h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Start free with paper trading. Upgrade any time — you keep access until the end of your billing period if you cancel.
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Recharge with credits</h1>
+          <p className="mx-auto max-w-xl text-muted-foreground">
+            Every AI prediction, backtest and bot execution burns credits. When your balance hits zero the bot stops
+            predicting and stops executing — nothing is charged in the background. Credits never expire.
           </p>
-          {isActive && (
+          {user && (
             <div className="pt-2">
-              <Badge className="bg-emerald-500/10 text-emerald-300 border-emerald-500/30 border">
-                You're on {tier.toUpperCase()} ({subscription?.cancel_at_period_end ? "canceling at period end" : subscription?.status})
+              <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+                <Zap className="mr-1 h-3 w-3" /> Balance: {balance.toLocaleString()} credits
               </Badge>
-              <div className="mt-3">
-                <Button variant="outline" size="sm" onClick={openPortal} disabled={portalLoading}>
-                  {portalLoading ? "Opening…" : "Manage billing"} <ExternalLink className="ml-2 h-3.5 w-3.5" />
-                </Button>
-              </div>
+              {row && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {row.lifetime_purchased.toLocaleString()} purchased · {row.lifetime_spent.toLocaleString()} spent
+                </p>
+              )}
+              {balance <= 0 && (
+                <p className="mt-2 text-xs text-red-300">Bot paused — top up below to resume predictions and execution.</p>
+              )}
             </div>
           )}
-          <div className="inline-flex rounded-full border border-border/60 bg-muted/20 p-1 text-xs">
-            <button
-              onClick={() => setInterval("monthly")}
-              className={`rounded-full px-4 py-1.5 transition ${interval === "monthly" ? "bg-emerald-500/20 text-emerald-200" : "text-muted-foreground"}`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setInterval("yearly")}
-              className={`rounded-full px-4 py-1.5 transition ${interval === "yearly" ? "bg-emerald-500/20 text-emerald-200" : "text-muted-foreground"}`}
-            >
-              Yearly <span className="ml-1 text-emerald-400">save 17%</span>
-            </button>
-          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {TIERS.map((t) => {
-            const priceId = interval === "monthly" ? t.priceIdMonthly : t.priceIdYearly;
-            const price = interval === "monthly" ? t.priceMonthly : t.priceYearly;
-            const isCurrent = priceId ? currentPriceId === priceId : (tier === "free" && !isActive);
-            return (
-              <Card
-                key={t.name}
-                className={`p-6 flex flex-col ${t.highlight ? "border-emerald-500/50 ring-1 ring-emerald-500/30" : ""}`}
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {CREDIT_PACKS.map((p) => (
+            <Card
+              key={p.priceId}
+              className={`flex flex-col p-6 ${p.highlight ? "border-emerald-500/50 ring-1 ring-emerald-500/30" : ""}`}
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">{p.name}</h2>
+                {p.tag && (
+                  <Badge className="border border-emerald-500/30 bg-emerald-500/20 text-emerald-300">{p.tag}</Badge>
+                )}
+              </div>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold">{p.priceLabel}</span>
+                <span className="text-sm text-muted-foreground">one-time</span>
+              </div>
+              <p className="mt-2 text-sm text-emerald-300">{p.credits.toLocaleString()} credits</p>
+              <p className="text-xs text-muted-foreground">≈ {costPerDollar(p)} credits per $1</p>
+              <ul className="mt-5 flex-1 space-y-2 text-sm">
+                <li className="flex gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                  <span>{Math.floor(p.credits / CREDIT_COSTS.momentum_prediction).toLocaleString()} momentum predictions</span>
+                </li>
+                <li className="flex gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                  <span>{Math.floor(p.credits / CREDIT_COSTS.backtest_run).toLocaleString()} backtests</span>
+                </li>
+                <li className="flex gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                  <span>{Math.floor(p.credits / CREDIT_COSTS.doctor_audit).toLocaleString()} Portfolio Doctor audits</span>
+                </li>
+                <li className="flex gap-2">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                  <span>Credits never expire · no recurring charge</span>
+                </li>
+              </ul>
+              <Button
+                className="mt-6 w-full"
+                variant={p.highlight ? "default" : "outline"}
+                onClick={() => startCheckout(p.priceId)}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">{t.name}</h3>
-                  {t.highlight && <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 border">{t.tag}</Badge>}
-                </div>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{price}</span>
-                  <span className="text-muted-foreground text-sm">/{interval === "monthly" ? "mo" : "yr"}</span>
-                </div>
-                <ul className="mt-6 space-y-2 text-sm flex-1">
-                  {t.features.map((f) => (
-                    <li key={f} className="flex gap-2">
-                      <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" /> <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6">
-                  {isCurrent ? (
-                    <Button variant="outline" className="w-full" disabled>Current plan</Button>
-                  ) : priceId ? (
-                    <Button className="w-full" variant={t.highlight ? "default" : "outline"} onClick={() => startCheckout(priceId)}>
-                      {t.cta}
-                    </Button>
-                  ) : (
-                    <Button variant="outline" className="w-full" disabled>Free forever</Button>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
+                <Zap className="mr-2 h-4 w-4" /> Buy {p.credits.toLocaleString()} credits
+              </Button>
+            </Card>
+          ))}
         </div>
 
-        <Card className="p-5 text-xs text-muted-foreground space-y-2 max-w-3xl mx-auto">
-          <p><strong className="text-foreground">Cancel anytime.</strong> If you cancel, you keep full access until the end of the current billing period. No refunds for partial periods.</p>
-          <p><strong className="text-foreground">Upgrades</strong> apply immediately and are prorated. <strong className="text-foreground">Downgrades</strong> take effect at the next renewal.</p>
-          <p>PumpPilot AI is an educational trading sandbox. Live execution is locked. Predictions are probabilistic — you can lose all capital. Nothing here is financial advice.</p>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold">What each action costs</h3>
+            <div className="mt-3 divide-y divide-border/50 text-sm">
+              {USAGE_ROWS.map((r) => (
+                <div key={r.label} className="flex items-center justify-between py-2">
+                  <span className="text-muted-foreground">{r.label}</span>
+                  <span className="font-medium">{r.cost} credit{r.cost === 1 ? "" : "s"}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Free actions: dashboard, watchlists, alerts history, Security Center, learn hub.
+            </p>
+          </Card>
+
+          <Card className="p-5">
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <History className="h-4 w-4" /> Recent credit activity
+            </h3>
+            {!user ? (
+              <p className="mt-3 text-sm text-muted-foreground">Sign in to see your credit history.</p>
+            ) : ledger.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">No credit activity yet.</p>
+            ) : (
+              <div className="mt-3 max-h-72 divide-y divide-border/50 overflow-y-auto text-sm">
+                {ledger.map((l) => (
+                  <div key={l.id} className="flex items-center justify-between gap-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate">{l.description ?? l.kind}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {new Date(l.created_at).toLocaleString()} · balance {l.balance_after.toLocaleString()}
+                      </p>
+                    </div>
+                    <span className={l.delta >= 0 ? "text-emerald-300" : "text-muted-foreground"}>
+                      {l.delta >= 0 ? "+" : ""}
+                      {l.delta}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <Card className="mx-auto max-w-3xl space-y-2 p-5 text-xs text-muted-foreground">
+          <p>
+            <strong className="text-foreground">No subscription, no auto-renewal.</strong> Credits are a one-time purchase and
+            never expire. Nothing is billed unless you buy another pack.
+          </p>
+          <p>
+            <strong className="text-foreground">Out of credits?</strong> The bot immediately stops generating predictions and
+            stops executing orders. Your data, alerts and history remain accessible.
+          </p>
+          <p>
+            PumpPilot AI is an educational trading sandbox. Live execution is locked. Predictions are probabilistic — you can
+            lose all capital. Nothing here is financial advice. Credit purchases are non-refundable once credits are spent.
+          </p>
           <p className="pt-1">
-            Admin: run a <Button variant="link" className="h-auto p-0 text-xs" onClick={() => navigate({ to: "/go-live-test" })}>guided go-live payment test</Button> to verify checkout and statement descriptor.
+            Admin: run a{" "}
+            <Button variant="link" className="h-auto p-0 text-xs" onClick={() => navigate({ to: "/go-live-test" })}>
+              guided go-live payment test
+            </Button>{" "}
+            to verify checkout and statement descriptor.
           </p>
         </Card>
       </div>

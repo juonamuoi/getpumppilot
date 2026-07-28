@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PaywallGate } from "@/components/paywall-gate";
+import { CreditGate } from "@/components/credit-gate";
+import { useCredits } from "@/hooks/useCredits";
+import { CREDIT_COSTS } from "@/lib/credits";
+import { toast } from "sonner";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -97,10 +100,25 @@ function BacktestPage() {
   const [period, setPeriod] = useState("6");
   const [threshold, setThreshold] = useState([70]);
   const [result, setResult] = useState<Result | null>(null);
+  const { spend, balance } = useCredits();
+  const [running, setRunning] = useState(false);
 
-  const run = () => {
+  const run = async () => {
+    if (running) return;
+    setRunning(true);
+    const charge = await spend("backtest_run", { description: `Backtest — ${strategy}` });
+    setRunning(false);
+    if (!charge.ok) {
+      toast.error(
+        charge.reason === "insufficient_credits"
+          ? `Out of credits — backtests are paused. Needs ${CREDIT_COSTS.backtest_run}, you have ${charge.balance}.`
+          : "Could not charge credits. Try again.",
+      );
+      return;
+    }
     const seed = strategy === "breakout" ? 3 : strategy === "trend" ? 7 : 11;
     setResult(runBacktest(seed, threshold[0], parseInt(period)));
+    toast.success(`Backtest complete — ${CREDIT_COSTS.backtest_run} credits used, ${charge.balance} left.`);
   };
 
   return (
@@ -263,8 +281,8 @@ function Metric({
 
 function GatedBacktestPage() {
   return (
-    <PaywallGate required="pro" featureName="Backtest">
+    <CreditGate feature="backtest_run" featureName="Backtesting">
       <BacktestPage />
-    </PaywallGate>
+    </CreditGate>
   );
 }

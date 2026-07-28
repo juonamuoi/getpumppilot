@@ -29,6 +29,7 @@ import { WalletConnect } from "./wallet-connect";
 import { CommandPalette } from "./command-palette";
 import { OnboardingDialog } from "./onboarding-dialog";
 import { AICopilot } from "./ai-copilot";
+import { CreditBadge, CreditMeter } from "./credit-badge";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -46,7 +47,7 @@ const nav = [
   { to: "/security", label: "Security", icon: ShieldAlert },
   { to: "/learn", label: "Learn", icon: BookOpen },
   { to: "/refer", label: "Invite & earn", icon: Gift },
-  { to: "/pricing", label: "Pricing", icon: Zap },
+  { to: "/pricing", label: "Credits & Pricing", icon: Zap },
   { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
@@ -140,6 +141,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="flex-1 text-left">Quick jump</span>
             <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
           </button>
+          <CreditMeter />
           <LiveLockedCard />
         </div>
       </aside>
@@ -148,6 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border/60 bg-background/80 px-4 py-3 backdrop-blur lg:hidden">
         <Brand />
         <div className="flex items-center gap-2">
+          <CreditBadge />
           <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
             Paper
           </Badge>
@@ -168,7 +171,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <div className="mt-4 px-3">
                 <NavList onNavigate={() => setOpen(false)} />
               </div>
-              <div className="p-3">
+              <div className="space-y-2 p-3">
+                <CreditMeter />
                 <LiveLockedCard />
               </div>
             </SheetContent>

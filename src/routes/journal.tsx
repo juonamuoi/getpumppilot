@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PaywallGate } from "@/components/paywall-gate";
+import { CreditGate } from "@/components/credit-gate";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -310,8 +310,8 @@ function JournalPage() {
 
 function GatedJournalPage() {
   return (
-    <PaywallGate required="pro" featureName="Journal">
+    <CreditGate feature="journal_insight" featureName="Trade Journal">
       <JournalPage />
-    </PaywallGate>
+    </CreditGate>
   );
 }

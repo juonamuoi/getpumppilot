@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PaywallGate } from "@/components/paywall-gate";
+import { CreditGate } from "@/components/credit-gate";
+import { useCredits } from "@/hooks/useCredits";
+import { CREDIT_COSTS } from "@/lib/credits";
+import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +42,7 @@ function CopilotPage() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const { spend } = useCredits();
 
   function buildCtx() {
     const lines = positions.map((p) => {
@@ -56,9 +60,19 @@ function CopilotPage() {
   async function send(text?: string) {
     const q = (text ?? input).trim();
     if (!q || busy) return;
+    setBusy(true);
+    const charge = await spend("copilot_message", { description: "Copilot answer" });
+    if (!charge.ok) {
+      setBusy(false);
+      toast.error(
+        charge.reason === "insufficient_credits"
+          ? `Out of credits — the Copilot is paused. Needs ${CREDIT_COSTS.copilot_message}, you have ${charge.balance}.`
+          : "Could not charge credits. Try again.",
+      );
+      return;
+    }
     setInput("");
     setMsgs((m) => [...m, { role: "user", content: q }]);
-    setBusy(true);
     try {
       const res = await askCopilot({ data: { prompt: `${buildCtx()}\n\nUser: ${q}` } });
       const reply = res.ok ? res.content : `⚠️ ${res.error}`;
@@ -166,8 +180,8 @@ function CopilotPage() {
 
 function GatedCopilotPage() {
   return (
-    <PaywallGate required="pro" featureName="Copilot">
+    <CreditGate feature="copilot_message" featureName="AI Copilot">
       <CopilotPage />
-    </PaywallGate>
+    </CreditGate>
   );
 }
