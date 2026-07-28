@@ -2754,7 +2754,11 @@ function MitigationChecklist({
     };
   };
 
+  /** Risk deltas that triggered the pending recommendation — recorded on every mitigation. */
+  const triggerText = `Recommendation ${meta.op} ${suggested}${meta.unit}: near-miss ${tuning.preview?.nearMissAnyBefore ?? 0} → ${tuning.preview?.nearMissAnyAfter ?? 0} (${nearMissDelta >= 0 ? "+" : ""}${nearMissDelta}), signals ${tuning.preview?.matchesBefore ?? 0} → ${tuning.preview?.matchesAfter ?? 0}, fragility ${fragilePct.toFixed(0)}% (${tuning.fragile}/${tuning.unlocked}), avg other-rule slack ${tuning.avgOtherMinSlack.toFixed(1)}`;
+
   const items: Item[] = [];
+
 
   items.push({
     key: "tighten",
