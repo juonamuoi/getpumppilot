@@ -1149,7 +1149,7 @@ function WalletRescanCard() {
   const monitor = useWalletMonitor();
   const walletInterval = getWalletInterval(address);
   const [open, setOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
 
   if (!wallet) {
@@ -1227,24 +1227,10 @@ function WalletRescanCard() {
                 variant="outline"
                 size="sm"
                 className="gap-2"
-                disabled={exporting}
-                onClick={async () => {
-                  setExporting(true);
-                  try {
-                    const { exportWalletReportPdf } = await import("@/lib/wallet-report-pdf");
-                    const file = await exportWalletReportPdf(scan);
-                    toast.success("Threat report exported", {
-                      description: `${file} · correlation ID ${scan.correlationId}`,
-                    });
-                  } catch {
-                    toast.error("Could not generate the PDF report");
-                  } finally {
-                    setExporting(false);
-                  }
-                }}
+                onClick={() => setPreviewOpen(true)}
               >
                 <FileDown className="h-4 w-4" />
-                {exporting ? "Building PDF…" : "Export PDF"}
+                Preview & export PDF
               </Button>
             </>
           )}
