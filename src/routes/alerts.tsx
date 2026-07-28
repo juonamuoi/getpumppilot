@@ -2229,12 +2229,16 @@ function FrontierChart({
 function RuleTuningPanel({
   result,
   rules,
+  mitigationUndo,
+  onUndoMitigation,
   onApply,
   onApplyBulk,
   onLogBoundsChange,
 }: {
   result: ReplayResult;
   rules: ScannerRules;
+  mitigationUndo: { label: string; detail: string; ts: number } | null;
+  onUndoMitigation: () => void;
   onApply: (
     k: RuleKey,
     value: number,
@@ -2446,6 +2450,24 @@ function RuleTuningPanel({
         </div>
 
       </div>
+
+      {mitigationUndo && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-400/40 bg-amber-400/10 p-2">
+          <div className="min-w-0 text-[11px]">
+            <div className="flex items-center gap-1.5 font-medium text-amber-200">
+              <Undo2 className="h-3.5 w-3.5" />
+              Mitigation applied: {mitigationUndo.label}
+            </div>
+            <div className="truncate text-[10px] text-muted-foreground">
+              Undo restores {mitigationUndo.detail} ({format(new Date(mitigationUndo.ts), "HH:mm:ss")})
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={onUndoMitigation}>
+            <Undo2 className="mr-1 h-3 w-3" />
+            Undo mitigation
+          </Button>
+        </div>
+      )}
 
       <FrontierChart result={result} rules={rules} preset={preset} bounds={bounds} />
 
@@ -3569,6 +3591,37 @@ function ReplayPanel() {
   const [openBucket, setOpenBucket] = useState<number | null>(null);
 
   const [auto, setAuto] = useState<AutoConfig>(loadAuto);
+  /** Snapshot taken right before a mitigation apply, so it can be undone in one tap. */
+  const [mitigationUndo, setMitigationUndo] = useState<{
+    ts: number;
+    before: ScannerRules;
+    ids: string[];
+    label: string;
+    detail: string;
+  } | null>(null);
+  const undoMitigation = () => {
+    if (!mitigationUndo) return;
+    setScannerRules(mitigationUndo.before);
+    for (const id of mitigationUndo.ids) markTuningReverted(id);
+    logTuning({
+      source: "mitigation",
+      kind: "rule",
+      rule: "undo",
+      ruleLabel: "Undo mitigation",
+      operator: ">=",
+      unit: "",
+      oldValue: 0,
+      newValue: 0,
+      preset: "undo",
+      scope: scopeOf(mitigationUndo.before),
+      mitigation: `Undo: ${mitigationUndo.label}`,
+      trigger: `Restored original parameters — ${mitigationUndo.detail}`,
+    });
+    toast.success("Mitigation undone — original parameters restored", {
+      description: mitigationUndo.detail,
+    });
+    setMitigationUndo(null);
+  };
   const lastAutoRef = useRef<number | null>(null);
   const runRef = useRef<() => void>(() => {});
 
@@ -3966,6 +4019,12 @@ function ReplayPanel() {
               <RuleTuningPanel
                 result={result}
                 rules={scannerRules}
+                mitigationUndo={
+                  mitigationUndo
+                    ? { label: mitigationUndo.label, detail: mitigationUndo.detail, ts: mitigationUndo.ts }
+                    : null
+                }
+                onUndoMitigation={undoMitigation}
                 onApply={(k, value, meta) => {
                   const next: ScannerRules = { ...scannerRules };
                   const current =
@@ -3981,7 +4040,7 @@ function ReplayPanel() {
                   else if (k === "volatility") next.maxVolatility = value;
                   else next.min24hChangePct = value;
                   setScannerRules(next);
-                  logTuning({
+                  const id = logTuning({
                     source: meta.mitigation ? "mitigation" : "recommendation",
                     kind: "rule",
                     rule: k,
@@ -4003,6 +4062,16 @@ function ReplayPanel() {
                     nearMissBefore: meta.preview?.nearMissAnyBefore,
                     nearMissAfter: meta.preview?.nearMissAnyAfter,
                   });
+                  if (meta.mitigation) {
+                    const detail = `${RULE_META[k].short} back to ${current}${RULE_META[k].unit}`;
+                    setMitigationUndo({
+                      ts: Date.now(),
+                      before: scannerRules,
+                      ids: [id],
+                      label: meta.mitigation,
+                      detail,
+                    });
+                  }
                   toast.success(
                     `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
                     meta.mitigation
@@ -4030,8 +4099,9 @@ function ReplayPanel() {
                     else next.min24hChangePct = e.value;
                   }
                   setScannerRules(next);
+                  const ids: string[] = [];
                   for (const e of entries) {
-                    logTuning({
+                    ids.push(logTuning({
                       source: "mitigation",
                       kind: "rule",
                       rule: e.key,
@@ -4051,8 +4121,17 @@ function ReplayPanel() {
                       matchesAfter: e.preview?.matchesAfter,
                       nearMissBefore: e.preview?.nearMissAnyBefore,
                       nearMissAfter: e.preview?.nearMissAnyAfter,
-                    });
+                    }));
                   }
+                  setMitigationUndo({
+                    ts: Date.now(),
+                    before: scannerRules,
+                    ids,
+                    label: `Bulk safer alternatives (${entries.length} rules)`,
+                    detail: entries
+                      .map((e) => `${RULE_META[e.key].short} back to ${olds[e.key]}${RULE_META[e.key].unit}`)
+                      .join(" · "),
+                  });
                   toast.success(
                     `Applied safer alternatives to ${entries.length} rule${entries.length === 1 ? "" : "s"}`,
                     {
