@@ -90,8 +90,9 @@ function UndoLastMitigationBar() {
   );
 }
 
-
+/**
  * Mitigation audit trail: every one-tap mitigation with the before/after deltas
+
  * shown in its confirmation dialog and the alert outcome it produced, all tied
  * together by a correlation ID.
  */
