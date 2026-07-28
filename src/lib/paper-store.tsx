@@ -47,7 +47,23 @@ export type AlertDelivery = {
   channel: "in-app" | "email" | "push";
   status: "delivered" | "muted" | "failed";
   detail: string;
+  /** Set when the delivery was produced by a mitigation outcome check. */
+  correlationId?: string;
 };
+
+/** Alert outcome observed right after a mitigation was applied. */
+export type MitigationOutcome = {
+  ts: number;
+  correlationId: string;
+  /** Number of assets matching the rules after the change. */
+  matched: number;
+  /** Alert deliveries actually created (0 when every channel is muted). */
+  delivered: number;
+  symbols: string[];
+  channels: string[];
+  status: "alerts-fired" | "no-matches" | "channels-muted";
+};
+
 
 /** One applied rule-tuning change, kept for auditability. */
 export type TuningLogEntry = {
