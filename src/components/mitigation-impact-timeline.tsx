@@ -423,6 +423,8 @@ export function MitigationImpactTimeline() {
                   return (
                     <g
                       key={`${p.correlationId ?? "sig"}-${i}`}
+                      onClick={() => openAudit(p.correlationId)}
+
                       className="cursor-pointer"
                       onMouseEnter={() => setHover({ kind: "signal", point: p })}
                       onMouseLeave={() => setHover(null)}
