@@ -94,11 +94,14 @@ export function WalletConnect() {
 
       // Deliver push / email for newly detected risky approvals (both
       // background sweeps and the first scan after connecting).
+      // Alert scope filters keep notifications to the selected tokens/wallets;
+      // every threat is still recorded in the scan and security log.
       const settings = getWalletMonitor();
-      if (newThreats.length > 0 && (settings.pushOnNewThreats || settings.emailOnNewThreats)) {
+      const alertable = filterAlertThreats(DEMO_ADDRESS, newThreats);
+      if (alertable.length > 0 && (settings.pushOnNewThreats || settings.emailOnNewThreats)) {
         void notifyNewThreats(
           DEMO_ADDRESS,
-          newThreats,
+          alertable,
           {
             push: settings.pushOnNewThreats,
             email: settings.emailOnNewThreats,
@@ -119,9 +122,9 @@ export function WalletConnect() {
       }
 
       if (background) {
-        if (newThreats.length > 0 && settings.notifyOnNewThreats) {
+        if (alertable.length > 0 && settings.notifyOnNewThreats) {
           toast.error(
-            `${newThreats.length} new risky approval${newThreats.length > 1 ? "s" : ""} detected on your wallet`,
+            `${alertable.length} new risky approval${alertable.length > 1 ? "s" : ""} detected on your wallet`,
             {
               description:
                 "Background monitor found a newly granted spender. Review and revoke it now.",
@@ -132,6 +135,7 @@ export function WalletConnect() {
         }
         return;
       }
+
 
       if (result.threats.length === 0) {
         toast.success("Wallet scan clear — no phishing approvals found");
