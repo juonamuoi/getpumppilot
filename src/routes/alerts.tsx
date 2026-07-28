@@ -175,7 +175,16 @@ function withRuleValue(rules: ScannerRules, key: string, value: number): Scanner
  * The most recent still-active save. One "Save rules" or auto-apply run can touch
  * several rules at once, so entries logged within a short window count as one batch.
  */
+/** Asset scope covered by a rule set, recorded on each tuning entry. */
+function scopeOf(r: ScannerRules): "majors" | "demo" | "both" | "none" {
+  if (r.includeMajors && r.includeDemoSmallCaps) return "both";
+  if (r.includeMajors) return "majors";
+  if (r.includeDemoSmallCaps) return "demo";
+  return "none";
+}
+
 function lastTuningBatch(log: TuningLogEntry[]): TuningLogEntry[] {
+
   const active = log.filter((e) => !e.revertedAt);
   if (active.length === 0) return [];
   const newest = active.reduce((a, b) => (a.ts >= b.ts ? a : b));
