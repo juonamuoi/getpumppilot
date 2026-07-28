@@ -96,6 +96,7 @@ export function buildTimelineJson(
         timestamp: new Date(p.ts).toISOString(),
         mitigation: p.label,
         rule: p.rule,
+        action: p.action ?? null,
         matchesBefore: p.matchesBefore ?? null,
         matchesAfter: p.matchesAfter ?? null,
         matchDelta: p.matchDelta,
