@@ -670,6 +670,9 @@ export function MitigationImpactTimeline() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Activity className="h-3.5 w-3.5 text-primary" />
                     <span className="font-medium">{hover.point.label}</span>
+                    <Badge variant="secondary" className="text-[10px] capitalize">
+                      {hover.point.action.replace("-", " ")}
+                    </Badge>
                     <Badge variant="outline" className="text-[10px]">
                       {hover.point.rule}
                     </Badge>
