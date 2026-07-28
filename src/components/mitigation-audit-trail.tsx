@@ -183,6 +183,8 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
             </SelectContent>
           </Select>
         </div>
+        <UndoLastMitigationBar />
+
       </CardHeader>
       <CardContent>
         {entries.length === 0 ? (
