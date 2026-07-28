@@ -354,6 +354,18 @@ export function MitigationAuditTrail({
         return !!e.correlationId && correlationIds.includes(e.correlationId);
       })
       .filter((e) => {
+        if (tokens.length === 0) return true;
+        return (e.outcome?.symbols ?? []).some((s) => tokens.includes(s));
+      })
+      .filter((e) => {
+        if (alertTypes.length === 0) return true;
+        return (e.outcome?.channels ?? []).some((c) => alertTypes.includes(c));
+      })
+      .filter((e) => {
+        if (wallets.length === 0) return true;
+        return (walletsForEntry.get(e.id) ?? []).some((w) => wallets.includes(w));
+      })
+      .filter((e) => {
         if (!q.trim()) return true;
         const hay = [
           e.mitigation,
@@ -367,7 +379,7 @@ export function MitigationAuditTrail({
           .toLowerCase();
         return hay.includes(q.trim().toLowerCase());
       });
-  }, [log, q, outcome, range, correlationIds]);
+  }, [log, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
@@ -399,9 +411,26 @@ export function MitigationAuditTrail({
       outcomeDelivered: e.outcome?.delivered ?? "",
       outcomeSymbols: e.outcome?.symbols.join("|") ?? "",
       outcomeChannels: e.outcome?.channels.join("|") ?? "",
+      wallets: (walletsForEntry.get(e.id) ?? []).join("|"),
       outcomeAt: e.outcome ? new Date(e.outcome.ts).toISOString() : "",
       revertedAt: e.revertedAt ? new Date(e.revertedAt).toISOString() : "",
     }));
+
+  /** The filter scope stamped into every export so it matches this view. */
+  const exportFilters = () => ({
+    quickSearch: q.trim() || "none",
+    outcome,
+    timeRange: RANGE_LABEL[range],
+    from:
+      range === "all" ? null : new Date(Date.now() - RANGE_MS[range]).toISOString(),
+    to: new Date().toISOString(),
+    tokens: tokens.length ? tokens : "all",
+    wallets: wallets.length ? wallets : "all",
+    alertTypes: alertTypes.length ? alertTypes : "all",
+    correlationIds: correlationIds.length ? correlationIds : "all",
+    includePreviews: paper.retention.includePreviewsInExport,
+  });
+
 
   const download = (kind: "csv" | "json") => {
     const data = rows();
