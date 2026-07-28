@@ -189,7 +189,9 @@ function scopeOf(r: ScannerRules): "majors" | "demo" | "both" | "none" {
 
 function lastTuningBatch(log: TuningLogEntry[]): TuningLogEntry[] {
 
-  const active = log.filter((e) => !e.revertedAt);
+  // Risk-bounds entries are audit-only — they don't map to a scanner threshold.
+  const active = log.filter((e) => !e.revertedAt && e.kind !== "bounds");
+
   if (active.length === 0) return [];
   const newest = active.reduce((a, b) => (a.ts >= b.ts ? a : b));
   return active
