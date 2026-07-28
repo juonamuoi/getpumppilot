@@ -144,6 +144,97 @@ async function buildReportBase64(result: WalletScanResult | null): Promise<strin
 /** Dedupe so the same finding never notifies twice in one session. */
 const notified = new Set<string>();
 
+type PushPayload = { kind: "push"; title: string; body: string; tag: string };
+type EmailPayload = { kind: "email"; input: ThreatEmailInput };
+
+async function dispatchPush(
+  payload: PushPayload,
+  meta: { correlationId: string; address?: string; test?: boolean },
+  enabled: boolean,
+): Promise<{ ok: boolean; reason?: string }> {
+  if (!enabled) {
+    recordDelivery({
+      channel: "push",
+      status: "skipped",
+      reason: "channel_off",
+      title: payload.title,
+      ...meta,
+    });
+    return { ok: false, reason: "channel_off" };
+  }
+  if (!pushSupported()) {
+    recordDelivery({
+      channel: "push",
+      status: "skipped",
+      reason: "unsupported",
+      title: payload.title,
+      ...meta,
+    });
+    return { ok: false, reason: "unsupported" };
+  }
+  const res = await showPush(payload.title, payload.body, payload.tag);
+  const skipped = res.reason === "permission_denied" || res.reason === "permission_default";
+  recordDelivery({
+    channel: "push",
+    status: res.ok ? "sent" : skipped ? "skipped" : "failed",
+    reason: res.reason,
+    title: payload.title,
+    payload,
+    ...meta,
+  });
+  return { ok: res.ok, reason: res.reason };
+}
+
+async function dispatchEmail(
+  payload: EmailPayload,
+  meta: { correlationId: string; address?: string; test?: boolean },
+  enabled: boolean,
+  pdfBase64?: string,
+): Promise<{ ok: boolean; reason?: string; reportUrl?: string }> {
+  const title = payload.input.test ? "Test alert email" : "New risky approval email";
+  if (!enabled) {
+    recordDelivery({
+      channel: "email",
+      status: "skipped",
+      reason: "channel_off",
+      title,
+      ...meta,
+    });
+    return { ok: false, reason: "channel_off" };
+  }
+  try {
+    const res = await sendThreatEmail({
+      data: { ...payload.input, pdfBase64 },
+    });
+    const skipReasons = new Set([
+      "no_account_email",
+      "email_not_configured",
+      "recipient_suppressed",
+    ]);
+    recordDelivery({
+      channel: "email",
+      status: res.sent ? "sent" : skipReasons.has(res.reason ?? "") ? "skipped" : "failed",
+      reason: res.reason,
+      detail: res.reportUrl ? "PDF report attached" : undefined,
+      title,
+      payload,
+      ...meta,
+    });
+    return { ok: res.sent, reason: res.reason, reportUrl: res.reportUrl };
+  } catch (e) {
+    const reason = e instanceof Error ? e.message : "send failed";
+    recordDelivery({
+      channel: "email",
+      status: "failed",
+      reason,
+      title,
+      payload,
+      ...meta,
+    });
+    return { ok: false, reason };
+  }
+}
+
 export async function notifyNewThreats(
   address: string,
   threats: WalletApproval[],
@@ -156,39 +247,42 @@ export async function notifyNewThreats(
 
   const { title, body } = threatSummary(fresh);
   const correlationId = fresh[0]?.correlationId ?? `${address}-${Date.now()}`;
+  const meta = { correlationId, address };
 
   const outcome: NotifyOutcome = { push: false, email: false };
 
-  if (channels.push) {
-    outcome.push = await showPush(`PumpPilot AI — ${title}`, body, `pp-threat-${correlationId}`);
-  }
+  const push = await dispatchPush(
+    {
+      kind: "push",
+      title: `PumpPilot AI — ${title}`,
+      body,
+      tag: `pp-threat-${correlationId}`,
+    },
+    meta,
+    channels.push,
+  );
+  outcome.push = push.ok;
+  outcome.pushReason = push.reason;
 
-  if (channels.email) {
-    try {
-      const pdfBase64 = channels.pdfReport ? await buildReportBase64(scan ?? null) : undefined;
-      const res = await sendThreatEmail({
-        data: {
-          address,
-          correlationId,
-          pdfBase64,
-          findings: fresh.slice(0, 10).map((t) => ({
-            token: t.token,
-            spender: t.spender,
-            spenderLabel: t.spenderLabel,
-            risk: t.risk,
-            valueAtRiskUsd: Math.round(t.valueAtRiskUsd),
-            reason: t.reasons[0] ?? "Risky approval detected",
-            correlationId: t.correlationId ?? correlationId,
-          })),
-        },
-      });
-      outcome.email = res.sent;
-      outcome.emailReason = res.reason;
-      outcome.reportAttached = !!res.reportUrl;
-    } catch (e) {
-      outcome.emailReason = e instanceof Error ? e.message : "send failed";
-    }
-  }
+  const emailInput: ThreatEmailInput = {
+    address,
+    correlationId,
+    findings: fresh.slice(0, 10).map((t) => ({
+      token: t.token,
+      spender: t.spender,
+      spenderLabel: t.spenderLabel,
+      risk: t.risk,
+      valueAtRiskUsd: Math.round(t.valueAtRiskUsd),
+      reason: t.reasons[0] ?? "Risky approval detected",
+      correlationId: t.correlationId ?? correlationId,
+    })),
+  };
+  const pdfBase64 =
+    channels.email && channels.pdfReport ? await buildReportBase64(scan ?? null) : undefined;
+  const email = await dispatchEmail({ kind: "email", input: emailInput }, meta, channels.email, pdfBase64);
+  outcome.email = email.ok;
+  outcome.emailReason = email.reason;
+  outcome.reportAttached = !!email.reportUrl;
 
   return outcome;
 }
@@ -198,26 +292,75 @@ export async function sendTestNotification(
   channels: NotifyChannels,
   scan?: WalletScanResult | null,
 ): Promise<NotifyOutcome> {
+  const correlationId = scan?.correlationId ?? `test-${Date.now()}`;
+  const meta = { correlationId, test: true };
   const outcome: NotifyOutcome = { push: false, email: false };
-  if (channels.push) {
-    outcome.push = await showPush(
-      "PumpPilot AI — test alert",
-      "This is what a new risky-approval alert looks like. Demo data only.",
-      "pp-threat-test",
-    );
-  }
-  if (channels.email) {
-    try {
-      const pdfBase64 = channels.pdfReport ? await buildReportBase64(scan ?? null) : undefined;
-      const res = await sendThreatEmail({
-        data: { test: true, pdfBase64, correlationId: scan?.correlationId },
-      });
-      outcome.email = res.sent;
-      outcome.emailReason = res.reason;
-      outcome.reportAttached = !!res.reportUrl;
-    } catch (e) {
-      outcome.emailReason = e instanceof Error ? e.message : "send failed";
-    }
-  }
+
+  const push = await dispatchPush(
+    {
+      kind: "push",
+      title: "PumpPilot AI — test alert",
+      body: "This is what a new risky-approval alert looks like. Demo data only.",
+      tag: "pp-threat-test",
+    },
+    meta,
+    channels.push,
+  );
+  outcome.push = push.ok;
+  outcome.pushReason = push.reason;
+
+  const pdfBase64 =
+    channels.email && channels.pdfReport ? await buildReportBase64(scan ?? null) : undefined;
+  const email = await dispatchEmail(
+    { kind: "email", input: { test: true, correlationId } },
+    meta,
+    channels.email,
+    pdfBase64,
+  );
+  outcome.email = email.ok;
+  outcome.emailReason = email.reason;
+  outcome.reportAttached = !!email.reportUrl;
+
   return outcome;
 }
+
+/**
+ * Re-attempt a failed delivery from the log. Permission/settings skips are
+ * re-checked first, so a retry after granting permission now succeeds.
+ */
+export async function retryDelivery(entry: NotifyDelivery): Promise<{ ok: boolean; reason?: string }> {
+  const payload = entry.payload as PushPayload | EmailPayload | undefined;
+  if (!payload) return { ok: false, reason: "nothing to retry" };
+
+  let result: { ok: boolean; reason?: string };
+  if (payload.kind === "push") {
+    if (!pushSupported()) result = { ok: false, reason: "unsupported" };
+    else result = await showPush(payload.title, payload.body, payload.tag);
+  } else {
+    try {
+      const res = await sendThreatEmail({ data: payload.input });
+      result = { ok: res.sent, reason: res.reason };
+    } catch (e) {
+      result = { ok: false, reason: e instanceof Error ? e.message : "send failed" };
+    }
+  }
+
+  const skipped =
+    result.reason === "permission_denied" ||
+    result.reason === "permission_default" ||
+    result.reason === "unsupported" ||
+    result.reason === "no_account_email" ||
+    result.reason === "email_not_configured" ||
+    result.reason === "recipient_suppressed";
+
+  updateDelivery(entry.id, {
+    status: result.ok ? "sent" : skipped ? "skipped" : "failed",
+    reason: result.reason,
+    attempts: entry.attempts + 1,
+    lastAttemptAt: Date.now(),
+    retryable: !result.ok && !skipped,
+  });
+
+  return result;
+}
+
