@@ -4829,12 +4829,20 @@ function ReplayPanel() {
                       detail,
                     });
                   }
+                  const outcome = meta.mitigation
+                    ? recordMitigationOutcome(corrId, next)
+                    : null;
                   toast.success(
                     `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
                     meta.mitigation
-                      ? { description: `Mitigation logged: ${meta.mitigation}` }
+                      ? {
+                          description: `Mitigation logged: ${meta.mitigation} · outcome ${
+                            outcome?.status ?? "pending"
+                          } (${outcome?.delivered ?? 0} alerts) · ${corrId}`,
+                        }
                       : undefined,
                   );
+
                 }}
                 onApplyBulk={(entries) => {
                   if (entries.length === 0) return;
