@@ -27,6 +27,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAuth } from "@/lib/auth-store";
+import { WaitlistForm } from "@/components/waitlist-form";
+
 
 const SITE_URL = "https://crypto-spotter-pro.lovable.app";
 const TITLE =
@@ -590,8 +592,21 @@ function LandingPage() {
               <Link to="/pricing">See pricing</Link>
             </Button>
           </div>
+          <div className="mt-8 border-t border-border/40 pt-6">
+            <h3 className="text-sm font-semibold">
+              Not ready yet? Join the waitlist
+            </h3>
+            <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+              Get a confirmation email now, plus a short follow-up when new
+              momentum features land.
+            </p>
+            <div className="mt-4">
+              <WaitlistForm source="landing-cta" />
+            </div>
+          </div>
         </div>
       </section>
+
 
       {/* Trust / disclaimers */}
       <section className="px-4 pb-16">
