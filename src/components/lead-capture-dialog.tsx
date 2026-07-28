@@ -26,8 +26,9 @@ const leadSchema = z.object({
     .max(254, { message: "Email is too long" })
     .email({ message: "Enter a valid email address" }),
   consent: z.literal(true, {
-    errorMap: () => ({ message: "Please tick the consent box to continue" }),
+    message: "Please tick the consent box to continue",
   }),
+
 });
 
 export type LeadCaptureContext = {
