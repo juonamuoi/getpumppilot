@@ -4783,6 +4783,27 @@ function ReplayPanel() {
                     matchesAfter: meta.preview?.matchesAfter,
                     nearMissBefore: meta.preview?.nearMissAnyBefore,
                     nearMissAfter: meta.preview?.nearMissAnyAfter,
+                    phase: "applied",
+                    appliedAt: Date.now(),
+                    previewId: meta.previewId,
+                    previewedAt: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.ts
+                      : undefined,
+                    scopeMatchesBefore: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeMatchesBefore
+                      : undefined,
+                    scopeMatchesAfter: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeMatchesAfter
+                      : undefined,
+                    scopeNearMissBefore: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeNearMissBefore
+                      : undefined,
+                    scopeNearMissAfter: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeNearMissAfter
+                      : undefined,
+                    scopeAssetsAffected: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeAssetsAffected
+                      : undefined,
                   });
                   if (meta.mitigation) {
                     const detail = `${RULE_META[k].short} back to ${current}${RULE_META[k].unit}`;
