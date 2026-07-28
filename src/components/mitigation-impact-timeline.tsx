@@ -152,6 +152,8 @@ export function MitigationImpactTimeline() {
   const [range, setRange] = useState<RangeKey>("7d");
   const [wallets, setWallets] = useState<string[]>([]);
   const [tokens, setTokens] = useState<string[]>([]);
+  const [actions, setActions] = useState<MitigationAction[]>([]);
+  const [outcomes, setOutcomes] = useState<OutcomeKey[]>([]);
   const [hover, setHover] = useState<
     | { kind: "risk"; point: RiskPoint }
     | { kind: "signal"; point: SignalPoint }
