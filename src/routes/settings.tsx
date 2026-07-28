@@ -16,6 +16,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { McpAuditExport } from "@/components/mcp-audit-export";
+import { McpRateLimits } from "@/components/mcp-rate-limits";
+import { Gauge } from "lucide-react";
+
 import { toast } from "sonner";
 import {
   Bot,
