@@ -2,8 +2,10 @@ import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import type { z } from "zod";
 import { supabaseAdminForAudit } from "./supabase";
 
-/** Requests allowed per user, per rolling window, across all MCP tools. */
+/** Requests allowed per user, per rolling window, across all MCP tools and agents. */
 export const RATE_LIMIT = 60;
+/** Requests allowed per user *per connected agent client*, same rolling window. */
+export const CLIENT_RATE_LIMIT = 30;
 export const RATE_WINDOW_SECONDS = 60;
 
 type ToolResult = {
