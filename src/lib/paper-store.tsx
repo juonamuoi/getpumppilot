@@ -132,6 +132,38 @@ export type TuningLogEntry = {
   revertReason?: string;
 };
 
+/** How long mitigation audit history is kept, and what gets exported. */
+export type AuditRetention = {
+  /** Days to keep "preview only" entries. 0 = keep forever. */
+  previewDays: number;
+  /** Days to keep applied entries (incl. undo/replay). 0 = keep forever. */
+  appliedDays: number;
+  /** Hard cap on stored entries (newest kept). */
+  maxEntries: number;
+  /** Include preview-only entries in audit exports. */
+  includePreviewsInExport: boolean;
+};
+
+export const DEFAULT_RETENTION: AuditRetention = {
+  previewDays: 30,
+  appliedDays: 180,
+  maxEntries: 200,
+  includePreviewsInExport: true,
+};
+
+const DAY_MS = 86_400_000;
+
+/** Applies a retention policy to a tuning log (newest-first). Pure. */
+export function applyRetention(log: TuningLogEntry[], r: AuditRetention, now = Date.now()) {
+  return log
+    .filter((e) => {
+      const days = (e.phase === "preview" ? r.previewDays : r.appliedDays) || 0;
+      if (days <= 0) return true;
+      return now - e.ts <= days * DAY_MS;
+    })
+    .slice(0, Math.max(1, r.maxEntries));
+}
+
 type State = {
   cash: number;
   positions: Position[];
@@ -170,6 +202,13 @@ type State = {
     correlationId: string,
   ) => { correlationId: string; label: string; entries: TuningLogEntry[]; outcome: MitigationOutcome } | null;
   clearTuningLog: () => void;
+  /** Retention policy for mitigation audit history. */
+  retention: AuditRetention;
+  setRetention: (r: AuditRetention) => void;
+  /** Immediately drop entries outside the policy. Returns how many were removed. */
+  purgeAuditHistory: (r?: AuditRetention) => number;
+  /** Entries currently outside the policy (i.e. what a purge would remove). */
+  expiredAuditCount: number;
 
 
   simulateScannerRun: () => number; // returns count of new deliveries
@@ -224,6 +263,7 @@ export function findLastMitigation(log: TuningLogEntry[]) {
 }
 
 const TUNING_LOG_KEY = "pumppilot_tuning_log";
+const RETENTION_KEY = "pumppilot_audit_retention";
 
 const Ctx = createContext<State | null>(null);
 
@@ -266,12 +306,42 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     }
   });
 
+  const [retention, setRetentionState] = useState<AuditRetention>(() => {
+    if (typeof window === "undefined") return DEFAULT_RETENTION;
+    try {
+      const raw = window.localStorage.getItem(RETENTION_KEY);
+      return raw
+        ? { ...DEFAULT_RETENTION, ...(JSON.parse(raw) as Partial<AuditRetention>) }
+        : DEFAULT_RETENTION;
+    } catch {
+      return DEFAULT_RETENTION;
+    }
+  });
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      window.localStorage.setItem(TUNING_LOG_KEY, JSON.stringify(tuningLog.slice(0, 200)));
+      window.localStorage.setItem(RETENTION_KEY, JSON.stringify(retention));
     } catch {}
-  }, [tuningLog]);
+  }, [retention]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        TUNING_LOG_KEY,
+        JSON.stringify(applyRetention(tuningLog, retention)),
+      );
+    } catch {}
+  }, [tuningLog, retention]);
+
+  // Prune on mount and whenever the policy changes.
+  useEffect(() => {
+    setTuningLog((prev) => {
+      const next = applyRetention(prev, retention);
+      return next.length === prev.length ? prev : next;
+    });
+  }, [retention]);
 
   const now = Date.now();
   const [deliveries, setDeliveries] = useState<AlertDelivery[]>([
@@ -588,6 +658,16 @@ export function PaperProvider({ children }: { children: ReactNode }) {
       return { correlationId: replayId, label, entries: replayEntries, outcome };
     },
     clearTuningLog: () => setTuningLog([]),
+    retention,
+    setRetention: setRetentionState,
+    purgeAuditHistory: (r) => {
+      const policy = r ?? retention;
+      const kept = applyRetention(tuningLog, policy);
+      const removed = tuningLog.length - kept.length;
+      if (removed > 0) setTuningLog(kept);
+      return removed;
+    },
+    expiredAuditCount: Math.max(0, tuningLog.length - applyRetention(tuningLog, retention).length),
 
     simulateScannerRun,
     clearDeliveries: () => setDeliveries([]),
