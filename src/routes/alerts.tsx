@@ -2772,8 +2772,11 @@ function RuleTuningPanel({
     recommendedValue: number;
     fragilePct?: number;
     window: WindowKey;
+    previewId?: string;
   }) => void;
+  onLogMitigationPreview?: (e: MitigationPreviewLog) => string;
 }) {
+
 
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
