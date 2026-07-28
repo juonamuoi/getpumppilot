@@ -70,14 +70,16 @@ export async function runScheduledReport(
         data: {
           address: DEMO_WALLET_ADDRESS,
           correlationId: result.correlationId,
-          findings: result.threats.map((t) => ({
-            id: t.id,
+          findings: result.threats.slice(0, 10).map((t) => ({
             token: t.token,
             spender: t.spender,
+            spenderLabel: t.spenderLabel,
             risk: t.risk,
-            reasons: t.reasons,
-            valueAtRisk: t.valueAtRisk,
+            valueAtRiskUsd: Math.round(t.valueAtRiskUsd),
+            reason: t.reasons[0] ?? "Risky approval detected",
+            correlationId: t.correlationId ?? result.correlationId,
           })),
+
           pdfBase64: await pdfBase64(result),
         },
       });
