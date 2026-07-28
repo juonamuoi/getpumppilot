@@ -311,13 +311,7 @@ function BeforeAfterChart({ rows }: { rows: Row[] }) {
             return (
               <g
                 key={r.asset.symbol}
-                onMouseEnter={(e) =>
-                  setHover({
-                    i,
-                    x: (e.currentTarget.parentElement as SVGSVGElement).clientWidth * (cx / 100),
-                    y: 0,
-                  })
-                }
+                onMouseEnter={() => setHover({ i, x: cx, y: 0 })}
               >
                 <rect
                   x={groupW * i}
@@ -366,10 +360,7 @@ function BeforeAfterChart({ rows }: { rows: Row[] }) {
         {active && hover && (
           <div
             className="pointer-events-none absolute top-1 z-10 w-52 -translate-x-1/2 rounded-md border border-border/70 bg-popover/95 p-2 text-[11px] shadow-lg backdrop-blur"
-            style={{
-              left: `${Math.min(Math.max(hover.x, 110), Math.max(110, 1e4))}px`,
-              transform: "translateX(-50%)",
-            }}
+            style={{ left: `${Math.min(Math.max(hover.x, 18), 82)}%` }}
           >
             <div className="mb-1 flex items-center justify-between gap-2">
               <span className="font-semibold">{active.asset.symbol}</span>
