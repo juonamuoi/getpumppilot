@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Upload, FileUp, Trash2, AlertTriangle } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Upload, FileUp, Trash2, AlertTriangle, Download, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,22 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
-import { parseMitigationExport, type ImportResult } from "@/lib/mitigation-import";
+import {
+  parseMitigationExport,
+  buildErrorReportCsv,
+  buildErrorReportJson,
+  type ImportResult,
+} from "@/lib/mitigation-import";
+
+function download(name: string, mime: string, body: string) {
+  const url = URL.createObjectURL(new Blob([body], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 
 /**
  * Upload a previously exported mitigation CSV/JSON file and load the records
