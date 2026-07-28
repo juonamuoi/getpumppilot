@@ -87,7 +87,9 @@ import { shortAddress } from "@/lib/wallet-scan";
 
 export const Route = createFileRoute("/security")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/security" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/security" },
       { title: "Security Center — PumpPilot AI" },
       {
         name: "description",

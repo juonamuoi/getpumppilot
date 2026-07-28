@@ -22,7 +22,9 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/scanner")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/scanner" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/scanner" },
       { title: "Market Scanner — PumpPilot AI" },
       {
         name: "description",

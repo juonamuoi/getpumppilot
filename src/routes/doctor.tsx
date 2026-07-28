@@ -30,7 +30,9 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/doctor")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/doctor" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/doctor" },
       { title: "Portfolio Doctor — PumpPilot AI" },
       {
         name: "description",

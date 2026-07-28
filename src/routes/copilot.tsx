@@ -16,7 +16,9 @@ import { Sparkles, Send, Loader2, Bot } from "lucide-react";
 
 export const Route = createFileRoute("/copilot")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/copilot" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/copilot" },
       { title: "AI Copilot — PumpPilot AI" },
       { name: "description", content: "Chat with an AI investing coach about your portfolio, strategy and market signals. Educational only." },
       { property: "og:title", content: "PumpPilot AI Copilot" },

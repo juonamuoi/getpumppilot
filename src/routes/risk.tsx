@@ -14,7 +14,9 @@ import { useState } from "react";
 
 export const Route = createFileRoute("/risk")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/risk" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/risk" },
       { title: "Risk Controls — PumpPilot AI" },
       {
         name: "description",

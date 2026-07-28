@@ -27,7 +27,9 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/community" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/community" },
       { title: "Community Strategies — PumpPilot AI" },
       {
         name: "description",

@@ -31,7 +31,9 @@ import { History } from "lucide-react";
 
 export const Route = createFileRoute("/backtest")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/backtest" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/backtest" },
       { title: "Backtest — PumpPilot AI" },
       {
         name: "description",

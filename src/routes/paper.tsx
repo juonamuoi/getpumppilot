@@ -23,7 +23,9 @@ import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/paper")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/paper" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/paper" },
       { title: "Paper Trading — PumpPilot AI" },
       {
         name: "description",

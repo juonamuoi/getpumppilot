@@ -16,7 +16,9 @@ import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/strategy")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/strategy" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/strategy" },
       { title: "Strategy Builder — PumpPilot AI" },
       {
         name: "description",

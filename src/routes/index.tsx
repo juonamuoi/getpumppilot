@@ -245,7 +245,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESCRIPTION },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: SITE_URL },
+      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:site_name", content: "PumpPilot AI" },
       { property: "og:image", content: `${SITE_URL}/favicon.png` },
       { name: "twitter:card", content: "summary_large_image" },
@@ -253,7 +253,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:description", content: DESCRIPTION },
       { name: "twitter:image", content: `${SITE_URL}/favicon.png` },
     ],
-    links: [{ rel: "canonical", href: SITE_URL }],
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
     scripts: [
       ldScript(homeWebPageSchema),
       ldScript(productSchema),
