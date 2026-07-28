@@ -192,7 +192,9 @@ function scopeOf(r: ScannerRules): "majors" | "demo" | "both" | "none" {
 function lastTuningBatch(log: TuningLogEntry[]): TuningLogEntry[] {
 
   // Risk-bounds entries are audit-only — they don't map to a scanner threshold.
-  const active = log.filter((e) => !e.revertedAt && e.kind !== "bounds");
+  // Preview entries were never applied, so they can't be rolled back either.
+  const active = log.filter((e) => !e.revertedAt && e.kind !== "bounds" && e.phase !== "preview");
+
 
   if (active.length === 0) return [];
   const newest = active.reduce((a, b) => (a.ts >= b.ts ? a : b));
@@ -2307,6 +2309,19 @@ function TuningHistoryPanel({
                       Risk bound
                     </Badge>
                   )}
+                  {e.phase === "preview" && (
+                    <Badge
+                      variant="outline"
+                      className="h-4 border-sky-500/40 px-1.5 text-[9px] text-sky-300"
+                    >
+                      Preview only
+                    </Badge>
+                  )}
+                  {e.phase === "applied" && e.previewId && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                      Reviewed
+                    </Badge>
+                  )}
 
 
                   {e.window && (
@@ -2343,6 +2358,21 @@ function TuningHistoryPanel({
                     nearMissAfter={e.nearMissAfter}
                   />
                 )}
+                {(e.scopeMatchesBefore != null || e.scopeNearMissBefore != null) && (
+                  <div className="mt-1 rounded-md border border-border/50 bg-background/40 p-1.5 text-[10px] text-muted-foreground">
+                    Scope-wide: signals {e.scopeMatchesBefore ?? 0} → {e.scopeMatchesAfter ?? 0}
+                    {" · "}near-miss {e.scopeNearMissBefore ?? 0} → {e.scopeNearMissAfter ?? 0}
+                    {e.scopeAssetsAffected != null && ` · ${e.scopeAssetsAffected} assets affected`}
+                  </div>
+                )}
+                {(e.previewedAt || e.appliedAt) && (
+                  <div className="mt-1 text-[10px] text-muted-foreground">
+                    {e.previewedAt &&
+                      `Previewed ${format(new Date(e.previewedAt), "MMM d, HH:mm:ss")}`}
+                    {e.previewedAt && e.appliedAt && " · "}
+                    {e.appliedAt && `Applied ${format(new Date(e.appliedAt), "MMM d, HH:mm:ss")}`}
+                  </div>
+                )}
                 {(e.mitigation || e.trigger) && (
                   <div className="mt-1 rounded-md border border-border/50 bg-muted/20 p-1.5 text-[10px] text-muted-foreground">
                     {e.mitigation && (
@@ -2361,7 +2391,7 @@ function TuningHistoryPanel({
                     {e.trigger && <div className="mt-0.5">Triggered by → {e.trigger}</div>}
                   </div>
                 )}
-                {!e.revertedAt && e.kind !== "bounds" && (
+                {!e.revertedAt && e.kind !== "bounds" && e.phase !== "preview" && (
                   <Button
                     size="sm"
                     variant="ghost"
@@ -2702,6 +2732,7 @@ function RuleTuningPanel({
   onApply,
   onApplyBulk,
   onLogBoundsChange,
+  onLogMitigationPreview,
 }: {
   result: ReplayResult;
   rules: ScannerRules;
@@ -2717,8 +2748,10 @@ function RuleTuningPanel({
       trigger?: string;
       recommendedValue?: number;
       fragilePct?: number;
+      previewId?: string;
     },
   ) => void;
+
   onApplyBulk: (
     entries: Array<{
       key: RuleKey;
@@ -2742,8 +2775,11 @@ function RuleTuningPanel({
     recommendedValue: number;
     fragilePct?: number;
     window: WindowKey;
+    previewId?: string;
   }) => void;
+  onLogMitigationPreview?: (e: MitigationPreviewLog) => string;
 }) {
+
 
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
@@ -3187,9 +3223,11 @@ function RuleTuningPanel({
             trigger: meta.trigger,
             recommendedValue: meta.recommendedValue,
             fragilePct: meta.fragilePct,
+            previewId: meta.previewId,
           });
           setPending(null);
         }}
+        onLogPreview={onLogMitigationPreview}
         onLogBounds={(e) =>
           onLogBoundsChange({
             label: e.label,
@@ -3202,8 +3240,10 @@ function RuleTuningPanel({
             recommendedValue: e.meta.recommendedValue,
             fragilePct: e.meta.fragilePct,
             window: result.window,
+            previewId: e.meta.previewId,
           })
         }
+
 
         onCancel={() => setPending(null)}
         onConfirm={() => {
@@ -3499,6 +3539,27 @@ type MitigationMeta = {
   trigger: string;
   recommendedValue: number;
   fragilePct?: number;
+  /** Audit id of the preview entry the user reviewed before applying. */
+  previewId?: string;
+};
+
+/** Before/after metrics recorded when a mitigation preview is opened. */
+export type MitigationPreviewLog = {
+  ruleKey: RuleKey;
+  label: string;
+  mitigation: string;
+  trigger: string;
+  recommendedValue: number;
+  fragilePct?: number;
+  targetValue?: number;
+  preview: TuningPreview | null;
+  scope?: {
+    matchesBefore: number;
+    matchesAfter: number;
+    nearMissBefore: number;
+    nearMissAfter: number;
+    assetsAffected: number;
+  };
 };
 
 function MitigationChecklist({
@@ -3508,8 +3569,9 @@ function MitigationChecklist({
   rules,
   bounds,
   onSetBounds,
-  onApplyAlternative,
-  onLogBounds,
+  onApplyAlternative: applyAlternativeProp,
+  onLogBounds: logBoundsProp,
+  onLogPreview,
 }: {
   ruleKey: RuleKey;
   tuning: RuleTuning;
@@ -3531,10 +3593,26 @@ function MitigationChecklist({
     meta: MitigationMeta;
     preview: TuningPreview | null;
   }) => void;
+  /** Records the reviewed preview into the audit history; returns its entry id. */
+  onLogPreview?: (e: MitigationPreviewLog) => string;
 }) {
   /** Mitigation awaiting explicit confirmation (before/after summary shown first). */
   const [pendingItem, setPendingItem] = useState<Item | null>(null);
+  /** Audit id of the preview logged when the confirm dialog was opened. */
+  const previewIdRef = useRef<string | null>(null);
   const meta = RULE_META[ruleKey];
+
+  const onApplyAlternative: typeof applyAlternativeProp = (value, preview, label, m) =>
+    applyAlternativeProp(value, preview, label, {
+      ...m,
+      previewId: previewIdRef.current ?? undefined,
+    });
+  const onLogBounds: typeof logBoundsProp = (e) =>
+    logBoundsProp({
+      ...e,
+      meta: { ...e.meta, previewId: previewIdRef.current ?? undefined },
+    });
+
 
   const suggested = tuning.suggested!;
   const alternatives = useSaferAlternatives(result, rules, ruleKey, suggested, bounds);
@@ -3796,7 +3874,34 @@ function MitigationChecklist({
                   size="sm"
                   variant="outline"
                   className="mt-1 h-6 px-2 text-[10px]"
-                  onClick={() => setPendingItem(item)}
+                  onClick={() => {
+                    const target = item.option?.targetValue;
+                    const scopeImpact =
+                      target != null
+                        ? simulateScopeImpact(result.perBucketSnapshots.flat(), ruleKey, target)
+                        : null;
+                    previewIdRef.current =
+                      onLogPreview?.({
+                        ruleKey,
+                        label: item.label,
+                        mitigation: item.action?.label ?? item.label,
+                        trigger: triggerText,
+                        recommendedValue: suggested,
+                        fragilePct: item.option?.fragilePct,
+                        targetValue: target,
+                        preview: item.option?.preview ?? null,
+                        scope: scopeImpact
+                          ? {
+                              matchesBefore: scopeImpact.totals.matchesBefore,
+                              matchesAfter: scopeImpact.totals.matchesAfter,
+                              nearMissBefore: scopeImpact.totals.nearMissBefore,
+                              nearMissAfter: scopeImpact.totals.nearMissAfter,
+                              assetsAffected: scopeImpact.totals.assetsAffected,
+                            }
+                          : undefined,
+                      }) ?? null;
+                    setPendingItem(item);
+                  }}
                 >
                   {item.action.label}
                 </Button>
@@ -3819,7 +3924,12 @@ function MitigationChecklist({
 
       <AlertDialog
         open={pendingItem !== null}
-        onOpenChange={(o) => !o && setPendingItem(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPendingItem(null);
+            previewIdRef.current = null;
+          }
+        }}
       >
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
@@ -3973,6 +4083,8 @@ function TuningConfirmDialog({
   onSetBounds,
   onApplyAlternative,
   onLogBounds,
+  onLogPreview,
+
 
   onCancel,
   onConfirm,
@@ -3999,6 +4111,8 @@ function TuningConfirmDialog({
     meta: MitigationMeta;
     preview: TuningPreview | null;
   }) => void;
+  onLogPreview?: (e: MitigationPreviewLog) => string;
+
 
   onCancel: () => void;
   onConfirm: () => void;
@@ -4136,8 +4250,9 @@ function TuningConfirmDialog({
             onSetBounds={onSetBounds}
             onApplyAlternative={onApplyAlternative}
             onLogBounds={onLogBounds}
-
+            onLogPreview={onLogPreview}
           />
+
         </div>
 
         <AlertDialogFooter>
@@ -4673,6 +4788,27 @@ function ReplayPanel() {
                     matchesAfter: meta.preview?.matchesAfter,
                     nearMissBefore: meta.preview?.nearMissAnyBefore,
                     nearMissAfter: meta.preview?.nearMissAnyAfter,
+                    phase: "applied",
+                    appliedAt: Date.now(),
+                    previewId: meta.previewId,
+                    previewedAt: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.ts
+                      : undefined,
+                    scopeMatchesBefore: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeMatchesBefore
+                      : undefined,
+                    scopeMatchesAfter: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeMatchesAfter
+                      : undefined,
+                    scopeNearMissBefore: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeNearMissBefore
+                      : undefined,
+                    scopeNearMissAfter: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeNearMissAfter
+                      : undefined,
+                    scopeAssetsAffected: meta.previewId
+                      ? tuningLog.find((t) => t.id === meta.previewId)?.scopeAssetsAffected
+                      : undefined,
                   });
                   if (meta.mitigation) {
                     const detail = `${RULE_META[k].short} back to ${current}${RULE_META[k].unit}`;
@@ -4774,13 +4910,64 @@ function ReplayPanel() {
                     matchesAfter: e.preview?.matchesAfter,
                     nearMissBefore: e.preview?.nearMissAnyBefore,
                     nearMissAfter: e.preview?.nearMissAnyAfter,
+                    phase: "applied",
+                    appliedAt: Date.now(),
+                    previewId: e.previewId,
+                    previewedAt: e.previewId
+                      ? tuningLog.find((t) => t.id === e.previewId)?.ts
+                      : undefined,
                   });
                   toast.success(`${e.label} updated to ${e.newValue}${e.unit}`, {
                     description: `Logged to the tuning audit trail (was ${e.oldValue}${e.unit}).`,
                   });
                 }}
-
+                onLogMitigationPreview={(p) =>
+                  logTuning({
+                    source: "mitigation",
+                    kind: "rule",
+                    phase: "preview",
+                    previewedAt: Date.now(),
+                    rule: p.ruleKey,
+                    ruleLabel: RULE_META[p.ruleKey].short,
+                    operator: RULE_META[p.ruleKey].op,
+                    unit: RULE_META[p.ruleKey].unit,
+                    oldValue:
+                      p.ruleKey === "momentum"
+                        ? scannerRules.minMomentum
+                        : p.ruleKey === "volume"
+                          ? scannerRules.minVolumeScore
+                          : p.ruleKey === "volatility"
+                            ? scannerRules.maxVolatility
+                            : scannerRules.min24hChangePct,
+                    newValue:
+                      p.targetValue ??
+                      (p.ruleKey === "momentum"
+                        ? scannerRules.minMomentum
+                        : p.ruleKey === "volume"
+                          ? scannerRules.minVolumeScore
+                          : p.ruleKey === "volatility"
+                            ? scannerRules.maxVolatility
+                            : scannerRules.min24hChangePct),
+                    preset: `preview · ${p.label}`,
+                    scope: scopeOf(scannerRules),
+                    mitigation: p.mitigation,
+                    trigger: p.trigger,
+                    recommendedValue: p.recommendedValue,
+                    fragilePct: p.fragilePct,
+                    window: result.window,
+                    matchesBefore: p.preview?.matchesBefore,
+                    matchesAfter: p.preview?.matchesAfter,
+                    nearMissBefore: p.preview?.nearMissAnyBefore,
+                    nearMissAfter: p.preview?.nearMissAnyAfter,
+                    scopeMatchesBefore: p.scope?.matchesBefore,
+                    scopeMatchesAfter: p.scope?.matchesAfter,
+                    scopeNearMissBefore: p.scope?.nearMissBefore,
+                    scopeNearMissAfter: p.scope?.nearMissAfter,
+                    scopeAssetsAffected: p.scope?.assetsAffected,
+                  })
+                }
               />
+
 
               <TuningHistoryPanel
                 log={tuningLog}
