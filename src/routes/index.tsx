@@ -32,10 +32,9 @@ import { WaitlistForm } from "@/components/waitlist-form";
 
 
 const SITE_URL = "https://crypto-spotter-pro.lovable.app";
-const TITLE =
-  "PumpPilot AI — Best AI Investment App for Crypto Momentum & Paper Trading";
+const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =
-  "PumpPilot AI is the explainable AI investment app for crypto: momentum scanner, paper trading, AI Copilot, backtesting and strict risk controls. Start free — no seed phrases, no live trades by default.";
+  "Explainable AI for crypto: momentum scanner, paper trading, AI coaching and strict risk controls. Start free with demo data — no seed phrases required.";
 
 const faqs = [
   {

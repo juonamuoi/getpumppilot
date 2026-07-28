@@ -1,0 +1,34 @@
+# PumpPilot AI
+
+> Explainable AI for crypto momentum: a market scanner, paper trading, AI coaching, backtesting and strict risk controls. Paper trading is the default and live execution stays locked. All market data shown in the product is mock/demo data. Predictions are probabilistic, returns are not guaranteed, and users can lose all capital.
+
+PumpPilot AI never requests or stores seed phrases or private keys. Wallet connection is read-only and includes phishing/drainer scanning.
+
+## Pages
+
+- [Home](/): What PumpPilot AI is, how explainable momentum scores work, and how to start free.
+- [Pricing](/pricing): Pay-as-you-go credits — no subscription. Credits are spent per prediction, backtest or AI audit.
+- [Scanner](/scanner): Momentum scanner with plain-English reasons for every score.
+- [Paper trading](/paper): Risk-free paper portfolio; live execution is disabled by design.
+- [Backtesting](/backtest): Rehearse strategies against historical demo data.
+- [Strategy builder](/strategy): Build and share rule-based momentum strategies.
+- [Risk controls](/risk): Position sizing, exposure caps and locked live-trading switch.
+- [Security Center](/security): Phishing detection, wallet approval scans and exportable audit logs.
+- [Learn](/learn): Guides on momentum, risk and disciplined investing.
+- [Community](/community): Public strategies you can review and fork.
+- [Developers](/developers): Public API, embeddable momentum widget and MCP agent integration.
+- [Blog](/blog): Guides and comparisons on AI investing.
+
+## Blog
+
+- [Best AI Investment App in 2026](/blog/best-ai-investment-app-2026): An honest comparison of explainability, safety and paper trading.
+- [AI Crypto Trading, Explained](/blog/ai-crypto-trading-explained): How momentum signals work and what realistic returns look like.
+- [Paper Trading vs Live Trading](/blog/paper-trading-vs-live-trading): Why rehearsing first beats learning with real capital.
+- [PumpPilot AI vs Autopilot App](/blog/pumppilot-vs-autopilot-comparison): Explainable momentum versus automated copy trading.
+
+## Optional
+
+- [Risk disclosure](/risk-disclosure): Full statement on probabilistic predictions and capital loss.
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.
+- [Refunds](/refund): Credit refund policy.

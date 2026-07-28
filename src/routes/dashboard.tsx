@@ -98,13 +98,16 @@ function Dashboard() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:items-end sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">
-              <TrendingUp className="h-3.5 w-3.5" /> PumpPilot AI
+              <TrendingUp className="h-3.5 w-3.5" /> PumpPilot AI · {greeting}
             </div>
-            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">{greeting}</h1>
+            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">
+              Your AI investment dashboard
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Spot momentum. Control risk. Trade smarter. Your <Term k="paper trading">paper</Term>{" "}
               portfolio and today's top signals.
             </p>
+
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
@@ -120,7 +123,7 @@ function Dashboard() {
 
         <DisclaimerBanner />
 
-        {/* Stats */}
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Portfolio overview</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Equity"
@@ -138,7 +141,7 @@ function Dashboard() {
           <StatCard label="Positions" value={String(positions.length)} sub="assets held" />
         </div>
 
-        {/* Today's signals — plain English */}
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Market pulse &amp; today's signals</h2>
         <Card className="border-border/60 bg-card/60">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -170,6 +173,7 @@ function Dashboard() {
           <LiveMarket />
         </div>
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">AI coaching</h2>
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
             <CardHeader className="pb-2">
@@ -220,8 +224,8 @@ function Dashboard() {
           </Card>
         </div>
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Holdings &amp; top momentum</h2>
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Portfolio */}
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
               <CardTitle className="flex items-center gap-2 text-base">

@@ -95,7 +95,46 @@ export const BLOG_POSTS: BlogPost[] = [
       { type: "cta", text: "Start paper trading now", href: "/paper", label: "Open paper trading" },
     ],
   },
+  {
+    slug: "pumppilot-vs-autopilot-comparison",
+    title: "PumpPilot AI vs Autopilot App: Explainable Momentum vs Copy Trading",
+    description:
+      "A side-by-side comparison of PumpPilot AI and copy-trading autopilot apps: explainable momentum scores and paper trading first, versus mirroring someone else's trades.",
+    date: "2026-07-28",
+    readMinutes: 7,
+    keywords: [
+      "autopilot app",
+      "autopilot investing app",
+      "copy trading app",
+      "pumppilot vs autopilot",
+      "ai investment app comparison",
+    ],
+    tags: ["Guides", "Comparisons"],
+    body: [
+      { type: "p", text: "Autopilot-style apps became popular by making investing feel effortless: pick someone to follow, and their trades are mirrored into your account. PumpPilot AI takes the opposite route — it shows you why a signal fired and asks you to rehearse it on paper before any capital is at risk. Both are 'automated'; only one is explainable." },
+      { type: "h2", text: "The core difference: copy the trader, or understand the signal" },
+      { type: "p", text: "Copy trading outsources judgement. You inherit another person's timing, position sizing, and risk appetite — including the parts they never explain. PumpPilot AI keeps the decision with you: every momentum score breaks down into the exact rules that fired, the thresholds they cleared, and how close the ones that failed came to passing." },
+      { type: "h2", text: "Side-by-side" },
+      { type: "ul", items: [
+        "Signal source — Autopilot apps: another trader's live positions. PumpPilot AI: rule-based momentum scores you can inspect and tune.",
+        "Explainability — Autopilot apps: usually none beyond a track record. PumpPilot AI: plain-English reasons on every score and alert.",
+        "Default mode — Autopilot apps: real money from day one. PumpPilot AI: paper trading by default, live execution locked.",
+        "Risk controls — Autopilot apps: inherited from whoever you follow. PumpPilot AI: your own exposure caps, position sizing and fragility bounds.",
+        "Rehearsal — Autopilot apps: rarely offered. PumpPilot AI: backtesting plus a trade journal that measures expectancy and profit factor.",
+        "Custody — Autopilot apps: brokerage account linkage. PumpPilot AI: read-only wallet connection, never a seed phrase or private key.",
+      ]},
+      { type: "h2", text: "Why paper-trading-first matters more than automation" },
+      { type: "p", text: "Automation multiplies whatever process you already have. If the process is 'follow a stranger', automation multiplies that risk too. PumpPilot AI's paper-first philosophy exists so you can find out whether a strategy has positive expectancy across at least 100 simulated trades before it can cost you anything." },
+      { type: "quote", text: "An app that can't explain a trade can't teach you to make a better one." },
+      { type: "h2", text: "Where copy trading still makes sense" },
+      { type: "p", text: "If you have no interest in learning market mechanics and are comfortable with the risk of a strategy you can't inspect, copy trading is genuinely lower effort. PumpPilot AI is for the opposite investor: someone who wants the reasoning, the risk numbers and the rehearsal loop." },
+      { type: "h2", text: "Important disclaimer" },
+      { type: "p", text: "PumpPilot AI is educational. All in-app market data is mock/demo data, predictions are probabilistic, returns are not guaranteed, and you can lose all your capital. Nothing here is financial advice." },
+      { type: "cta", text: "Try the explainable approach with 100 free credits", href: "/pricing", label: "Start free" },
+    ],
+  },
 ];
+
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find((p) => p.slug === slug);
