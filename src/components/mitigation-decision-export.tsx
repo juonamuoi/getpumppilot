@@ -257,15 +257,19 @@ export function MitigationDecisionExport<F,>({
     const data = rows();
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     if (kind === "json") {
+      const preset = presets.find((p) => p.id === activePreset);
       const payload = {
         exportedAt: new Date().toISOString(),
         recordCount: data.length,
         fields: selected,
         includesPreviewOnly: includePreviewOnly,
+        preset: preset ? { name: preset.name, savedAt: new Date(preset.savedAt).toISOString() } : null,
+        filters: filters ?? null,
         note: "PumpPilot AI mitigation decisions — simulated/demo data.",
         decisions: data,
       };
       saveBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), `mitigation-decisions-${stamp}.json`);
+
     } else {
       saveBlob(new Blob([toCsv(data)], { type: "text/csv" }), `mitigation-decisions-${stamp}.csv`);
     }
