@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SITE_URL, breadcrumbSchema, webPageSchema, ldScript } from "@/lib/structured-data";
+import { SITE_URL, breadcrumbSchema, legalPageSchema, ldScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/terms")({
     links: [{ rel: "canonical", href: `${SITE_URL}/terms` }],
     scripts: [
       ldScript(
-        webPageSchema({
+        legalPageSchema({
           name: "Terms of Service — PumpPilot AI",
           description:
             "The rules for using PumpPilot AI: educational use only, paper trading by default, and no guarantee of investment returns.",
