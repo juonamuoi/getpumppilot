@@ -3283,8 +3283,10 @@ function MitigationChecklist({
     preview: TuningPreview | null;
   }) => void;
 }) {
-
+  /** Mitigation awaiting explicit confirmation (before/after summary shown first). */
+  const [pendingItem, setPendingItem] = useState<Item | null>(null);
   const meta = RULE_META[ruleKey];
+
   const suggested = tuning.suggested!;
   const alternatives = useSaferAlternatives(result, rules, ruleKey, suggested, bounds);
   const fragilePct = tuning.unlocked ? (tuning.fragile / tuning.unlocked) * 100 : 0;
