@@ -25,6 +25,7 @@ import {
 } from "@/lib/ad-creatives";
 import { trackCtaClick } from "@/lib/funnel";
 import { readUtmSourceMedium, tailorCopy, type TailoredCopy } from "@/lib/utm-copy";
+import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 import {
   COMPLIANCE_FOOTER,
   getVariant,
@@ -91,9 +92,22 @@ function AdLandingVariant() {
     void trackCreativeEvent("impression", assignment);
   }, [v.slug]);
 
+  // Optional lead capture before the visitor starts free.
+  const [leadOpen, setLeadOpen] = useState(false);
+  const [leadPlacement, setLeadPlacement] = useState("hero");
+
   const trackClick = (placement: string) => () => {
     if (assignmentRef.current) void trackCreativeEvent("click", assignmentRef.current);
     void trackCtaClick(placement, v.slug);
+  };
+
+  /** Signed-out visitors see the optional email step first. */
+  const handleCta = (placement: string) => (e: React.MouseEvent) => {
+    trackClick(placement)();
+    if (user) return;
+    e.preventDefault();
+    setLeadPlacement(placement);
+    setLeadOpen(true);
   };
 
   const ctaHref = user ? "/dashboard" : "/auth";
@@ -102,7 +116,11 @@ function AdLandingVariant() {
   const Cta = ({ size = "lg" }: { size?: "lg" | "default" }) => (
     <div className="flex flex-col items-center gap-3">
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button size={size} asChild onClick={trackClick(size === "lg" ? "hero" : "inline")}>
+        <Button
+          size={size}
+          asChild
+          onClick={handleCta(size === "lg" ? "hero" : "inline")}
+        >
           <Link to={ctaHref}>
             {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
@@ -119,6 +137,12 @@ function AdLandingVariant() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <LeadCaptureDialog
+        open={leadOpen}
+        onOpenChange={setLeadOpen}
+        context={{ variant: v.slug, placement: leadPlacement }}
+        destination={ctaHref}
+      />
       <header className="border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
@@ -129,7 +153,7 @@ function AdLandingVariant() {
             />
             <span className="text-sm font-bold tracking-tight">PumpPilot AI</span>
           </Link>
-          <Button size="sm" asChild onClick={trackClick("nav")}>
+          <Button size="sm" asChild onClick={handleCta("nav")}>
             <Link to={ctaHref}>{ctaLabel}</Link>
           </Button>
         </div>
