@@ -2675,6 +2675,14 @@ function MitigationOptionPreview({
  * for each, a one-tap safer action (tighten the threshold, widen the buffer, or
  * adjust the fragility tolerance).
  */
+/** Extra audit context attached to every one-tap mitigation. */
+type MitigationMeta = {
+  mitigation: string;
+  trigger: string;
+  recommendedValue: number;
+  fragilePct?: number;
+};
+
 function MitigationChecklist({
   ruleKey,
   tuning,
@@ -2683,6 +2691,7 @@ function MitigationChecklist({
   bounds,
   onSetBounds,
   onApplyAlternative,
+  onLogBounds,
 }: {
   ruleKey: RuleKey;
   tuning: RuleTuning;
@@ -2690,8 +2699,22 @@ function MitigationChecklist({
   rules: ScannerRules;
   bounds: RiskBounds;
   onSetBounds: (fn: (b: RiskBounds) => RiskBounds) => void;
-  onApplyAlternative: (value: number, preview: TuningPreview | null, label: string) => void;
+  onApplyAlternative: (
+    value: number,
+    preview: TuningPreview | null,
+    label: string,
+    meta: MitigationMeta,
+  ) => void;
+  onLogBounds: (e: {
+    label: string;
+    unit: string;
+    oldValue: number;
+    newValue: number;
+    meta: MitigationMeta;
+    preview: TuningPreview | null;
+  }) => void;
 }) {
+
   const meta = RULE_META[ruleKey];
   const suggested = tuning.suggested!;
   const alternatives = useSaferAlternatives(result, rules, ruleKey, suggested, bounds);
