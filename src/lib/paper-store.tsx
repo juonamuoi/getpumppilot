@@ -177,6 +177,42 @@ export function newCorrelationId(prefix = "MIT") {
   return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
+/** Writes a rule key's threshold onto a ruleset (mutates), keeping its fixed operator. */
+export function applyRuleValue(rules: ScannerRules, key: string, value: number) {
+  if (key === "momentum") rules.minMomentum = value;
+  else if (key === "volume") rules.minVolumeScore = value;
+  else if (key === "volatility") rules.maxVolatility = value;
+  else if (key === "change") rules.min24hChangePct = value;
+}
+
+/** Newest applied, not-yet-reverted mitigation batch, grouped by correlation id. */
+export function findLastMitigation(log: TuningLogEntry[]) {
+  const head = log.find(
+    (e) =>
+      e.source === "mitigation" &&
+      e.kind === "rule" &&
+      e.rule !== "undo" &&
+      e.phase !== "preview" &&
+      !e.revertedAt,
+  );
+  if (!head) return null;
+  const cid = head.correlationId ?? head.id;
+  const entries = log.filter(
+    (e) =>
+      (e.correlationId ?? e.id) === cid &&
+      e.kind === "rule" &&
+      e.rule !== "undo" &&
+      e.phase !== "preview" &&
+      !e.revertedAt,
+  );
+  return {
+    correlationId: cid,
+    ts: head.ts,
+    label: head.mitigation ?? "Mitigation",
+    entries,
+  };
+}
+
 const TUNING_LOG_KEY = "pumppilot_tuning_log";
 
 const Ctx = createContext<State | null>(null);
