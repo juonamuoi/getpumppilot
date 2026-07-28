@@ -468,6 +468,19 @@ export function MitigationDecisionExport<F,>({
             />
             Include preview-only reviews (not applied)
           </label>
+          <label className="flex items-center gap-2">
+            <Checkbox checked={includeSchema} onCheckedChange={(v) => setIncludeSchema(v === true)} />
+            Include column schema file
+          </label>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1.5 text-[11px]"
+            onClick={() => downloadSchema("csv")}
+          >
+            <FileText className="h-3.5 w-3.5" /> Schema only
+          </Button>
+
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setSelected(FIELDS.map((f) => f.key))}>
               Select all
