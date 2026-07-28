@@ -158,6 +158,8 @@ export function RuleImpactPreview({
           </span>
         </div>
 
+        {rows.length > 0 && <BeforeAfterChart rows={rows} />}
+
         {rows.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             No assets in this scope yet — open a paper position or pick another scope.
@@ -231,6 +233,181 @@ function Tile({
       >
         {value}
       </div>
+    </div>
+  );
+}
+
+type Row = {
+  asset: Asset;
+  before: ReturnType<typeof signals>;
+  after: ReturnType<typeof signals>;
+  status: "gained" | "lost" | "same";
+};
+
+const CHECK_LABELS: Record<keyof ReturnType<typeof signals>["checks"], string> = {
+  category: "Asset class",
+  momentum: "Momentum score",
+  volume: "Volume score",
+  volatility: "Volatility cap",
+  change: "24h change",
+};
+
+/** Interactive grouped bar chart: signal strength before vs after, per asset. */
+function BeforeAfterChart({ rows }: { rows: Row[] }) {
+  const [hover, setHover] = useState<{ i: number; x: number; y: number } | null>(null);
+
+  const H = 168;
+  const PAD_T = 12;
+  const PAD_B = 26;
+  const plot = H - PAD_T - PAD_B;
+  const groupW = 100 / rows.length;
+  const barW = Math.min(groupW * 0.34, 6);
+  const yOf = (v: number) => PAD_T + plot - (v / 100) * plot;
+
+  const active = hover ? rows[hover.i] : null;
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs font-medium">Signal strength by asset</span>
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-sm bg-muted-foreground/60" /> Before
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-sm bg-emerald-400" /> After (improved)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-sm bg-rose-400" /> After (reduced)
+          </span>
+        </div>
+      </div>
+
+      <div className="relative">
+        <svg
+          viewBox={`0 0 100 ${H}`}
+          preserveAspectRatio="none"
+          className="h-44 w-full"
+          role="img"
+          aria-label="Before and after signal strength per asset"
+          onMouseLeave={() => setHover(null)}
+        >
+          {[0, 25, 50, 75, 100].map((g) => (
+            <line
+              key={g}
+              x1={0}
+              x2={100}
+              y1={yOf(g)}
+              y2={yOf(g)}
+              stroke="currentColor"
+              strokeWidth={0.3}
+              className="text-border/60"
+            />
+          ))}
+
+          {rows.map((r, i) => {
+            const cx = groupW * i + groupW / 2;
+            const up = r.after.strength >= r.before.strength;
+            return (
+              <g
+                key={r.asset.symbol}
+                onMouseEnter={() => setHover({ i, x: cx, y: 0 })}
+              >
+                <rect
+                  x={groupW * i}
+                  y={0}
+                  width={groupW}
+                  height={H}
+                  fill="transparent"
+                  className={cn(hover?.i === i && "fill-foreground/[0.04]")}
+                />
+                <rect
+                  x={cx - barW - 0.6}
+                  y={yOf(r.before.strength)}
+                  width={barW}
+                  height={plot - (yOf(r.before.strength) - PAD_T)}
+                  rx={0.8}
+                  className="fill-muted-foreground/60"
+                />
+                <rect
+                  x={cx + 0.6}
+                  y={yOf(r.after.strength)}
+                  width={barW}
+                  height={plot - (yOf(r.after.strength) - PAD_T)}
+                  rx={0.8}
+                  className={up ? "fill-emerald-400" : "fill-rose-400"}
+                />
+              </g>
+            );
+          })}
+        </svg>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex">
+          {rows.map((r, i) => (
+            <span
+              key={r.asset.symbol}
+              style={{ width: `${groupW}%` }}
+              className={cn(
+                "truncate px-0.5 text-center text-[9px]",
+                hover?.i === i ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {r.asset.symbol}
+            </span>
+          ))}
+        </div>
+
+        {active && hover && (
+          <div
+            className="pointer-events-none absolute top-1 z-10 w-52 -translate-x-1/2 rounded-md border border-border/70 bg-popover/95 p-2 text-[11px] shadow-lg backdrop-blur"
+            style={{ left: `${Math.min(Math.max(hover.x, 18), 82)}%` }}
+          >
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="font-semibold">{active.asset.symbol}</span>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "h-4 px-1 text-[9px]",
+                  active.status === "gained" && "border-emerald-500/40 text-emerald-300",
+                  active.status === "lost" && "border-rose-500/40 text-rose-300",
+                )}
+              >
+                {active.status === "gained"
+                  ? "New signal"
+                  : active.status === "lost"
+                    ? "Signal lost"
+                    : "Unchanged"}
+              </Badge>
+            </div>
+            <div className="font-mono text-muted-foreground">
+              {active.before.strength}% → {active.after.strength}%
+            </div>
+            <div className="mt-1.5 space-y-0.5">
+              {(Object.keys(CHECK_LABELS) as (keyof typeof CHECK_LABELS)[]).map((k) => {
+                const b = active.before.checks[k];
+                const a = active.after.checks[k];
+                return (
+                  <div key={k} className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">{CHECK_LABELS[k]}</span>
+                    <span
+                      className={cn(
+                        "font-mono",
+                        b !== a ? (a ? "text-emerald-300" : "text-rose-300") : "text-foreground/70",
+                      )}
+                    >
+                      {b ? "pass" : "fail"} → {a ? "pass" : "fail"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-1 text-[10px] text-muted-foreground">
+        Hover a bar pair to see which rule checks changed. Mock/demo data.
+      </p>
     </div>
   );
 }
