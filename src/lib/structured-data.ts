@@ -100,6 +100,32 @@ export function webPageSchema(opts: {
   };
 }
 
+/**
+ * Legal pages (terms, privacy, refunds, risk disclosure).
+ * Emits a WebPage node typed as a LegalPage so crawlers treat it as
+ * policy content rather than ordinary marketing copy.
+ */
+export function legalPageSchema(opts: {
+  name: string;
+  description: string;
+  path: string;
+  /** Only pass an authoritative review date; omit when unknown. */
+  lastReviewed?: string;
+}) {
+  const base = webPageSchema({
+    name: opts.name,
+    description: opts.description,
+    path: opts.path,
+  });
+  return {
+    ...base,
+    additionalType: "https://schema.org/LegalPage",
+    about: { "@id": ORG_ID },
+    reviewedBy: { "@id": ORG_ID },
+    ...(opts.lastReviewed ? { lastReviewed: opts.lastReviewed } : {}),
+  };
+}
+
 export function faqSchema(faqs: { q: string; a: string }[]) {
   return {
     "@context": "https://schema.org",
