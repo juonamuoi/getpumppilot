@@ -97,6 +97,7 @@ type SignalPoint = {
   ts: number;
   label: string;
   rule: string;
+  action: MitigationAction;
   matchDelta: number;
   nearMissDelta: number;
   matchesBefore?: number;
