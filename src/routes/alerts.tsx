@@ -2722,6 +2722,13 @@ function MitigationChecklist({
     hint: string;
     done: boolean;
     action?: { label: string; run: () => void };
+    /** Before/after preview of the option this item offers. */
+    option?: {
+      targetValue?: number;
+      preview: TuningPreview | null;
+      fragilePct?: number;
+      note?: string;
+    };
   };
 
   const items: Item[] = [];
@@ -2738,6 +2745,13 @@ function MitigationChecklist({
           label: `Apply ${safestInBounds.title}`,
           run: () =>
             onApplyAlternative(safestInBounds.value, safestInBounds.preview, "tightened"),
+        }
+      : undefined,
+    option: safestInBounds
+      ? {
+          targetValue: safestInBounds.value,
+          preview: safestInBounds.preview,
+          fragilePct: safestInBounds.fragilePct,
         }
       : undefined,
   });
@@ -2757,6 +2771,14 @@ function MitigationChecklist({
         ? {
             label: `Apply ${buffered.title}`,
             run: () => onApplyAlternative(buffered.value, buffered.preview, "buffered"),
+          }
+        : undefined,
+    option:
+      tuning.avgOtherMinSlack < 2 && buffered
+        ? {
+            targetValue: buffered.value,
+            preview: buffered.preview,
+            fragilePct: buffered.fragilePct,
           }
         : undefined,
   });
@@ -2789,6 +2811,19 @@ function MitigationChecklist({
                 onSetBounds((b) => ({ ...b, maxFragilePct: suggestedTolerance })),
             }
         : undefined,
+    option:
+      bounds.enabled && fragilePct > bounds.maxFragilePct
+        ? lowestFragility && lowestFragility.fragilePct <= bounds.maxFragilePct
+          ? {
+              targetValue: lowestFragility.value,
+              preview: lowestFragility.preview,
+              fragilePct: lowestFragility.fragilePct,
+            }
+          : {
+              preview: null,
+              note: `No signal change — raising tolerance to ${suggestedTolerance}% keeps the pending change (fragility ${fragilePct.toFixed(0)}%, near-miss ${nearMissDelta >= 0 ? "+" : ""}${nearMissDelta}) but accepts more noise.`,
+            }
+        : undefined,
   });
 
   items.push({
@@ -2805,6 +2840,13 @@ function MitigationChecklist({
             label: `Allow +${nearMissDelta}`,
             run: () =>
               onSetBounds((b) => ({ ...b, maxNearMissIncrease: nearMissDelta })),
+          }
+        : undefined,
+    option:
+      bounds.enabled && nearMissDelta > bounds.maxNearMissIncrease
+        ? {
+            preview: null,
+            note: `No signal change — this raises your limit to +${nearMissDelta} so the pending change (near-miss ${tuning.preview?.nearMissAnyBefore ?? 0} → ${tuning.preview?.nearMissAnyAfter ?? 0}) is allowed.`,
           }
         : undefined,
   });
