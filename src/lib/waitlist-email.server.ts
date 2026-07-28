@@ -12,14 +12,19 @@ type Sender = (
   opts: { templateData?: Record<string, unknown>; idempotencyKey?: string },
 ) => Promise<{ sent: boolean; reason?: string }>;
 
+const SEND_MODULE = "@/lib/email-templates/send-email";
+
 async function getSender(): Promise<Sender | null> {
   try {
-    const mod = await import("@/lib/email-templates/send-email");
-    return (mod as unknown as { sendTemplateEmail: Sender }).sendTemplateEmail;
+    const mod = (await import(/* @vite-ignore */ SEND_MODULE)) as unknown as {
+      sendTemplateEmail: Sender;
+    };
+    return mod.sendTemplateEmail;
   } catch {
     return null;
   }
 }
+
 
 export async function sendWaitlistConfirmation(email: string, id: string) {
   const send = await getSender();
