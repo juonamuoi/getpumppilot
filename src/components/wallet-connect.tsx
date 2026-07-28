@@ -27,6 +27,7 @@ import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
 import { scanWallet, shortAddress, type WalletScanResult } from "@/lib/wallet-scan";
 import { Link } from "@tanstack/react-router";
 import { notifyNewThreats } from "@/lib/threat-notify";
+import { runScheduledReportIfDue } from "@/lib/report-schedule";
 import {
   DEMO_WALLET_ADDRESS,
   getWalletMonitor,
@@ -191,6 +192,45 @@ export function WalletConnect() {
     );
     return () => window.clearInterval(id);
   }, [connected, monitor.enabled, effectiveInterval, runScan]);
+
+  // Recurring PDF threat-report export (daily / weekly at a chosen local hour).
+  // Checked once a minute plus immediately on mount so a slot missed while the
+  // app was closed still fires on the next visit.
+  const scheduleKey = JSON.stringify(monitor.reportSchedule);
+  useEffect(() => {
+    if (!connected || monitor.reportSchedule.frequency === "off") return;
+    let cancelled = false;
+
+    const tick = () => {
+      void runScheduledReportIfDue()
+        .then((res) => {
+          if (!res || cancelled) return;
+          const parts: string[] = [];
+          if (res.downloaded) parts.push(`downloaded ${res.filename}`);
+          if (res.emailed) parts.push("emailed to your account");
+          toast.success("Scheduled wallet threat report ready", {
+            description: `${res.threats} flagged approval${res.threats === 1 ? "" : "s"} · ${
+              parts.join(" · ") || "generated"
+            } · ID ${res.correlationId}`,
+            duration: 12000,
+          });
+          if (!res.emailed && res.emailReason) {
+            toast.warning(`Report email not sent — ${res.emailReason}`);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) toast.error("Scheduled threat report failed to generate");
+        });
+    };
+
+    tick();
+    const id = window.setInterval(tick, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+    // scheduleKey captures frequency/hour/weekday/delivery/lastRunAt changes.
+  }, [connected, scheduleKey, monitor.reportSchedule.frequency]);
 
 
   // Verify current origin whenever the dialog opens.

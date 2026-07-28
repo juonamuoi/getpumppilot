@@ -69,7 +69,42 @@ export type WalletMonitorSettings = {
   emailOnNewThreats: boolean;
   /** Attach a signed link to the full PDF threat report in those emails. */
   emailPdfReport: boolean;
+  /** Recurring PDF threat-report export. */
+  reportSchedule: ReportSchedule;
 };
+
+export type ReportFrequency = "off" | "daily" | "weekly";
+export type ReportDelivery = "download" | "email" | "both";
+
+export type ReportSchedule = {
+  frequency: ReportFrequency;
+  /** Local hour of day (0-23) the report is generated. */
+  hour: number;
+  /** Local weekday (0 = Sunday) used when frequency is "weekly". */
+  weekday: number;
+  /** Where the generated report goes. */
+  delivery: ReportDelivery;
+  /** Epoch ms of the last successful run (null if never run). */
+  lastRunAt: number | null;
+};
+
+export const defaultReportSchedule: ReportSchedule = {
+  frequency: "off",
+  hour: 9,
+  weekday: 1,
+  delivery: "download",
+  lastRunAt: null,
+};
+
+export const WEEKDAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
 
 export const MONITOR_INTERVALS = [5, 15, 30, 60] as const;
 
@@ -99,6 +134,7 @@ const defaultMonitor: WalletMonitorSettings = {
   pushOnNewThreats: false,
   emailOnNewThreats: false,
   emailPdfReport: true,
+  reportSchedule: defaultReportSchedule,
 };
 
 function loadMonitor(): WalletMonitorSettings {
@@ -106,7 +142,12 @@ function loadMonitor(): WalletMonitorSettings {
   try {
     const raw = window.localStorage.getItem(MONITOR_KEY);
     if (!raw) return defaultMonitor;
-    return { ...defaultMonitor, ...(JSON.parse(raw) as Partial<WalletMonitorSettings>) };
+    const parsed = JSON.parse(raw) as Partial<WalletMonitorSettings>;
+    return {
+      ...defaultMonitor,
+      ...parsed,
+      reportSchedule: { ...defaultReportSchedule, ...(parsed.reportSchedule ?? {}) },
+    };
   } catch {
     return defaultMonitor;
   }
@@ -147,6 +188,49 @@ export function setWalletInterval(address: string, minutes: number | null) {
   if (minutes === null) delete next[key];
   else next[key] = clampInterval(minutes);
   setWalletMonitor({ walletIntervals: next });
+}
+
+/** Patch the recurring report schedule. */
+export function setReportSchedule(patch: Partial<ReportSchedule>) {
+  setWalletMonitor({ reportSchedule: { ...monitor.reportSchedule, ...patch } });
+}
+
+/**
+ * Next fire time (epoch ms) for a schedule, in local time.
+ * Returns null when the schedule is off.
+ */
+export function nextReportRunAt(
+  schedule: ReportSchedule,
+  from: number = Date.now(),
+): number | null {
+  if (schedule.frequency === "off") return null;
+  const hour = Math.min(23, Math.max(0, Math.round(schedule.hour)));
+  const base = new Date(from);
+  const candidate = new Date(base);
+  candidate.setHours(hour, 0, 0, 0);
+
+  if (schedule.frequency === "daily") {
+    if (candidate.getTime() <= from) candidate.setDate(candidate.getDate() + 1);
+    return candidate.getTime();
+  }
+
+  const weekday = Math.min(6, Math.max(0, Math.round(schedule.weekday)));
+  let delta = (weekday - candidate.getDay() + 7) % 7;
+  if (delta === 0 && candidate.getTime() <= from) delta = 7;
+  candidate.setDate(candidate.getDate() + delta);
+  return candidate.getTime();
+}
+
+/** True when the schedule's most recent slot has passed without a run. */
+export function isReportDue(schedule: ReportSchedule, now: number = Date.now()): boolean {
+  if (schedule.frequency === "off") return false;
+  // The previous slot is the next slot one period earlier.
+  const next = nextReportRunAt(schedule, now);
+  if (next === null) return false;
+  const period = schedule.frequency === "daily" ? 86_400_000 : 7 * 86_400_000;
+  const previousSlot = next - period;
+  if (previousSlot > now) return false;
+  return (schedule.lastRunAt ?? 0) < previousSlot;
 }
 
 export function useWalletMonitor(): WalletMonitorSettings {

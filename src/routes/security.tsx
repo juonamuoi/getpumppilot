@@ -77,6 +77,7 @@ import {
 
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
 import { WalletScanTimeline } from "@/components/wallet-scan-timeline";
+import { ScheduledReportCard } from "@/components/scheduled-report-card";
 import { shortAddress } from "@/lib/wallet-scan";
 
 export const Route = createFileRoute("/security")({
@@ -1296,6 +1297,7 @@ function WalletRescanCard() {
         </div>
       </div>
       <ThreatAlertChannels />
+      <ScheduledReportCard />
       <WalletThreatDialog
         open={open}
 
