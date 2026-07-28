@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Upload, FileUp, Trash2, AlertTriangle } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Upload, FileUp, Trash2, AlertTriangle, Download, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,22 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
-import { parseMitigationExport, type ImportResult } from "@/lib/mitigation-import";
+import {
+  parseMitigationExport,
+  buildErrorReportCsv,
+  buildErrorReportJson,
+  type ImportResult,
+} from "@/lib/mitigation-import";
+
+function download(name: string, mime: string, body: string) {
+  const url = URL.createObjectURL(new Blob([body], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 
 /**
  * Upload a previously exported mitigation CSV/JSON file and load the records
@@ -49,16 +64,38 @@ export function MitigationImport({
     }
   };
 
+  const counts = useMemo(() => {
+    if (!result) return null;
+    const errors = result.issues.filter((i) => i.level === "error").length;
+    const warnings = result.issues.filter((i) => i.level === "warning").length;
+    return { errors, warnings, clean: result.entries.length - result.warned };
+  }, [result]);
+
+  const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const downloadReport = (kind: "csv" | "json") => {
+    if (!result) return;
+    if (kind === "csv") {
+      download(`mitigation-import-errors-${stamp()}.csv`, "text/csv;charset=utf-8", buildErrorReportCsv(result));
+    } else {
+      download(`mitigation-import-errors-${stamp()}.json`, "application/json", buildErrorReportJson(result));
+    }
+    toast.success("Error report downloaded");
+  };
+
   const confirm = () => {
     if (!result || result.entries.length === 0) return;
     onImport(result.entries);
     toast.success(`Imported ${result.entries.length} mitigation record(s)`, {
-      description: "Loaded into the audit trail for review — marked as imported, not applied.",
+      description:
+        result.skipped > 0 || result.warned > 0
+          ? `${result.skipped} skipped, ${result.warned} imported with warnings — download the report for details.`
+          : "Loaded into the audit trail for review — marked as imported, not applied.",
     });
     setResult(null);
     setFileName("");
     setOpen(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -122,18 +159,24 @@ export function MitigationImport({
 
         {result && (
           <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {[
+                { label: "Rows in file", value: result.total },
+                { label: "Imported", value: result.entries.length },
+                { label: "With warnings", value: result.warned },
+                { label: "Skipped", value: result.skipped },
+              ].map((s) => (
+                <div key={s.label} className="rounded-md border border-border/60 bg-muted/20 p-2">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+                  <p className="font-mono text-sm">{s.value}</p>
+                </div>
+              ))}
+            </div>
+
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <Badge variant="secondary" className="text-[10px] uppercase">
                 {result.format}
               </Badge>
-              <Badge variant="secondary" className="text-[10px]">
-                {result.entries.length} record{result.entries.length === 1 ? "" : "s"}
-              </Badge>
-              {result.skipped > 0 && (
-                <Badge variant="outline" className="text-[10px]">
-                  {result.skipped} skipped
-                </Badge>
-              )}
               {result.range && (
                 <span className="text-muted-foreground">
                   {format(result.range.from, "d MMM yyyy HH:mm")} →{" "}
@@ -154,6 +197,87 @@ export function MitigationImport({
                 ))}
               </ul>
             )}
+
+            {counts && result.issues.length === 0 ? (
+              <div className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/10 p-2.5 text-[11px] text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                Every record parsed cleanly — no warnings or errors.
+              </div>
+            ) : (
+              counts && (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 px-2.5 py-2">
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                      <span>
+                        {counts.errors} error{counts.errors === 1 ? "" : "s"} · {counts.warnings}{" "}
+                        warning{counts.warnings === 1 ? "" : "s"} across{" "}
+                        {new Set(result.issues.map((i) => i.row)).size} record(s)
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-[11px]"
+                        onClick={() => downloadReport("csv")}
+                      >
+                        <Download className="h-3 w-3" /> Report CSV
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-[11px]"
+                        onClick={() => downloadReport("json")}
+                      >
+                        <Download className="h-3 w-3" /> JSON
+                      </Button>
+                    </div>
+                  </div>
+                  <ScrollArea className="max-h-44">
+                    <table className="w-full text-[11px]">
+                      <thead className="sticky top-0 bg-muted/50 text-muted-foreground">
+                        <tr>
+                          <th className="px-2 py-1.5 text-left font-medium">Row</th>
+                          <th className="px-2 py-1.5 text-left font-medium">Level</th>
+                          <th className="px-2 py-1.5 text-left font-medium">Field</th>
+                          <th className="px-2 py-1.5 text-left font-medium">Detail</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.issues.slice(0, 200).map((i, idx) => (
+                          <tr key={`${i.row}-${i.code}-${idx}`} className="border-t border-border/40">
+                            <td className="px-2 py-1.5 font-mono text-muted-foreground">
+                              {i.row}
+                              {i.line ? ` (L${i.line})` : ""}
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <Badge
+                                variant={i.level === "error" ? "destructive" : "outline"}
+                                className="text-[9px] uppercase"
+                              >
+                                {i.level}
+                              </Badge>
+                            </td>
+                            <td className="px-2 py-1.5 font-mono text-muted-foreground">
+                              {i.field ?? "—"}
+                            </td>
+                            <td className="px-2 py-1.5">{i.message}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </ScrollArea>
+                  {result.issues.length > 200 && (
+                    <p className="px-2.5 py-1.5 text-[10px] text-muted-foreground">
+                      Showing first 200 of {result.issues.length} issues — download the report for the
+                      full list.
+                    </p>
+                  )}
+                </div>
+              )
+            )}
+
 
             <ScrollArea className="max-h-56 rounded-md border border-border/60">
               <table className="w-full text-[11px]">
