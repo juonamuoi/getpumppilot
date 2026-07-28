@@ -2,8 +2,23 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { BLOG_POSTS, getPostBySlug, type BlogBlock } from "@/lib/blog-posts";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  SITE_URL as BASE,
+  ORG_ID,
+  WEBSITE_ID,
+  LOGO_URL,
+  breadcrumbSchema,
+  ldScript,
+} from "@/lib/structured-data";
 
-const BASE = "https://crypto-spotter-pro.lovable.app";
+/** Rough word count from the block body — powers Article `wordCount`. */
+function countWords(blocks: BlogBlock[]) {
+  return blocks.reduce((sum, b) => {
+    const text =
+      b.type === "ul" ? b.items.join(" ") : "text" in b ? b.text : "";
+    return sum + text.trim().split(/\s+/).filter(Boolean).length;
+  }, 0);
+}
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: ({ params }) => {
@@ -30,22 +45,37 @@ export const Route = createFileRoute("/blog/$slug")({
         { name: "twitter:description", content: post.description },
       ],
       links: [{ rel: "canonical", href: url }],
-      scripts: [{
-        type: "application/ld+json",
-        children: JSON.stringify({
+      scripts: [
+        ldScript({
           "@context": "https://schema.org",
           "@type": "BlogPosting",
+          "@id": `${url}#article`,
           headline: post.title,
           description: post.description,
           datePublished: post.date,
-          author: { "@type": "Organization", name: "PumpPilot AI" },
-          publisher: { "@type": "Organization", name: "PumpPilot AI" },
-          mainEntityOfPage: url,
+          dateModified: post.date,
+          author: { "@id": ORG_ID },
+          publisher: { "@id": ORG_ID },
+          image: { "@type": "ImageObject", url: LOGO_URL },
+          mainEntityOfPage: { "@type": "WebPage", "@id": url },
+          isPartOf: { "@id": `${BASE}/blog#blog` },
+          url,
+          inLanguage: "en",
           keywords: post.keywords.join(", "),
+          articleSection: post.tags,
+          wordCount: countWords(post.body),
+          timeRequired: `PT${post.readMinutes}M`,
         }),
-      }],
+        ldScript(
+          breadcrumbSchema([
+            { name: "Blog", path: "/blog" },
+            { name: post.title, path: `/blog/${params.slug}` },
+          ]),
+        ),
+      ],
     };
   },
+
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
