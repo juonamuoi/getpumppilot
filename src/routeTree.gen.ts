@@ -23,6 +23,7 @@ import { Route as GoLiveTestRouteImport } from './routes/go-live-test'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as McpConsoleRouteImport } from './routes/mcp-console'
 import { Route as PaperRouteImport } from './routes/paper'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -117,6 +118,11 @@ const LearnRoute = LearnRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpConsoleRoute = McpConsoleRouteImport.update({
+  id: '/mcp-console',
+  path: '/mcp-console',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaperRoute = PaperRouteImport.update({
@@ -265,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/mcp': typeof McpRoute
+  '/mcp-console': typeof McpConsoleRoute
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/mcp': typeof McpRoute
+  '/mcp-console': typeof McpConsoleRoute
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
   '/mcp': typeof McpRoute
+  '/mcp-console': typeof McpConsoleRoute
   '/paper': typeof PaperRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -391,6 +400,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/mcp'
+    | '/mcp-console'
     | '/paper'
     | '/pricing'
     | '/privacy'
@@ -432,6 +442,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/mcp'
+    | '/mcp-console'
     | '/paper'
     | '/pricing'
     | '/privacy'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/learn'
     | '/mcp'
+    | '/mcp-console'
     | '/paper'
     | '/pricing'
     | '/privacy'
@@ -515,6 +527,7 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRoute
   LearnRoute: typeof LearnRoute
   McpRoute: typeof McpRoute
+  McpConsoleRoute: typeof McpConsoleRoute
   PaperRoute: typeof PaperRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -639,6 +652,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp-console': {
+      id: '/mcp-console'
+      path: '/mcp-console'
+      fullPath: '/mcp-console'
+      preLoaderRoute: typeof McpConsoleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/paper': {
@@ -845,6 +865,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRoute,
   LearnRoute: LearnRoute,
   McpRoute: McpRoute,
+  McpConsoleRoute: McpConsoleRoute,
   PaperRoute: PaperRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,

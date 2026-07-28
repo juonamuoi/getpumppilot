@@ -19,6 +19,7 @@ import {
   Zap,
   Gift,
   Settings as SettingsIcon,
+  TerminalSquare,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -46,6 +47,7 @@ const nav = [
   { to: "/learn", label: "Learn", icon: BookOpen },
   { to: "/refer", label: "Invite & earn", icon: Gift },
   { to: "/pricing", label: "Pricing", icon: Zap },
+  { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
