@@ -3173,6 +3173,8 @@ function TuningConfirmDialog({
             bounds={bounds}
             onSetBounds={onSetBounds}
             onApplyAlternative={onApplyAlternative}
+            onLogBounds={onLogBounds}
+
           />
         </div>
 
