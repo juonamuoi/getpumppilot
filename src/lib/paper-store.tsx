@@ -89,6 +89,8 @@ export type TuningLogEntry = {
   nearMissAfter?: number;
   /** Set once this change has been rolled back. */
   revertedAt?: number;
+  /** Optional user-entered reason captured at rollback time. */
+  revertReason?: string;
 };
 
 type State = {
@@ -113,7 +115,7 @@ type State = {
   toggleAlert: (id: string) => void;
   setScannerRules: (r: ScannerRules) => void;
   logTuning: (e: Omit<TuningLogEntry, "id" | "ts">) => string;
-  markTuningReverted: (id: string) => void;
+  markTuningReverted: (id: string, reason?: string) => void;
   clearTuningLog: () => void;
   simulateScannerRun: () => number; // returns count of new deliveries
   clearDeliveries: () => void;
@@ -330,9 +332,13 @@ export function PaperProvider({ children }: { children: ReactNode }) {
       setTuningLog((prev) => [{ ...e, id, ts: Date.now() }, ...prev].slice(0, 200));
       return id;
     },
-    markTuningReverted: (id) =>
+    markTuningReverted: (id, reason) =>
       setTuningLog((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, revertedAt: Date.now() } : e)),
+        prev.map((e) =>
+          e.id === id
+            ? { ...e, revertedAt: Date.now(), ...(reason ? { revertReason: reason } : {}) }
+            : e,
+        ),
       ),
     clearTuningLog: () => setTuningLog([]),
     simulateScannerRun,
