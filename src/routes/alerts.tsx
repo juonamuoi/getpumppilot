@@ -4770,8 +4770,14 @@ function ReplayPanel() {
                   else if (k === "volatility") next.maxVolatility = value;
                   else next.min24hChangePct = value;
                   setScannerRules(next);
+                  const previewEntry = meta.previewId
+                    ? tuningLog.find((t) => t.id === meta.previewId)
+                    : undefined;
+                  const corrId = previewEntry?.correlationId ?? newCorrelationId();
                   const id = logTuning({
+                    correlationId: corrId,
                     source: meta.mitigation ? "mitigation" : "recommendation",
+
                     kind: "rule",
                     rule: k,
                     ruleLabel: RULE_META[k].short,
