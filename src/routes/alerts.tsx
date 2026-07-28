@@ -69,7 +69,10 @@ import {
   type AlertDelivery,
   type ScannerRules,
   type TuningLogEntry,
+
 } from "@/lib/paper-store";
+import { TuningAuditExport } from "@/components/tuning-audit-export";
+
 import { toast } from "sonner";
 import {
   RuleImpactPreview,
@@ -1597,11 +1600,13 @@ function TuningHistoryPanel({
               {batch.length > 1 ? ` (${batch.length})` : ""}
             </Button>
           )}
+          <TuningAuditExport log={log} />
           {log.length > 0 && (
             <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onClear}>
               Clear
             </Button>
           )}
+
         </div>
       </div>
 
