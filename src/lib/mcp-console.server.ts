@@ -120,7 +120,7 @@ export type ConsoleRun = {
   durationMs: number;
   isError: boolean;
   text: string;
-  structured: unknown;
+  structuredJson: string;
 };
 
 export async function runConsoleTool(opts: {
@@ -146,7 +146,7 @@ export async function runConsoleTool(opts: {
       durationMs: Date.now() - startedAt,
       isError: false,
       text: JSON.stringify(sanitize(payload), null, 2),
-      structured: sanitize(payload),
+      structuredJson: JSON.stringify(sanitize(payload), null, 2),
     };
   }
 
@@ -168,6 +168,6 @@ export async function runConsoleTool(opts: {
     durationMs: Date.now() - startedAt,
     isError: Boolean(raw.isError),
     text: String(sanitize(raw.content?.[0]?.text ?? "")),
-    structured: sanitize(structured),
+    structuredJson: JSON.stringify(sanitize(structured), null, 2),
   };
 }
