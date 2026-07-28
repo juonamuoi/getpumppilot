@@ -262,6 +262,24 @@ export function MitigationImpactTimeline() {
 
   const activeFilters = wallets.length + tokens.length;
 
+  // Exports exactly the filtered view (wallets, tokens, time range).
+  const exportTimeline = (fmt: "csv" | "json") => {
+    const filters = {
+      range,
+      rangeLabel: RANGES.find((r) => r.key === range)!.label,
+      from: cutoff || null,
+      to: Date.now(),
+      wallets,
+      tokens,
+    };
+    const body =
+      fmt === "csv"
+        ? buildTimelineCsv(filters, riskPoints, signalPoints)
+        : buildTimelineJson(filters, riskPoints, signalPoints);
+    downloadTimelineExport(body, fmt);
+  };
+
+
   return (
     <Card>
       <CardHeader className="pb-3">
