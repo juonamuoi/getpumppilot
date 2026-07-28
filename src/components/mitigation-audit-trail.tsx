@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -150,12 +152,37 @@ function UndoLastMitigationBar() {
  * shown in its confirmation dialog and the alert outcome it produced, all tied
  * together by a correlation ID.
  */
-export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
+export function MitigationAuditTrail({
+  log,
+  focusCorrelationId,
+}: {
+  log: TuningLogEntry[];
+  focusCorrelationId?: string;
+}) {
   const paper = usePaper();
   const [q, setQ] = useState("");
   const [outcome, setOutcome] = useState<OutcomeFilter>("all");
   const [range, setRange] = useState<RangeFilter>("all");
-  const [correlationIds, setCorrelationIds] = useState<string[]>([]);
+  const [correlationIds, setCorrelationIds] = useState<string[]>(
+    focusCorrelationId ? [focusCorrelationId] : [],
+  );
+  const focusRef = useRef<HTMLDivElement | null>(null);
+
+  // A deep link from the impact timeline focuses one correlation batch:
+  // filter to it, show previews, and scroll it into view.
+  useEffect(() => {
+    if (!focusCorrelationId) return;
+    setCorrelationIds([focusCorrelationId]);
+    setRange("all");
+    setOutcome("all");
+    setQ("");
+    const t = window.setTimeout(
+      () => focusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      120,
+    );
+    return () => window.clearTimeout(t);
+  }, [focusCorrelationId]);
+
   const [saved, setSaved] = useState<SavedAuditFilter[]>(loadSavedFilters);
   const [filterName, setFilterName] = useState("");
 
@@ -490,8 +517,18 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
           </p>
         ) : (
           <div className="space-y-2">
-            {entries.map((e) => (
-              <div key={e.id} className="rounded-md border border-border/60 bg-card/40 p-3">
+            {entries.map((e, i) => {
+              const focused = !!focusCorrelationId && e.correlationId === focusCorrelationId;
+              return (
+              <div
+                key={e.id}
+                ref={focused && i === 0 ? focusRef : undefined}
+                className={cn(
+                  "rounded-md border border-border/60 bg-card/40 p-3",
+                  focused && "border-primary/60 ring-1 ring-primary/40",
+                )}
+              >
+
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-[10px]">
                     {e.phase === "preview" ? "Preview only" : "Applied"}
@@ -600,7 +637,9 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
+
           </div>
         )}
       </CardContent>

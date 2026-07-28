@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Activity, ShieldAlert, Filter, X } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Activity, ShieldAlert, Filter, X, ExternalLink } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -105,9 +107,34 @@ function TokenChip({
   );
 }
 
+/**
+ * Deep link from a timeline marker to the exact preview + reviewed mitigation
+ * entries for that correlation ID in the audit trail.
+ */
+function CorrelationLink({ id }: { id: string }) {
+  return (
+    <Link
+      to="/alerts"
+      search={{ tab: "replay", audit: id }}
+      className="inline-flex items-center gap-1 font-mono text-[10px] text-primary underline-offset-2 hover:underline"
+      title="Open the matching audit entries"
+    >
+      {id}
+      <ExternalLink className="h-3 w-3" />
+    </Link>
+  );
+}
+
 export function MitigationImpactTimeline() {
+
   const runs = useScanHistory();
   const { tuningLog } = usePaper();
+  const navigate = useNavigate();
+  const openAudit = (id?: string) => {
+    if (!id) return;
+    navigate({ to: "/alerts", search: { tab: "replay", audit: id } });
+  };
+
 
   const [range, setRange] = useState<RangeKey>("7d");
   const [wallets, setWallets] = useState<string[]>([]);
@@ -365,8 +392,10 @@ export function MitigationImpactTimeline() {
                     className="cursor-pointer"
                     onMouseEnter={() => setHover({ kind: "risk", point: p })}
                     onMouseLeave={() => setHover(null)}
+                    onClick={() => openAudit(p.correlationId)}
                   />
                 ))}
+
 
                 {/* signal delta baseline */}
                 <line
@@ -394,6 +423,8 @@ export function MitigationImpactTimeline() {
                   return (
                     <g
                       key={`${p.correlationId ?? "sig"}-${i}`}
+                      onClick={() => openAudit(p.correlationId)}
+
                       className="cursor-pointer"
                       onMouseEnter={() => setHover({ kind: "signal", point: p })}
                       onMouseLeave={() => setHover(null)}
@@ -487,9 +518,8 @@ export function MitigationImpactTimeline() {
                     {hover.point.threats === 1 ? "" : "s"} · $
                     {Math.round(hover.point.valueAtRisk).toLocaleString()} at risk
                   </div>
-                  <div className="font-mono text-[10px] text-muted-foreground">
-                    {hover.point.correlationId}
-                  </div>
+                  <CorrelationLink id={hover.point.correlationId} />
+
                 </div>
               )}
               {hover?.kind === "signal" && (
@@ -529,10 +559,9 @@ export function MitigationImpactTimeline() {
                     </div>
                   )}
                   {hover.point.correlationId && (
-                    <div className="font-mono text-[10px] text-muted-foreground">
-                      {hover.point.correlationId}
-                    </div>
+                    <CorrelationLink id={hover.point.correlationId} />
                   )}
+
                 </div>
               )}
             </div>

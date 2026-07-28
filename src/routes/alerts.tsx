@@ -94,6 +94,11 @@ const ALL_STATUSES: StatusKey[] = ["delivered", "muted", "failed"];
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 export const Route = createFileRoute("/alerts")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: typeof search.tab === "string" ? search.tab : undefined,
+    audit: typeof search.audit === "string" ? search.audit : undefined,
+  }),
+
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/alerts" }],
     meta: [
@@ -117,6 +122,11 @@ export const Route = createFileRoute("/alerts")({
 function AlertsPage() {
   const { tuningLog } = usePaper();
   useNearMissRiskAlerts(tuningLog);
+  const { tab: tabParam } = Route.useSearch();
+  const [tab, setTab] = useState(tabParam ?? "rules");
+  useEffect(() => {
+    if (tabParam) setTab(tabParam);
+  }, [tabParam]);
   return (
     <AppShell>
       <div className="space-y-5">
@@ -128,7 +138,8 @@ function AlertsPage() {
         </div>
         <DisclaimerBanner />
 
-        <Tabs defaultValue="rules">
+        <Tabs value={tab} onValueChange={setTab}>
+
           <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="rules" className="flex-1 sm:flex-none">
               Scanner rules
@@ -4307,7 +4318,9 @@ function loadAuto(): AutoConfig {
 
 
 function ReplayPanel() {
+  const { audit: auditFocus } = Route.useSearch();
   const {
+
     scannerRules,
     setScannerRules,
     tuningLog,
@@ -5003,7 +5016,7 @@ function ReplayPanel() {
                 }
               />
 
-              <MitigationAuditTrail log={tuningLog} />
+              <MitigationAuditTrail log={tuningLog} focusCorrelationId={auditFocus} />
 
               <TuningHistoryPanel
 
