@@ -635,7 +635,9 @@ export function MitigationAuditTrail({
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
+
           </div>
         )}
       </CardContent>
