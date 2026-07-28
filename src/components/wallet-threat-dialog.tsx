@@ -20,11 +20,15 @@ import {
   Radar,
   CheckCircle2,
   FileDown,
+  ChevronDown,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import { exportWalletReportPdf } from "@/lib/wallet-report-pdf";
 import {
   revokeApproval,
   shortAddress,
+  PHISHING_ADDRESSES,
   type ApprovalRisk,
   type WalletApproval,
   type WalletScanResult,
@@ -39,6 +43,114 @@ const RISK_STYLE: Record<ApprovalRisk, string> = {
 
 const usd = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+const REVOKE_GUIDES = [
+  { label: "Revoke.cash — revoke approvals", href: "https://revoke.cash/" },
+  { label: "Etherscan token approval checker", href: "https://etherscan.io/tokenapprovalchecker" },
+  {
+    label: "MetaMask: how to revoke smart contract allowances",
+    href: "https://support.metamask.io/privacy-and-security/how-to-revoke-smart-contract-allowances-token-approvals/",
+  },
+];
+
+function since(ts: number) {
+  const mins = Math.max(1, Math.round((Date.now() - ts) / 60000));
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-baseline gap-2">
+      <span className="w-28 shrink-0 opacity-70">{label}</span>
+      <span className="min-w-0 flex-1 break-all">{children}</span>
+    </div>
+  );
+}
+
+function ThreatContext({ approval: t }: { approval: WalletApproval }) {
+  const [open, setOpen] = useState(false);
+  const blocklist = PHISHING_ADDRESSES[t.spender];
+
+  return (
+    <div className="mt-2 rounded-md border border-current/20 bg-background/30">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-[11px] font-semibold"
+      >
+        Full threat context
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="space-y-2 border-t border-current/15 px-2 py-2 text-[11px] leading-relaxed">
+          <div className="space-y-1">
+            <Row label="Spender">
+              <span className="font-mono">{t.spender}</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-1 h-5 px-1"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(t.spender);
+                  toast.success("Spender address copied");
+                }}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </Row>
+            <Row label="Known as">{t.spenderLabel}</Row>
+            <Row label="Token">{t.token}</Row>
+            <Row label="Approval scope">
+              {t.allowance === null
+                ? "Unlimited — spender may move the entire current and future balance of this token"
+                : `Capped at ${t.allowance} ${t.token}`}
+            </Row>
+            <Row label="Value at risk">{usd(t.valueAtRiskUsd)} (demo estimate)</Row>
+            <Row label="Granted">
+              {new Date(t.approvedAt).toLocaleString()} · {since(t.approvedAt)}
+            </Row>
+            <Row label="Matched rules">
+              <span className="font-mono">{t.rules.join(" · ")}</span>
+            </Row>
+            {t.correlationId && (
+              <Row label="Finding ID">
+                <span className="font-mono">{t.correlationId}</span>
+              </Row>
+            )}
+            {blocklist && <Row label="Blocklist">{blocklist}</Row>}
+          </div>
+
+          <div className="rounded border border-current/20 p-2">
+            <div className="font-semibold">How to revoke</div>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-4 opacity-90">
+              <li>Revoking sends an <span className="font-mono">approve(spender, 0)</span> transaction — it never moves your funds.</li>
+              <li>You pay only network gas; no one should ever ask for a seed phrase to revoke.</li>
+              <li>Confirm the spender address above matches the one shown in your wallet prompt.</li>
+            </ol>
+            <div className="mt-2 space-y-1">
+              {REVOKE_GUIDES.map((g) => (
+                <a
+                  key={g.href}
+                  href={g.href}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="flex items-center gap-1 underline underline-offset-2 hover:opacity-80"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {g.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function WalletThreatDialog({
   open,
