@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type ScannerRules } from "@/lib/paper-store";
 import { cn } from "@/lib/utils";
+import { RuleBacktestPanel } from "@/components/rule-backtest-panel";
+
 
 type Asset = (typeof ASSETS)[number];
 
@@ -239,6 +241,16 @@ export function RuleImpactPreview({
         </div>
 
         {rows.length > 0 && <BeforeAfterChart rows={rows} />}
+
+        {rows.length > 0 && (
+          <RuleBacktestPanel
+            before={change.before}
+            after={change.after}
+            assets={scoped}
+            scopeLabel={SCOPES.find((s) => s.key === scope)?.label ?? "All mock assets"}
+          />
+        )}
+
 
         {rows.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
