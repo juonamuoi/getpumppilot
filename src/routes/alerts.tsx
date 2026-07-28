@@ -94,6 +94,11 @@ const ALL_STATUSES: StatusKey[] = ["delivered", "muted", "failed"];
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 export const Route = createFileRoute("/alerts")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: typeof search.tab === "string" ? search.tab : undefined,
+    audit: typeof search.audit === "string" ? search.audit : undefined,
+  }),
+
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/alerts" }],
     meta: [
