@@ -19,6 +19,8 @@ export type TimelineSignalRow = {
   ts: number;
   label: string;
   rule: string;
+  /** single | bulk | risk-bounds */
+  action?: string;
   matchDelta: number;
   nearMissDelta: number;
   matchesBefore?: number;
