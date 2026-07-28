@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { Download, FileJson, FileSpreadsheet } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -137,21 +138,104 @@ function saveBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function MitigationDecisionExport({
+/* ------------------------------ presets ------------------------------ */
+
+const PRESETS_KEY = "pumppilot_export_presets";
+
+export type ExportPreset<F = unknown> = {
+  id: string;
+  name: string;
+  fields: string[];
+  includePreviewOnly: boolean;
+  /** Snapshot of the audit-trail filter scope active when the preset was saved. */
+  filters?: F;
+  savedAt: number;
+};
+
+function loadPresets(): ExportPreset[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(PRESETS_KEY);
+    return raw ? (JSON.parse(raw) as ExportPreset[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function MitigationDecisionExport<F,>({
   log,
   label = "Export decisions",
+  filters,
+  onApplyFilters,
 }: {
   log: TuningLogEntry[];
   label?: string;
+  /** Current filter scope, stored with a preset so it can be restored. */
+  filters?: F;
+  /** Called when a preset with a stored filter scope is applied. */
+  onApplyFilters?: (filters: F) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(DEFAULT_FIELDS);
   const [includePreviewOnly, setIncludePreviewOnly] = useState(true);
+  const [presets, setPresets] = useState<ExportPreset<F>[]>(() => loadPresets() as ExportPreset<F>[]);
+  const [presetName, setPresetName] = useState("");
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+
+  const persistPresets = (next: ExportPreset<F>[]) => {
+    setPresets(next);
+    try {
+      window.localStorage.setItem(PRESETS_KEY, JSON.stringify(next));
+    } catch {}
+  };
+
+  const savePreset = () => {
+    const name = presetName.trim();
+    if (!name) {
+      toast.error("Name your export preset first");
+      return;
+    }
+    if (selected.length === 0) {
+      toast.error("Select at least one field to save");
+      return;
+    }
+    const existing = presets.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    const preset: ExportPreset<F> = {
+      id: existing?.id ?? `${Date.now()}`,
+      name,
+      fields: selected,
+      includePreviewOnly,
+      filters,
+      savedAt: Date.now(),
+    };
+    persistPresets(existing ? presets.map((p) => (p.id === existing.id ? preset : p)) : [...presets, preset]);
+    setActivePreset(preset.id);
+    setPresetName("");
+    toast.success(existing ? `Updated preset "${name}"` : `Saved preset "${name}"`, {
+      description: `${selected.length} fields${filters ? " · filter scope included" : ""}`,
+    });
+  };
+
+  const applyPreset = (p: ExportPreset<F>) => {
+    setSelected(p.fields.filter((k) => FIELDS.some((f) => f.key === k)));
+    setIncludePreviewOnly(p.includePreviewOnly);
+    setActivePreset(p.id);
+    if (p.filters && onApplyFilters) onApplyFilters(p.filters);
+    toast.success(`Applied preset "${p.name}"`, {
+      description: p.filters && onApplyFilters ? "Fields, toggle and filter scope restored" : "Fields and toggle restored",
+    });
+  };
+
+  const deletePreset = (id: string) => {
+    persistPresets(presets.filter((p) => p.id !== id));
+    if (activePreset === id) setActivePreset(null);
+  };
 
   const decisions = useMemo(() => {
     const all = buildDecisions(log);
     return includePreviewOnly ? all : all.filter((d) => !!d.applied);
   }, [log, includePreviewOnly]);
+
 
   const rows = (): MitigationDecisionRow[] =>
     decisions.map((d) => {
@@ -174,15 +258,19 @@ export function MitigationDecisionExport({
     const data = rows();
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
     if (kind === "json") {
+      const preset = presets.find((p) => p.id === activePreset);
       const payload = {
         exportedAt: new Date().toISOString(),
         recordCount: data.length,
         fields: selected,
         includesPreviewOnly: includePreviewOnly,
+        preset: preset ? { name: preset.name, savedAt: new Date(preset.savedAt).toISOString() } : null,
+        filters: filters ?? null,
         note: "PumpPilot AI mitigation decisions — simulated/demo data.",
         decisions: data,
       };
       saveBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), `mitigation-decisions-${stamp}.json`);
+
     } else {
       saveBlob(new Blob([toCsv(data)], { type: "text/csv" }), `mitigation-decisions-${stamp}.csv`);
     }
@@ -211,7 +299,59 @@ export function MitigationDecisionExport({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="space-y-2 rounded-md border border-border/60 bg-muted/10 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Saved export presets
+            </p>
+            <span className="text-[10px] text-muted-foreground">
+              Fields · preview-only toggle{filters ? " · filter scope" : ""}
+            </span>
+          </div>
+          {presets.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              No presets yet — configure your export below, then name and save it.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {presets.map((p) => (
+                <span
+                  key={p.id}
+                  className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] ${
+                    activePreset === p.id ? "border-primary/60 bg-primary/10" : "border-border/60 bg-muted/20"
+                  }`}
+                >
+                  <button type="button" className="hover:underline" onClick={() => applyPreset(p)}>
+                    {p.name}
+                  </button>
+                  <span className="text-muted-foreground">({p.fields.length})</span>
+                  <button
+                    type="button"
+                    aria-label={`Delete preset ${p.name}`}
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => deletePreset(p.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Input
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              placeholder="Preset name (e.g. Weekly compliance export)"
+              className="h-8 text-xs"
+            />
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={savePreset}>
+              <Save className="h-3.5 w-3.5" /> Save preset
+            </Button>
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 bg-muted/20 p-3 text-xs">
+
           <Badge variant="secondary" className="text-[10px]">
             {decisions.length} decision{decisions.length === 1 ? "" : "s"}
           </Badge>

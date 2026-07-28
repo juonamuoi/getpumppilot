@@ -558,7 +558,11 @@ export function MitigationAuditTrail({
           </div>
           <div className="flex gap-2">
             <MitigationRetentionSettings />
-            <MitigationDecisionExport log={exportEntries} />
+            <MitigationDecisionExport
+              log={exportEntries}
+              filters={current}
+              onApplyFilters={applyFilter}
+            />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
               Quick CSV
             </Button>
