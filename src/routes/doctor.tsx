@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
+import { useCredits } from "@/hooks/useCredits";
+import { CREDIT_COSTS } from "@/lib/credits";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
@@ -60,12 +62,21 @@ function DoctorPage() {
   const paper = usePaper();
   const { state: onb } = useOnboarding();
   const run = useServerFn(analyzePortfolio);
+  const { spend } = useCredits();
 
   const [report, setReport] = useState<DoctorReport | null>(null);
   const [meta, setMeta] = useState<{ ok: boolean; error?: string } | null>(null);
 
   const mut = useMutation({
     mutationFn: async () => {
+      const charge = await spend("doctor_audit", { description: "Portfolio Doctor audit" });
+      if (!charge.ok) {
+        throw new Error(
+          charge.reason === "insufficient_credits"
+            ? `Out of credits — the Doctor is paused. This audit needs ${CREDIT_COSTS.doctor_audit} credits, you have ${charge.balance}. Recharge on the Pricing page.`
+            : "Could not charge credits. Try again.",
+        );
+      }
       const positions = paper.positions.map((p) => {
         const a = getAsset(p.symbol)!;
         return {

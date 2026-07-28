@@ -42,6 +42,7 @@ function CopilotPage() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const { spend } = useCredits();
 
   function buildCtx() {
     const lines = positions.map((p) => {
