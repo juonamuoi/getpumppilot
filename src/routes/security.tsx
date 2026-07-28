@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { AlertFilterCard } from "@/components/alert-filter-card";
 import { NotificationDeliveryLog } from "@/components/notification-delivery-log";
 import { NotificationHistory } from "@/components/notification-history";
 import { Checkbox } from "@/components/ui/checkbox";
