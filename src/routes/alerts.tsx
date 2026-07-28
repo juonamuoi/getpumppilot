@@ -3025,7 +3025,17 @@ function TuningConfirmDialog({
     value: number,
     preview: TuningPreview | null,
     label: string,
+    meta: MitigationMeta,
   ) => void;
+  onLogBounds: (e: {
+    label: string;
+    unit: string;
+    oldValue: number;
+    newValue: number;
+    meta: MitigationMeta;
+    preview: TuningPreview | null;
+  }) => void;
+
   onCancel: () => void;
   onConfirm: () => void;
 }) {
