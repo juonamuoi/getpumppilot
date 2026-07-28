@@ -2899,9 +2899,24 @@ function MitigationChecklist({
       bounds.enabled && nearMissDelta > bounds.maxNearMissIncrease
         ? {
             label: `Allow +${nearMissDelta}`,
-            run: () =>
-              onSetBounds((b) => ({ ...b, maxNearMissIncrease: nearMissDelta })),
+            run: () => {
+              onSetBounds((b) => ({ ...b, maxNearMissIncrease: nearMissDelta }));
+              onLogBounds({
+                label: "Near-miss increase limit",
+                unit: "",
+                oldValue: bounds.maxNearMissIncrease,
+                newValue: nearMissDelta,
+                preview: tuning.preview,
+                meta: {
+                  mitigation: `Allow near-miss increase of +${nearMissDelta}`,
+                  trigger: triggerText,
+                  recommendedValue: suggested,
+                  fragilePct,
+                },
+              });
+            },
           }
+
         : undefined,
     option:
       bounds.enabled && nearMissDelta > bounds.maxNearMissIncrease
