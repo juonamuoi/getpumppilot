@@ -7,8 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  SITE_URL as BASE,
+  ORG_ID,
+  LOGO_URL,
+  breadcrumbSchema,
+  ldScript,
+} from "@/lib/structured-data";
 
-const BASE = "https://getpumppilot.app";
 
 const IFRAME_SNIPPET = `<iframe
   src="${BASE}/embed/momentum?limit=5&theme=dark"
