@@ -52,7 +52,9 @@ export async function requestPushPermission(): Promise<PushPermission> {
   }
 }
 
-async function showPush(title: string, body: string, tag: string) {
+type PushResult = { ok: boolean; reason?: string };
+
+async function showPush(title: string, body: string, tag: string): Promise<PushResult> {
   if (isNativeApp()) {
     try {
       const { LocalNotifications } = await import("@capacitor/local-notifications");
@@ -67,13 +69,15 @@ async function showPush(title: string, body: string, tag: string) {
           },
         ],
       });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, reason: e instanceof Error ? e.message : "push failed" };
     }
   }
-  if (typeof window === "undefined" || !("Notification" in window)) return false;
-  if (Notification.permission !== "granted") return false;
+  if (typeof window === "undefined" || !("Notification" in window))
+    return { ok: false, reason: "unsupported" };
+  if (Notification.permission === "denied") return { ok: false, reason: "permission_denied" };
+  if (Notification.permission !== "granted") return { ok: false, reason: "permission_default" };
   try {
     const n = new Notification(title, {
       body,
@@ -86,11 +90,12 @@ async function showPush(title: string, body: string, tag: string) {
       window.location.href = "/security";
       n.close();
     };
-    return true;
-  } catch {
-    return false;
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: e instanceof Error ? e.message : "push failed" };
   }
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Copy                                                                */
