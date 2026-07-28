@@ -81,6 +81,7 @@ import {
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
 import { WalletReportPreviewDialog } from "@/components/wallet-report-preview";
 import { WalletScanTimeline } from "@/components/wallet-scan-timeline";
+import { MitigationImpactTimeline } from "@/components/mitigation-impact-timeline";
 import { ScheduledReportCard } from "@/components/scheduled-report-card";
 import { shortAddress } from "@/lib/wallet-scan";
 
@@ -124,6 +125,8 @@ function SecurityPage() {
         <WalletRescanCard />
 
         <WalletScanTimeline />
+
+        <MitigationImpactTimeline />
 
         <div className="grid gap-3 sm:grid-cols-3">
           <StatusTile
