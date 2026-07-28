@@ -397,6 +397,11 @@ export function MitigationImpactTimeline() {
           </div>
         ) : (
           <>
+            <TimelineAggregateSummary
+              riskPoints={riskPoints}
+              signalPoints={signalPoints}
+            />
+
             <div className="overflow-x-auto">
               <svg
                 viewBox={`0 0 ${W} ${H}`}
