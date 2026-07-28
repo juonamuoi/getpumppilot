@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Copy, Share2, Twitter, Mail, MessageCircle, Gift, Users, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 
-const BASE = "https://getpumppilot.app";
+const BASE = "https://www.getpumppilot.app";
 
 export const Route = createFileRoute("/refer")({
   head: () => ({
