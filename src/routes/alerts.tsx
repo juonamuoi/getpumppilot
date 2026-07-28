@@ -4946,10 +4946,12 @@ function ReplayPanel() {
                       ? tuningLog.find((t) => t.id === e.previewId)?.ts
                       : undefined,
                   });
+                  const boundsOutcome = recordMitigationOutcome(boundsCorrId, scannerRules);
                   toast.success(`${e.label} updated to ${e.newValue}${e.unit}`, {
-                    description: `Logged to the tuning audit trail (was ${e.oldValue}${e.unit}).`,
+                    description: `Logged (was ${e.oldValue}${e.unit}) — outcome ${boundsOutcome.status} (${boundsOutcome.delivered} alerts) · ${boundsCorrId}`,
                   });
                 }}
+
                 onLogMitigationPreview={(p) =>
                   logTuning({
                     source: "mitigation",
