@@ -61,7 +61,7 @@ export function McpRateLimits({ userId, agentIds }: { userId: string; agentIds: 
   const load = useCallback(async () => {
     setLoading(true);
     const [e, o, a] = await Promise.all([
-      supabase.rpc("mcp_effective_limits", { _user_id: userId, _client_id: null }),
+      supabase.rpc("mcp_effective_limits", { _user_id: userId, _client_id: undefined }),
       supabase
         .from("mcp_agent_rate_limits")
         .select("client_id, call_limit, updated_at")
@@ -106,10 +106,10 @@ export function McpRateLimits({ userId, agentIds }: { userId: string; agentIds: 
     if (!eff) return;
     setSaving(true);
     const { data, error } = await supabase.rpc("mcp_set_rate_limits", {
-      _account_limit: Number(accountLimit) || null,
-      _client_limit: Number(clientLimit) || null,
-      _window_seconds: Number(windowSeconds) || null,
-      _reason: reason.trim() || null,
+      _account_limit: Number(accountLimit) || undefined,
+      _client_limit: Number(clientLimit) || undefined,
+      _window_seconds: Number(windowSeconds) || undefined,
+      _reason: reason.trim() || undefined,
     });
     setSaving(false);
     if (error || !(data as { ok?: boolean } | null)?.ok) {
@@ -149,8 +149,8 @@ export function McpRateLimits({ userId, agentIds }: { userId: string; agentIds: 
     setSaving(true);
     const { error } = await supabase.rpc("mcp_set_agent_rate_limit", {
       _client_id: clientId,
-      _call_limit: clear ? null : (value as number),
-      _reason: reason.trim() || null,
+      _call_limit: clear ? (undefined as unknown as number) : (value as number),
+      _reason: reason.trim() || undefined,
     });
     setSaving(false);
     if (error) {
