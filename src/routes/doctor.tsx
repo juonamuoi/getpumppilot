@@ -69,14 +69,7 @@ function DoctorPage() {
 
   const mut = useMutation({
     mutationFn: async () => {
-      const charge = await spend("doctor_audit", { description: "Portfolio Doctor audit" });
-      if (!charge.ok) {
-        throw new Error(
-          charge.reason === "insufficient_credits"
-            ? `Out of credits — the Doctor is paused. This audit needs ${CREDIT_COSTS.doctor_audit} credits, you have ${charge.balance}. Recharge on the Pricing page.`
-            : "Could not charge credits. Try again.",
-        );
-      }
+      // Credits are charged server-side inside analyzePortfolio.
       const positions = paper.positions.map((p) => {
         const a = getAsset(p.symbol)!;
         return {

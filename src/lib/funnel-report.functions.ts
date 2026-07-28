@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-guard";
 
 export type FunnelReportRow = {
   source: string;
@@ -22,7 +23,8 @@ export const getFunnelReport = createServerFn({ method: "POST" })
   .inputValidator((input: { days?: number }) => ({
     days: Math.min(Math.max(Number(input?.days ?? 30), 1), 365),
   }))
-  .handler(async ({ data }): Promise<FunnelReportRow[]> => {
+  .handler(async ({ data, context }): Promise<FunnelReportRow[]> => {
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin.rpc("ad_funnel_report", {
       _days: data.days,
