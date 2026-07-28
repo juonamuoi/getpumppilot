@@ -369,9 +369,70 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     setScannerRules,
     logTuning: (e) => {
       const id = Math.random().toString(36).slice(2);
-      setTuningLog((prev) => [{ ...e, id, ts: Date.now() }, ...prev].slice(0, 200));
+      setTuningLog((prev) =>
+        [
+          { correlationId: e.correlationId ?? newCorrelationId(), ...e, id, ts: Date.now() },
+          ...prev,
+        ].slice(0, 200),
+      );
       return id;
     },
+    recordMitigationOutcome: (correlationId, rulesOverride) => {
+      const rules = rulesOverride ?? scannerRules;
+      const channels: AlertDelivery["channel"][] = [];
+      if (rules.channels.inApp) channels.push("in-app");
+      if (rules.channels.email) channels.push("email");
+      if (rules.channels.push) channels.push("push");
+
+      const matches = ASSETS.filter((a) => {
+        if (!rules.includeMajors && a.category === "major") return false;
+        if (!rules.includeDemoSmallCaps && a.category === "demo-smallcap") return false;
+        return (
+          a.momentum.total >= rules.minMomentum &&
+          a.momentum.volume >= rules.minVolumeScore &&
+          a.momentum.volatility <= rules.maxVolatility &&
+          a.change24h >= rules.min24hChangePct
+        );
+      });
+
+      const ts = Date.now();
+      const created: AlertDelivery[] =
+        channels.length === 0
+          ? []
+          : matches.map((a, i) => ({
+              id: `${ts}-${a.symbol}-${i}-${correlationId}`,
+              ts,
+              symbol: a.symbol,
+              rule: `Mitigation check · Momentum ≥ ${rules.minMomentum} · Vol ≥ ${rules.minVolumeScore} · 24h ≥ ${rules.min24hChangePct}%`,
+              channel: channels[i % channels.length],
+              status: "delivered" as const,
+              detail: `${a.symbol} momentum ${a.momentum.total}, 24h ${a.change24h >= 0 ? "+" : ""}${a.change24h.toFixed(2)}% (${correlationId})`,
+              correlationId,
+            }));
+
+      if (created.length > 0) setDeliveries((prev) => [...created, ...prev]);
+
+      const outcome: MitigationOutcome = {
+        ts,
+        correlationId,
+        matched: matches.length,
+        delivered: created.length,
+        symbols: matches.map((a) => a.symbol),
+        channels,
+        status:
+          channels.length === 0
+            ? "channels-muted"
+            : matches.length === 0
+              ? "no-matches"
+              : "alerts-fired",
+      };
+
+      setTuningLog((prev) =>
+        prev.map((e) => (e.correlationId === correlationId ? { ...e, outcome } : e)),
+      );
+      return outcome;
+    },
+
     markTuningReverted: (id, reason) =>
       setTuningLog((prev) =>
         prev.map((e) =>
