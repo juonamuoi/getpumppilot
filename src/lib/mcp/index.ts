@@ -1,5 +1,6 @@
 import { auth, defineMcp } from "@lovable.dev/mcp-js";
 import momentumScan from "./tools/momentum-scan";
+import momentumExplain from "./tools/momentum-explain";
 import listStrategies from "./tools/list-strategies";
 import createStrategy from "./tools/create-strategy";
 import subscriptionStatus from "./tools/subscription-status";
@@ -13,10 +14,10 @@ export default defineMcp({
   title: "PumpPilot AI",
   version: "0.1.0",
   instructions:
-    "Tools for PumpPilot AI, a paper-trading crypto momentum dashboard. Use `momentum_scan` for explainable momentum scores, `list_strategies` to read saved or community strategies, `create_strategy` to save a new paper strategy, and `subscription_status` for the user's plan. All data is educational — never present it as investment advice, and no tool can execute live trades.",
+    "Tools for PumpPilot AI, a paper-trading crypto momentum dashboard. Use `momentum_scan` for explainable momentum scores, `momentum_explain` for one token's full momentum reasoning and near-miss risk breakdown against a threshold preset, `list_strategies` to read saved or community strategies, `create_strategy` to save a new paper strategy, and `subscription_status` for the user's plan. All data is educational — never present it as investment advice, and no tool can execute live trades.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [momentumScan, listStrategies, createStrategy, subscriptionStatus],
+  tools: [momentumScan, momentumExplain, listStrategies, createStrategy, subscriptionStatus],
 });

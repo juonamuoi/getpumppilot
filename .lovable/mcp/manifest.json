@@ -44,6 +44,63 @@
         "outputSchema": null
       },
       {
+        "name": "momentum_explain",
+        "title": "Explain momentum & near-miss risk",
+        "description": "Return the full explainable momentum reasoning for one token (component scores, plain-English drivers) plus a per-rule pass/fail and near-miss risk breakdown against a scanner threshold preset (conservative, balanced, aggressive) or custom thresholds. Educational data only — not investment advice.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "description": "Ticker of the token to explain, e.g. BTC or DEMO1."
+            },
+            "preset": {
+              "description": "Threshold preset to evaluate against. Defaults to balanced.",
+              "type": "string",
+              "enum": [
+                "conservative",
+                "balanced",
+                "aggressive"
+              ]
+            },
+            "thresholds": {
+              "description": "Optional overrides applied on top of the preset.",
+              "type": "object",
+              "properties": {
+                "minMomentum": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "minVolumeScore": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "maxVolatility": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "min24hChangePct": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "required": [
+            "symbol"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
         "name": "list_strategies",
         "title": "List strategies",
         "description": "List the signed-in user's saved PumpPilot strategies, or browse the public community feed.",
