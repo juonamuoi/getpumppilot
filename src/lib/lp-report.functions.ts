@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdmin } from "@/lib/admin-guard";
 
 export type LpVariantReportRow = {
   variant: string;
@@ -19,7 +20,8 @@ export const getLpVariantReport = createServerFn({ method: "POST" })
   .inputValidator((input: { days?: number }) => ({
     days: Math.min(Math.max(Number(input?.days ?? 30), 1), 365),
   }))
-  .handler(async ({ data }): Promise<LpVariantReportRow[]> => {
+  .handler(async ({ data, context }): Promise<LpVariantReportRow[]> => {
+    await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin.rpc("lp_variant_report", {
       _days: data.days,

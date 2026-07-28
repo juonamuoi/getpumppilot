@@ -61,20 +61,13 @@ function CopilotPage() {
     const q = (text ?? input).trim();
     if (!q || busy) return;
     setBusy(true);
-    const charge = await spend("copilot_message", { description: "Copilot answer" });
-    if (!charge.ok) {
-      setBusy(false);
-      toast.error(
-        charge.reason === "insufficient_credits"
-          ? `Out of credits — the Copilot is paused. Needs ${CREDIT_COSTS.copilot_message}, you have ${charge.balance}.`
-          : "Could not charge credits. Try again.",
-      );
-      return;
-    }
+    // Credits are charged server-side inside askCopilot so a direct API call
+    // cannot use the AI gateway for free.
     setInput("");
     setMsgs((m) => [...m, { role: "user", content: q }]);
     try {
       const res = await askCopilot({ data: { prompt: `${buildCtx()}\n\nUser: ${q}` } });
+      if (!res.ok) toast.error(res.error);
       const reply = res.ok ? res.content : `⚠️ ${res.error}`;
       setMsgs((m) => [...m, { role: "assistant", content: reply || "(no response)" }]);
     } catch (e) {

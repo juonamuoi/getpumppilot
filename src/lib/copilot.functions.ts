@@ -1,14 +1,37 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { CREDIT_COSTS } from "@/lib/credits";
 
 const Input = z.object({
   prompt: z.string().min(1).max(6000),
   system: z.string().max(4000).optional(),
 });
 
+/**
+ * Signed-in users only, and metered server-side: the credit charge happens here
+ * so a direct POST cannot burn the paid AI gateway for free.
+ */
 export const askCopilot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { data: charge, error: chargeError } = await context.supabase.rpc("consume_credits", {
+      _amount: CREDIT_COSTS.copilot_message,
+      _feature: "copilot_message",
+      _description: "Copilot answer",
+    });
+    const chargeResult = (charge ?? {}) as { ok?: boolean; reason?: string; balance?: number };
+    if (chargeError || !chargeResult.ok) {
+      return {
+        ok: false as const,
+        error:
+          chargeResult.reason === "insufficient_credits"
+            ? `Out of credits — the Copilot is paused. This answer needs ${CREDIT_COSTS.copilot_message} credits, you have ${chargeResult.balance ?? 0}.`
+            : "Could not charge credits. Try again.",
+      };
+    }
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
