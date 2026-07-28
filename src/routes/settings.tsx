@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
+import { McpAuditExport } from "@/components/mcp-audit-export";
 import { toast } from "sonner";
 import {
   Bot,
