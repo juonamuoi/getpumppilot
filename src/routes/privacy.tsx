@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SITE_URL, breadcrumbSchema, webPageSchema, ldScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -16,6 +17,21 @@ export const Route = createFileRoute("/privacy")({
         content:
           "What PumpPilot AI collects, how wallet scan data is handled, and why we never request seed phrases or private keys.",
       },
+      { property: "og:type", content: "article" },
+      { property: "og:url", content: `${SITE_URL}/privacy` },
+      { name: "twitter:card", content: "summary" },
+    ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/privacy` }],
+    scripts: [
+      ldScript(
+        webPageSchema({
+          name: "Privacy Policy — PumpPilot AI",
+          description:
+            "What PumpPilot AI collects, how wallet scan data is handled, and why we never request seed phrases or private keys.",
+          path: "/privacy",
+        }),
+      ),
+      ldScript(breadcrumbSchema([{ name: "Privacy Policy", path: "/privacy" }])),
     ],
   }),
   component: PrivacyPage,
