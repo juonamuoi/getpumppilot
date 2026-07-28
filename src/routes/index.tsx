@@ -27,6 +27,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAuth } from "@/lib/auth-store";
+import { WaitlistForm } from "@/components/waitlist-form";
+
 
 const SITE_URL = "https://crypto-spotter-pro.lovable.app";
 const TITLE =
