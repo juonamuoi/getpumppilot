@@ -161,6 +161,66 @@ function UndoLastMitigationBar() {
   );
 }
 
+/** Generic checkbox multi-select used for token / wallet / alert-type scoping. */
+function MultiFilter({
+  label,
+  options,
+  selected,
+  onToggle,
+  onClear,
+  emptyText,
+  mono,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  onClear: () => void;
+  emptyText: string;
+  mono?: boolean;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="outline" className="h-8 text-xs">
+          <Filter className="mr-1 h-3 w-3" />
+          {label}
+          {selected.length > 0 ? ` (${selected.length})` : ": all"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-2" align="start">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs font-medium">Scope export to {label.toLowerCase()}</span>
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={onClear}>
+            Select all
+          </Button>
+        </div>
+        <ScrollArea className="h-48 pr-2">
+          {options.length === 0 ? (
+            <p className="p-2 text-xs text-muted-foreground">{emptyText}</p>
+          ) : (
+            <div className="space-y-1">
+              {options.map((opt) => (
+                <label
+                  key={opt}
+                  className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 hover:bg-muted/50"
+                >
+                  <Checkbox
+                    checked={selected.includes(opt)}
+                    onCheckedChange={() => onToggle(opt)}
+                  />
+                  <span className={cn("text-[11px]", mono && "font-mono")}>{opt}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+
 /**
  * Mitigation audit trail: every one-tap mitigation with the before/after deltas
 
