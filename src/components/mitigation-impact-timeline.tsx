@@ -487,9 +487,8 @@ export function MitigationImpactTimeline() {
                     {hover.point.threats === 1 ? "" : "s"} · $
                     {Math.round(hover.point.valueAtRisk).toLocaleString()} at risk
                   </div>
-                  <div className="font-mono text-[10px] text-muted-foreground">
-                    {hover.point.correlationId}
-                  </div>
+                  <CorrelationLink id={hover.point.correlationId} />
+
                 </div>
               )}
               {hover?.kind === "signal" && (
