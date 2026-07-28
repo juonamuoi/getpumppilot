@@ -1579,8 +1579,60 @@ function TuningHistoryPanel({
   onRollbackLast: (batch: TuningLogEntry[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const shown = expanded ? log : log.slice(0, 5);
+  const [query, setQuery] = useState("");
+  const [ruleFilter, setRuleFilter] = useState("all");
+  const [opFilter, setOpFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [scopeFilter, setScopeFilter] = useState("all");
+  const [rangeFilter, setRangeFilter] = useState("all");
+
+  const ruleOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const e of log) m.set(e.rule, e.ruleLabel);
+    return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [log]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const cutoff =
+      rangeFilter === "all"
+        ? 0
+        : Date.now() -
+          { "24h": 864e5, "7d": 6048e5, "30d": 2592e6 }[rangeFilter as "24h" | "7d" | "30d"];
+    return log.filter((e) => {
+      if (e.ts < cutoff) return false;
+      if (ruleFilter !== "all" && e.rule !== ruleFilter) return false;
+      if (opFilter !== "all" && e.operator !== opFilter) return false;
+      if (sourceFilter !== "all" && (e.source ?? "manual-save") !== sourceFilter) return false;
+      if (scopeFilter !== "all" && (e.scope ?? "both") !== scopeFilter) return false;
+      if (!q) return true;
+      return [
+        e.ruleLabel,
+        e.rule,
+        e.preset,
+        e.window ?? "",
+        e.source ?? "manual-save",
+        e.scope ?? "",
+        `${e.oldValue}${e.unit}`,
+        `${e.newValue}${e.unit}`,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [log, query, ruleFilter, opFilter, sourceFilter, scopeFilter, rangeFilter]);
+
+  const filtersActive =
+    query.trim() !== "" ||
+    ruleFilter !== "all" ||
+    opFilter !== "all" ||
+    sourceFilter !== "all" ||
+    scopeFilter !== "all" ||
+    rangeFilter !== "all";
+
+  const shown = expanded ? filtered : filtered.slice(0, 5);
   const batch = useMemo(() => lastTuningBatch(log), [log]);
+
 
   return (
     <div className="rounded-md border border-border/60 bg-muted/10 p-3">
