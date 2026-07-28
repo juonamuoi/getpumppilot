@@ -595,6 +595,33 @@ export function MitigationAuditTrail({
             </PopoverContent>
           </Popover>
 
+          <MultiFilter
+            label="Tokens"
+            emptyText="No tokens in alert outcomes yet."
+            options={availableTokens}
+            selected={tokens}
+            onToggle={toggleIn(setTokens)}
+            onClear={() => setTokens([])}
+          />
+          <MultiFilter
+            label="Wallets"
+            emptyText="No scanned wallets yet."
+            options={availableWallets}
+            selected={wallets}
+            onToggle={toggleIn(setWallets)}
+            onClear={() => setWallets([])}
+            mono
+          />
+          <MultiFilter
+            label="Alert type"
+            emptyText="No alert deliveries yet."
+            options={availableAlertTypes}
+            selected={alertTypes}
+            onToggle={toggleIn(setAlertTypes)}
+            onClear={() => setAlertTypes([])}
+          />
+
+
           <Button
             size="sm"
             variant="ghost"
