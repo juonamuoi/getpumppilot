@@ -371,5 +371,11 @@ export function WalletThreatDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+      <WalletReportPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        result={result}
+      />
+    </>
   );
 }

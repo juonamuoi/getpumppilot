@@ -76,6 +76,7 @@ import {
 } from "@/lib/wallet-session";
 
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
+import { WalletReportPreviewDialog } from "@/components/wallet-report-preview";
 import { WalletScanTimeline } from "@/components/wallet-scan-timeline";
 import { ScheduledReportCard } from "@/components/scheduled-report-card";
 import { shortAddress } from "@/lib/wallet-scan";
@@ -1292,6 +1293,7 @@ function WalletRescanCard() {
         result={scan}
         onRevoked={() => {}}
       />
+      <WalletReportPreviewDialog open={previewOpen} onOpenChange={setPreviewOpen} result={scan} />
     </Card>
   );
 }
