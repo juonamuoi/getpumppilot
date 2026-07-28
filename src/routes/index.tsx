@@ -255,14 +255,9 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "canonical", href: SITE_URL }],
     scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(productSchema),
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(faqSchema),
-      },
+      ldScript(homeWebPageSchema),
+      ldScript(productSchema),
+      ldScript(homeFaqSchema),
     ],
   }),
   component: LandingPage,
