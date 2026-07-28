@@ -1759,6 +1759,8 @@ function TuningHistoryPanel({
                 <SelectItem value="manual-save">Manual save</SelectItem>
                 <SelectItem value="recommendation">Recommendation</SelectItem>
                 <SelectItem value="auto">Automated</SelectItem>
+                <SelectItem value="mitigation">Mitigation</SelectItem>
+
               </SelectContent>
             </Select>
             <Select value={scopeFilter} onValueChange={setScopeFilter}>
