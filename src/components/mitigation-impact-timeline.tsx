@@ -214,18 +214,41 @@ export function MitigationImpactTimeline() {
   }, [runs, cutoff, wallets, tokens]);
 
   const signalPoints = useMemo<SignalPoint[]>(() => {
-    return tuningLog
-      .filter((e): e is TuningLogEntry => e.source === "mitigation" && e.phase !== "preview")
+    const applied = tuningLog.filter(
+      (e): e is TuningLogEntry => e.source === "mitigation" && e.phase !== "preview",
+    );
+    // A correlation id shared by several rule changes means the mitigation was
+    // applied as a bulk batch; a bounds change is its own action type.
+    const batchSize = new Map<string, number>();
+    applied.forEach((e) => {
+      if (!e.correlationId) return;
+      batchSize.set(e.correlationId, (batchSize.get(e.correlationId) ?? 0) + 1);
+    });
+    const actionOf = (e: TuningLogEntry): MitigationAction =>
+      e.kind === "bounds"
+        ? "risk-bounds"
+        : (e.correlationId ? (batchSize.get(e.correlationId) ?? 1) : 1) > 1
+          ? "bulk"
+          : "single";
+
+    return applied
       .filter((e) => e.ts >= cutoff)
       .filter((e) => {
         if (tokens.length === 0) return true;
         const syms = e.outcome?.symbols ?? [];
         return syms.length === 0 ? false : syms.some((s) => tokens.includes(s));
       })
+      .filter((e) => actions.length === 0 || actions.includes(actionOf(e)))
+      .filter((e) => {
+        if (outcomes.length === 0) return true;
+        const status = e.outcome?.status;
+        return status ? outcomes.includes(status) : false;
+      })
       .map((e) => ({
         ts: e.appliedAt ?? e.ts,
         label: e.mitigation ?? "Mitigation",
         rule: `${e.ruleLabel} ${e.operator} ${e.newValue}${e.unit}`,
+        action: actionOf(e),
         matchDelta: (e.matchesAfter ?? 0) - (e.matchesBefore ?? 0),
         nearMissDelta: (e.nearMissAfter ?? 0) - (e.nearMissBefore ?? 0),
         matchesBefore: e.matchesBefore,
@@ -237,7 +260,7 @@ export function MitigationImpactTimeline() {
         outcome: e.outcome?.status,
       }))
       .sort((a, b) => a.ts - b.ts);
-  }, [tuningLog, cutoff, tokens]);
+  }, [tuningLog, cutoff, tokens, actions, outcomes]);
 
   const hasData = riskPoints.length > 0 || signalPoints.length > 0;
 
