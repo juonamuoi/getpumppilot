@@ -151,13 +151,15 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
             </p>
           </div>
           <div className="flex gap-2">
+            <MitigationDecisionExport log={log} />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
-              Export CSV
+              Quick CSV
             </Button>
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("json")}>
-              Export JSON
+              Quick JSON
             </Button>
           </div>
+
         </div>
         <div className="flex flex-wrap gap-2">
           <Input
