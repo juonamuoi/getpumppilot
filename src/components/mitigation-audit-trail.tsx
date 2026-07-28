@@ -434,25 +434,48 @@ export function MitigationAuditTrail({
 
   const download = (kind: "csv" | "json") => {
     const data = rows();
+    const filters = exportFilters();
     if (data.length === 0) {
       toast.error("Nothing to export — no mitigation entries match the current filters");
       return;
     }
     let blob: Blob;
     if (kind === "json") {
-      blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      blob = new Blob(
+        [
+          JSON.stringify(
+            {
+              export: "mitigation-audit-trail",
+              generatedAt: new Date().toISOString(),
+              dataSource: "demo/mock data — not financial advice",
+              filters,
+              recordCount: data.length,
+              records: data,
+            },
+            null,
+            2,
+          ),
+        ],
+        { type: "application/json" },
+      );
     } else {
+      const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const meta = Object.entries(filters)
+        .map(([k, v]) => [cell(k), cell(Array.isArray(v) ? v.join(" | ") : v)].join(","))
+        .join("\n");
       const headers = Object.keys(data[0]);
       const csv = [
+        `${cell("filter")},${cell("value")}`,
+        meta,
+        "",
         headers.join(","),
         ...data.map((r) =>
-          headers
-            .map((h) => `"${String((r as Record<string, unknown>)[h] ?? "").replace(/"/g, '""')}"`)
-            .join(","),
+          headers.map((h) => cell((r as Record<string, unknown>)[h])).join(","),
         ),
       ].join("\n");
       blob = new Blob([csv], { type: "text/csv" });
     }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
