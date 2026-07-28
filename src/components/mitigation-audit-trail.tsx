@@ -19,6 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
+import { useScanHistory } from "@/lib/wallet-session";
+
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
