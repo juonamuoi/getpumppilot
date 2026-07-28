@@ -776,6 +776,11 @@ export function MitigationAuditTrail({
                   <Badge variant="outline" className="text-[10px]">
                     {e.phase === "preview" ? "Preview only" : "Applied"}
                   </Badge>
+                  {isImportedEntry(e) && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      Imported
+                    </Badge>
+                  )}
                   <span className="text-sm font-medium">{e.mitigation}</span>
                   <span className="text-xs text-muted-foreground">
                     {e.ruleLabel} {e.operator === ">=" ? "≥" : "≤"}{" "}
@@ -860,8 +865,13 @@ export function MitigationAuditTrail({
                       size="sm"
                       variant="outline"
                       className="h-6 px-2 text-[10px]"
+                      disabled={isImportedEntry(e)}
                       onClick={() => replay(e)}
-                      title="Re-run this mitigation with the same parameters"
+                      title={
+                        isImportedEntry(e)
+                          ? "Imported records are review-only and cannot be replayed"
+                          : "Re-run this mitigation with the same parameters"
+                      }
                     >
                       <RotateCw className="mr-1 h-3 w-3" />
                       Replay
