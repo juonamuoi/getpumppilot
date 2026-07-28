@@ -2771,7 +2771,13 @@ function MitigationChecklist({
       ? {
           label: `Apply ${safestInBounds.title}`,
           run: () =>
-            onApplyAlternative(safestInBounds.value, safestInBounds.preview, "tightened"),
+            onApplyAlternative(safestInBounds.value, safestInBounds.preview, "tightened", {
+              mitigation: `Tighten filter — ${safestInBounds.title}`,
+              trigger: triggerText,
+              recommendedValue: suggested,
+              fragilePct: safestInBounds.fragilePct,
+            }),
+
         }
       : undefined,
     option: safestInBounds
