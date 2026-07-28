@@ -92,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Premium crypto dashboard with explainable momentum scores, market scanner, paper trading, backtesting and strict risk controls. Demo data only.",
       },
       { name: "author", content: "PumpPilot AI" },
-      { property: "og:title", content: "PumpPilot AI" },
+      { property: "og:title", content: "PumpPilot AI — Explainable Crypto Momentum & Paper Trading" },
       {
         property: "og:description",
         content:
