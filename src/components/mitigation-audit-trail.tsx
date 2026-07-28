@@ -179,7 +179,12 @@ export function MitigationAuditTrail({
   const [correlationIds, setCorrelationIds] = useState<string[]>(
     focusCorrelationId ? [focusCorrelationId] : [],
   );
+  const [tokens, setTokens] = useState<string[]>([]);
+  const [wallets, setWallets] = useState<string[]>([]);
+  const [alertTypes, setAlertTypes] = useState<string[]>([]);
+  const runs = useScanHistory();
   const focusRef = useRef<HTMLDivElement | null>(null);
+
 
   // A deep link from the impact timeline focuses one correlation batch:
   // filter to it, show previews, and scroll it into view.
