@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, ChevronDown, Sparkles, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Download, Loader2, Sparkles, X } from "lucide-react";
+import { toast } from "sonner";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type ScannerRules } from "@/lib/paper-store";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,18 @@ const SCOPES: { key: ScopeKey; label: string }[] = [
   { key: "demo", label: "DEMO small-caps" },
   { key: "all", label: "All mock assets" },
 ];
+
+/** Human-readable before/after deltas for each scanner threshold. */
+function ruleDeltas(b: ScannerRules, a: ScannerRules) {
+  return [
+    { label: "Min momentum", before: String(b.minMomentum), after: String(a.minMomentum), changed: b.minMomentum !== a.minMomentum },
+    { label: "Min volume score", before: String(b.minVolumeScore), after: String(a.minVolumeScore), changed: b.minVolumeScore !== a.minVolumeScore },
+    { label: "Max volatility", before: String(b.maxVolatility), after: String(a.maxVolatility), changed: b.maxVolatility !== a.maxVolatility },
+    { label: "Min 24h change", before: `${b.min24hChangePct}%`, after: `${a.min24hChangePct}%`, changed: b.min24hChangePct !== a.min24hChangePct },
+    { label: "Include majors", before: b.includeMajors ? "yes" : "no", after: a.includeMajors ? "yes" : "no", changed: b.includeMajors !== a.includeMajors },
+    { label: "Include DEMO small-caps", before: b.includeDemoSmallCaps ? "yes" : "no", after: a.includeDemoSmallCaps ? "yes" : "no", changed: b.includeDemoSmallCaps !== a.includeDemoSmallCaps },
+  ];
+}
 
 function signals(rules: ScannerRules, a: Asset) {
   const checks = {
