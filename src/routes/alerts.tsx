@@ -428,7 +428,7 @@ function ScannerRulesPanel() {
             <Button
               variant="ghost"
               className="w-full gap-2 text-xs text-muted-foreground"
-              onClick={() => rollbackLast(lastBatch)}
+              onClick={() => setRollbackOpen(true)}
             >
               <Undo2 className="h-3.5 w-3.5" />
               Roll back last change (
@@ -438,6 +438,16 @@ function ScannerRulesPanel() {
               )
             </Button>
           )}
+          <RollbackConfirmDialog
+            batch={lastBatch}
+            open={rollbackOpen}
+            onOpenChange={setRollbackOpen}
+            onConfirm={() => {
+              setRollbackOpen(false);
+              rollbackLast(lastBatch);
+            }}
+          />
+
 
         </CardContent>
       </Card>
