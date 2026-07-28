@@ -3924,7 +3924,12 @@ function MitigationChecklist({
 
       <AlertDialog
         open={pendingItem !== null}
-        onOpenChange={(o) => !o && setPendingItem(null)}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPendingItem(null);
+            previewIdRef.current = null;
+          }
+        }}
       >
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
