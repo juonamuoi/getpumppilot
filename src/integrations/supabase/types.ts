@@ -462,32 +462,19 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
-      mcp_begin_call:
-        | {
-            Args: {
-              _client_id: string
-              _correlation_id: string
-              _limit?: number
-              _request?: Json
-              _tool_name: string
-              _user_id: string
-              _window_seconds?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _client_id: string
-              _client_limit?: number
-              _correlation_id: string
-              _limit?: number
-              _request?: Json
-              _tool_name: string
-              _user_id: string
-              _window_seconds?: number
-            }
-            Returns: Json
-          }
+      mcp_begin_call: {
+        Args: {
+          _client_id: string
+          _client_limit?: number
+          _correlation_id: string
+          _limit?: number
+          _request?: Json
+          _tool_name: string
+          _user_id: string
+          _window_seconds?: number
+        }
+        Returns: Json
+      }
       mcp_finish_call: {
         Args: {
           _correlation_id: string
