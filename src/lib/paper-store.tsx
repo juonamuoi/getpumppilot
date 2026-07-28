@@ -155,7 +155,12 @@ type State = {
   markTuningReverted: (id: string, reason?: string) => void;
   /** Evaluate alert outcome for a mitigation and attach it to every entry sharing the correlation id. */
   recordMitigationOutcome: (correlationId: string, rules?: ScannerRules) => MitigationOutcome;
+  /** The most recent applied, not-yet-reverted mitigation batch (entries share a correlation id). */
+  lastMitigation: { correlationId: string; ts: number; label: string; entries: TuningLogEntry[] } | null;
+  /** One-click revert of the last applied mitigation. Returns the restored batch, or null. */
+  undoLastMitigation: (reason?: string) => { correlationId: string; label: string; entries: TuningLogEntry[] } | null;
   clearTuningLog: () => void;
+
 
   simulateScannerRun: () => number; // returns count of new deliveries
   clearDeliveries: () => void;
@@ -170,6 +175,42 @@ const STARTING_CASH = 100_000;
 /** Human-readable correlation id shared by a mitigation preview, apply and outcome. */
 export function newCorrelationId(prefix = "MIT") {
   return `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+}
+
+/** Writes a rule key's threshold onto a ruleset (mutates), keeping its fixed operator. */
+export function applyRuleValue(rules: ScannerRules, key: string, value: number) {
+  if (key === "momentum") rules.minMomentum = value;
+  else if (key === "volume") rules.minVolumeScore = value;
+  else if (key === "volatility") rules.maxVolatility = value;
+  else if (key === "change") rules.min24hChangePct = value;
+}
+
+/** Newest applied, not-yet-reverted mitigation batch, grouped by correlation id. */
+export function findLastMitigation(log: TuningLogEntry[]) {
+  const head = log.find(
+    (e) =>
+      e.source === "mitigation" &&
+      e.kind === "rule" &&
+      e.rule !== "undo" &&
+      e.phase !== "preview" &&
+      !e.revertedAt,
+  );
+  if (!head) return null;
+  const cid = head.correlationId ?? head.id;
+  const entries = log.filter(
+    (e) =>
+      (e.correlationId ?? e.id) === cid &&
+      e.kind === "rule" &&
+      e.rule !== "undo" &&
+      e.phase !== "preview" &&
+      !e.revertedAt,
+  );
+  return {
+    correlationId: cid,
+    ts: head.ts,
+    label: head.mitigation ?? "Mitigation",
+    entries,
+  };
 }
 
 const TUNING_LOG_KEY = "pumppilot_tuning_log";
@@ -352,7 +393,10 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     return created.length;
   };
 
+  const lastMitigationBatch = findLastMitigation(tuningLog);
+
   const value: State = {
+
     cash,
     positions,
     trades,
@@ -447,7 +491,53 @@ export function PaperProvider({ children }: { children: ReactNode }) {
             : e,
         ),
       ),
+    lastMitigation: lastMitigationBatch,
+    undoLastMitigation: (reason) => {
+      const batch = lastMitigationBatch;
+      if (!batch) return null;
+      const restored = { ...scannerRules };
+      for (const e of batch.entries) applyRuleValue(restored, e.rule, e.oldValue);
+      setScannerRules(restored);
+      const at = Date.now();
+      const ids = new Set(batch.entries.map((e) => e.id));
+      const undoId = Math.random().toString(36).slice(2);
+      const detail = batch.entries
+        .map((e) => `${e.ruleLabel} ${e.newValue}${e.unit} → ${e.oldValue}${e.unit}`)
+        .join(", ");
+      setTuningLog((prev) =>
+        [
+          {
+            id: undoId,
+            ts: at,
+            correlationId: batch.correlationId,
+            source: "mitigation" as const,
+            kind: "rule" as const,
+            phase: "applied" as const,
+            mitigation: `Undo: ${batch.label}`,
+            trigger: reason
+              ? `One-click undo — ${reason}`
+              : "One-click undo of the last mitigation",
+            rule: "undo",
+            ruleLabel: "Undo mitigation",
+            operator: ">=" as const,
+            unit: "",
+            oldValue: 0,
+            newValue: 0,
+            preset: "undo",
+            appliedAt: at,
+            revertReason: reason,
+          },
+          ...prev.map((e) =>
+            ids.has(e.id)
+              ? { ...e, revertedAt: at, ...(reason ? { revertReason: reason } : {}) }
+              : e,
+          ),
+        ].slice(0, 200),
+      );
+      return { correlationId: batch.correlationId, label: batch.label, entries: batch.entries };
+    },
     clearTuningLog: () => setTuningLog([]),
+
     simulateScannerRun,
     clearDeliveries: () => setDeliveries([]),
     setRisk,
