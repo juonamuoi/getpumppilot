@@ -292,6 +292,10 @@ function LandingPage() {
           <img
             src="/favicon.png"
             alt="PumpPilot AI mascot — AI robot pumping crypto into a wallet while you sleep"
+            width={160}
+            height={160}
+            fetchPriority="high"
+            decoding="async"
             className="mx-auto mb-6 h-32 w-32 rounded-3xl object-cover shadow-2xl shadow-emerald-500/10 sm:h-40 sm:w-40"
           />
           <Badge

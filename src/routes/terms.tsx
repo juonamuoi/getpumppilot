@@ -33,7 +33,7 @@ function TermsPage() {
             <span className="font-bold tracking-tight">PumpPilot AI</span>
           </Link>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/">Back home</Link>
+            <Link to="/">Back to PumpPilot AI home</Link>
           </Button>
         </div>
       </header>

@@ -84,7 +84,7 @@ function CopilotPage() {
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">
             <Sparkles className="h-3.5 w-3.5" /> AI Copilot
           </div>
-          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Your investing coach</h1>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">AI Crypto Investing Coach — PumpPilot AI Copilot</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Ask about your portfolio, tune your strategy, or learn a concept. Educational only — not financial advice.
           </p>
@@ -157,7 +157,7 @@ function CopilotPage() {
                   }
                 }}
               />
-              <Button type="submit" size="icon" disabled={busy || !input.trim()} aria-label="Send">
+              <Button type="submit" size="icon" disabled={busy || !input.trim()} aria-label="Send message to AI Copilot">
                 <Send className="h-4 w-4" />
               </Button>
             </form>

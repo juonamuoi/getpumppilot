@@ -50,7 +50,7 @@ function LearnPage() {
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">
             <BookOpen className="h-3.5 w-3.5" /> Learn hub
           </div>
-          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Understand what you're doing</h1>
+          <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Learn AI Crypto Trading — PumpPilot AI Education Hub</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Short lessons and a glossary. If you can explain it, you can trade it.
           </p>

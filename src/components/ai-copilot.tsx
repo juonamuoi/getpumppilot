@@ -150,7 +150,7 @@ export function AICopilot() {
               size="icon"
               disabled={busy || !input.trim()}
               className="shrink-0"
-              aria-label="Send"
+              aria-label="Send message to AI Copilot"
             >
               <Send className="h-4 w-4" />
             </Button>
