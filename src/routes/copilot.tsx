@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PaywallGate } from "@/components/paywall-gate";
+import { CreditGate } from "@/components/credit-gate";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -166,8 +166,8 @@ function CopilotPage() {
 
 function GatedCopilotPage() {
   return (
-    <PaywallGate required="pro" featureName="Copilot">
+    <CreditGate feature="copilot_message" featureName="AI Copilot">
       <CopilotPage />
-    </PaywallGate>
+    </CreditGate>
   );
 }

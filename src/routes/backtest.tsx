@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PaywallGate } from "@/components/paywall-gate";
+import { CreditGate } from "@/components/credit-gate";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -263,8 +263,8 @@ function Metric({
 
 function GatedBacktestPage() {
   return (
-    <PaywallGate required="pro" featureName="Backtest">
+    <CreditGate feature="backtest_run" featureName="Backtesting">
       <BacktestPage />
-    </PaywallGate>
+    </CreditGate>
   );
 }

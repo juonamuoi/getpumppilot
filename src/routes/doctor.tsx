@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PaywallGate } from "@/components/paywall-gate";
+import { CreditGate } from "@/components/credit-gate";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
@@ -298,8 +298,8 @@ function DoctorPage() {
 
 function GatedDoctorPage() {
   return (
-    <PaywallGate required="pro" featureName="Doctor">
+    <CreditGate feature="doctor_audit" featureName="Portfolio Doctor">
       <DoctorPage />
-    </PaywallGate>
+    </CreditGate>
   );
 }
