@@ -3922,6 +3922,19 @@ function MitigationChecklist({
                 );
               })()}
 
+              {pendingItem.option?.targetValue != null && (
+                <ScopeImpactPanel
+                  impact={simulateScopeImpact(
+                    result.perBucketSnapshots.flat(),
+                    ruleKey,
+                    pendingItem.option.targetValue,
+                  )}
+                  scopeLabel={SCOPE_LABEL[scopeOf(rules)] ?? scopeOf(rules)}
+                />
+              )}
+
+
+
               <p className="text-[10px] text-muted-foreground">
                 Confirming saves this change immediately and logs it to the tuning audit
                 trail. Demo data — safer never means profitable.
