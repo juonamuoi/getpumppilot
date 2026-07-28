@@ -20,11 +20,13 @@ import {
   Radar,
   CheckCircle2,
   FileDown,
+  FileSpreadsheet,
   ChevronDown,
   Copy,
   ExternalLink,
 } from "lucide-react";
 import { exportWalletReportPdf } from "@/lib/wallet-report-pdf";
+import { exportWalletFindingsCsv } from "@/lib/wallet-report-csv";
 import {
   revokeApproval,
   shortAddress,
@@ -329,19 +331,40 @@ export function WalletThreatDialog({
         <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
           {!scanning && result && (
             <>
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                disabled={exporting}
-                onClick={() => void exportPdf()}
-              >
-                {exporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <FileDown className="h-4 w-4" />
-                )}
-                Export threat report (PDF)
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={exporting}
+                  onClick={() => void exportPdf()}
+                >
+                  {exporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileDown className="h-4 w-4" />
+                  )}
+                  Export report (PDF)
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={threats.length === 0}
+                  onClick={() => {
+                    try {
+                      const file = exportWalletFindingsCsv(result);
+                      toast.success("Findings exported as CSV", {
+                        description: `${file} · ${threats.length} finding${threats.length > 1 ? "s" : ""} · correlation ID ${result.correlationId}`,
+                      });
+                    } catch {
+                      toast.error("Could not generate the CSV export");
+                    }
+                  }}
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Export findings (CSV)
+                </Button>
+              </div>
+
               <p className="font-mono text-[10px] text-muted-foreground">
                 Scan ID {result.correlationId} · {new Date(result.scannedAt).toLocaleString()}
               </p>
