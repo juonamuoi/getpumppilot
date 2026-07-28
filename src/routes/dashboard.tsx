@@ -98,13 +98,16 @@ function Dashboard() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:items-end sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">
-              <TrendingUp className="h-3.5 w-3.5" /> PumpPilot AI
+              <TrendingUp className="h-3.5 w-3.5" /> PumpPilot AI · {greeting}
             </div>
-            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">{greeting}</h1>
+            <h1 className="mt-1 truncate text-2xl font-bold sm:text-3xl">
+              Your AI investment dashboard
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Spot momentum. Control risk. Trade smarter. Your <Term k="paper trading">paper</Term>{" "}
               portfolio and today's top signals.
             </p>
+
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Badge variant="outline" className="border-emerald-500/30 text-emerald-300">
