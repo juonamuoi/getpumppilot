@@ -51,6 +51,12 @@ type AuditFilterState = {
   outcome: OutcomeFilter;
   range: RangeFilter;
   correlationIds: string[];
+  /** Token symbols the mitigation's alert outcome touched (empty = all). */
+  tokens: string[];
+  /** Wallet addresses scanned around the mitigation (empty = all). */
+  wallets: string[];
+  /** Alert delivery channels, e.g. email / push / in-app (empty = all). */
+  alertTypes: string[];
 };
 
 type SavedAuditFilter = AuditFilterState & { id: string; name: string };
@@ -60,7 +66,14 @@ const EMPTY_FILTER: AuditFilterState = {
   outcome: "all",
   range: "all",
   correlationIds: [],
+  tokens: [],
+  wallets: [],
+  alertTypes: [],
 };
+
+/** A mitigation is attributed to wallets scanned within this window of it. */
+const WALLET_LINK_MS = 60 * 60 * 1000;
+
 
 const SAVED_FILTERS_KEY = "pumppilot_audit_saved_filters";
 
