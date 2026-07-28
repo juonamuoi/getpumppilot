@@ -19,6 +19,8 @@ export type TimelineSignalRow = {
   ts: number;
   label: string;
   rule: string;
+  /** single | bulk | risk-bounds */
+  action?: string;
   matchDelta: number;
   nearMissDelta: number;
   matchesBefore?: number;
@@ -37,6 +39,10 @@ export type TimelineFilters = {
   to: number;
   wallets: string[];
   tokens: string[];
+  /** Mitigation action types selected (empty = all). */
+  actions?: string[];
+  /** Outcome statuses selected (empty = all). */
+  outcomes?: string[];
 };
 
 const RISK_LABELS = ["safe", "medium", "high", "critical"];
@@ -66,6 +72,8 @@ export function buildTimelineJson(
         toIso: new Date(filters.to).toISOString(),
         wallets: filters.wallets.length ? filters.wallets : "all",
         tokens: filters.tokens.length ? filters.tokens : "all",
+        actions: filters.actions?.length ? filters.actions : "all",
+        outcomes: filters.outcomes?.length ? filters.outcomes : "all",
       },
       totals: {
         riskPoints: risk.length,
@@ -88,6 +96,7 @@ export function buildTimelineJson(
         timestamp: new Date(p.ts).toISOString(),
         mitigation: p.label,
         rule: p.rule,
+        action: p.action ?? null,
         matchesBefore: p.matchesBefore ?? null,
         matchesAfter: p.matchesAfter ?? null,
         matchDelta: p.matchDelta,
@@ -120,6 +129,8 @@ export function buildTimelineCsv(
       ["to", new Date(filters.to).toISOString()],
       ["wallets", filters.wallets.length ? filters.wallets.join(" | ") : "all"],
       ["tokens", filters.tokens.length ? filters.tokens.join(" | ") : "all"],
+      ["actions", filters.actions?.length ? filters.actions.join(" | ") : "all"],
+      ["outcomes", filters.outcomes?.length ? filters.outcomes.join(" | ") : "all"],
     ],
   );
 
@@ -150,6 +161,7 @@ export function buildTimelineCsv(
     [
       "timestamp",
       "mitigation",
+      "action",
       "rule",
       "matches_before",
       "matches_after",
@@ -164,6 +176,7 @@ export function buildTimelineCsv(
     signals.map((p) => [
       new Date(p.ts).toISOString(),
       p.label,
+      p.action ?? "",
       p.rule,
       p.matchesBefore ?? "",
       p.matchesAfter ?? "",

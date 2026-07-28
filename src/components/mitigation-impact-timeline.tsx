@@ -67,6 +67,22 @@ const RANGES = [
 ] as const;
 type RangeKey = (typeof RANGES)[number]["key"];
 
+/** How the mitigation was applied. */
+type MitigationAction = "single" | "bulk" | "risk-bounds";
+const ACTION_OPTIONS: { key: MitigationAction; label: string }[] = [
+  { key: "single", label: "Single" },
+  { key: "bulk", label: "Bulk" },
+  { key: "risk-bounds", label: "Risk bounds" },
+];
+
+/** Alert outcome recorded right after the mitigation. */
+type OutcomeKey = "alerts-fired" | "no-matches" | "channels-muted";
+const OUTCOME_OPTIONS: { key: OutcomeKey; label: string }[] = [
+  { key: "alerts-fired", label: "Alerts fired" },
+  { key: "no-matches", label: "No matches" },
+  { key: "channels-muted", label: "Channels muted" },
+];
+
 type RiskPoint = {
   ts: number;
   score: number;
@@ -81,6 +97,7 @@ type SignalPoint = {
   ts: number;
   label: string;
   rule: string;
+  action: MitigationAction;
   matchDelta: number;
   nearMissDelta: number;
   matchesBefore?: number;
@@ -152,6 +169,8 @@ export function MitigationImpactTimeline() {
   const [range, setRange] = useState<RangeKey>("7d");
   const [wallets, setWallets] = useState<string[]>([]);
   const [tokens, setTokens] = useState<string[]>([]);
+  const [actions, setActions] = useState<MitigationAction[]>([]);
+  const [outcomes, setOutcomes] = useState<OutcomeKey[]>([]);
   const [hover, setHover] = useState<
     | { kind: "risk"; point: RiskPoint }
     | { kind: "signal"; point: SignalPoint }
@@ -196,18 +215,41 @@ export function MitigationImpactTimeline() {
   }, [runs, cutoff, wallets, tokens]);
 
   const signalPoints = useMemo<SignalPoint[]>(() => {
-    return tuningLog
-      .filter((e): e is TuningLogEntry => e.source === "mitigation" && e.phase !== "preview")
+    const applied = tuningLog.filter(
+      (e): e is TuningLogEntry => e.source === "mitigation" && e.phase !== "preview",
+    );
+    // A correlation id shared by several rule changes means the mitigation was
+    // applied as a bulk batch; a bounds change is its own action type.
+    const batchSize = new Map<string, number>();
+    applied.forEach((e) => {
+      if (!e.correlationId) return;
+      batchSize.set(e.correlationId, (batchSize.get(e.correlationId) ?? 0) + 1);
+    });
+    const actionOf = (e: TuningLogEntry): MitigationAction =>
+      e.kind === "bounds"
+        ? "risk-bounds"
+        : (e.correlationId ? (batchSize.get(e.correlationId) ?? 1) : 1) > 1
+          ? "bulk"
+          : "single";
+
+    return applied
       .filter((e) => e.ts >= cutoff)
       .filter((e) => {
         if (tokens.length === 0) return true;
         const syms = e.outcome?.symbols ?? [];
         return syms.length === 0 ? false : syms.some((s) => tokens.includes(s));
       })
+      .filter((e) => actions.length === 0 || actions.includes(actionOf(e)))
+      .filter((e) => {
+        if (outcomes.length === 0) return true;
+        const status = e.outcome?.status;
+        return status ? outcomes.includes(status) : false;
+      })
       .map((e) => ({
         ts: e.appliedAt ?? e.ts,
         label: e.mitigation ?? "Mitigation",
         rule: `${e.ruleLabel} ${e.operator} ${e.newValue}${e.unit}`,
+        action: actionOf(e),
         matchDelta: (e.matchesAfter ?? 0) - (e.matchesBefore ?? 0),
         nearMissDelta: (e.nearMissAfter ?? 0) - (e.nearMissBefore ?? 0),
         matchesBefore: e.matchesBefore,
@@ -219,7 +261,7 @@ export function MitigationImpactTimeline() {
         outcome: e.outcome?.status,
       }))
       .sort((a, b) => a.ts - b.ts);
-  }, [tuningLog, cutoff, tokens]);
+  }, [tuningLog, cutoff, tokens, actions, outcomes]);
 
   const hasData = riskPoints.length > 0 || signalPoints.length > 0;
 
@@ -261,9 +303,9 @@ export function MitigationImpactTimeline() {
     })
     .join(" ");
 
-  const activeFilters = wallets.length + tokens.length;
+  const activeFilters = wallets.length + tokens.length + actions.length + outcomes.length;
 
-  // Exports exactly the filtered view (wallets, tokens, time range).
+  // Exports exactly the filtered view (wallets, tokens, actions, outcomes, range).
   const exportTimeline = (fmt: "csv" | "json") => {
     const filters = {
       range,
@@ -272,6 +314,8 @@ export function MitigationImpactTimeline() {
       to: Date.now(),
       wallets,
       tokens,
+      actions,
+      outcomes,
     };
     const body =
       fmt === "csv"
@@ -323,6 +367,8 @@ export function MitigationImpactTimeline() {
                 onClick={() => {
                   setWallets([]);
                   setTokens([]);
+                  setActions([]);
+                  setOutcomes([]);
                 }}
               >
                 <X className="h-3 w-3" /> Clear ({activeFilters})
@@ -388,6 +434,46 @@ export function MitigationImpactTimeline() {
               />
             ))}
           </div>
+
+          <div className="flex items-center gap-1.5 pt-1 text-[11px] font-medium text-muted-foreground">
+            <Filter className="h-3 w-3" /> Mitigation action
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {ACTION_OPTIONS.map((o) => (
+              <TokenChip
+                key={o.key}
+                value={o.label}
+                active={actions.includes(o.key)}
+                onToggle={() =>
+                  setActions((prev) =>
+                    prev.includes(o.key) ? prev.filter((a) => a !== o.key) : [...prev, o.key],
+                  )
+                }
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 pt-1 text-[11px] font-medium text-muted-foreground">
+            <Filter className="h-3 w-3" /> Outcome
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {OUTCOME_OPTIONS.map((o) => (
+              <TokenChip
+                key={o.key}
+                value={o.label}
+                active={outcomes.includes(o.key)}
+                onToggle={() =>
+                  setOutcomes((prev) =>
+                    prev.includes(o.key) ? prev.filter((s) => s !== o.key) : [...prev, o.key],
+                  )
+                }
+              />
+            ))}
+          </div>
+          <p className="pt-1 text-[10px] text-muted-foreground">
+            Action and outcome filters apply to mitigation markers only; wallet risk scans stay
+            plotted for context.
+          </p>
         </div>
 
         {!hasData ? (
@@ -584,6 +670,9 @@ export function MitigationImpactTimeline() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Activity className="h-3.5 w-3.5 text-primary" />
                     <span className="font-medium">{hover.point.label}</span>
+                    <Badge variant="secondary" className="text-[10px] capitalize">
+                      {hover.point.action.replace("-", " ")}
+                    </Badge>
                     <Badge variant="outline" className="text-[10px]">
                       {hover.point.rule}
                     </Badge>
