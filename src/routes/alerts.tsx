@@ -2230,6 +2230,7 @@ function RuleTuningPanel({
   result,
   rules,
   onApply,
+  onApplyBulk,
   onLogBoundsChange,
 }: {
   result: ReplayResult;
@@ -2245,6 +2246,18 @@ function RuleTuningPanel({
       recommendedValue?: number;
       fragilePct?: number;
     },
+  ) => void;
+  onApplyBulk: (
+    entries: Array<{
+      key: RuleKey;
+      value: number;
+      preset: string;
+      preview: TuningPreview | null;
+      mitigation: string;
+      trigger: string;
+      recommendedValue?: number;
+      fragilePct?: number;
+    }>,
   ) => void;
   onLogBoundsChange: (e: {
     label: string;
@@ -2262,6 +2275,8 @@ function RuleTuningPanel({
 
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
+  const [selected, setSelected] = useState<RuleKey[]>([]);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [bounds, setBounds] = useState<RiskBounds>(loadBounds);
 
   useEffect(() => {
@@ -2275,6 +2290,16 @@ function RuleTuningPanel({
     [result, rules, fraction],
   );
   const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const safest = useMemo(() => {
+    const out = {} as Record<RuleKey, SaferOption | null>;
+    for (const k of ["momentum", "volume", "volatility", "change"] as RuleKey[]) {
+      out[k] = tuning[k].suggested == null ? null : safestAlternativeFor(result, rules, k, bounds);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, rules, tuning, bounds.enabled, bounds.maxFragilePct, bounds.maxNearMissIncrease]);
+  const selectable = keys.filter((k) => safest[k] != null);
+  const chosen = selected.filter((k) => safest[k] != null);
   const anySuggestion = keys.some((k) => tuning[k].suggested != null);
   const presetHint =
     preset === "conservative"
