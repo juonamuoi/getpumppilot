@@ -122,6 +122,11 @@ export const Route = createFileRoute("/alerts")({
 function AlertsPage() {
   const { tuningLog } = usePaper();
   useNearMissRiskAlerts(tuningLog);
+  const { tab: tabParam } = Route.useSearch();
+  const [tab, setTab] = useState(tabParam ?? "rules");
+  useEffect(() => {
+    if (tabParam) setTab(tabParam);
+  }, [tabParam]);
   return (
     <AppShell>
       <div className="space-y-5">
@@ -133,7 +138,8 @@ function AlertsPage() {
         </div>
         <DisclaimerBanner />
 
-        <Tabs defaultValue="rules">
+        <Tabs value={tab} onValueChange={setTab}>
+
           <TabsList className="w-full sm:w-auto">
             <TabsTrigger value="rules" className="flex-1 sm:flex-none">
               Scanner rules
