@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Download, FileJson, FileSpreadsheet, Save, X } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, FileText, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -99,6 +99,79 @@ const DEFAULT_FIELDS = FIELDS.filter((f) => f.group !== "decision" || !["kind", 
   (f) => f.key,
 );
 
+/* --------------------- column schema / definitions --------------------- */
+
+type FieldDoc = { type: "string" | "number" | "timestamp" | "enum"; source: string; description: string };
+
+/** Maps every exportable column back to the underlying mitigation confirmation record. */
+const FIELD_DOC: Record<string, FieldDoc> = {
+  correlationId: { type: "string", source: "tuningLog.correlationId", description: "Shared ID linking the preview, the applied change, the alert outcome and any revert." },
+  decisionId: { type: "string", source: "tuningLog.id", description: "Unique ID of the audit entry this row was generated from." },
+  decision: { type: "enum", source: "derived (revertedAt / phase)", description: "applied | preview-only | reverted — the final state of the decision." },
+  mitigation: { type: "string", source: "tuningLog.mitigation", description: "Mitigation identifier proposed by the checklist (e.g. relax-threshold)." },
+  trigger: { type: "string", source: "tuningLog.trigger", description: "What raised the mitigation: risk bounds breach, manual tuning, or automation." },
+
+  rule: { type: "string", source: "tuningLog.ruleLabel", description: "Human label of the scanner rule that was changed." },
+  kind: { type: "enum", source: "tuningLog.kind", description: "Type of change: rule threshold, operator, or scope adjustment." },
+  operator: { type: "string", source: "tuningLog.operator", description: "Comparison operator in effect for the rule after the change." },
+  oldValue: { type: "string", source: "tuningLog.oldValue", description: "Rule value before the mitigation was applied." },
+  newValue: { type: "string", source: "tuningLog.newValue", description: "Rule value after the mitigation was applied." },
+  unit: { type: "string", source: "tuningLog.unit", description: "Unit of the rule value (%, USD, score points, etc.)." },
+  recommendedValue: { type: "number", source: "tuningLog.recommendedValue", description: "Value the tuning engine recommended, which may differ from what you applied." },
+  preset: { type: "enum", source: "tuningLog.preset", description: "Tuning preset used: conservative, balanced, or aggressive." },
+  window: { type: "string", source: "tuningLog.window", description: "Replay window the confirmation preview was computed over." },
+  scope: { type: "string", source: "tuningLog.scope", description: "Asset scope the change was limited to (empty = all scanned assets)." },
+
+  previewedAt: { type: "timestamp", source: "preview.ts / applied.previewedAt", description: "ISO time the confirmation preview was generated and reviewed." },
+  appliedAt: { type: "timestamp", source: "applied.appliedAt / applied.ts", description: "ISO time the change was actually applied (blank for preview-only)." },
+  matchesBefore: { type: "number", source: "tuningLog.matchesBefore", description: "Assets matching the rule set in the preview, before the change." },
+  matchesAfter: { type: "number", source: "tuningLog.matchesAfter", description: "Assets matching the rule set in the preview, after the change." },
+  matchesDelta: { type: "number", source: "derived (after - before)", description: "Net change in matched assets shown on the confirmation screen." },
+  nearMissBefore: { type: "number", source: "tuningLog.nearMissBefore", description: "Assets within near-miss slack of the thresholds, before the change." },
+  nearMissAfter: { type: "number", source: "tuningLog.nearMissAfter", description: "Assets within near-miss slack of the thresholds, after the change." },
+  nearMissDelta: { type: "number", source: "derived (after - before)", description: "Net change in near-miss assets — the fragility signal you confirmed against." },
+  scopeMatchesBefore: { type: "number", source: "tuningLog.scopeMatchesBefore", description: "Matches before the change, counted only within the selected asset scope." },
+  scopeMatchesAfter: { type: "number", source: "tuningLog.scopeMatchesAfter", description: "Matches after the change, counted only within the selected asset scope." },
+  scopeNearMissBefore: { type: "number", source: "tuningLog.scopeNearMissBefore", description: "Near-misses before the change, within the selected asset scope." },
+  scopeNearMissAfter: { type: "number", source: "tuningLog.scopeNearMissAfter", description: "Near-misses after the change, within the selected asset scope." },
+  scopeAssetsAffected: { type: "number", source: "tuningLog.scopeAssetsAffected", description: "Number of assets whose match status changed inside the scope." },
+  fragilePct: { type: "number", source: "tuningLog.fragilePct", description: "Share of matches sitting close to a threshold after the change (higher = more fragile)." },
+
+  outcomeStatus: { type: "enum", source: "tuningLog.outcome.status", description: "alerts-fired | no-matches | channels-muted | pending — what the rules did after the change." },
+  outcomeMatched: { type: "number", source: "tuningLog.outcome.matched", description: "Assets that actually matched once the changed rules ran live." },
+  outcomeDelivered: { type: "number", source: "tuningLog.outcome.delivered", description: "Alert notifications successfully delivered for those matches." },
+  outcomeSymbols: { type: "string", source: "tuningLog.outcome.symbols", description: "Pipe-separated token symbols involved in the outcome." },
+  outcomeChannels: { type: "string", source: "tuningLog.outcome.channels", description: "Pipe-separated delivery channels used (email, push, in-app)." },
+  outcomeAt: { type: "timestamp", source: "tuningLog.outcome.ts", description: "ISO time the outcome was recorded after the change took effect." },
+  revertedAt: { type: "timestamp", source: "tuningLog.revertedAt", description: "ISO time the change was rolled back, if it was reverted." },
+  revertReason: { type: "string", source: "tuningLog.revertReason", description: "Reason captured at rollback time (manual undo, risk bounds breach, etc.)." },
+};
+
+export type SchemaRow = {
+  column: string;
+  label: string;
+  group: string;
+  type: string;
+  source: string;
+  description: string;
+};
+
+/** Build the column dictionary for exactly the fields included in an export. */
+export function buildSchemaRows(selectedKeys: string[]): SchemaRow[] {
+  return FIELDS.filter((f) => selectedKeys.includes(f.key)).map((f) => {
+    const doc = FIELD_DOC[f.key];
+    return {
+      column: f.key,
+      label: f.label,
+      group: GROUP_LABEL[f.group],
+      type: doc?.type ?? "string",
+      source: doc?.source ?? "",
+      description: doc?.description ?? "",
+    };
+  });
+}
+
+
 /** Pair each applied mitigation with the preview it was confirmed against. */
 export function buildDecisions(log: TuningLogEntry[]): Decision[] {
   const mitigations = log.filter((e) => e.source === "mitigation" && !!e.mitigation);
@@ -178,6 +251,7 @@ export function MitigationDecisionExport<F,>({
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(DEFAULT_FIELDS);
   const [includePreviewOnly, setIncludePreviewOnly] = useState(true);
+  const [includeSchema, setIncludeSchema] = useState(true);
   const [presets, setPresets] = useState<ExportPreset<F>[]>(() => loadPresets() as ExportPreset<F>[]);
   const [presetName, setPresetName] = useState("");
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -246,6 +320,34 @@ export function MitigationDecisionExport<F,>({
       return row;
     });
 
+  const schemaRows = () => buildSchemaRows(selected);
+
+  const downloadSchema = (kind: "csv" | "json", stamp = new Date().toISOString().replace(/[:.]/g, "-")) => {
+    const schema = schemaRows();
+    if (schema.length === 0) {
+      toast.error("Select at least one field first");
+      return;
+    }
+    if (kind === "json") {
+      const payload = {
+        generatedAt: new Date().toISOString(),
+        appliesTo: `mitigation-decisions-${stamp}.${kind === "json" ? "json" : "csv"}`,
+        columnCount: schema.length,
+        note: "Column dictionary for PumpPilot AI mitigation decision exports. 'source' maps each column back to the underlying mitigation confirmation record.",
+        columns: schema,
+      };
+      saveBlob(
+        new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+        `mitigation-decisions-schema-${stamp}.json`,
+      );
+    } else {
+      saveBlob(
+        new Blob([toCsv(schema as unknown as MitigationDecisionRow[])], { type: "text/csv" }),
+        `mitigation-decisions-schema-${stamp}.csv`,
+      );
+    }
+  };
+
   const download = (kind: "csv" | "json") => {
     if (decisions.length === 0) {
       toast.error("No mitigation decisions to export yet");
@@ -266,6 +368,7 @@ export function MitigationDecisionExport<F,>({
         includesPreviewOnly: includePreviewOnly,
         preset: preset ? { name: preset.name, savedAt: new Date(preset.savedAt).toISOString() } : null,
         filters: filters ?? null,
+        schema: schemaRows(),
         note: "PumpPilot AI mitigation decisions — simulated/demo data.",
         decisions: data,
       };
@@ -274,11 +377,15 @@ export function MitigationDecisionExport<F,>({
     } else {
       saveBlob(new Blob([toCsv(data)], { type: "text/csv" }), `mitigation-decisions-${stamp}.csv`);
     }
+    if (includeSchema) downloadSchema(kind, stamp);
     toast.success(`Exported ${data.length} decision${data.length === 1 ? "" : "s"} as ${kind.toUpperCase()}`, {
-      description: `${selected.length} fields · timestamps and correlation IDs included`,
+      description: includeSchema
+        ? `${selected.length} fields · column schema file included`
+        : `${selected.length} fields · timestamps and correlation IDs included`,
     });
     setOpen(false);
   };
+
 
   const groups: FieldDef["group"][] = ["identity", "decision", "confirmation", "outcome"];
 
@@ -362,6 +469,19 @@ export function MitigationDecisionExport<F,>({
             />
             Include preview-only reviews (not applied)
           </label>
+          <label className="flex items-center gap-2">
+            <Checkbox checked={includeSchema} onCheckedChange={(v) => setIncludeSchema(v === true)} />
+            Include column schema file
+          </label>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 gap-1.5 text-[11px]"
+            onClick={() => downloadSchema("csv")}
+          >
+            <FileText className="h-3.5 w-3.5" /> Schema only
+          </Button>
+
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setSelected(FIELDS.map((f) => f.key))}>
               Select all
