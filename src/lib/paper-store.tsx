@@ -393,7 +393,10 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     return created.length;
   };
 
+  const lastMitigationBatch = findLastMitigation(tuningLog);
+
   const value: State = {
+
     cash,
     positions,
     trades,
