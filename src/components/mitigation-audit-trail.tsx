@@ -12,7 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { RotateCw, Undo2 } from "lucide-react";
+import { RotateCw, Undo2, Filter, Save, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
@@ -327,13 +330,7 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
           </div>
           <div className="flex gap-2">
             <MitigationRetentionSettings />
-            <MitigationDecisionExport
-              log={
-                paper.retention.includePreviewsInExport
-                  ? log
-                  : log.filter((e) => e.phase !== "preview")
-              }
-            />
+            <MitigationDecisionExport log={exportEntries} />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
               Quick CSV
             </Button>
@@ -344,12 +341,24 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
 
         </div>
         <div className="flex flex-wrap gap-2">
-          <Input
-            value={q}
-            onChange={(ev) => setQ(ev.target.value)}
-            placeholder="Search mitigation, rule, symbol or correlation ID"
-            className="h-8 w-full max-w-xs text-xs"
-          />
+          <div className="relative w-full max-w-xs">
+            <Input
+              value={q}
+              onChange={(ev) => setQ(ev.target.value)}
+              placeholder="Quick search: mitigation, rule, symbol or correlation ID"
+              className="h-8 pr-7 text-xs"
+            />
+            {q ? (
+              <button
+                type="button"
+                aria-label="Clear quick search"
+                onClick={() => setQ("")}
+                className="absolute right-1.5 top-1.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
           <Select value={outcome} onValueChange={(v) => setOutcome(v as OutcomeFilter)}>
             <SelectTrigger className="h-8 w-[170px] text-xs">
               <SelectValue placeholder="Outcome" />
@@ -362,6 +371,109 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
               <SelectItem value="pending">Outcome pending</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={range} onValueChange={(v) => setRange(v as RangeFilter)}>
+            <SelectTrigger className="h-8 w-[150px] text-xs">
+              <SelectValue placeholder="Time range" />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(RANGE_LABEL) as RangeFilter[]).map((r) => (
+                <SelectItem key={r} value={r}>
+                  {RANGE_LABEL[r]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline" className="h-8 text-xs">
+                <Filter className="mr-1 h-3 w-3" />
+                Correlation IDs
+                {correlationIds.length > 0 ? ` (${correlationIds.length})` : ": all"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-2" align="start">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-medium">Pick IDs to export</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={() => setCorrelationIds([])}
+                >
+                  Select all
+                </Button>
+              </div>
+              <ScrollArea className="h-56 pr-2">
+                {availableCids.length === 0 ? (
+                  <p className="p-2 text-xs text-muted-foreground">No correlation IDs yet.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {availableCids.map((cid) => (
+                      <label
+                        key={cid}
+                        className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 hover:bg-muted/50"
+                      >
+                        <Checkbox
+                          checked={correlationIds.includes(cid)}
+                          onCheckedChange={() => toggleCid(cid)}
+                        />
+                        <span className="font-mono text-[11px]">{cid}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs"
+            onClick={() => applyFilter(EMPTY_FILTER)}
+          >
+            Reset filters
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={filterName}
+            onChange={(ev) => setFilterName(ev.target.value)}
+            placeholder="Name this filter"
+            className="h-8 w-full max-w-[200px] text-xs"
+          />
+          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={saveCurrentFilter}>
+            <Save className="mr-1 h-3 w-3" />
+            Save filter
+          </Button>
+          {saved.map((f) => (
+            <Badge
+              key={f.id}
+              variant="outline"
+              className="h-7 gap-1 pl-2 pr-1 text-[11px]"
+            >
+              <button type="button" onClick={() => applyFilter(f)} className="hover:underline">
+                {f.name}
+              </button>
+              <button
+                type="button"
+                aria-label={`Delete saved filter ${f.name}`}
+                onClick={() => {
+                  persistSaved(saved.filter((x) => x.id !== f.id));
+                  toast.success(`Deleted saved filter "${f.name}"`);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+          <span className="ml-auto text-[11px] text-muted-foreground">
+            {exportEntries.length} of {log.filter((e) => e.source === "mitigation").length} entries
+            in export scope
+          </span>
         </div>
         <UndoLastMitigationBar />
 
