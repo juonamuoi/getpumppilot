@@ -1901,12 +1901,21 @@ type RiskBounds = {
   maxNearMissIncrease: number;
   /** Max allowed share of unlocked snapshots that are fragile, in percent. */
   maxFragilePct: number;
+  /** Raise an in-app alert when a save pushes near-miss risk up. */
+  alertEnabled: boolean;
+  /** Near-miss increase (snapshots) that triggers the in-app alert. */
+  alertNearMissIncrease: number;
+  /** Which asset scope the alert watches. */
+  alertScope: "any" | "majors" | "demo" | "both";
 };
 
 const DEFAULT_BOUNDS: RiskBounds = {
   enabled: true,
   maxNearMissIncrease: 5,
   maxFragilePct: 50,
+  alertEnabled: true,
+  alertNearMissIncrease: 3,
+  alertScope: "any",
 };
 
 const BOUNDS_KEY = "pumppilot_tuning_bounds";
