@@ -62,6 +62,13 @@ import {
 } from "@/lib/threat-notify";
 import {
   MONITOR_INTERVALS,
+  MIN_INTERVAL_MINUTES,
+  MAX_INTERVAL_MINUTES,
+  clampInterval,
+  formatInterval,
+  getWalletInterval,
+  hasWalletIntervalOverride,
+  setWalletInterval,
   requestWalletRescan,
   setWalletMonitor,
   useWalletMonitor,
@@ -1139,6 +1146,7 @@ function StatBlock({
 function WalletRescanCard() {
   const { wallet, address, scanning, scan } = useWalletSession();
   const monitor = useWalletMonitor();
+  const walletInterval = getWalletInterval(address);
   const [open, setOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -1300,6 +1308,119 @@ function WalletRescanCard() {
   );
 }
 
+
+
+/**
+ * Per-wallet background scan interval. Presets plus a custom value
+ * (1 min – 24 h). With no wallet connected this edits the default that
+ * new wallets inherit.
+ */
+function ScanIntervalControl({
+  address,
+  disabled,
+}: {
+  address: string | null;
+  disabled?: boolean;
+}) {
+  const monitor = useWalletMonitor();
+  const effective = getWalletInterval(address);
+  const overridden = hasWalletIntervalOverride(address);
+  const isPreset = (MONITOR_INTERVALS as readonly number[]).includes(effective);
+  const [custom, setCustom] = useState(!isPreset);
+  const [draft, setDraft] = useState(String(effective));
+
+  useEffect(() => {
+    setDraft(String(effective));
+    setCustom(!(MONITOR_INTERVALS as readonly number[]).includes(effective));
+  }, [effective]);
+
+  const apply = (minutes: number) => {
+    const v = clampInterval(minutes);
+    if (address) setWalletInterval(address, v);
+    else setWalletMonitor({ intervalMinutes: v });
+    toast.info(
+      address
+        ? `${shortAddress(address)} now scans every ${formatInterval(v)}`
+        : `Default scan interval set to every ${formatInterval(v)}`,
+    );
+  };
+
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <Select
+        value={custom ? "custom" : String(effective)}
+        onValueChange={(v) => {
+          if (v === "custom") {
+            setCustom(true);
+            return;
+          }
+          if (v === "default") {
+            if (address) setWalletInterval(address, null);
+            toast.info(
+              `${address ? shortAddress(address) : "Wallet"} follows the default (${formatInterval(monitor.intervalMinutes)})`,
+            );
+            setCustom(false);
+            return;
+          }
+          setCustom(false);
+          apply(Number(v));
+        }}
+        disabled={disabled}
+      >
+        <SelectTrigger className="h-8 w-[150px] text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {address && (
+            <SelectItem value="default">
+              Default ({formatInterval(monitor.intervalMinutes)})
+            </SelectItem>
+          )}
+          {MONITOR_INTERVALS.map((m) => (
+            <SelectItem key={m} value={String(m)}>
+              Every {m} min
+            </SelectItem>
+          ))}
+          <SelectItem value="custom">Custom…</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {custom && (
+        <div className="flex items-center gap-1.5">
+          <Input
+            type="number"
+            min={MIN_INTERVAL_MINUTES}
+            max={MAX_INTERVAL_MINUTES}
+            value={draft}
+            disabled={disabled}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") apply(Number(draft));
+            }}
+            className="h-8 w-20 text-xs"
+            aria-label="Custom scan interval in minutes"
+          />
+          <span className="text-muted-foreground">min</span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+            disabled={disabled || Number(draft) === effective || !draft}
+            onClick={() => apply(Number(draft))}
+          >
+            Save
+          </Button>
+        </div>
+      )}
+
+      {address && overridden && (
+        <Badge variant="outline" className="text-[10px]">
+          Custom for {shortAddress(address)}
+        </Badge>
+      )}
+    </div>
+  );
+}
 
 /**
  * Delivery channels for new risky-approval detections: device/browser push
