@@ -529,10 +529,9 @@ export function MitigationImpactTimeline() {
                     </div>
                   )}
                   {hover.point.correlationId && (
-                    <div className="font-mono text-[10px] text-muted-foreground">
-                      {hover.point.correlationId}
-                    </div>
+                    <CorrelationLink id={hover.point.correlationId} />
                   )}
+
                 </div>
               )}
             </div>
