@@ -367,6 +367,8 @@ export function MitigationImpactTimeline() {
                 onClick={() => {
                   setWallets([]);
                   setTokens([]);
+                  setActions([]);
+                  setOutcomes([]);
                 }}
               >
                 <X className="h-3 w-3" /> Clear ({activeFilters})
