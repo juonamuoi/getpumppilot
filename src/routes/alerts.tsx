@@ -5001,8 +5001,10 @@ function ReplayPanel() {
                 }
               />
 
+              <MitigationAuditTrail log={tuningLog} />
 
               <TuningHistoryPanel
+
                 log={tuningLog}
                 onClear={clearTuningLog}
                 onRevert={(e) => {
