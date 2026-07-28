@@ -69,13 +69,16 @@ import {
 import { ASSETS } from "@/lib/mock-data";
 import {
   usePaper,
+  newCorrelationId,
   type Alert,
   type AlertDelivery,
   type ScannerRules,
   type TuningLogEntry,
 
 } from "@/lib/paper-store";
+import { MitigationAuditTrail } from "@/components/mitigation-audit-trail";
 import { TuningAuditExport } from "@/components/tuning-audit-export";
+
 
 import { toast } from "sonner";
 import {
@@ -4307,6 +4310,8 @@ function ReplayPanel() {
     setScannerRules,
     tuningLog,
     logTuning,
+    recordMitigationOutcome,
+
     clearTuningLog,
     markTuningReverted,
   } = usePaper();
@@ -4767,8 +4772,14 @@ function ReplayPanel() {
                   else if (k === "volatility") next.maxVolatility = value;
                   else next.min24hChangePct = value;
                   setScannerRules(next);
+                  const previewEntry = meta.previewId
+                    ? tuningLog.find((t) => t.id === meta.previewId)
+                    : undefined;
+                  const corrId = previewEntry?.correlationId ?? newCorrelationId();
                   const id = logTuning({
+                    correlationId: corrId,
                     source: meta.mitigation ? "mitigation" : "recommendation",
+
                     kind: "rule",
                     rule: k,
                     ruleLabel: RULE_META[k].short,
@@ -4820,12 +4831,20 @@ function ReplayPanel() {
                       detail,
                     });
                   }
+                  const outcome = meta.mitigation
+                    ? recordMitigationOutcome(corrId, next)
+                    : null;
                   toast.success(
                     `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
                     meta.mitigation
-                      ? { description: `Mitigation logged: ${meta.mitigation}` }
+                      ? {
+                          description: `Mitigation logged: ${meta.mitigation} · outcome ${
+                            outcome?.status ?? "pending"
+                          } (${outcome?.delivered ?? 0} alerts) · ${corrId}`,
+                        }
                       : undefined,
                   );
+
                 }}
                 onApplyBulk={(entries) => {
                   if (entries.length === 0) return;
@@ -4847,11 +4866,16 @@ function ReplayPanel() {
                     else next.min24hChangePct = e.value;
                   }
                   setScannerRules(next);
+                  const bulkCorrId = newCorrelationId("MITB");
                   const ids: string[] = [];
                   for (const e of entries) {
                     ids.push(logTuning({
+                      correlationId: bulkCorrId,
                       source: "mitigation",
                       kind: "rule",
+                      phase: "applied",
+                      appliedAt: Date.now(),
+
                       rule: e.key,
                       ruleLabel: RULE_META[e.key].short,
                       operator: RULE_META[e.key].op,
@@ -4880,18 +4904,25 @@ function ReplayPanel() {
                       .map((e) => `${RULE_META[e.key].short} back to ${olds[e.key]}${RULE_META[e.key].unit}`)
                       .join(" · "),
                   });
+                  const bulkOutcome = recordMitigationOutcome(bulkCorrId, next);
                   toast.success(
                     `Applied safer alternatives to ${entries.length} rule${entries.length === 1 ? "" : "s"}`,
                     {
                       description: `${entries
                         .map((e) => `${RULE_META[e.key].short} ${RULE_META[e.key].op} ${e.value}${RULE_META[e.key].unit}`)
-                        .join(" · ")} — logged to the audit trail.`,
+                        .join(" · ")} — outcome ${bulkOutcome.status} (${bulkOutcome.delivered} alerts) · ${bulkCorrId}`,
                     },
                   );
+
                 }}
                 onLogBoundsChange={(e) => {
+                  const boundsCorrId =
+                    (e.previewId ? tuningLog.find((t) => t.id === e.previewId)?.correlationId : undefined) ??
+                    newCorrelationId("MITB");
                   logTuning({
+                    correlationId: boundsCorrId,
                     source: "mitigation",
+
                     kind: "bounds",
                     rule: `bounds:${e.label.toLowerCase().replace(/\s+/g, "-")}`,
                     ruleLabel: e.label,
@@ -4917,10 +4948,12 @@ function ReplayPanel() {
                       ? tuningLog.find((t) => t.id === e.previewId)?.ts
                       : undefined,
                   });
+                  const boundsOutcome = recordMitigationOutcome(boundsCorrId, scannerRules);
                   toast.success(`${e.label} updated to ${e.newValue}${e.unit}`, {
-                    description: `Logged to the tuning audit trail (was ${e.oldValue}${e.unit}).`,
+                    description: `Logged (was ${e.oldValue}${e.unit}) — outcome ${boundsOutcome.status} (${boundsOutcome.delivered} alerts) · ${boundsCorrId}`,
                   });
                 }}
+
                 onLogMitigationPreview={(p) =>
                   logTuning({
                     source: "mitigation",
@@ -4968,8 +5001,10 @@ function ReplayPanel() {
                 }
               />
 
+              <MitigationAuditTrail log={tuningLog} />
 
               <TuningHistoryPanel
+
                 log={tuningLog}
                 onClear={clearTuningLog}
                 onRevert={(e) => {
