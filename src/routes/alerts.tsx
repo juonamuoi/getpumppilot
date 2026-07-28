@@ -1575,6 +1575,68 @@ function PreviewStat({
   );
 }
 
+function RollbackConfirmDialog({
+  batch,
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  batch: TuningLogEntry[];
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onConfirm: () => void;
+}) {
+  const op = (o: string) => (o === ">=" ? "≥" : "≤");
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Roll back last change?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This restores the thresholds and operator settings saved before your most recent
+            tuning change. {batch.length} rule{batch.length === 1 ? "" : "s"} will change back.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-1.5">
+          {batch.map((e) => (
+            <div
+              key={e.id}
+              className="rounded border border-border/60 bg-muted/20 p-2 text-[11px]"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-foreground">{e.ruleLabel}</span>
+                <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                  {e.source ?? "manual-save"}
+                </Badge>
+              </div>
+              <div className="mt-1 flex items-center gap-2 font-mono">
+                <span className="text-destructive line-through">
+                  {op(e.operator)} {e.newValue}
+                  {e.unit}
+                </span>
+                <span className="text-muted-foreground">→</span>
+                <span className="font-semibold text-emerald-400">
+                  {op(e.operator)} {e.oldValue}
+                  {e.unit}
+                </span>
+              </div>
+              <div className="mt-0.5 text-[9px] text-muted-foreground">
+                Saved {new Date(e.ts).toLocaleString()}
+                {e.mitigation ? ` · ${e.mitigation}` : ""}
+              </div>
+            </div>
+          ))}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>Roll back</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+
 function TuningHistoryPanel({
   log,
   onClear,
