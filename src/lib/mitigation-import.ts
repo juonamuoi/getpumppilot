@@ -8,13 +8,38 @@ import type { TuningLogEntry } from "@/lib/paper-store";
  * back into read-only audit entries for review.
  * ------------------------------------------------------------------ */
 
+export type ImportIssueLevel = "error" | "warning";
+
+/** One problem tied to a specific source record. */
+export type ImportIssue = {
+  /** 1-based index of the record within the file's data rows. */
+  row: number;
+  /** Source line in the file when known (CSV), otherwise the record index. */
+  line?: number;
+  level: ImportIssueLevel;
+  field?: string;
+  code: string;
+  message: string;
+  /** Raw value that triggered the issue, truncated for display. */
+  value?: string;
+  /** Correlation / decision id when it could be read. */
+  ref?: string;
+};
+
 export type ImportResult = {
   entries: TuningLogEntry[];
   /** Rows the parser could not turn into an audit entry. */
   skipped: number;
-  /** Non-fatal notes for the user (unknown columns, missing fields, …). */
+  /** Total data rows found in the file. */
+  total: number;
+  /** Records imported with at least one warning. */
+  warned: number;
+  /** Per-record warnings and errors. */
+  issues: ImportIssue[];
+  /** Non-fatal notes about the file as a whole. */
   warnings: string[];
   format: "csv" | "json";
+  fileName?: string;
   /** Metadata found in a JSON export header, when present. */
   meta?: {
     exportedAt?: string;
@@ -30,6 +55,7 @@ export const IMPORT_PREFIX = "imported-";
 export function isImportedEntry(e: TuningLogEntry) {
   return e.id.startsWith(IMPORT_PREFIX);
 }
+
 
 /** Minimal RFC4180 CSV parser (quoted fields, escaped quotes, CRLF). */
 export function parseCsv(text: string): string[][] {
