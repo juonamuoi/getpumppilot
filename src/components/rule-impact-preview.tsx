@@ -166,44 +166,13 @@ export function RuleImpactPreview({
           </div>
         ) : (
           <div className="divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60">
-            {rows.map(({ asset, before, after, status }) => (
-              <div
-                key={asset.symbol}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold">{asset.symbol}</span>
-                    {asset.category === "demo-smallcap" && (
-                      <Badge variant="outline" className="h-4 px-1 text-[9px]">
-                        DEMO
-                      </Badge>
-                    )}
-                    {held.has(asset.symbol) && (
-                      <Badge variant="outline" className="h-4 border-sky-500/40 px-1 text-[9px] text-sky-300">
-                        HELD
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="truncate text-[11px] text-muted-foreground">
-                    {before.matched ? "signal" : "no signal"}
-                    {" → "}
-                    {after.matched ? "signal" : "no signal"} · strength {before.strength}% →{" "}
-                    {after.strength}%
-                  </div>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px]",
-                    status === "gained" && "border-emerald-500/40 text-emerald-300",
-                    status === "lost" && "border-rose-500/40 text-rose-300",
-                    status === "same" && "text-muted-foreground",
-                  )}
-                >
-                  {status === "gained" ? "New signal" : status === "lost" ? "Signal lost" : "Unchanged"}
-                </Badge>
-              </div>
+            {rows.map((row) => (
+              <AssetImpactRow
+                key={row.asset.symbol}
+                row={row}
+                change={change}
+                held={held.has(row.asset.symbol)}
+              />
             ))}
           </div>
         )}
