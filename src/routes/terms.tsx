@@ -10,6 +10,12 @@ export const Route = createFileRoute("/terms")({
         name: "description",
         content: "Terms of Service for PumpPilot AI. Educational crypto dashboard with paper trading.",
       },
+      { property: "og:title", content: "Terms of Service — PumpPilot AI" },
+      {
+        property: "og:description",
+        content:
+          "The rules for using PumpPilot AI: educational use only, paper trading by default, and no guarantee of investment returns.",
+      },
     ],
   }),
   component: TermsPage,
