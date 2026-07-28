@@ -52,6 +52,25 @@ export const Route = createFileRoute("/developers")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: `${BASE}/developers` }],
+    scripts: [
+      ldScript({
+        "@context": "https://schema.org",
+        "@type": "WebAPI",
+        "@id": `${BASE}/developers#api`,
+        name: "PumpPilot AI Public Momentum API",
+        description:
+          "Free JSON API and embeddable iframe widget serving PumpPilot AI crypto momentum scores. Attribution-friendly, no API key required.",
+        url: `${BASE}/developers`,
+        documentation: `${BASE}/developers`,
+        endpointUrl: `${BASE}/api/public/momentum`,
+        provider: { "@id": ORG_ID },
+        image: LOGO_URL,
+        inLanguage: "en",
+        isAccessibleForFree: true,
+        termsOfService: `${BASE}/terms`,
+      }),
+      ldScript(breadcrumbSchema([{ name: "Developers", path: "/developers" }])),
+    ],
   }),
   component: DevelopersPage,
 });
