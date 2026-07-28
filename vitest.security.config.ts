@@ -20,6 +20,8 @@ export default defineConfig({
         "src/lib/go-live-session.server.ts",
         "src/lib/payments-validation.ts",
         "src/lib/stripe-customer.server.ts",
+        "src/lib/mcp/audit.ts",
+
       ],
       all: true,
     },
