@@ -97,6 +97,51 @@ export function RuleImpactPreview({
     ? Math.round(rows.reduce((s, x) => s + x.after.strength, 0) / rows.length)
     : 0;
 
+  const [exporting, setExporting] = useState(false);
+  const [lastExport, setLastExport] = useState<{ id: string; at: number } | null>(null);
+
+  const handleExportPdf = async () => {
+    if (!rows.length) return;
+    setExporting(true);
+    try {
+      const { exportImpactReportPdf } = await import("@/lib/impact-report-pdf");
+      const built = await exportImpactReportPdf({
+        scopeLabel: SCOPES.find((s) => s.key === scope)?.label ?? "All mock assets",
+        savedAt: change.ts,
+        ruleDeltas: ruleDeltas(change.before, change.after),
+        rows: rows.map((r) => ({
+          symbol: r.asset.symbol,
+          category: r.asset.category,
+          held: held.has(r.asset.symbol),
+          status: r.status,
+          strengthBefore: r.before.strength,
+          strengthAfter: r.after.strength,
+          matchedBefore: r.before.matched,
+          matchedAfter: r.after.matched,
+          reasons: explainAsset(r.asset, change.before, change.after).map((x) => ({
+            label: x.label,
+            input: x.input,
+            thresholdBefore: x.thresholdBefore,
+            thresholdAfter: x.thresholdAfter,
+            before: x.before,
+            after: x.after,
+            sentence: x.sentence,
+          })),
+        })),
+      });
+      setLastExport({ id: built.correlationId, at: built.generatedAt });
+      toast.success("Impact report exported", {
+        description: `${built.filename} · correlation ID ${built.correlationId}`,
+      });
+    } catch (e) {
+      toast.error("Could not generate the impact PDF", {
+        description: e instanceof Error ? e.message : "Unexpected error",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card className="border-emerald-500/30 bg-emerald-500/[0.04]">
       <CardHeader className="pb-3">
@@ -105,10 +150,26 @@ export function RuleImpactPreview({
             <Sparkles className="h-4 w-4 text-emerald-300" />
             Impact of your saved rule change
           </span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDismiss}>
-            <X className="h-4 w-4" />
-            <span className="sr-only">Dismiss impact preview</span>
-          </Button>
+          <span className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={handleExportPdf}
+              disabled={exporting || rows.length === 0}
+            >
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Export impact (PDF)
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDismiss}>
+              <X className="h-4 w-4" />
+              <span className="sr-only">Dismiss impact preview</span>
+            </Button>
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
