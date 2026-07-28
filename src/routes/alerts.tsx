@@ -4902,14 +4902,16 @@ function ReplayPanel() {
                       .map((e) => `${RULE_META[e.key].short} back to ${olds[e.key]}${RULE_META[e.key].unit}`)
                       .join(" · "),
                   });
+                  const bulkOutcome = recordMitigationOutcome(bulkCorrId, next);
                   toast.success(
                     `Applied safer alternatives to ${entries.length} rule${entries.length === 1 ? "" : "s"}`,
                     {
                       description: `${entries
                         .map((e) => `${RULE_META[e.key].short} ${RULE_META[e.key].op} ${e.value}${RULE_META[e.key].unit}`)
-                        .join(" · ")} — logged to the audit trail.`,
+                        .join(" · ")} — outcome ${bulkOutcome.status} (${bulkOutcome.delivered} alerts) · ${bulkCorrId}`,
                     },
                   );
+
                 }}
                 onLogBoundsChange={(e) => {
                   logTuning({
