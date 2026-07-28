@@ -1871,16 +1871,17 @@ function TuningHistoryPanel({
               </div>
             );
           })}
-          {log.length > 5 && (
+          {filtered.length > 5 && (
             <Button
               size="sm"
               variant="ghost"
               className="h-6 w-full text-[10px]"
               onClick={() => setExpanded((v) => !v)}
             >
-              {expanded ? "Show less" : `Show all ${log.length}`}
+              {expanded ? "Show less" : `Show all ${filtered.length}`}
             </Button>
           )}
+
         </div>
       )}
     </div>
