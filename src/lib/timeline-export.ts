@@ -70,6 +70,8 @@ export function buildTimelineJson(
         toIso: new Date(filters.to).toISOString(),
         wallets: filters.wallets.length ? filters.wallets : "all",
         tokens: filters.tokens.length ? filters.tokens : "all",
+        actions: filters.actions?.length ? filters.actions : "all",
+        outcomes: filters.outcomes?.length ? filters.outcomes : "all",
       },
       totals: {
         riskPoints: risk.length,
