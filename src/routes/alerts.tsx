@@ -1738,7 +1738,7 @@ function TuningHistoryPanel({
               size="sm"
               variant="outline"
               className="h-6 gap-1 px-2 text-[10px]"
-              onClick={() => onRollbackLast(batch)}
+              onClick={() => setRollbackOpen(true)}
               title={batch
                 .map(
                   (e) =>
@@ -1751,6 +1751,16 @@ function TuningHistoryPanel({
               {batch.length > 1 ? ` (${batch.length})` : ""}
             </Button>
           )}
+          <RollbackConfirmDialog
+            batch={batch}
+            open={rollbackOpen}
+            onOpenChange={setRollbackOpen}
+            onConfirm={() => {
+              setRollbackOpen(false);
+              onRollbackLast(batch);
+            }}
+          />
+
           <TuningAuditExport log={filtered} />
           {log.length > 0 && (
             <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onClear}>
