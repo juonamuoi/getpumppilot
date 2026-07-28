@@ -269,6 +269,56 @@ export function MitigationAuditTrail({
       prev.includes(cid) ? prev.filter((x) => x !== cid) : [...prev, cid],
     );
 
+  const toggleIn = (setter: (fn: (prev: string[]) => string[]) => void) => (value: string) =>
+    setter((prev) => (prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]));
+
+  /** Token symbols seen in mitigation outcomes. */
+  const availableTokens = useMemo(() => {
+    const seen = new Set<string>();
+    for (const e of log) {
+      if (e.source !== "mitigation") continue;
+      e.outcome?.symbols.forEach((s) => seen.add(s));
+    }
+    return [...seen].sort();
+  }, [log]);
+
+  /** Alert delivery channels seen in mitigation outcomes. */
+  const availableAlertTypes = useMemo(() => {
+    const seen = new Set<string>();
+    for (const e of log) {
+      if (e.source !== "mitigation") continue;
+      e.outcome?.channels.forEach((c) => seen.add(c));
+    }
+    return [...seen].sort();
+  }, [log]);
+
+  /** Wallets with scan history, used to attribute mitigations to a wallet. */
+  const availableWallets = useMemo(
+    () => [...new Set(runs.map((r) => r.address))],
+    [runs],
+  );
+
+  /**
+   * A mitigation is attributed to every wallet scanned within an hour of it
+   * (or sharing its correlation ID) — the same linkage the impact timeline uses.
+   */
+  const walletsForEntry = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const e of log) {
+      if (e.source !== "mitigation") continue;
+      const hit = runs
+        .filter(
+          (r) =>
+            r.correlationId === e.correlationId ||
+            Math.abs(r.scannedAt - e.ts) <= WALLET_LINK_MS,
+        )
+        .map((r) => r.address);
+      map.set(e.id, [...new Set(hit)]);
+    }
+    return map;
+  }, [log, runs]);
+
+
   /** Re-run a recorded mitigation with identical parameters and stored preview context. */
   const replay = (entry: TuningLogEntry) => {
     if (!entry.correlationId) {
