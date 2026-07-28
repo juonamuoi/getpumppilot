@@ -34,6 +34,7 @@ import {
   setWalletSession,
   useWalletMonitor,
   recordScanRun,
+  getWalletInterval,
 } from "@/lib/wallet-session";
 
 
