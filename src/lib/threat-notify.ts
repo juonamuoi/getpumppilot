@@ -11,6 +11,7 @@
  */
 
 import { isNativeApp } from "@/lib/native";
+import { recordAlertEvents } from "@/lib/notify-history";
 import { sendThreatEmail } from "@/lib/threat-alerts.functions";
 import type { ThreatEmailInput } from "@/lib/threat-alerts.functions";
 import {
