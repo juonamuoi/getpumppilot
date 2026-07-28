@@ -364,3 +364,78 @@ export function parseMitigationExport(filename: string, text: string): ImportRes
   });
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Error report
+ * ------------------------------------------------------------------ */
+
+const csvCell = (v: unknown) => {
+  const s = String(v ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+export const ERROR_REPORT_COLUMNS = [
+  "row",
+  "line",
+  "level",
+  "code",
+  "field",
+  "message",
+  "value",
+  "ref",
+] as const;
+
+/** CSV report of every per-record warning/error found while importing. */
+export function buildErrorReportCsv(result: ImportResult): string {
+  const head = [
+    ["file", result.fileName ?? ""],
+    ["format", result.format],
+    ["generatedAt", new Date().toISOString()],
+    ["rowsTotal", result.total],
+    ["rowsImported", result.entries.length],
+    ["rowsSkipped", result.skipped],
+    ["rowsWithWarnings", result.warned],
+  ].map((r) => r.map(csvCell).join(","));
+
+  const fileNotes = result.warnings.map((w) => ["file", "", "warning", "file-note", "", w, "", ""]);
+  const rows = result.issues.map((i) => [
+    i.row,
+    i.line ?? "",
+    i.level,
+    i.code,
+    i.field ?? "",
+    i.message,
+    i.value ?? "",
+    i.ref ?? "",
+  ]);
+
+  return [
+    ...head,
+    "",
+    ERROR_REPORT_COLUMNS.join(","),
+    ...[...fileNotes, ...rows].map((r) => r.map(csvCell).join(",")),
+  ].join("\n");
+}
+
+/** JSON report of every per-record warning/error found while importing. */
+export function buildErrorReportJson(result: ImportResult): string {
+  return JSON.stringify(
+    {
+      file: result.fileName ?? null,
+      format: result.format,
+      generatedAt: new Date().toISOString(),
+      summary: {
+        rowsTotal: result.total,
+        rowsImported: result.entries.length,
+        rowsSkipped: result.skipped,
+        rowsWithWarnings: result.warned,
+        errors: result.issues.filter((i) => i.level === "error").length,
+        warnings: result.issues.filter((i) => i.level === "warning").length,
+      },
+      fileNotes: result.warnings,
+      issues: result.issues,
+    },
+    null,
+    2,
+  );
+}
