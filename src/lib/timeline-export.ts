@@ -37,6 +37,10 @@ export type TimelineFilters = {
   to: number;
   wallets: string[];
   tokens: string[];
+  /** Mitigation action types selected (empty = all). */
+  actions?: string[];
+  /** Outcome statuses selected (empty = all). */
+  outcomes?: string[];
 };
 
 const RISK_LABELS = ["safe", "medium", "high", "critical"];
