@@ -17,6 +17,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Play, Terminal, ShieldCheck, Copy, ScrollText } from "lucide-react";
 import { listConsoleTools, runConsoleToolCall } from "@/lib/mcp-console.functions";
+import {
+  QuotaMeter,
+  ThrottleBanner,
+  type ConsoleQuotaView,
+  type ConsoleThrottleView,
+} from "@/components/mcp-quota";
 
 export const Route = createFileRoute("/mcp-console")({
   head: () => ({
@@ -57,6 +63,8 @@ type RunResult = {
   isError: boolean;
   text: string;
   structuredJson: string;
+  quota: ConsoleQuotaView | null;
+  throttle: ConsoleThrottleView | null;
 };
 
 function McpConsolePage() {
@@ -96,7 +104,11 @@ function McpConsolePage() {
     try {
       const result = (await runTool({ data: { tool: selected, mode, input } })) as RunResult;
       setHistory((h) => [result, ...h].slice(0, 20));
-      if (result.isError) toast.error("Tool returned an error — see the response below.");
+      if (result.throttle)
+        toast.error(
+          `Rate limited — retry in ${result.throttle.retryAfterSeconds}s (correlation ${result.correlationId ?? "n/a"})`,
+        );
+      else if (result.isError) toast.error("Tool returned an error — see the response below.");
       else toast.success(`${mode === "mock" ? "Mock" : "Live"} call completed in ${result.durationMs}ms`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Tool call failed.");
@@ -222,7 +234,7 @@ function McpConsolePage() {
                     <Badge variant={r.mode === "live" ? "default" : "secondary"}>{r.mode}</Badge>
                     <span className="font-mono">{r.tool}</span>
                     <Badge variant={r.isError ? "destructive" : "outline"}>
-                      {r.isError ? "error" : "ok"}
+                      {r.throttle ? "throttled" : r.isError ? "error" : "ok"}
                     </Badge>
                     <span className="text-muted-foreground">{r.durationMs}ms</span>
                     <span className="ml-auto flex items-center gap-1 text-muted-foreground">
@@ -244,6 +256,17 @@ function McpConsolePage() {
                       </Button>
                     )}
                   </div>
+
+                  {r.throttle && (
+                    <ThrottleBanner
+                      throttle={r.throttle}
+                      correlationId={r.correlationId}
+                      onCopy={copy}
+                      onRetry={i === 0 ? run : undefined}
+                    />
+                  )}
+
+                  {r.quota && <QuotaMeter quota={r.quota} />}
 
                   <pre className="max-h-72 overflow-auto rounded bg-muted/40 p-2 text-[11px] leading-relaxed font-mono whitespace-pre-wrap">
                     {r.text || r.structuredJson}
