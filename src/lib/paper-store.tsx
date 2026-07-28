@@ -118,7 +118,13 @@ export type TuningLogEntry = {
   scopeNearMissAfter?: number;
   scopeAssetsAffected?: number;
 
+  /** Stable id linking a mitigation preview, its applied entry and the alert outcome. */
+  correlationId?: string;
+  /** Alert outcome recorded after the mitigation took effect. */
+  outcome?: MitigationOutcome;
+
   /** Set once this change has been rolled back. */
+
   revertedAt?: number;
   /** Optional user-entered reason captured at rollback time. */
   revertReason?: string;
