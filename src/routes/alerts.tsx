@@ -1817,6 +1817,7 @@ function TuningHistoryPanel({
         e.scope ?? "",
         e.mitigation ?? "",
         e.trigger ?? "",
+        e.revertReason ?? "",
 
         `${e.oldValue}${e.unit}`,
         `${e.newValue}${e.unit}`,
