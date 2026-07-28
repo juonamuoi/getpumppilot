@@ -249,6 +249,8 @@ function ScannerRulesPanel() {
         oldValue,
         newValue,
         preset: "manual",
+        scope: scopeOf(r),
+
         matchesBefore: mBefore.matches,
         matchesAfter: mAfter.matches,
         nearMissBefore: mBefore.nearMiss,
