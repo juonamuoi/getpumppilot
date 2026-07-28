@@ -546,6 +546,47 @@ export function PaperProvider({ children }: { children: ReactNode }) {
       );
       return { correlationId: batch.correlationId, label: batch.label, entries: batch.entries };
     },
+    replayMitigation: (correlationId) => {
+      // Source of truth = the stored audit entries for this correlation id.
+      const source = tuningLog.filter(
+        (e) =>
+          e.correlationId === correlationId &&
+          e.source === "mitigation" &&
+          e.kind === "rule" &&
+          e.rule !== "undo",
+      );
+      // Prefer the applied entries; fall back to the preview context when the
+      // mitigation was only ever reviewed.
+      const applied = source.filter((e) => e.phase !== "preview");
+      const batch = applied.length > 0 ? applied : source;
+      if (batch.length === 0) return null;
+
+      const label = batch[0].mitigation ?? "Mitigation";
+      const nextRules = { ...scannerRules };
+      for (const e of batch) applyRuleValue(nextRules, e.rule, e.newValue);
+      setScannerRules(nextRules);
+
+      const at = Date.now();
+      const replayId = `${correlationId}-R${at.toString(36).slice(-4)}`;
+      const replayEntries: TuningLogEntry[] = batch.map((e, i) => ({
+        ...e,
+        id: `${at.toString(36)}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+        ts: at,
+        appliedAt: at,
+        correlationId: replayId,
+        replayOf: correlationId,
+        phase: "applied" as const,
+        mitigation: `Replay: ${label}`,
+        trigger: `One-click replay of ${correlationId} — same parameters, stored preview context`,
+        outcome: undefined,
+        revertedAt: undefined,
+        revertReason: undefined,
+      }));
+
+      setTuningLog((prev) => [...replayEntries, ...prev].slice(0, 200));
+      const outcome = value.recordMitigationOutcome(replayId, nextRules);
+      return { correlationId: replayId, label, entries: replayEntries, outcome };
+    },
     clearTuningLog: () => setTuningLog([]),
 
     simulateScannerRun,
