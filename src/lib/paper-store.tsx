@@ -53,8 +53,19 @@ export type AlertDelivery = {
 export type TuningLogEntry = {
   id: string;
   /** Where the change came from. */
-  source?: "manual-save" | "recommendation" | "auto";
+  source?: "manual-save" | "recommendation" | "auto" | "mitigation";
+  /** Rule threshold change, or a risk-bounds (tolerance/limit) change. */
+  kind?: "rule" | "bounds";
+  /** One-tap mitigation label, e.g. "Tighten filter" or "Raise fragility tolerance". */
+  mitigation?: string;
+  /** Risk deltas that triggered the recommendation this mitigation replaced. */
+  trigger?: string;
+  /** The originally recommended value the mitigation replaced. */
+  recommendedValue?: number;
+  /** Fragility of the applied option, in percent. */
+  fragilePct?: number;
   ts: number;
+
 
   /** Rule key: momentum | volume | volatility | change */
   rule: string;
