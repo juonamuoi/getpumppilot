@@ -1850,18 +1850,12 @@ function TuningHistoryPanel({
                   </span>
                 </div>
                 {(e.matchesBefore != null || e.nearMissBefore != null) && (
-                  <div className="mt-1 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
-                    {e.matchesBefore != null && (
-                      <span>
-                        Matches {e.matchesBefore} → {e.matchesAfter}
-                      </span>
-                    )}
-                    {e.nearMissBefore != null && (
-                      <span>
-                        Near-miss {e.nearMissBefore} → {e.nearMissAfter}
-                      </span>
-                    )}
-                  </div>
+                  <TuningDeltaChart
+                    matchesBefore={e.matchesBefore}
+                    matchesAfter={e.matchesAfter}
+                    nearMissBefore={e.nearMissBefore}
+                    nearMissAfter={e.nearMissAfter}
+                  />
                 )}
                 {!e.revertedAt && (
                   <Button
