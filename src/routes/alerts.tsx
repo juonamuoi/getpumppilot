@@ -69,13 +69,16 @@ import {
 import { ASSETS } from "@/lib/mock-data";
 import {
   usePaper,
+  newCorrelationId,
   type Alert,
   type AlertDelivery,
   type ScannerRules,
   type TuningLogEntry,
 
 } from "@/lib/paper-store";
+import { MitigationAuditTrail } from "@/components/mitigation-audit-trail";
 import { TuningAuditExport } from "@/components/tuning-audit-export";
+
 
 import { toast } from "sonner";
 import {
