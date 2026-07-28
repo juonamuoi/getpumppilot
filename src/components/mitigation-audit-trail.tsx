@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
+
 
 type OutcomeFilter = "all" | "alerts-fired" | "no-matches" | "channels-muted" | "pending";
 
