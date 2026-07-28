@@ -19,6 +19,51 @@ import { MitigationRetentionSettings } from "@/components/mitigation-retention-s
 
 
 type OutcomeFilter = "all" | "alerts-fired" | "no-matches" | "channels-muted" | "pending";
+type RangeFilter = "all" | "24h" | "7d" | "30d" | "90d";
+
+const RANGE_MS: Record<Exclude<RangeFilter, "all">, number> = {
+  "24h": 86_400_000,
+  "7d": 7 * 86_400_000,
+  "30d": 30 * 86_400_000,
+  "90d": 90 * 86_400_000,
+};
+
+const RANGE_LABEL: Record<RangeFilter, string> = {
+  all: "All time",
+  "24h": "Last 24 hours",
+  "7d": "Last 7 days",
+  "30d": "Last 30 days",
+  "90d": "Last 90 days",
+};
+
+/** Everything that defines an export scope, so it can be named and re-used. */
+type AuditFilterState = {
+  q: string;
+  outcome: OutcomeFilter;
+  range: RangeFilter;
+  correlationIds: string[];
+};
+
+type SavedAuditFilter = AuditFilterState & { id: string; name: string };
+
+const EMPTY_FILTER: AuditFilterState = {
+  q: "",
+  outcome: "all",
+  range: "all",
+  correlationIds: [],
+};
+
+const SAVED_FILTERS_KEY = "pumppilot_audit_saved_filters";
+
+function loadSavedFilters(): SavedAuditFilter[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(SAVED_FILTERS_KEY);
+    return raw ? (JSON.parse(raw) as SavedAuditFilter[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 const OUTCOME_LABEL: Record<string, string> = {
   "alerts-fired": "Alerts fired",
@@ -102,6 +147,58 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
   const paper = usePaper();
   const [q, setQ] = useState("");
   const [outcome, setOutcome] = useState<OutcomeFilter>("all");
+  const [range, setRange] = useState<RangeFilter>("all");
+  const [correlationIds, setCorrelationIds] = useState<string[]>([]);
+  const [saved, setSaved] = useState<SavedAuditFilter[]>(loadSavedFilters);
+  const [filterName, setFilterName] = useState("");
+
+  const persistSaved = (next: SavedAuditFilter[]) => {
+    setSaved(next);
+    try {
+      window.localStorage.setItem(SAVED_FILTERS_KEY, JSON.stringify(next));
+    } catch {}
+  };
+
+  const current: AuditFilterState = { q, outcome, range, correlationIds };
+
+  const applyFilter = (f: AuditFilterState) => {
+    setQ(f.q);
+    setOutcome(f.outcome);
+    setRange(f.range);
+    setCorrelationIds(f.correlationIds ?? []);
+  };
+
+  const saveCurrentFilter = () => {
+    const name = filterName.trim();
+    if (!name) {
+      toast.error("Name this filter before saving");
+      return;
+    }
+    const existing = saved.find((f) => f.name.toLowerCase() === name.toLowerCase());
+    const entry: SavedAuditFilter = {
+      ...current,
+      id: existing?.id ?? Math.random().toString(36).slice(2),
+      name,
+    };
+    persistSaved(existing ? saved.map((f) => (f.id === existing.id ? entry : f)) : [entry, ...saved]);
+    setFilterName("");
+    toast.success(existing ? `Updated saved filter "${name}"` : `Saved filter "${name}"`);
+  };
+
+  /** Correlation IDs available in the log, newest first. */
+  const availableCids = useMemo(() => {
+    const seen: string[] = [];
+    for (const e of log) {
+      const cid = e.correlationId;
+      if (e.source === "mitigation" && cid && !seen.includes(cid)) seen.push(cid);
+    }
+    return seen;
+  }, [log]);
+
+  const toggleCid = (cid: string) =>
+    setCorrelationIds((prev) =>
+      prev.includes(cid) ? prev.filter((x) => x !== cid) : [...prev, cid],
+    );
 
   /** Re-run a recorded mitigation with identical parameters and stored preview context. */
   const replay = (entry: TuningLogEntry) => {
@@ -130,6 +227,14 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
         return e.outcome?.status === outcome;
       })
       .filter((e) => {
+        if (range === "all") return true;
+        return Date.now() - e.ts <= RANGE_MS[range];
+      })
+      .filter((e) => {
+        if (correlationIds.length === 0) return true;
+        return !!e.correlationId && correlationIds.includes(e.correlationId);
+      })
+      .filter((e) => {
         if (!q.trim()) return true;
         const hay = [
           e.mitigation,
@@ -143,7 +248,7 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
           .toLowerCase();
         return hay.includes(q.trim().toLowerCase());
       });
-  }, [log, q, outcome]);
+  }, [log, q, outcome, range, correlationIds]);
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
