@@ -71,6 +71,12 @@ export type WalletMonitorSettings = {
   emailPdfReport: boolean;
   /** Recurring PDF threat-report export. */
   reportSchedule: ReportSchedule;
+  /**
+   * Alert scoping: only notify for approvals whose token / wallet is
+   * selected. Empty array = no filter (all tokens / all wallets).
+   */
+  alertTokens: string[];
+  alertWallets: string[];
 };
 
 export type ReportFrequency = "off" | "daily" | "weekly";
@@ -135,6 +141,8 @@ const defaultMonitor: WalletMonitorSettings = {
   emailOnNewThreats: false,
   emailPdfReport: true,
   reportSchedule: defaultReportSchedule,
+  alertTokens: [],
+  alertWallets: [],
 };
 
 function loadMonitor(): WalletMonitorSettings {
@@ -189,6 +197,63 @@ export function setWalletInterval(address: string, minutes: number | null) {
   else next[key] = clampInterval(minutes);
   setWalletMonitor({ walletIntervals: next });
 }
+
+/* --------------------------- Alert scope filters --------------------------- */
+
+/** Toggle a token in the alert filter. Empty selection = all tokens. */
+export function toggleAlertToken(token: string) {
+  const key = token.toUpperCase();
+  const has = monitor.alertTokens.includes(key);
+  setWalletMonitor({
+    alertTokens: has
+      ? monitor.alertTokens.filter((t) => t !== key)
+      : [...monitor.alertTokens, key],
+  });
+}
+
+/** Toggle a wallet address in the alert filter. Empty selection = all wallets. */
+export function toggleAlertWallet(address: string) {
+  const key = address.toLowerCase();
+  const has = monitor.alertWallets.includes(key);
+  setWalletMonitor({
+    alertWallets: has
+      ? monitor.alertWallets.filter((a) => a !== key)
+      : [...monitor.alertWallets, key],
+  });
+}
+
+export function clearAlertFilters() {
+  setWalletMonitor({ alertTokens: [], alertWallets: [] });
+}
+
+/** True when alerts are allowed for this wallet address. */
+export function walletAlertsEnabled(address: string | null | undefined) {
+  const list = monitor.alertWallets;
+  if (list.length === 0) return true;
+  return !!address && list.includes(address.toLowerCase());
+}
+
+/** True when alerts are allowed for this token symbol. */
+export function tokenAlertsEnabled(token: string | null | undefined) {
+  const list = monitor.alertTokens;
+  if (list.length === 0) return true;
+  return !!token && list.includes(token.toUpperCase());
+}
+
+/**
+ * Narrow a set of detected approvals down to the ones the user wants to be
+ * notified about. Filtering is notification-only — every threat still shows
+ * up in scans, the security log and reports.
+ */
+export function filterAlertThreats<T extends { token: string }>(
+  address: string | null | undefined,
+  threats: T[],
+): T[] {
+  if (!walletAlertsEnabled(address)) return [];
+  return threats.filter((t) => tokenAlertsEnabled(t.token));
+}
+
+
 
 /** Patch the recurring report schedule. */
 export function setReportSchedule(patch: Partial<ReportSchedule>) {
