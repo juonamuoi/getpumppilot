@@ -3559,8 +3559,9 @@ function MitigationChecklist({
   rules,
   bounds,
   onSetBounds,
-  onApplyAlternative,
-  onLogBounds,
+  onApplyAlternative: applyAlternativeProp,
+  onLogBounds: logBoundsProp,
+  onLogPreview,
 }: {
   ruleKey: RuleKey;
   tuning: RuleTuning;
@@ -3582,10 +3583,26 @@ function MitigationChecklist({
     meta: MitigationMeta;
     preview: TuningPreview | null;
   }) => void;
+  /** Records the reviewed preview into the audit history; returns its entry id. */
+  onLogPreview?: (e: MitigationPreviewLog) => string;
 }) {
   /** Mitigation awaiting explicit confirmation (before/after summary shown first). */
   const [pendingItem, setPendingItem] = useState<Item | null>(null);
+  /** Audit id of the preview logged when the confirm dialog was opened. */
+  const previewIdRef = useRef<string | null>(null);
   const meta = RULE_META[ruleKey];
+
+  const onApplyAlternative: typeof applyAlternativeProp = (value, preview, label, m) =>
+    applyAlternativeProp(value, preview, label, {
+      ...m,
+      previewId: previewIdRef.current ?? undefined,
+    });
+  const onLogBounds: typeof logBoundsProp = (e) =>
+    logBoundsProp({
+      ...e,
+      meta: { ...e.meta, previewId: previewIdRef.current ?? undefined },
+    });
+
 
   const suggested = tuning.suggested!;
   const alternatives = useSaferAlternatives(result, rules, ruleKey, suggested, bounds);
