@@ -1828,6 +1828,18 @@ function TuningHistoryPanel({
                       {e.window}
                     </Badge>
                   )}
+                  {e.scope && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                      {e.scope === "both"
+                        ? "Majors + DEMO"
+                        : e.scope === "majors"
+                          ? "Majors"
+                          : e.scope === "demo"
+                            ? "DEMO"
+                            : "No assets"}
+                    </Badge>
+                  )}
+
                   {e.revertedAt && (
                     <Badge variant="outline" className="h-4 px-1.5 text-[9px] text-muted-foreground">
                       Reverted
