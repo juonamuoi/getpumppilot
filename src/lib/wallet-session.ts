@@ -71,6 +71,12 @@ export type WalletMonitorSettings = {
   emailPdfReport: boolean;
   /** Recurring PDF threat-report export. */
   reportSchedule: ReportSchedule;
+  /**
+   * Alert scoping: only notify for approvals whose token / wallet is
+   * selected. Empty array = no filter (all tokens / all wallets).
+   */
+  alertTokens: string[];
+  alertWallets: string[];
 };
 
 export type ReportFrequency = "off" | "daily" | "weekly";
