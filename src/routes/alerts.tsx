@@ -95,7 +95,9 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 export const Route = createFileRoute("/alerts")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/alerts" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/alerts" },
       { title: "Alerts — PumpPilot AI" },
       {
         name: "description",

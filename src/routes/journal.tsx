@@ -14,7 +14,9 @@ const STARTING_CASH = 100_000;
 
 export const Route = createFileRoute("/journal")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/journal" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/journal" },
       { title: "Trade Journal — PumpPilot AI" },
       {
         name: "description",

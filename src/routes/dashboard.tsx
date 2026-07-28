@@ -17,7 +17,9 @@ import { useOnboarding } from "@/lib/onboarding-store";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/dashboard" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/dashboard" },
       { title: "Dashboard — PumpPilot AI" },
       {
         name: "description",

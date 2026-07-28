@@ -15,7 +15,9 @@ export const Route = createFileRoute("/auth")({
     typeof s.next === "string" ? { next: s.next } : {},
 
   head: () => ({
+    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/auth" }],
     meta: [
+      { property: "og:url", content: "https://www.getpumppilot.app/auth" },
       { title: "Sign in — PumpPilot AI" },
       { name: "description", content: "Sign in to publish strategies, follow top authors, and climb the PumpPilot leaderboard." },
       { property: "og:title", content: "Sign in — PumpPilot AI" },
