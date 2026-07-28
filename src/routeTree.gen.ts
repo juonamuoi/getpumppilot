@@ -22,6 +22,7 @@ import { Route as DoctorRouteImport } from './routes/doctor'
 import { Route as GoLiveTestRouteImport } from './routes/go-live-test'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as LearnRouteImport } from './routes/learn'
+import { Route as LpReportRouteImport } from './routes/lp-report'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as McpConsoleRouteImport } from './routes/mcp-console'
 import { Route as PaperRouteImport } from './routes/paper'
@@ -113,6 +114,11 @@ const JournalRoute = JournalRouteImport.update({
 const LearnRoute = LearnRouteImport.update({
   id: '/learn',
   path: '/learn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LpReportRoute = LpReportRouteImport.update({
+  id: '/lp-report',
+  path: '/lp-report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/go-live-test': typeof GoLiveTestRoute
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
+  '/lp-report': typeof LpReportRoute
   '/mcp': typeof McpRoute
   '/mcp-console': typeof McpConsoleRoute
   '/paper': typeof PaperRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/go-live-test': typeof GoLiveTestRoute
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
+  '/lp-report': typeof LpReportRoute
   '/mcp': typeof McpRoute
   '/mcp-console': typeof McpConsoleRoute
   '/paper': typeof PaperRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/go-live-test': typeof GoLiveTestRoute
   '/journal': typeof JournalRoute
   '/learn': typeof LearnRoute
+  '/lp-report': typeof LpReportRoute
   '/mcp': typeof McpRoute
   '/mcp-console': typeof McpConsoleRoute
   '/paper': typeof PaperRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/go-live-test'
     | '/journal'
     | '/learn'
+    | '/lp-report'
     | '/mcp'
     | '/mcp-console'
     | '/paper'
@@ -441,6 +451,7 @@ export interface FileRouteTypes {
     | '/go-live-test'
     | '/journal'
     | '/learn'
+    | '/lp-report'
     | '/mcp'
     | '/mcp-console'
     | '/paper'
@@ -483,6 +494,7 @@ export interface FileRouteTypes {
     | '/go-live-test'
     | '/journal'
     | '/learn'
+    | '/lp-report'
     | '/mcp'
     | '/mcp-console'
     | '/paper'
@@ -526,6 +538,7 @@ export interface RootRouteChildren {
   GoLiveTestRoute: typeof GoLiveTestRoute
   JournalRoute: typeof JournalRoute
   LearnRoute: typeof LearnRoute
+  LpReportRoute: typeof LpReportRoute
   McpRoute: typeof McpRoute
   McpConsoleRoute: typeof McpConsoleRoute
   PaperRoute: typeof PaperRoute
@@ -645,6 +658,13 @@ declare module '@tanstack/react-router' {
       path: '/learn'
       fullPath: '/learn'
       preLoaderRoute: typeof LearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lp-report': {
+      id: '/lp-report'
+      path: '/lp-report'
+      fullPath: '/lp-report'
+      preLoaderRoute: typeof LpReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -864,6 +884,7 @@ const rootRouteChildren: RootRouteChildren = {
   GoLiveTestRoute: GoLiveTestRoute,
   JournalRoute: JournalRoute,
   LearnRoute: LearnRoute,
+  LpReportRoute: LpReportRoute,
   McpRoute: McpRoute,
   McpConsoleRoute: McpConsoleRoute,
   PaperRoute: PaperRoute,
