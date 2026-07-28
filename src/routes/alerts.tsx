@@ -175,7 +175,16 @@ function withRuleValue(rules: ScannerRules, key: string, value: number): Scanner
  * The most recent still-active save. One "Save rules" or auto-apply run can touch
  * several rules at once, so entries logged within a short window count as one batch.
  */
+/** Asset scope covered by a rule set, recorded on each tuning entry. */
+function scopeOf(r: ScannerRules): "majors" | "demo" | "both" | "none" {
+  if (r.includeMajors && r.includeDemoSmallCaps) return "both";
+  if (r.includeMajors) return "majors";
+  if (r.includeDemoSmallCaps) return "demo";
+  return "none";
+}
+
 function lastTuningBatch(log: TuningLogEntry[]): TuningLogEntry[] {
+
   const active = log.filter((e) => !e.revertedAt);
   if (active.length === 0) return [];
   const newest = active.reduce((a, b) => (a.ts >= b.ts ? a : b));
@@ -249,6 +258,8 @@ function ScannerRulesPanel() {
         oldValue,
         newValue,
         preset: "manual",
+        scope: scopeOf(r),
+
         matchesBefore: mBefore.matches,
         matchesAfter: mAfter.matches,
         nearMissBefore: mBefore.nearMiss,
@@ -1568,8 +1579,60 @@ function TuningHistoryPanel({
   onRollbackLast: (batch: TuningLogEntry[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const shown = expanded ? log : log.slice(0, 5);
+  const [query, setQuery] = useState("");
+  const [ruleFilter, setRuleFilter] = useState("all");
+  const [opFilter, setOpFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [scopeFilter, setScopeFilter] = useState("all");
+  const [rangeFilter, setRangeFilter] = useState("all");
+
+  const ruleOptions = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const e of log) m.set(e.rule, e.ruleLabel);
+    return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [log]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const cutoff =
+      rangeFilter === "all"
+        ? 0
+        : Date.now() -
+          { "24h": 864e5, "7d": 6048e5, "30d": 2592e6 }[rangeFilter as "24h" | "7d" | "30d"];
+    return log.filter((e) => {
+      if (e.ts < cutoff) return false;
+      if (ruleFilter !== "all" && e.rule !== ruleFilter) return false;
+      if (opFilter !== "all" && e.operator !== opFilter) return false;
+      if (sourceFilter !== "all" && (e.source ?? "manual-save") !== sourceFilter) return false;
+      if (scopeFilter !== "all" && (e.scope ?? "both") !== scopeFilter) return false;
+      if (!q) return true;
+      return [
+        e.ruleLabel,
+        e.rule,
+        e.preset,
+        e.window ?? "",
+        e.source ?? "manual-save",
+        e.scope ?? "",
+        `${e.oldValue}${e.unit}`,
+        `${e.newValue}${e.unit}`,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [log, query, ruleFilter, opFilter, sourceFilter, scopeFilter, rangeFilter]);
+
+  const filtersActive =
+    query.trim() !== "" ||
+    ruleFilter !== "all" ||
+    opFilter !== "all" ||
+    sourceFilter !== "all" ||
+    scopeFilter !== "all" ||
+    rangeFilter !== "all";
+
+  const shown = expanded ? filtered : filtered.slice(0, 5);
   const batch = useMemo(() => lastTuningBatch(log), [log]);
+
 
   return (
     <div className="rounded-md border border-border/60 bg-muted/10 p-3">
@@ -1578,8 +1641,9 @@ function TuningHistoryPanel({
           <History className="h-3.5 w-3.5 text-primary" />
           <span>Tuning history</span>
           <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
-            {log.length}
+            {filtersActive ? `${filtered.length}/${log.length}` : log.length}
           </Badge>
+
         </div>
         <div className="flex items-center gap-1">
           {batch.length > 0 && (
@@ -1600,7 +1664,7 @@ function TuningHistoryPanel({
               {batch.length > 1 ? ` (${batch.length})` : ""}
             </Button>
           )}
-          <TuningAuditExport log={log} />
+          <TuningAuditExport log={filtered} />
           {log.length > 0 && (
             <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onClear}>
               Clear
@@ -1625,13 +1689,107 @@ function TuningHistoryPanel({
         </div>
       )}
 
+      {log.length > 0 && (
+        <div className="mb-2 space-y-2 rounded border border-border/50 bg-background/40 p-2">
+          <div className="flex items-center gap-2">
+            <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(ev) => setQuery(ev.target.value)}
+              placeholder="Search rule, preset, window or values…"
+              className="h-7 text-[11px]"
+            />
+            {filtersActive && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 shrink-0 px-2 text-[10px]"
+                onClick={() => {
+                  setQuery("");
+                  setRuleFilter("all");
+                  setOpFilter("all");
+                  setSourceFilter("all");
+                  setScopeFilter("all");
+                  setRangeFilter("all");
+                }}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <Select value={ruleFilter} onValueChange={setRuleFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Rule" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All rules</SelectItem>
+                {ruleOptions.map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={opFilter} onValueChange={setOpFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Operator" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any operator</SelectItem>
+                <SelectItem value=">=">≥ (minimum)</SelectItem>
+                <SelectItem value="<=">≤ (maximum)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any source</SelectItem>
+                <SelectItem value="manual-save">Manual save</SelectItem>
+                <SelectItem value="recommendation">Recommendation</SelectItem>
+                <SelectItem value="auto">Automated</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={scopeFilter} onValueChange={setScopeFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Asset scope" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any scope</SelectItem>
+                <SelectItem value="both">Majors + DEMO</SelectItem>
+                <SelectItem value="majors">Majors only</SelectItem>
+                <SelectItem value="demo">DEMO small-caps only</SelectItem>
+                <SelectItem value="none">No assets included</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={rangeFilter} onValueChange={setRangeFilter}>
+              <SelectTrigger className="h-7 text-[11px]">
+                <SelectValue placeholder="Time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="24h">Last 24 hours</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
 
       {log.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">
           No recommendations applied yet. Applied threshold changes are recorded here with their old
           and new values.
         </p>
+      ) : filtered.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">
+          No tuning entries match these filters — try resetting the search or time range.
+        </p>
       ) : (
+
         <div className="space-y-1.5">
           {shown.map((e) => {
             const looser =
@@ -1670,6 +1828,18 @@ function TuningHistoryPanel({
                       {e.window}
                     </Badge>
                   )}
+                  {e.scope && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                      {e.scope === "both"
+                        ? "Majors + DEMO"
+                        : e.scope === "majors"
+                          ? "Majors"
+                          : e.scope === "demo"
+                            ? "DEMO"
+                            : "No assets"}
+                    </Badge>
+                  )}
+
                   {e.revertedAt && (
                     <Badge variant="outline" className="h-4 px-1.5 text-[9px] text-muted-foreground">
                       Reverted
@@ -1713,16 +1883,17 @@ function TuningHistoryPanel({
               </div>
             );
           })}
-          {log.length > 5 && (
+          {filtered.length > 5 && (
             <Button
               size="sm"
               variant="ghost"
               className="h-6 w-full text-[10px]"
               onClick={() => setExpanded((v) => !v)}
             >
-              {expanded ? "Show less" : `Show all ${log.length}`}
+              {expanded ? "Show less" : `Show all ${filtered.length}`}
             </Button>
           )}
+
         </div>
       )}
     </div>
@@ -2801,6 +2972,8 @@ function ReplayPanel() {
       oldValue: current,
       newValue: value,
       preset: meta.preset,
+      scope: scopeOf(next),
+
       window: windowLabel,
       matchesBefore: meta.preview?.matchesBefore,
       matchesAfter: meta.preview?.matchesAfter,
@@ -3165,6 +3338,8 @@ function ReplayPanel() {
                     oldValue: current,
                     newValue: value,
                     preset: meta.preset,
+                    scope: scopeOf(next),
+
                     window: result.window,
                     matchesBefore: meta.preview?.matchesBefore,
                     matchesAfter: meta.preview?.matchesAfter,
