@@ -34,6 +34,7 @@ import {
   setWalletSession,
   useWalletMonitor,
   recordScanRun,
+  getWalletInterval,
 } from "@/lib/wallet-session";
 
 
@@ -171,6 +172,8 @@ export function WalletConnect() {
   }, [connected, runScan]);
 
   // Periodic background monitoring while a wallet is connected.
+  // Interval respects a per-wallet override when one is set.
+  const effectiveInterval = getWalletInterval(connected ? DEMO_ADDRESS : null);
   useEffect(() => {
     if (!connected || !monitor.enabled) return;
     const id = window.setInterval(
@@ -178,10 +181,10 @@ export function WalletConnect() {
         if (document.hidden) return;
         void runScan(connected, { background: true });
       },
-      Math.max(1, monitor.intervalMinutes) * 60_000,
+      Math.max(1, effectiveInterval) * 60_000,
     );
     return () => window.clearInterval(id);
-  }, [connected, monitor.enabled, monitor.intervalMinutes, runScan]);
+  }, [connected, monitor.enabled, effectiveInterval, runScan]);
 
 
   // Verify current origin whenever the dialog opens.
