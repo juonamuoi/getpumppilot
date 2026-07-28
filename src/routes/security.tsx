@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { NotificationDeliveryLog } from "@/components/notification-delivery-log";
+import { NotificationHistory } from "@/components/notification-history";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -1286,6 +1287,8 @@ function WalletRescanCard() {
       </div>
       <ThreatAlertChannels />
       <NotificationDeliveryLog />
+
+      <NotificationHistory />
       <ScheduledReportCard />
       <WalletThreatDialog
         open={open}

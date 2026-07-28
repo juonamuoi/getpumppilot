@@ -11,6 +11,7 @@
  */
 
 import { isNativeApp } from "@/lib/native";
+import { recordAlertEvents } from "@/lib/notify-history";
 import { sendThreatEmail } from "@/lib/threat-alerts.functions";
 import type { ThreatEmailInput } from "@/lib/threat-alerts.functions";
 import {
@@ -290,6 +291,36 @@ export async function notifyNewThreats(
   outcome.email = email.ok;
   outcome.emailReason = email.reason;
   outcome.reportAttached = !!email.reportUrl;
+
+  const now = Date.now();
+  const delivery = {
+    push: (push.ok ? "sent" : push.reason === "channel_off" || push.reason === "duplicate" || push.reason === "unsupported" ? "skipped" : "failed") as
+      | "sent"
+      | "failed"
+      | "skipped",
+    pushReason: push.reason,
+    email: (email.ok ? "sent" : email.reason === "channel_off" || email.reason === "duplicate" ? "skipped" : "failed") as
+      | "sent"
+      | "failed"
+      | "skipped",
+    emailReason: email.reason,
+    reportAttached: !!email.reportUrl,
+  };
+  recordAlertEvents(
+    fresh.map((t) => ({
+      ts: now,
+      address,
+      token: t.token,
+      spender: t.spender,
+      spenderLabel: t.spenderLabel,
+      risk: t.risk,
+      valueAtRiskUsd: Math.round(t.valueAtRiskUsd),
+      reason: t.reasons[0] ?? "Risky approval detected",
+      correlationId: t.correlationId ?? correlationId,
+      batchCorrelationId: correlationId,
+      delivery,
+    })),
+  );
 
   return outcome;
 }
