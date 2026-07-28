@@ -125,6 +125,57 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_captures: {
+        Row: {
+          consent: boolean
+          created_at: string
+          email: string
+          id: string
+          page_path: string | null
+          placement: string | null
+          referrer: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          variant: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          consent?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          page_path?: string | null
+          placement?: string | null
+          referrer?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          variant?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          consent?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          page_path?: string | null
+          placement?: string | null
+          referrer?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          variant?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       mcp_audit_log: {
         Row: {
           client_id: string | null
