@@ -1661,6 +1661,8 @@ function TuningHistoryPanel({
   onRollbackLast: (batch: TuningLogEntry[]) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [rollbackOpen, setRollbackOpen] = useState(false);
+
   const [query, setQuery] = useState("");
   const [ruleFilter, setRuleFilter] = useState("all");
   const [opFilter, setOpFilter] = useState("all");
