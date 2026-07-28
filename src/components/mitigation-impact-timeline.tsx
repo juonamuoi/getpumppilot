@@ -13,6 +13,7 @@ import {
   buildTimelineJson,
   downloadTimelineExport,
 } from "@/lib/timeline-export";
+import { TimelineAggregateSummary } from "@/components/timeline-aggregate-summary";
 
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
