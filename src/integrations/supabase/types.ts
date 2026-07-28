@@ -765,6 +765,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      mcp_my_limits: { Args: { _client_id?: string }; Returns: Json }
       mcp_plan_defaults: { Args: { _user_id: string }; Returns: Json }
       mcp_rate_limit_status: {
         Args: { _client_id?: string; _user_id?: string }
