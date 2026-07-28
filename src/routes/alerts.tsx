@@ -1600,6 +1600,128 @@ function simulateApply(
   };
 }
 
+/* -------------------- Scope-wide (portfolio) impact preview ------------------- */
+
+export type ScopeAssetImpact = {
+  symbol: string;
+  category: "major" | "demo-smallcap";
+  snapshots: number;
+  matchesBefore: number;
+  matchesAfter: number;
+  nearMissBefore: number;
+  nearMissAfter: number;
+  /** Snapshots that flip fail -> match with the new threshold. */
+  newlyMatched: number;
+  /** Snapshots that flip match -> fail (only possible when tightening). */
+  lostMatches: number;
+};
+
+export type ScopeImpact = {
+  totals: {
+    snapshots: number;
+    matchesBefore: number;
+    matchesAfter: number;
+    nearMissBefore: number;
+    nearMissAfter: number;
+    newlyMatched: number;
+    lostMatches: number;
+    assetsAffected: number;
+  };
+  assets: ScopeAssetImpact[];
+};
+
+/**
+ * Portfolio-level version of `simulateApply`: reclassifies every eligible
+ * snapshot in the replay window per asset so we can show scope-wide near-miss
+ * counts and expected signal deltas for a chosen mitigation value.
+ */
+function simulateScopeImpact(
+  allSnaps: BucketSnapshot[],
+  k: RuleKey,
+  value: number,
+  scope?: string[],
+): ScopeImpact {
+  const keys: RuleKey[] = ["momentum", "volume", "volatility", "change"];
+  const meta = RULE_META[k];
+  const scopeSet = scope && scope.length > 0 ? new Set(scope) : null;
+  const byAsset = new Map<string, ScopeAssetImpact>();
+
+  for (const s of allSnaps) {
+    if (s.outcome === "cooldown") continue;
+    if (scopeSet && !scopeSet.has(s.symbol)) continue;
+    let row = byAsset.get(s.symbol);
+    if (!row) {
+      row = {
+        symbol: s.symbol,
+        category: s.category,
+        snapshots: 0,
+        matchesBefore: 0,
+        matchesAfter: 0,
+        nearMissBefore: 0,
+        nearMissAfter: 0,
+        newlyMatched: 0,
+        lostMatches: 0,
+      };
+      byAsset.set(s.symbol, row);
+    }
+    row.snapshots++;
+
+    const beforeFailed = s.failedRules;
+    const wasMatch = beforeFailed.length === 0;
+    if (wasMatch) row.matchesBefore++;
+    if (beforeFailed.length === 1) row.nearMissBefore++;
+
+    const val = snapshotValue(s, k);
+    const newSlackK = meta.op === ">=" ? val - value : value - val;
+    const afterFailed: RuleKey[] = [];
+    for (const rk of keys) {
+      const sl = rk === k ? newSlackK : s.slack[rk];
+      if (sl < 0) afterFailed.push(rk);
+    }
+    const isMatch = afterFailed.length === 0;
+    if (isMatch) row.matchesAfter++;
+    if (afterFailed.length === 1) row.nearMissAfter++;
+    if (isMatch && !wasMatch) row.newlyMatched++;
+    if (!isMatch && wasMatch) row.lostMatches++;
+  }
+
+  const assets = [...byAsset.values()].sort((a, b) => {
+    const da = Math.abs(a.matchesAfter - a.matchesBefore);
+    const db = Math.abs(b.matchesAfter - b.matchesBefore);
+    if (db !== da) return db - da;
+    return a.symbol.localeCompare(b.symbol);
+  });
+
+  const totals = assets.reduce(
+    (acc, a) => {
+      acc.snapshots += a.snapshots;
+      acc.matchesBefore += a.matchesBefore;
+      acc.matchesAfter += a.matchesAfter;
+      acc.nearMissBefore += a.nearMissBefore;
+      acc.nearMissAfter += a.nearMissAfter;
+      acc.newlyMatched += a.newlyMatched;
+      acc.lostMatches += a.lostMatches;
+      if (a.matchesAfter !== a.matchesBefore || a.nearMissAfter !== a.nearMissBefore)
+        acc.assetsAffected++;
+      return acc;
+    },
+    {
+      snapshots: 0,
+      matchesBefore: 0,
+      matchesAfter: 0,
+      nearMissBefore: 0,
+      nearMissAfter: 0,
+      newlyMatched: 0,
+      lostMatches: 0,
+      assetsAffected: 0,
+    },
+  );
+
+  return { totals, assets };
+}
+
+
+
 function PreviewStat({
   label,
   before,
