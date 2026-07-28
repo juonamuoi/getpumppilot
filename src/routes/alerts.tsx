@@ -4318,7 +4318,9 @@ function loadAuto(): AutoConfig {
 
 
 function ReplayPanel() {
+  const { audit: auditFocus } = Route.useSearch();
   const {
+
     scannerRules,
     setScannerRules,
     tuningLog,
