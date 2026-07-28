@@ -159,6 +159,14 @@ type State = {
   lastMitigation: { correlationId: string; ts: number; label: string; entries: TuningLogEntry[] } | null;
   /** One-click revert of the last applied mitigation. Returns the restored batch, or null. */
   undoLastMitigation: (reason?: string) => { correlationId: string; label: string; entries: TuningLogEntry[] } | null;
+  /**
+   * One-click replay: re-run a recorded mitigation with the exact same parameters,
+   * reusing its stored preview context. Returns the new batch, or null when the
+   * correlation id has no replayable rule entries.
+   */
+  replayMitigation: (
+    correlationId: string,
+  ) => { correlationId: string; label: string; entries: TuningLogEntry[]; outcome: MitigationOutcome } | null;
   clearTuningLog: () => void;
 
 
