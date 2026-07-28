@@ -150,12 +150,37 @@ function UndoLastMitigationBar() {
  * shown in its confirmation dialog and the alert outcome it produced, all tied
  * together by a correlation ID.
  */
-export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
+export function MitigationAuditTrail({
+  log,
+  focusCorrelationId,
+}: {
+  log: TuningLogEntry[];
+  focusCorrelationId?: string;
+}) {
   const paper = usePaper();
   const [q, setQ] = useState("");
   const [outcome, setOutcome] = useState<OutcomeFilter>("all");
   const [range, setRange] = useState<RangeFilter>("all");
-  const [correlationIds, setCorrelationIds] = useState<string[]>([]);
+  const [correlationIds, setCorrelationIds] = useState<string[]>(
+    focusCorrelationId ? [focusCorrelationId] : [],
+  );
+  const focusRef = useRef<HTMLDivElement | null>(null);
+
+  // A deep link from the impact timeline focuses one correlation batch:
+  // filter to it, show previews, and scroll it into view.
+  useEffect(() => {
+    if (!focusCorrelationId) return;
+    setCorrelationIds([focusCorrelationId]);
+    setRange("all");
+    setOutcome("all");
+    setQ("");
+    const t = window.setTimeout(
+      () => focusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      120,
+    );
+    return () => window.clearTimeout(t);
+  }, [focusCorrelationId]);
+
   const [saved, setSaved] = useState<SavedAuditFilter[]>(loadSavedFilters);
   const [filterName, setFilterName] = useState("");
 
