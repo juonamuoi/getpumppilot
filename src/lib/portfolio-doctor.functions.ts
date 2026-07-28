@@ -3,6 +3,8 @@
 // paper-trading data. All output is educational, not financial advice.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { CREDIT_COSTS } from "@/lib/credits";
 
 const PositionSnap = z.object({
   symbol: z.string().min(1).max(12),
@@ -74,9 +76,28 @@ function fallback(input: DoctorInput): DoctorReport {
   };
 }
 
+/** Signed-in users only, and charged server-side so the AI gateway can't be used for free. */
 export const analyzePortfolio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
-  .handler(async ({ data }): Promise<{ ok: true; report: DoctorReport } | { ok: false; error: string; report: DoctorReport }> => {
+  .handler(async ({ data, context }): Promise<{ ok: true; report: DoctorReport } | { ok: false; error: string; report: DoctorReport }> => {
+    const { data: charge, error: chargeError } = await context.supabase.rpc("consume_credits", {
+      _amount: CREDIT_COSTS.doctor_audit,
+      _feature: "doctor_audit",
+      _description: "Portfolio Doctor audit",
+    });
+    const chargeResult = (charge ?? {}) as { ok?: boolean; reason?: string; balance?: number };
+    if (chargeError || !chargeResult.ok) {
+      return {
+        ok: false,
+        error:
+          chargeResult.reason === "insufficient_credits"
+            ? `Out of credits — the Doctor is paused. This audit needs ${CREDIT_COSTS.doctor_audit} credits, you have ${chargeResult.balance ?? 0}. Recharge on the Pricing page.`
+            : "Could not charge credits. Try again.",
+        report: fallback(data),
+      };
+    }
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) {
       return { ok: false, error: "AI unavailable", report: fallback(data) };
