@@ -112,7 +112,7 @@ type State = {
   removeAlert: (id: string) => void;
   toggleAlert: (id: string) => void;
   setScannerRules: (r: ScannerRules) => void;
-  logTuning: (e: Omit<TuningLogEntry, "id" | "ts">) => void;
+  logTuning: (e: Omit<TuningLogEntry, "id" | "ts">) => string;
   markTuningReverted: (id: string) => void;
   clearTuningLog: () => void;
   simulateScannerRun: () => number; // returns count of new deliveries
@@ -325,10 +325,11 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     toggleAlert: (id) =>
       setAlerts((prev) => prev.map((x) => (x.id === id ? { ...x, active: !x.active } : x))),
     setScannerRules,
-    logTuning: (e) =>
-      setTuningLog((prev) =>
-        [{ ...e, id: Math.random().toString(36).slice(2), ts: Date.now() }, ...prev].slice(0, 200),
-      ),
+    logTuning: (e) => {
+      const id = Math.random().toString(36).slice(2);
+      setTuningLog((prev) => [{ ...e, id, ts: Date.now() }, ...prev].slice(0, 200));
+      return id;
+    },
     markTuningReverted: (id) =>
       setTuningLog((prev) =>
         prev.map((e) => (e.id === id ? { ...e, revertedAt: Date.now() } : e)),
