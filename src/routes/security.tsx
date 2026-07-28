@@ -1286,6 +1286,7 @@ function WalletRescanCard() {
         </div>
       </div>
       <ThreatAlertChannels />
+      <AlertFilterCard address={address} />
       <NotificationDeliveryLog />
 
       <NotificationHistory />
