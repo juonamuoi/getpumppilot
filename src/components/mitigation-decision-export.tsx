@@ -319,6 +319,34 @@ export function MitigationDecisionExport<F,>({
       return row;
     });
 
+  const schemaRows = () => buildSchemaRows(selected);
+
+  const downloadSchema = (kind: "csv" | "json", stamp = new Date().toISOString().replace(/[:.]/g, "-")) => {
+    const schema = schemaRows();
+    if (schema.length === 0) {
+      toast.error("Select at least one field first");
+      return;
+    }
+    if (kind === "json") {
+      const payload = {
+        generatedAt: new Date().toISOString(),
+        appliesTo: `mitigation-decisions-${stamp}.${kind === "json" ? "json" : "csv"}`,
+        columnCount: schema.length,
+        note: "Column dictionary for PumpPilot AI mitigation decision exports. 'source' maps each column back to the underlying mitigation confirmation record.",
+        columns: schema,
+      };
+      saveBlob(
+        new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+        `mitigation-decisions-schema-${stamp}.json`,
+      );
+    } else {
+      saveBlob(
+        new Blob([toCsv(schema as unknown as MitigationDecisionRow[])], { type: "text/csv" }),
+        `mitigation-decisions-schema-${stamp}.csv`,
+      );
+    }
+  };
+
   const download = (kind: "csv" | "json") => {
     if (decisions.length === 0) {
       toast.error("No mitigation decisions to export yet");
@@ -339,6 +367,7 @@ export function MitigationDecisionExport<F,>({
         includesPreviewOnly: includePreviewOnly,
         preset: preset ? { name: preset.name, savedAt: new Date(preset.savedAt).toISOString() } : null,
         filters: filters ?? null,
+        schema: schemaRows(),
         note: "PumpPilot AI mitigation decisions — simulated/demo data.",
         decisions: data,
       };
@@ -347,11 +376,15 @@ export function MitigationDecisionExport<F,>({
     } else {
       saveBlob(new Blob([toCsv(data)], { type: "text/csv" }), `mitigation-decisions-${stamp}.csv`);
     }
+    if (includeSchema) downloadSchema(kind, stamp);
     toast.success(`Exported ${data.length} decision${data.length === 1 ? "" : "s"} as ${kind.toUpperCase()}`, {
-      description: `${selected.length} fields · timestamps and correlation IDs included`,
+      description: includeSchema
+        ? `${selected.length} fields · column schema file included`
+        : `${selected.length} fields · timestamps and correlation IDs included`,
     });
     setOpen(false);
   };
+
 
   const groups: FieldDef["group"][] = ["identity", "decision", "confirmation", "outcome"];
 
