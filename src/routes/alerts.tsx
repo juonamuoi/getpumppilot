@@ -4382,6 +4382,7 @@ function ReplayPanel() {
                 }}
                 onRollbackLast={(batch) => {
                   if (batch.length === 0) return;
+                  const snapshot = scannerRules;
                   setScannerRules(rollbackBatch(scannerRules, batch));
                   for (const e of batch) markTuningReverted(e.id);
                   toast.success(
@@ -4391,8 +4392,19 @@ function ReplayPanel() {
                           `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
                       )
                       .join(", ")}`,
+                    {
+                      duration: 10000,
+                      action: {
+                        label: "Undo",
+                        onClick: () => {
+                          setScannerRules(snapshot);
+                          toast.success("Rollback undone — tuned thresholds restored");
+                        },
+                      },
+                    },
                   );
                 }}
+
               />
 
 
