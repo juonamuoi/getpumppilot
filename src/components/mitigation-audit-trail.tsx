@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
+
 
 type OutcomeFilter = "all" | "alerts-fired" | "no-matches" | "channels-muted" | "pending";
 
@@ -151,13 +153,15 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
             </p>
           </div>
           <div className="flex gap-2">
+            <MitigationDecisionExport log={log} />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
-              Export CSV
+              Quick CSV
             </Button>
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("json")}>
-              Export JSON
+              Quick JSON
             </Button>
           </div>
+
         </div>
         <div className="flex flex-wrap gap-2">
           <Input
