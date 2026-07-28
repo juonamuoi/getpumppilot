@@ -4068,6 +4068,8 @@ function TuningConfirmDialog({
   onSetBounds,
   onApplyAlternative,
   onLogBounds,
+  onLogPreview,
+
 
   onCancel,
   onConfirm,
