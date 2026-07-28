@@ -36,6 +36,7 @@ import {
   useWalletMonitor,
   recordScanRun,
   getWalletInterval,
+  filterAlertThreats,
 } from "@/lib/wallet-session";
 
 
