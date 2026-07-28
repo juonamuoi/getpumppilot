@@ -1,0 +1,119 @@
+/**
+ * Centralised schema.org (JSON-LD) builders.
+ *
+ * Every public route should emit structured data from here so that the
+ * organisation / publisher identity stays consistent across pages and
+ * search engines can merge them into one entity graph.
+ */
+
+export const SITE_URL = "https://www.getpumppilot.app";
+export const SITE_NAME = "PumpPilot AI";
+export const SITE_TAGLINE = "Spot momentum. Control risk. Trade smarter.";
+export const LOGO_URL = `${SITE_URL}/favicon.png`;
+
+/** Stable @id values let crawlers link nodes across pages into one graph. */
+export const ORG_ID = `${SITE_URL}/#organization`;
+export const WEBSITE_ID = `${SITE_URL}/#website`;
+
+export const absoluteUrl = (path = "/") =>
+  path.startsWith("http") ? path : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
+export const organizationSchema = {
+  "@type": "Organization",
+  "@id": ORG_ID,
+  name: SITE_NAME,
+  url: SITE_URL,
+  slogan: SITE_TAGLINE,
+  description:
+    "PumpPilot AI builds explainable crypto momentum tooling: a market scanner, paper trading sandbox, AI coaching and strict risk controls.",
+  logo: {
+    "@type": "ImageObject",
+    url: LOGO_URL,
+    width: 512,
+    height: 512,
+  },
+};
+
+export const websiteSchema = {
+  "@type": "WebSite",
+  "@id": WEBSITE_ID,
+  name: SITE_NAME,
+  url: SITE_URL,
+  description:
+    "Explainable AI crypto momentum scanner, paper trading, backtesting and risk controls.",
+  inLanguage: "en",
+  publisher: { "@id": ORG_ID },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_URL}/scanner?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+/** Site-wide graph, emitted once from the root route. */
+export const siteGraph = {
+  "@context": "https://schema.org",
+  "@graph": [organizationSchema, websiteSchema],
+};
+
+export type Crumb = { name: string; path: string };
+
+/** BreadcrumbList — helps Google render the breadcrumb trail in results. */
+export function breadcrumbSchema(crumbs: Crumb[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [{ name: "Home", path: "/" }, ...crumbs].map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: absoluteUrl(c.path),
+    })),
+  };
+}
+
+/** Generic WebPage node, used for informational and legal pages. */
+export function webPageSchema(opts: {
+  name: string;
+  description: string;
+  path: string;
+  type?: string;
+  datePublished?: string;
+  dateModified?: string;
+}) {
+  const url = absoluteUrl(opts.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": opts.type ?? "WebPage",
+    "@id": `${url}#webpage`,
+    name: opts.name,
+    description: opts.description,
+    url,
+    inLanguage: "en",
+    isPartOf: { "@id": WEBSITE_ID },
+    publisher: { "@id": ORG_ID },
+    ...(opts.datePublished ? { datePublished: opts.datePublished } : {}),
+    ...(opts.dateModified ? { dateModified: opts.dateModified } : {}),
+  };
+}
+
+export function faqSchema(faqs: { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+}
+
+/** Convenience wrapper so routes can pass objects straight into head().scripts. */
+export const ldScript = (schema: unknown) => ({
+  type: "application/ld+json",
+  children: JSON.stringify(schema),
+});

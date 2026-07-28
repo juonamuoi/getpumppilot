@@ -31,7 +31,15 @@ import { useAuth } from "@/lib/auth-store";
 import { WaitlistForm } from "@/components/waitlist-form";
 
 
-const SITE_URL = "https://crypto-spotter-pro.lovable.app";
+import { CREDIT_PACKS } from "@/lib/credits";
+import {
+  SITE_URL,
+  ORG_ID,
+  WEBSITE_ID,
+  LOGO_URL,
+  faqSchema as buildFaqSchema,
+  ldScript,
+} from "@/lib/structured-data";
 const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =
   "Explainable AI for crypto: momentum scanner, paper trading, AI coaching and strict risk controls. Start free with demo data — no seed phrases required.";
@@ -174,35 +182,55 @@ const plans = [
     highlight: false,
   },
 ];
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqs.map((f) => ({
-    "@type": "Question",
-    name: f.q,
-    acceptedAnswer: { "@type": "Answer", text: f.a },
-  })),
-};
+const homeFaqSchema = buildFaqSchema(faqs);
 
 const productSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
+  "@id": `${SITE_URL}/#app`,
   name: "PumpPilot AI",
   applicationCategory: "FinanceApplication",
-  operatingSystem: "Web",
+  applicationSubCategory: "Crypto momentum scanner & paper trading",
+  operatingSystem: "Web, iOS, Android",
   description: DESCRIPTION,
   url: SITE_URL,
-  offers: [
-    { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Pro", price: "19", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Quant", price: "99", priceCurrency: "USD" },
+  image: LOGO_URL,
+  inLanguage: "en",
+  publisher: { "@id": ORG_ID },
+  isPartOf: { "@id": WEBSITE_ID },
+  featureList: [
+    "Explainable crypto momentum scores",
+    "Market scanner with configurable alert rules",
+    "Paper trading sandbox (live execution locked by default)",
+    "Strategy builder and backtesting",
+    "AI Copilot coaching and Portfolio Doctor audits",
+    "Wallet phishing and drainer-approval scanning",
   ],
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: "4.8",
-    reviewCount: "127",
-  },
+  // Pay-as-you-go credit packs — mirrors the /pricing page exactly.
+  offers: CREDIT_PACKS.map((pack) => ({
+    "@type": "Offer",
+    name: `${pack.name} — ${pack.credits.toLocaleString()} credits`,
+    price: (pack.amountCents / 100).toFixed(2),
+    priceCurrency: "USD",
+    category: "One-time credit pack",
+    url: `${SITE_URL}/pricing`,
+    availability: "https://schema.org/InStock",
+  })),
 };
+
+const homeWebPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "@id": `${SITE_URL}/#webpage`,
+  name: TITLE,
+  description: DESCRIPTION,
+  url: SITE_URL,
+  inLanguage: "en",
+  isPartOf: { "@id": WEBSITE_ID },
+  about: { "@id": `${SITE_URL}/#app` },
+  primaryImageOfPage: { "@type": "ImageObject", url: LOGO_URL },
+};
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -227,14 +255,9 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "canonical", href: SITE_URL }],
     scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(productSchema),
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(faqSchema),
-      },
+      ldScript(homeWebPageSchema),
+      ldScript(productSchema),
+      ldScript(homeFaqSchema),
     ],
   }),
   component: LandingPage,

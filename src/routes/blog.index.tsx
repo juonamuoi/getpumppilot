@@ -3,8 +3,15 @@ import { BLOG_POSTS } from "@/lib/blog-posts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, BookOpen } from "lucide-react";
+import {
+  SITE_URL,
+  ORG_ID,
+  WEBSITE_ID,
+  breadcrumbSchema,
+  ldScript,
+} from "@/lib/structured-data";
 
-const CANONICAL = "https://crypto-spotter-pro.lovable.app/blog";
+const CANONICAL = `${SITE_URL}/blog`;
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({
@@ -19,26 +26,34 @@ export const Route = createFileRoute("/blog/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: CANONICAL }],
-    scripts: [{
-      type: "application/ld+json",
-      children: JSON.stringify({
+    scripts: [
+      ldScript({
         "@context": "https://schema.org",
         "@type": "Blog",
+        "@id": `${CANONICAL}#blog`,
         name: "PumpPilot AI Blog",
         url: CANONICAL,
         description: "AI investment and crypto trading guides.",
+        inLanguage: "en",
+        isPartOf: { "@id": WEBSITE_ID },
+        publisher: { "@id": ORG_ID },
         blogPost: BLOG_POSTS.map((p) => ({
           "@type": "BlogPosting",
+          "@id": `${CANONICAL}/${p.slug}#article`,
           headline: p.title,
           description: p.description,
           datePublished: p.date,
+          author: { "@id": ORG_ID },
+          keywords: p.keywords.join(", "),
           url: `${CANONICAL}/${p.slug}`,
         })),
       }),
-    }],
+      ldScript(breadcrumbSchema([{ name: "Blog", path: "/blog" }])),
+    ],
   }),
   component: BlogIndex,
 });
+
 
 function BlogIndex() {
   return (

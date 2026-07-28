@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SITE_URL, breadcrumbSchema, webPageSchema, ldScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/risk-disclosure")({
   head: () => ({
@@ -18,7 +19,20 @@ export const Route = createFileRoute("/risk-disclosure")({
           "Crypto momentum tools do not guarantee returns. Paper-trade first, size positions carefully, and never risk more than you can afford to lose.",
       },
       { property: "og:type", content: "article" },
+      { property: "og:url", content: `${SITE_URL}/risk-disclosure` },
       { name: "twitter:card", content: "summary" },
+    ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/risk-disclosure` }],
+    scripts: [
+      ldScript(
+        webPageSchema({
+          name: "Risk Disclosure — PumpPilot AI",
+          description:
+            "Crypto momentum tools do not guarantee returns. Predictions are probabilistic and you can lose all capital.",
+          path: "/risk-disclosure",
+        }),
+      ),
+      ldScript(breadcrumbSchema([{ name: "Risk Disclosure", path: "/risk-disclosure" }])),
     ],
   }),
   component: RiskDisclosurePage,
