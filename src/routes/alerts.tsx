@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ import {
   ArrowRight,
   Undo2,
   ShieldAlert,
+  ShieldCheck,
   BellRing,
 } from "lucide-react";
 import {
@@ -2642,6 +2644,49 @@ type SaferOption = {
   fragilePct: number;
   inBounds: boolean;
 };
+
+/**
+ * Safest in-bounds alternative for a single rule: sweeps loosening fractions and
+ * keeps the option with the lowest fragility (ties broken by more matches).
+ */
+function safestAlternativeFor(
+  result: ReplayResult,
+  rules: ScannerRules,
+  ruleKey: RuleKey,
+  bounds: RiskBounds,
+): SaferOption | null {
+  const meta = RULE_META[ruleKey];
+  const seen = new Set<number>();
+  let best: SaferOption | null = null;
+  for (let i = 1; i <= 19; i++) {
+    const f = i / 20;
+    const t = computeTuning(result, rules, f)[ruleKey];
+    if (t.suggested == null || !t.preview) continue;
+    if (seen.has(t.suggested)) continue;
+    seen.add(t.suggested);
+    if (checkBounds(t, bounds).length > 0) continue;
+    const fragilePct = t.unlocked ? (t.fragile / t.unlocked) * 100 : 0;
+    const opt: SaferOption = {
+      id: `f${i}`,
+      title: `${meta.short} ${meta.op} ${t.suggested}${meta.unit}`,
+      detail: `${t.preview.matchesAfter} matches · ${t.preview.nearMissAnyAfter} near-miss · ${fragilePct.toFixed(0)}% fragile`,
+      value: t.suggested,
+      fraction: f,
+      preview: t.preview,
+      fragilePct,
+      inBounds: true,
+    };
+    if (
+      !best ||
+      opt.fragilePct < best.fragilePct - 0.001 ||
+      (Math.abs(opt.fragilePct - best.fragilePct) <= 0.001 &&
+        (opt.preview?.matchesAfter ?? 0) > (best.preview?.matchesAfter ?? 0))
+    ) {
+      best = opt;
+    }
+  }
+  return best;
+}
 
 function useSaferAlternatives(
   result: ReplayResult,
