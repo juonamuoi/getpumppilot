@@ -161,6 +161,7 @@ export function buildTimelineCsv(
     [
       "timestamp",
       "mitigation",
+      "action",
       "rule",
       "matches_before",
       "matches_after",
@@ -175,6 +176,7 @@ export function buildTimelineCsv(
     signals.map((p) => [
       new Date(p.ts).toISOString(),
       p.label,
+      p.action ?? "",
       p.rule,
       p.matchesBefore ?? "",
       p.matchesAfter ?? "",
