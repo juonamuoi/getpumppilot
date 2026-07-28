@@ -555,6 +555,17 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      lp_variant_report: {
+        Args: { _days?: number }
+        Returns: {
+          cta_clickers: number
+          cta_clicks: number
+          impressions: number
+          signups: number
+          variant: string
+          visitors: number
+        }[]
+      }
       mcp_begin_call: {
         Args: {
           _client_id: string
