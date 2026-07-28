@@ -5,6 +5,7 @@ import momentumExplain from "@/lib/mcp/tools/momentum-explain";
 import listStrategies from "@/lib/mcp/tools/list-strategies";
 import createStrategy from "@/lib/mcp/tools/create-strategy";
 import subscriptionStatus from "@/lib/mcp/tools/subscription-status";
+import { CLIENT_RATE_LIMIT, RATE_LIMIT, RATE_WINDOW_SECONDS } from "@/lib/mcp/audit";
 
 type AnyTool = {
   name: string;
@@ -112,6 +113,27 @@ function consoleContext(userId: string, email: string | null): ToolContext {
   } as unknown as ToolContext;
 }
 
+export type ConsoleQuota = {
+  limit: number;
+  remaining: number | null;
+  windowSeconds: number;
+  clientId: string | null;
+  clientLimit: number;
+  clientRemaining: number | null;
+};
+
+export type ConsoleThrottle = {
+  reason: string;
+  scope: "account" | "client" | "unknown";
+  limit: number;
+  used: number | null;
+  windowSeconds: number;
+  retryAfterSeconds: number;
+  /** Server clock at the moment the throttle was issued (ms epoch). */
+  issuedAt: number;
+  clientId: string | null;
+};
+
 export type ConsoleRun = {
   mode: "mock" | "live";
   tool: string;
@@ -121,6 +143,8 @@ export type ConsoleRun = {
   isError: boolean;
   text: string;
   structuredJson: string;
+  quota: ConsoleQuota | null;
+  throttle: ConsoleThrottle | null;
 };
 
 export async function runConsoleTool(opts: {
@@ -147,6 +171,8 @@ export async function runConsoleTool(opts: {
       isError: false,
       text: JSON.stringify(sanitize(payload), null, 2),
       structuredJson: JSON.stringify(sanitize(payload), null, 2),
+      quota: null,
+      throttle: null,
     };
   }
 
@@ -159,6 +185,36 @@ export async function runConsoleTool(opts: {
 
   const structured = (raw.structuredContent ?? {}) as Record<string, unknown>;
   const correlationId = typeof structured.correlation_id === "string" ? structured.correlation_id : null;
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const str = (v: unknown) => (typeof v === "string" && v ? v : null);
+
+  const rl = (structured.rate_limit ?? null) as Record<string, unknown> | null;
+  const quota: ConsoleQuota | null = rl
+    ? {
+        limit: num(rl.limit) ?? RATE_LIMIT,
+        remaining: num(rl.remaining),
+        windowSeconds: num(rl.window_seconds) ?? RATE_WINDOW_SECONDS,
+        clientId: str(rl.client_id),
+        clientLimit: num(rl.client_limit) ?? CLIENT_RATE_LIMIT,
+        clientRemaining: num(rl.client_remaining),
+      }
+    : null;
+
+  const reason = str(structured.reason);
+  const throttled = raw.isError && reason === "rate_limited";
+  const scopeRaw = str(structured.scope);
+  const throttle: ConsoleThrottle | null = throttled
+    ? {
+        reason,
+        scope: scopeRaw === "client" || scopeRaw === "account" ? scopeRaw : "unknown",
+        limit: num(structured.limit) ?? RATE_LIMIT,
+        used: num(structured.used),
+        windowSeconds: num(structured.window_seconds) ?? RATE_WINDOW_SECONDS,
+        retryAfterSeconds: num(structured.retry_after_seconds) ?? RATE_WINDOW_SECONDS,
+        issuedAt: Date.now(),
+        clientId: str(structured.client_id),
+      }
+    : null;
 
   return {
     mode: "live",
@@ -169,5 +225,7 @@ export async function runConsoleTool(opts: {
     isError: Boolean(raw.isError),
     text: String(sanitize(raw.content?.[0]?.text ?? "")),
     structuredJson: JSON.stringify(sanitize(structured), null, 2),
+    quota,
+    throttle,
   };
 }
