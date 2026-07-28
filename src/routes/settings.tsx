@@ -398,6 +398,18 @@ function SettingsPage() {
                   </Select>
                 </div>
 
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {filteredLogs.length} of {logs.length} entries shown
+                  </p>
+                  <McpAuditExport
+                    rows={filteredLogs}
+                    totalCount={logs.length}
+                    userId={user?.id}
+                  />
+                </div>
+
+
                 {filteredLogs.length === 0 ? (
                   <Card>
                     <CardContent className="pt-6 text-sm text-muted-foreground">
