@@ -66,6 +66,8 @@ export function WalletConnect() {
       setScan(result);
       setScanning(false);
       setWalletSession({ scanning: false, scan: result });
+      recordScanRun(result, background ? "background" : firstScan.current ? "connect" : "manual");
+      firstScan.current = false;
 
       const previous = lastThreatIds.current;
       const newThreats = result.threats.filter((t) => !previous.has(t.id));
