@@ -19,6 +19,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
+import { MitigationDiffView } from "@/components/mitigation-diff-view";
+
 
 
 type OutcomeFilter = "all" | "alerts-fired" | "no-matches" | "channels-muted" | "pending";
