@@ -2309,6 +2309,19 @@ function TuningHistoryPanel({
                       Risk bound
                     </Badge>
                   )}
+                  {e.phase === "preview" && (
+                    <Badge
+                      variant="outline"
+                      className="h-4 border-sky-500/40 px-1.5 text-[9px] text-sky-300"
+                    >
+                      Preview only
+                    </Badge>
+                  )}
+                  {e.phase === "applied" && e.previewId && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                      Reviewed
+                    </Badge>
+                  )}
 
 
                   {e.window && (
