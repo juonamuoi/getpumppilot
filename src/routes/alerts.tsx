@@ -2732,6 +2732,7 @@ function RuleTuningPanel({
   onApply,
   onApplyBulk,
   onLogBoundsChange,
+  onLogMitigationPreview,
 }: {
   result: ReplayResult;
   rules: ScannerRules;
@@ -2747,8 +2748,10 @@ function RuleTuningPanel({
       trigger?: string;
       recommendedValue?: number;
       fragilePct?: number;
+      previewId?: string;
     },
   ) => void;
+
   onApplyBulk: (
     entries: Array<{
       key: RuleKey;
