@@ -12,6 +12,12 @@
 
 import { isNativeApp } from "@/lib/native";
 import { sendThreatEmail } from "@/lib/threat-alerts.functions";
+import type { ThreatEmailInput } from "@/lib/threat-alerts.functions";
+import {
+  recordDelivery,
+  updateDelivery,
+  type NotifyDelivery,
+} from "@/lib/notify-log";
 import type { WalletApproval, WalletScanResult } from "@/lib/wallet-scan";
 import { shortAddress } from "@/lib/wallet-scan";
 
@@ -124,6 +130,7 @@ export function threatSummary(threats: WalletApproval[]) {
 export type NotifyChannels = { push: boolean; email: boolean; pdfReport?: boolean };
 export type NotifyOutcome = {
   push: boolean;
+  pushReason?: string;
   email: boolean;
   emailReason?: string;
   reportAttached?: boolean;
