@@ -25,6 +25,8 @@ import { MitigationDecisionExport } from "@/components/mitigation-decision-expor
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { explainOutcome } from "@/lib/mitigation-explain";
+import { MitigationImport } from "@/components/mitigation-import";
+import { isImportedEntry } from "@/lib/mitigation-import";
 
 
 
@@ -245,6 +247,8 @@ export function MitigationAuditTrail({
   const [wallets, setWallets] = useState<string[]>([]);
   const [alertTypes, setAlertTypes] = useState<string[]>([]);
   const runs = useScanHistory();
+  /** Records loaded from a previously exported file — review only, never applied. */
+  const [importedEntries, setImportedEntries] = useState<TuningLogEntry[]>([]);
   const focusRef = useRef<HTMLDivElement | null>(null);
 
 
@@ -397,8 +401,14 @@ export function MitigationAuditTrail({
     });
   };
 
+  /** Live audit entries plus anything imported from a file, newest first. */
+  const sourceLog = useMemo(
+    () => (importedEntries.length ? [...importedEntries, ...log].sort((a, b) => b.ts - a.ts) : log),
+    [importedEntries, log],
+  );
+
   const entries = useMemo(() => {
-    return log
+    return sourceLog
       .filter((e) => e.source === "mitigation" && !!e.mitigation)
       .filter((e) => {
         if (outcome === "all") return true;
@@ -439,7 +449,7 @@ export function MitigationAuditTrail({
           .toLowerCase();
         return hay.includes(q.trim().toLowerCase());
       });
-  }, [log, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
+  }, [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
@@ -558,6 +568,11 @@ export function MitigationAuditTrail({
           </div>
           <div className="flex gap-2">
             <MitigationRetentionSettings />
+            <MitigationImport
+              onImport={(rows) => setImportedEntries((prev) => [...prev, ...rows])}
+              importedCount={importedEntries.length}
+              onClear={() => setImportedEntries([])}
+            />
             <MitigationDecisionExport
               log={exportEntries}
               filters={current}
