@@ -77,6 +77,7 @@ function JournalPage() {
 
         <DisclaimerBanner />
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Performance analytics</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat
             label="Net P/L"
@@ -155,6 +156,7 @@ function JournalPage() {
           </CardContent>
         </Card>
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Trade breakdown</h2>
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="border-border/60 bg-card/60">
             <CardHeader className="pb-2">

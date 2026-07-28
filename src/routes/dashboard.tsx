@@ -123,7 +123,7 @@ function Dashboard() {
 
         <DisclaimerBanner />
 
-        {/* Stats */}
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Portfolio overview</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Equity"
@@ -141,7 +141,7 @@ function Dashboard() {
           <StatCard label="Positions" value={String(positions.length)} sub="assets held" />
         </div>
 
-        {/* Today's signals — plain English */}
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Market pulse &amp; today's signals</h2>
         <Card className="border-border/60 bg-card/60">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -173,6 +173,7 @@ function Dashboard() {
           <LiveMarket />
         </div>
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">AI coaching</h2>
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
             <CardHeader className="pb-2">
@@ -223,8 +224,8 @@ function Dashboard() {
           </Card>
         </div>
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Holdings &amp; top momentum</h2>
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Portfolio */}
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
