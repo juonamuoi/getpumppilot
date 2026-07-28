@@ -4,6 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { GLOSSARY } from "@/components/glossary";
 import { BookOpen, GraduationCap, Lightbulb, ShieldCheck, TrendingUp } from "lucide-react";
+import {
+  SITE_URL,
+  ORG_ID,
+  breadcrumbSchema,
+  webPageSchema,
+  ldScript,
+} from "@/lib/structured-data";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -12,6 +19,32 @@ export const Route = createFileRoute("/learn")({
       { name: "description", content: "Micro-lessons and a glossary to help you understand momentum trading, risk, and how PumpPilot's signals work." },
       { property: "og:title", content: "PumpPilot AI Learn hub" },
       { property: "og:description", content: "Short, plain-English lessons on momentum, risk and reading signals." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: `${SITE_URL}/learn` },
+      { name: "twitter:card", content: "summary" },
+    ],
+    links: [{ rel: "canonical", href: `${SITE_URL}/learn` }],
+    scripts: [
+      ldScript({
+        ...webPageSchema({
+          name: "Learn momentum trading and risk — PumpPilot AI",
+          description:
+            "Micro-lessons and a glossary covering momentum trading, reading signals, position sizing and risk control.",
+          path: "/learn",
+          type: "LearningResource",
+        }),
+        learningResourceType: "Lesson series",
+        educationalLevel: "Beginner",
+        teaches: [
+          "What momentum trading is",
+          "How to read an explainable signal card",
+          "Position sizing and stop-loss discipline",
+          "Why probabilistic predictions are not guarantees",
+        ],
+        provider: { "@id": ORG_ID },
+        isAccessibleForFree: true,
+      }),
+      ldScript(breadcrumbSchema([{ name: "Learn", path: "/learn" }])),
     ],
   }),
   component: LearnPage,
