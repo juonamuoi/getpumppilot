@@ -202,9 +202,15 @@ export function RuleImpactPreview({
               </SelectContent>
             </Select>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            Mock/demo data. Signals are probabilistic — not investment advice.
-          </p>
+          <div className="text-[11px] text-muted-foreground sm:text-right">
+            <p>Mock/demo data. Signals are probabilistic — not investment advice.</p>
+            {lastExport && (
+              <p className="font-mono text-[10px]">
+                Last PDF: {lastExport.id} · {new Date(lastExport.at).toLocaleString()} (UTC{" "}
+                {new Date(lastExport.at).toISOString()})
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-4">
