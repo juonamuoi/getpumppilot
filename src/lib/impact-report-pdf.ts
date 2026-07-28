@@ -49,6 +49,17 @@ export function newImpactCorrelationId() {
   return `IMP-${Date.now().toString(36).toUpperCase()}-${rand}`;
 }
 
+/** jsPDF's built-in fonts lack these glyphs — map to ASCII before drawing. */
+const ascii = (v: string) =>
+  v
+    .replace(/\u2192/g, "->")
+    .replace(/\u2265/g, ">=")
+    .replace(/\u2264/g, "<=")
+    .replace(/\u25b2/g, "*")
+    .replace(/\u00b7/g, "-")
+    .replace(/\u2014/g, "-")
+    .replace(/\u2022/g, "-");
+
 const stamp = (ms: number) =>
   `${new Date(ms).toLocaleString()}  (UTC ${new Date(ms).toISOString()})`;
 
@@ -81,7 +92,7 @@ export async function buildImpactReportDoc(input: ImpactReportInput, correlation
     const c = opts.color ?? [30, 34, 45];
     doc.setTextColor(c[0], c[1], c[2]);
     const x = M + (opts.indent ?? 0);
-    const lines = doc.splitTextToSize(value, W - M * 2 - (opts.indent ?? 0)) as string[];
+    const lines = doc.splitTextToSize(ascii(value), W - M * 2 - (opts.indent ?? 0)) as string[];
     for (const line of lines) {
       ensure(14);
       doc.text(line, x, y);
@@ -103,11 +114,11 @@ export async function buildImpactReportDoc(input: ImpactReportInput, correlation
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.setTextColor(255, 255, 255);
-  doc.text("PumpPilot AI — Rule Change Impact Report", M, 46);
+  doc.text("PumpPilot AI - Rule Change Impact Report", M, 46);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(168, 178, 198);
-  doc.text("Spot momentum. Control risk. Trade smarter.  ·  DEMO / MOCK DATA", M, 66);
+  doc.text("Spot momentum. Control risk. Trade smarter.  -  DEMO / MOCK DATA", M, 66);
   y = 124;
 
   /* ----------------------------- Metadata ----------------------------- */
@@ -124,11 +135,11 @@ export async function buildImpactReportDoc(input: ImpactReportInput, correlation
     ["Report generated at", stamp(generatedAt)],
     ["Comparison scope", input.scopeLabel],
     ["Assets compared", String(input.rows.length)],
-    ["Signals before / after", `${matchedBefore} → ${matchedAfter}`],
+    ["Signals before / after", `${matchedBefore} -> ${matchedAfter}`],
     ["New signals / signals lost", `+${gained} / -${lost}`],
     [
       "Average signal strength",
-      `${avg((r) => r.strengthBefore)}% → ${avg((r) => r.strengthAfter)}%`,
+      `${avg((r) => r.strengthBefore)}% -> ${avg((r) => r.strengthAfter)}%`,
     ],
   ];
   for (const [k, v] of meta) {
@@ -136,10 +147,10 @@ export async function buildImpactReportDoc(input: ImpactReportInput, correlation
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(90, 98, 115);
-    doc.text(k, M, y);
+    doc.text(ascii(k), M, y);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(30, 34, 45);
-    doc.text(v, M + 170, y);
+    doc.text(ascii(v), M + 170, y);
     y += 15;
   }
   y += 6;
