@@ -4096,6 +4096,8 @@ function TuningConfirmDialog({
     meta: MitigationMeta;
     preview: TuningPreview | null;
   }) => void;
+  onLogPreview?: (e: MitigationPreviewLog) => string;
+
 
   onCancel: () => void;
   onConfirm: () => void;
