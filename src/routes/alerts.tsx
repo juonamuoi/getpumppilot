@@ -2602,6 +2602,75 @@ function useSaferAlternatives(
 }
 
 /**
+ * Before/after preview for a single mitigation option: how near-miss risk and
+ * signal counts move versus today's rules, and versus the pending recommendation.
+ */
+function MitigationOptionPreview({
+  targetValue,
+  unit,
+  op,
+  preview,
+  fragilePct,
+  pending,
+  note,
+}: {
+  targetValue?: number;
+  unit?: string;
+  op?: string;
+  preview: TuningPreview | null;
+  fragilePct?: number;
+  pending: TuningPreview | null;
+  note?: string;
+}) {
+  if (!preview) {
+    return (
+      <div className="mt-1.5 rounded-md border border-border/60 bg-background/40 p-2 text-[10px] text-muted-foreground">
+        {note ?? "No signal change — this only adjusts your risk tolerance settings."}
+      </div>
+    );
+  }
+  const dMatch = preview.matchesAfter - preview.matchesBefore;
+  const dNear = preview.nearMissAnyAfter - preview.nearMissAnyBefore;
+  const vsMatch = pending ? preview.matchesAfter - pending.matchesAfter : null;
+  const vsNear = pending ? preview.nearMissAnyAfter - pending.nearMissAnyAfter : null;
+  return (
+    <div className="mt-1.5 rounded-md border border-border/60 bg-background/40 p-2">
+      <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+        <span className="font-medium text-foreground">
+          {targetValue != null ? `Preview at ${op ?? ""} ${targetValue}${unit ?? ""}` : "Preview"}
+        </span>
+        <span>
+          Signals {preview.matchesBefore} → {preview.matchesAfter} ({dMatch >= 0 ? "+" : ""}
+          {dMatch})
+        </span>
+        <span>
+          Near-miss {preview.nearMissAnyBefore} → {preview.nearMissAnyAfter} (
+          {dNear >= 0 ? "+" : ""}
+          {dNear})
+        </span>
+        {fragilePct != null && <span>Fragility {fragilePct.toFixed(0)}%</span>}
+      </div>
+      <TuningDeltaChart
+        matchesBefore={preview.matchesBefore}
+        matchesAfter={preview.matchesAfter}
+        nearMissBefore={preview.nearMissAnyBefore}
+        nearMissAfter={preview.nearMissAnyAfter}
+      />
+      {vsMatch != null && vsNear != null && (
+        <div className="mt-1 text-[10px] text-muted-foreground">
+          vs pending recommendation: signals {vsMatch >= 0 ? "+" : ""}
+          {vsMatch}, near-miss risk{" "}
+          <span className={vsNear <= 0 ? "text-emerald-400" : "text-destructive"}>
+            {vsNear >= 0 ? "+" : ""}
+            {vsNear}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * In-dialog mitigation checklist: surfaces every risk the change introduces and,
  * for each, a one-tap safer action (tighten the threshold, widen the buffer, or
  * adjust the fragility tolerance).
@@ -2653,6 +2722,13 @@ function MitigationChecklist({
     hint: string;
     done: boolean;
     action?: { label: string; run: () => void };
+    /** Before/after preview of the option this item offers. */
+    option?: {
+      targetValue?: number;
+      preview: TuningPreview | null;
+      fragilePct?: number;
+      note?: string;
+    };
   };
 
   const items: Item[] = [];
@@ -2669,6 +2745,13 @@ function MitigationChecklist({
           label: `Apply ${safestInBounds.title}`,
           run: () =>
             onApplyAlternative(safestInBounds.value, safestInBounds.preview, "tightened"),
+        }
+      : undefined,
+    option: safestInBounds
+      ? {
+          targetValue: safestInBounds.value,
+          preview: safestInBounds.preview,
+          fragilePct: safestInBounds.fragilePct,
         }
       : undefined,
   });
@@ -2688,6 +2771,14 @@ function MitigationChecklist({
         ? {
             label: `Apply ${buffered.title}`,
             run: () => onApplyAlternative(buffered.value, buffered.preview, "buffered"),
+          }
+        : undefined,
+    option:
+      tuning.avgOtherMinSlack < 2 && buffered
+        ? {
+            targetValue: buffered.value,
+            preview: buffered.preview,
+            fragilePct: buffered.fragilePct,
           }
         : undefined,
   });
@@ -2720,6 +2811,19 @@ function MitigationChecklist({
                 onSetBounds((b) => ({ ...b, maxFragilePct: suggestedTolerance })),
             }
         : undefined,
+    option:
+      bounds.enabled && fragilePct > bounds.maxFragilePct
+        ? lowestFragility && lowestFragility.fragilePct <= bounds.maxFragilePct
+          ? {
+              targetValue: lowestFragility.value,
+              preview: lowestFragility.preview,
+              fragilePct: lowestFragility.fragilePct,
+            }
+          : {
+              preview: null,
+              note: `No signal change — raising tolerance to ${suggestedTolerance}% keeps the pending change (fragility ${fragilePct.toFixed(0)}%, near-miss ${nearMissDelta >= 0 ? "+" : ""}${nearMissDelta}) but accepts more noise.`,
+            }
+        : undefined,
   });
 
   items.push({
@@ -2736,6 +2840,13 @@ function MitigationChecklist({
             label: `Allow +${nearMissDelta}`,
             run: () =>
               onSetBounds((b) => ({ ...b, maxNearMissIncrease: nearMissDelta })),
+          }
+        : undefined,
+    option:
+      bounds.enabled && nearMissDelta > bounds.maxNearMissIncrease
+        ? {
+            preview: null,
+            note: `No signal change — this raises your limit to +${nearMissDelta} so the pending change (near-miss ${tuning.preview?.nearMissAnyBefore ?? 0} → ${tuning.preview?.nearMissAnyAfter ?? 0}) is allowed.`,
           }
         : undefined,
   });
@@ -2773,6 +2884,17 @@ function MitigationChecklist({
               <div className="text-[10px] leading-relaxed text-muted-foreground">
                 {item.hint}
               </div>
+              {item.option && (
+                <MitigationOptionPreview
+                  targetValue={item.option.targetValue}
+                  unit={meta.unit}
+                  op={meta.op === ">=" ? "≥" : "≤"}
+                  preview={item.option.preview}
+                  fragilePct={item.option.fragilePct}
+                  pending={tuning.preview}
+                  note={item.option.note}
+                />
+              )}
               {item.action && (
                 <Button
                   size="sm"
