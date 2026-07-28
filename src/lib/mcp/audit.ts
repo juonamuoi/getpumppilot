@@ -170,6 +170,9 @@ export function defineAuditedTool<TSchema extends Shape>(config: AuditedTool<TSc
             limit: RATE_LIMIT,
             window_seconds: RATE_WINDOW_SECONDS,
             remaining: verdict.remaining ?? null,
+            client_id: verdict.client_id ?? clientId,
+            client_limit: verdict.client_limit ?? CLIENT_RATE_LIMIT,
+            client_remaining: verdict.client_remaining ?? null,
           },
         },
       };
