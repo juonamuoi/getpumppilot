@@ -18,6 +18,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trackCtaClick } from "@/lib/funnel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -278,7 +279,7 @@ function LandingPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link to="/blog">Blog</Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button size="sm" asChild onClick={() => void trackCtaClick("nav")}>
               <Link to={launchHref}>{launchLabel}</Link>
             </Button>
           </div>
@@ -312,7 +313,7 @@ function LandingPage() {
             signal works before you ever put real money on the line.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" asChild>
+            <Button size="lg" asChild onClick={() => void trackCtaClick("hero")}>
               <Link to={launchHref}>
                 {launchLabel} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -538,6 +539,7 @@ function LandingPage() {
                   className="mt-6 w-full"
                   variant={p.highlight ? "default" : "outline"}
                   asChild
+                  onClick={() => void trackCtaClick(`pricing_${p.name.toLowerCase()}`)}
                 >
                   <Link to={p.href}>{p.cta}</Link>
                 </Button>
@@ -580,7 +582,7 @@ function LandingPage() {
             PumpPilot AI is actively saving you time and mistakes.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" asChild>
+            <Button size="lg" asChild onClick={() => void trackCtaClick("footer_cta")}>
               <Link to={launchHref}>
                 {launchLabel} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

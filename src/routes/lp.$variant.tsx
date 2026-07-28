@@ -23,7 +23,7 @@ import {
   type AdCreative,
   type Assignment,
 } from "@/lib/ad-creatives";
-import { trackFunnelStep } from "@/lib/funnel";
+import { trackCtaClick } from "@/lib/funnel";
 import {
   COMPLIANCE_FOOTER,
   getVariant,
@@ -82,9 +82,9 @@ function AdLandingVariant() {
     void trackCreativeEvent("impression", assignment);
   }, [v.slug]);
 
-  const trackClick = () => {
+  const trackClick = (placement: string) => () => {
     if (assignmentRef.current) void trackCreativeEvent("click", assignmentRef.current);
-    void trackFunnelStep("cta_click");
+    void trackCtaClick(placement, v.slug);
   };
 
   const ctaHref = user ? "/dashboard" : "/auth";
@@ -93,7 +93,7 @@ function AdLandingVariant() {
   const Cta = ({ size = "lg" }: { size?: "lg" | "default" }) => (
     <div className="flex flex-col items-center gap-3">
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button size={size} asChild onClick={trackClick}>
+        <Button size={size} asChild onClick={trackClick(size === "lg" ? "hero" : "inline")}>
           <Link to={ctaHref}>
             {ctaLabel} <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
@@ -120,7 +120,7 @@ function AdLandingVariant() {
             />
             <span className="text-sm font-bold tracking-tight">PumpPilot AI</span>
           </Link>
-          <Button size="sm" asChild onClick={trackClick}>
+          <Button size="sm" asChild onClick={trackClick("nav")}>
             <Link to={ctaHref}>{ctaLabel}</Link>
           </Button>
         </div>

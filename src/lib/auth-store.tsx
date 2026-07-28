@@ -3,7 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { captureReferralFromUrl, recordReferralIfPresent } from "@/lib/referral";
 import { trackSignupOnce } from "@/lib/ad-creatives";
-import { captureUtmFromUrl, trackFunnelStep } from "@/lib/funnel";
+import { captureUtmFromUrl, trackFunnelStep, trackSignupAttribution } from "@/lib/funnel";
 
 type Ctx = {
   session: Session | null;
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           recordReferralIfPresent(s.user.id).catch(() => {});
           trackSignupOnce(s.user.id).catch(() => {});
           trackFunnelStep("signup", s.user.id).catch(() => {});
+          trackSignupAttribution(s.user.id).catch(() => {});
         }, 0);
       }
     });
