@@ -2884,6 +2884,17 @@ function MitigationChecklist({
               <div className="text-[10px] leading-relaxed text-muted-foreground">
                 {item.hint}
               </div>
+              {item.option && (
+                <MitigationOptionPreview
+                  targetValue={item.option.targetValue}
+                  unit={meta.unit}
+                  op={meta.op === ">=" ? "≥" : "≤"}
+                  preview={item.option.preview}
+                  fragilePct={item.option.fragilePct}
+                  pending={tuning.preview}
+                  note={item.option.note}
+                />
+              )}
               {item.action && (
                 <Button
                   size="sm"
