@@ -47,6 +47,7 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as ApiPublicMomentumRouteImport } from './routes/api/public/momentum'
 import { Route as ApiPublicWaitlistRouteImport } from './routes/api/public/waitlist'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicWaitlistFollowupRouteImport } from './routes/api/public/waitlist/followup'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -242,6 +243,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWaitlistFollowupRoute =
+  ApiPublicWaitlistFollowupRouteImport.update({
+    id: '/followup',
+    path: '/followup',
+    getParentRoute: () => ApiPublicWaitlistRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -280,8 +287,9 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
-  '/api/public/waitlist': typeof ApiPublicWaitlistRoute
+  '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -320,8 +328,9 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
-  '/api/public/waitlist': typeof ApiPublicWaitlistRoute
+  '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -361,8 +370,9 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
-  '/api/public/waitlist': typeof ApiPublicWaitlistRoute
+  '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/api/public/momentum'
     | '/api/public/waitlist'
     | '/api/public/payments/webhook'
+    | '/api/public/waitlist/followup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/api/public/momentum'
     | '/api/public/waitlist'
     | '/api/public/payments/webhook'
+    | '/api/public/waitlist/followup'
   id:
     | '__root__'
     | '/'
@@ -485,6 +497,7 @@ export interface FileRouteTypes {
     | '/api/public/momentum'
     | '/api/public/waitlist'
     | '/api/public/payments/webhook'
+    | '/api/public/waitlist/followup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -524,7 +537,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMomentumRoute: typeof ApiPublicMomentumRoute
-  ApiPublicWaitlistRoute: typeof ApiPublicWaitlistRoute
+  ApiPublicWaitlistRoute: typeof ApiPublicWaitlistRouteWithChildren
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -796,8 +809,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/waitlist/followup': {
+      id: '/api/public/waitlist/followup'
+      path: '/followup'
+      fullPath: '/api/public/waitlist/followup'
+      preLoaderRoute: typeof ApiPublicWaitlistFollowupRouteImport
+      parentRoute: typeof ApiPublicWaitlistRoute
+    }
   }
 }
+
+interface ApiPublicWaitlistRouteChildren {
+  ApiPublicWaitlistFollowupRoute: typeof ApiPublicWaitlistFollowupRoute
+}
+
+const ApiPublicWaitlistRouteChildren: ApiPublicWaitlistRouteChildren = {
+  ApiPublicWaitlistFollowupRoute: ApiPublicWaitlistFollowupRoute,
+}
+
+const ApiPublicWaitlistRouteWithChildren =
+  ApiPublicWaitlistRoute._addFileChildren(ApiPublicWaitlistRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -837,7 +868,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMomentumRoute: ApiPublicMomentumRoute,
-  ApiPublicWaitlistRoute: ApiPublicWaitlistRoute,
+  ApiPublicWaitlistRoute: ApiPublicWaitlistRouteWithChildren,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
