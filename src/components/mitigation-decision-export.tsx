@@ -298,7 +298,59 @@ export function MitigationDecisionExport<F,>({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="space-y-2 rounded-md border border-border/60 bg-muted/10 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Saved export presets
+            </p>
+            <span className="text-[10px] text-muted-foreground">
+              Fields · preview-only toggle{filters ? " · filter scope" : ""}
+            </span>
+          </div>
+          {presets.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              No presets yet — configure your export below, then name and save it.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {presets.map((p) => (
+                <span
+                  key={p.id}
+                  className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] ${
+                    activePreset === p.id ? "border-primary/60 bg-primary/10" : "border-border/60 bg-muted/20"
+                  }`}
+                >
+                  <button type="button" className="hover:underline" onClick={() => applyPreset(p)}>
+                    {p.name}
+                  </button>
+                  <span className="text-muted-foreground">({p.fields.length})</span>
+                  <button
+                    type="button"
+                    aria-label={`Delete preset ${p.name}`}
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => deletePreset(p.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Input
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              placeholder="Preset name (e.g. Weekly compliance export)"
+              className="h-8 text-xs"
+            />
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={savePreset}>
+              <Save className="h-3.5 w-3.5" /> Save preset
+            </Button>
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 bg-muted/20 p-3 text-xs">
+
           <Badge variant="secondary" className="text-[10px]">
             {decisions.length} decision{decisions.length === 1 ? "" : "s"}
           </Badge>
