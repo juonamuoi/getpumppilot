@@ -2194,15 +2194,36 @@ function RuleTuningPanel({
   result,
   rules,
   onApply,
+  onLogBoundsChange,
 }: {
   result: ReplayResult;
   rules: ScannerRules;
   onApply: (
     k: RuleKey,
     value: number,
-    meta: { preset: string; preview: TuningPreview | null },
+    meta: {
+      preset: string;
+      preview: TuningPreview | null;
+      mitigation?: string;
+      trigger?: string;
+      recommendedValue?: number;
+      fragilePct?: number;
+    },
   ) => void;
+  onLogBoundsChange: (e: {
+    label: string;
+    unit: string;
+    oldValue: number;
+    newValue: number;
+    preview: TuningPreview | null;
+    mitigation: string;
+    trigger: string;
+    recommendedValue: number;
+    fragilePct?: number;
+    window: WindowKey;
+  }) => void;
 }) {
+
   const [preset, setPreset] = useState<"conservative" | "balanced" | "aggressive">("balanced");
   const [pending, setPending] = useState<RuleKey | null>(null);
   const [bounds, setBounds] = useState<RiskBounds>(loadBounds);
