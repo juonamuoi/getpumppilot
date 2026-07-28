@@ -129,6 +129,12 @@ export function MitigationImpactTimeline() {
 
   const runs = useScanHistory();
   const { tuningLog } = usePaper();
+  const navigate = useNavigate();
+  const openAudit = (id?: string) => {
+    if (!id) return;
+    navigate({ to: "/alerts", search: { tab: "replay", audit: id } });
+  };
+
 
   const [range, setRange] = useState<RangeKey>("7d");
   const [wallets, setWallets] = useState<string[]>([]);
