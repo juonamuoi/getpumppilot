@@ -1641,8 +1641,9 @@ function TuningHistoryPanel({
           <History className="h-3.5 w-3.5 text-primary" />
           <span>Tuning history</span>
           <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
-            {log.length}
+            {filtersActive ? `${filtered.length}/${log.length}` : log.length}
           </Badge>
+
         </div>
         <div className="flex items-center gap-1">
           {batch.length > 0 && (
