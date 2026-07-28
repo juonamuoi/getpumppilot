@@ -3223,9 +3223,11 @@ function RuleTuningPanel({
             trigger: meta.trigger,
             recommendedValue: meta.recommendedValue,
             fragilePct: meta.fragilePct,
+            previewId: meta.previewId,
           });
           setPending(null);
         }}
+        onLogPreview={onLogMitigationPreview}
         onLogBounds={(e) =>
           onLogBoundsChange({
             label: e.label,
@@ -3238,8 +3240,10 @@ function RuleTuningPanel({
             recommendedValue: e.meta.recommendedValue,
             fragilePct: e.meta.fragilePct,
             window: result.window,
+            previewId: e.meta.previewId,
           })
         }
+
 
         onCancel={() => setPending(null)}
         onConfirm={() => {
