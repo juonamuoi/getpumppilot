@@ -26,6 +26,7 @@ import { useSecurity } from "@/lib/security-store";
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
 import { scanWallet, shortAddress, type WalletScanResult } from "@/lib/wallet-scan";
 import { Link } from "@tanstack/react-router";
+import { notifyNewThreats } from "@/lib/threat-notify";
 import {
   DEMO_WALLET_ADDRESS,
   getWalletMonitor,
@@ -85,8 +86,28 @@ export function WalletConnect() {
         });
       }
 
+      // Deliver push / email for newly detected risky approvals (both
+      // background sweeps and the first scan after connecting).
+      const settings = getWalletMonitor();
+      if (newThreats.length > 0 && (settings.pushOnNewThreats || settings.emailOnNewThreats)) {
+        void notifyNewThreats(DEMO_ADDRESS, newThreats, {
+          push: settings.pushOnNewThreats,
+          email: settings.emailOnNewThreats,
+        }).then((res) => {
+          if (res.email === false && res.emailReason && res.emailReason !== "duplicate") {
+            const why =
+              res.emailReason === "email_not_configured"
+                ? "email alerts need a verified sender domain"
+                : res.emailReason === "no_account_email"
+                  ? "sign in to receive email alerts"
+                  : res.emailReason;
+            toast.warning(`Threat email not sent — ${why}`);
+          }
+        });
+      }
+
       if (background) {
-        if (newThreats.length > 0 && getWalletMonitor().notifyOnNewThreats) {
+        if (newThreats.length > 0 && settings.notifyOnNewThreats) {
           toast.error(
             `${newThreats.length} new risky approval${newThreats.length > 1 ? "s" : ""} detected on your wallet`,
             {

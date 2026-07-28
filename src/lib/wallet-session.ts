@@ -61,6 +61,10 @@ export type WalletMonitorSettings = {
   intervalMinutes: number;
   /** Toast immediately when a new threat appears. */
   notifyOnNewThreats: boolean;
+  /** Send a device/browser push notification for new risky approvals. */
+  pushOnNewThreats: boolean;
+  /** Email the signed-in account for new risky approvals. */
+  emailOnNewThreats: boolean;
 };
 
 export const MONITOR_INTERVALS = [5, 15, 30, 60] as const;
@@ -71,6 +75,8 @@ const defaultMonitor: WalletMonitorSettings = {
   enabled: true,
   intervalMinutes: 15,
   notifyOnNewThreats: true,
+  pushOnNewThreats: false,
+  emailOnNewThreats: false,
 };
 
 function loadMonitor(): WalletMonitorSettings {

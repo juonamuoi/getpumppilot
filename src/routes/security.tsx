@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +44,7 @@ import {
   Columns3,
   X,
   FileDown,
+  BellRing,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -53,6 +54,12 @@ import {
   type ReportCategory,
   type Severity,
 } from "@/lib/security-store";
+import {
+  pushPermission,
+  pushSupported,
+  requestPushPermission,
+  sendTestNotification,
+} from "@/lib/threat-notify";
 import {
   MONITOR_INTERVALS,
   requestWalletRescan,
@@ -1286,12 +1293,13 @@ function WalletRescanCard() {
               checked={monitor.notifyOnNewThreats}
               disabled={!monitor.enabled}
               onCheckedChange={(v) => setWalletMonitor({ notifyOnNewThreats: v })}
-              aria-label="Notify on new threats"
+              aria-label="In-app alert on new threats"
             />
-            <span className="text-muted-foreground">Notify on new threats</span>
+            <span className="text-muted-foreground">In-app alert</span>
           </label>
         </div>
       </div>
+      <ThreatAlertChannels />
       <WalletThreatDialog
         open={open}
 
@@ -1301,5 +1309,117 @@ function WalletRescanCard() {
         onRevoked={() => {}}
       />
     </Card>
+  );
+}
+
+
+/**
+ * Delivery channels for new risky-approval detections: device/browser push
+ * and email to the signed-in account. In-app toasts are always on.
+ */
+function ThreatAlertChannels() {
+  const monitor = useWalletMonitor();
+  const [perm, setPerm] = useState<string>("default");
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    setPerm(pushPermission());
+  }, []);
+
+  const supported = pushSupported();
+
+  const togglePush = async (v: boolean) => {
+    if (!v) {
+      setWalletMonitor({ pushOnNewThreats: false });
+      return;
+    }
+    if (!supported) {
+      toast.error("This device or browser does not support push notifications");
+      return;
+    }
+    const res = await requestPushPermission();
+    setPerm(res);
+    if (res !== "granted") {
+      toast.error(
+        res === "denied"
+          ? "Notifications are blocked — enable them in your browser or device settings"
+          : "Push notifications are unavailable here",
+      );
+      return;
+    }
+    setWalletMonitor({ pushOnNewThreats: true });
+    toast.success("Push alerts on — you'll be notified the moment a new risky approval appears");
+  };
+
+  const runTest = async () => {
+    setTesting(true);
+    const res = await sendTestNotification({
+      push: monitor.pushOnNewThreats,
+      email: monitor.emailOnNewThreats,
+    });
+    setTesting(false);
+    const parts: string[] = [];
+    if (monitor.pushOnNewThreats) parts.push(res.push ? "push sent" : "push failed");
+    if (monitor.emailOnNewThreats) {
+      parts.push(
+        res.email
+          ? "email sent"
+          : `email not sent (${
+              res.emailReason === "email_not_configured"
+                ? "sender domain not verified yet"
+                : res.emailReason === "no_account_email"
+                  ? "sign in first"
+                  : (res.emailReason ?? "failed")
+            })`,
+      );
+    }
+    if (parts.length === 0) {
+      toast.info("Turn on push or email first, then send a test alert.");
+      return;
+    }
+    toast.info(`Test alert: ${parts.join(" · ")}`);
+  };
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-border/60 px-6 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="flex items-center gap-2 font-medium">
+          <BellRing className="h-3.5 w-3.5 text-emerald-400" />
+          New risky approval alerts
+        </span>
+        <label className="flex items-center gap-2">
+          <Switch
+            checked={monitor.pushOnNewThreats}
+            onCheckedChange={(v) => void togglePush(v)}
+            aria-label="Push notifications for new risky approvals"
+          />
+          <span className="text-muted-foreground">
+            Push{" "}
+            {!supported
+              ? "(unsupported here)"
+              : perm === "denied"
+                ? "(blocked in settings)"
+                : ""}
+          </span>
+        </label>
+        <label className="flex items-center gap-2">
+          <Switch
+            checked={monitor.emailOnNewThreats}
+            onCheckedChange={(v) => {
+              setWalletMonitor({ emailOnNewThreats: v });
+              if (v)
+                toast.success(
+                  "Email alerts on — sent to your account email when a new risky approval is found",
+                );
+            }}
+            aria-label="Email alerts for new risky approvals"
+          />
+          <span className="text-muted-foreground">Email to my account</span>
+        </label>
+      </div>
+      <Button size="sm" variant="outline" className="h-8 text-xs" disabled={testing} onClick={runTest}>
+        {testing ? "Sending…" : "Send test alert"}
+      </Button>
+    </div>
   );
 }
