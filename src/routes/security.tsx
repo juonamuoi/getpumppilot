@@ -1286,6 +1286,8 @@ function WalletRescanCard() {
       </div>
       <ThreatAlertChannels />
       <NotificationDeliveryLog />
+
+      <NotificationHistory />
       <ScheduledReportCard />
       <WalletThreatDialog
         open={open}
