@@ -46,6 +46,7 @@ const nav = [
   { to: "/learn", label: "Learn", icon: BookOpen },
   { to: "/refer", label: "Invite & earn", icon: Gift },
   { to: "/pricing", label: "Pricing", icon: Zap },
+  { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
