@@ -16,6 +16,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { McpAuditExport } from "@/components/mcp-audit-export";
+import { McpRateLimits } from "@/components/mcp-rate-limits";
+import { Gauge } from "lucide-react";
+
 import { toast } from "sonner";
 import {
   Bot,
@@ -283,7 +286,20 @@ function SettingsPage() {
                 <TabsTrigger value="audit">
                   <ScrollText className="mr-2 h-4 w-4" /> Audit trail
                 </TabsTrigger>
+                <TabsTrigger value="limits">
+                  <Gauge className="mr-2 h-4 w-4" /> Rate limits
+                </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="limits" className="mt-4">
+                {user && (
+                  <McpRateLimits
+                    userId={user.id}
+                    agentIds={grants.map((g) => g.client_id).filter(Boolean)}
+                  />
+                )}
+              </TabsContent>
+
 
               <TabsContent value="agents" className="mt-4 space-y-3">
                 {grants.length === 0 && (

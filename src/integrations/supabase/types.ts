@@ -176,6 +176,33 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_agent_rate_limits: {
+        Row: {
+          call_limit: number
+          client_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          call_limit: number
+          client_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          call_limit?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mcp_audit_log: {
         Row: {
           client_id: string | null
@@ -245,6 +272,72 @@ export type Database = {
           revoked_at?: string | null
           tools_used?: string[]
           user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_rate_limit_audit: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          field: string
+          id: string
+          new_value: number | null
+          old_value: number | null
+          plan: string | null
+          reason: string | null
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          field: string
+          id?: string
+          new_value?: number | null
+          old_value?: number | null
+          plan?: string | null
+          reason?: string | null
+          scope: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          field?: string
+          id?: string
+          new_value?: number | null
+          old_value?: number | null
+          plan?: string | null
+          reason?: string | null
+          scope?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_rate_limit_settings: {
+        Row: {
+          account_limit: number
+          client_limit: number
+          created_at: string
+          updated_at: string
+          user_id: string
+          window_seconds: number
+        }
+        Insert: {
+          account_limit: number
+          client_limit: number
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          window_seconds?: number
+        }
+        Update: {
+          account_limit?: number
+          client_limit?: number
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          window_seconds?: number
         }
         Relationships: []
       }
@@ -630,6 +723,10 @@ export type Database = {
         }
         Returns: Json
       }
+      mcp_effective_limits: {
+        Args: { _client_id?: string; _user_id: string }
+        Returns: Json
+      }
       mcp_finish_call: {
         Args: {
           _correlation_id: string
@@ -639,6 +736,20 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      mcp_plan_defaults: { Args: { _user_id: string }; Returns: Json }
+      mcp_set_agent_rate_limit: {
+        Args: { _call_limit?: number; _client_id: string; _reason?: string }
+        Returns: Json
+      }
+      mcp_set_rate_limits: {
+        Args: {
+          _account_limit?: number
+          _client_limit?: number
+          _reason?: string
+          _window_seconds?: number
+        }
+        Returns: Json
       }
       my_referral_reward_months: { Args: never; Returns: number }
       process_referral_rewards: { Args: never; Returns: number }
