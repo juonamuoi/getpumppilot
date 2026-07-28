@@ -1817,16 +1817,27 @@ function TuningHistoryPanel({
 
       {batch.length > 0 && (
         <div className="mb-2 rounded border border-border/50 bg-background/40 p-2 text-[10px] text-muted-foreground">
-          One click restores the previous thresholds and operator settings from the last
-          save:{" "}
-          <span className="font-mono text-foreground">
-            {batch
-              .map(
-                (e) =>
-                  `${e.ruleLabel} ${e.operator === ">=" ? "≥" : "≤"} ${e.oldValue}${e.unit}`,
-              )
-              .join(", ")}
-          </span>
+          One click restores the previous thresholds and operator settings from the last save:
+          <div className="mt-1 space-y-0.5">
+            {batch.map((e) => {
+              const o = e.operator === ">=" ? "≥" : "≤";
+              return (
+                <div key={e.id} className="flex items-center gap-1.5 font-mono text-[10px]">
+                  <span className="text-foreground">{e.ruleLabel}</span>
+                  <span className="text-destructive line-through">
+                    {o} {e.newValue}
+                    {e.unit}
+                  </span>
+                  <span>→</span>
+                  <span className="font-semibold text-emerald-400">
+                    {o} {e.oldValue}
+                    {e.unit}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
         </div>
       )}
 
