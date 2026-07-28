@@ -33,6 +33,7 @@ import {
   registerRescanHandler,
   setWalletSession,
   useWalletMonitor,
+  recordScanRun,
 } from "@/lib/wallet-session";
 
 
@@ -52,6 +53,7 @@ export function WalletConnect() {
   const DEMO_ADDRESS = DEMO_WALLET_ADDRESS;
 
   const lastThreatIds = useRef<Set<string>>(new Set());
+  const firstScan = useRef(true);
 
   const runScan = useCallback(
     async (walletName: string, opts?: { background?: boolean }) => {
