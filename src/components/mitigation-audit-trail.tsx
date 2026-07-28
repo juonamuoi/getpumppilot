@@ -98,8 +98,27 @@ function UndoLastMitigationBar() {
  * together by a correlation ID.
  */
 export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
+  const paper = usePaper();
   const [q, setQ] = useState("");
   const [outcome, setOutcome] = useState<OutcomeFilter>("all");
+
+  /** Re-run a recorded mitigation with identical parameters and stored preview context. */
+  const replay = (entry: TuningLogEntry) => {
+    if (!entry.correlationId) {
+      toast.error("This entry has no correlation ID to replay");
+      return;
+    }
+    const res = paper.replayMitigation(entry.correlationId);
+    if (!res) {
+      toast.error("Nothing replayable in this entry");
+      return;
+    }
+    toast.success(`Replayed "${res.label}"`, {
+      description: `${res.entries
+        .map((e) => `${e.ruleLabel} → ${e.newValue}${e.unit}`)
+        .join(" · ")} — ${res.outcome.matched} match(es), ${res.outcome.delivered} delivery(s) · ${res.correlationId}`,
+    });
+  };
 
   const entries = useMemo(() => {
     return log
