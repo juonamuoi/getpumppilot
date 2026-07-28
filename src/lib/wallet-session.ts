@@ -57,8 +57,10 @@ export function useWalletSession(): WalletSession {
 
 export type WalletMonitorSettings = {
   enabled: boolean;
-  /** Scan interval in minutes. */
+  /** Default scan interval in minutes (used when a wallet has no override). */
   intervalMinutes: number;
+  /** Per-wallet custom interval overrides, keyed by lowercased address. */
+  walletIntervals: Record<string, number>;
   /** Toast immediately when a new threat appears. */
   notifyOnNewThreats: boolean;
   /** Send a device/browser push notification for new risky approvals. */
@@ -69,11 +71,28 @@ export type WalletMonitorSettings = {
 
 export const MONITOR_INTERVALS = [5, 15, 30, 60] as const;
 
+/** Allowed bounds for a custom interval, in minutes. */
+export const MIN_INTERVAL_MINUTES = 1;
+export const MAX_INTERVAL_MINUTES = 1440;
+
+export function clampInterval(minutes: number) {
+  if (!Number.isFinite(minutes)) return defaultMonitor.intervalMinutes;
+  return Math.min(MAX_INTERVAL_MINUTES, Math.max(MIN_INTERVAL_MINUTES, Math.round(minutes)));
+}
+
+export function formatInterval(minutes: number) {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h} h` : `${h} h ${m} min`;
+}
+
 const MONITOR_KEY = "pp_wallet_monitor_v1";
 
 const defaultMonitor: WalletMonitorSettings = {
   enabled: true,
   intervalMinutes: 15,
+  walletIntervals: {},
   notifyOnNewThreats: true,
   pushOnNewThreats: false,
   emailOnNewThreats: false,
