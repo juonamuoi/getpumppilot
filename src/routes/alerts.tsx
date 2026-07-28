@@ -1619,6 +1619,9 @@ function TuningHistoryPanel({
         e.window ?? "",
         e.source ?? "manual-save",
         e.scope ?? "",
+        e.mitigation ?? "",
+        e.trigger ?? "",
+
         `${e.oldValue}${e.unit}`,
         `${e.newValue}${e.unit}`,
       ]
