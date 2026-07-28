@@ -18,6 +18,8 @@ import { AD_CREATIVES } from "@/lib/ad-creatives";
 import { LANDING_VARIANTS } from "@/lib/landing-variants";
 import { useAuth } from "@/lib/auth-store";
 import { FunnelReport } from "@/components/funnel-report";
+import { SignificancePanel, type SignificanceRow } from "@/components/significance-panel";
+import { wilsonInterval } from "@/lib/ab-stats";
 
 
 export const Route = createFileRoute("/ads-report")({
@@ -74,12 +76,28 @@ function AdsReport() {
           headline: c ? `${c.headline} ${c.headlineAccent}` : r.creative_id,
           description: c?.description ?? "",
           ctr: pct(r.clicks, r.impressions),
+          ctrCi: wilsonInterval(r.clicks, r.impressions),
+          conversionCi: wilsonInterval(r.signups, r.impressions),
           signupRate: pct(r.signups, r.clicks),
           conversion: pct(r.signups, r.impressions),
         };
       })
       .sort((a, b) => b.ctr - a.ctr);
   }, [query.data]);
+
+  const sigRows: SignificanceRow[] = useMemo(
+    () =>
+      rows.map((r) => ({
+        key: `${r.variant}:${r.creative_id}`,
+        label: r.headline,
+        variant: r.variant,
+        creativeId: r.creative_id,
+        impressions: r.impressions,
+        clicks: r.clicks,
+        signups: r.signups,
+      })),
+    [rows],
+  );
 
   const bestCtr = rows[0];
   const bestSignup = useMemo(
@@ -143,6 +161,9 @@ function AdsReport() {
                 {bestCtr ? (
                   <>
                     <div className="text-2xl font-bold">{bestCtr.ctr.toFixed(1)}%</div>
+                    <p className="text-xs text-muted-foreground">
+                      95% CI {bestCtr.ctrCi.low.toFixed(1)}% – {bestCtr.ctrCi.high.toFixed(1)}%
+                    </p>
                     <p className="mt-1 text-sm">{bestCtr.headline}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {bestCtr.variant} · {bestCtr.label} · {bestCtr.clicks} clicks /{" "}
@@ -166,6 +187,10 @@ function AdsReport() {
                     <div className="text-2xl font-bold">
                       {bestSignup.conversion.toFixed(1)}%
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      95% CI {bestSignup.conversionCi.low.toFixed(1)}% –{" "}
+                      {bestSignup.conversionCi.high.toFixed(1)}%
+                    </p>
                     <p className="mt-1 text-sm">{bestSignup.headline}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {bestSignup.variant} · {bestSignup.label} · {bestSignup.signups} signups /{" "}
@@ -190,10 +215,10 @@ function AdsReport() {
                     <th className="px-4 py-2 text-left">Creative</th>
                     <th className="px-4 py-2 text-right">Views</th>
                     <th className="px-4 py-2 text-right">Clicks</th>
-                    <th className="px-4 py-2 text-right">CTR</th>
+                    <th className="px-4 py-2 text-right">CTR (95% CI)</th>
                     <th className="px-4 py-2 text-right">Signups</th>
                     <th className="px-4 py-2 text-right">Click→signup</th>
-                    <th className="px-4 py-2 text-right">View→signup</th>
+                    <th className="px-4 py-2 text-right">View→signup (95% CI)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -226,11 +251,17 @@ function AdsReport() {
                       <td className="px-4 py-3 text-right">{r.clicks}</td>
                       <td className="px-4 py-3 text-right font-semibold">
                         {r.ctr.toFixed(1)}%
+                        <div className="text-[10px] font-normal text-muted-foreground">
+                          {r.ctrCi.low.toFixed(1)}–{r.ctrCi.high.toFixed(1)}%
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">{r.signups}</td>
                       <td className="px-4 py-3 text-right">{r.signupRate.toFixed(1)}%</td>
                       <td className="px-4 py-3 text-right font-semibold">
                         {r.conversion.toFixed(1)}%
+                        <div className="text-[10px] font-normal text-muted-foreground">
+                          {r.conversionCi.low.toFixed(1)}–{r.conversionCi.high.toFixed(1)}%
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -238,6 +269,8 @@ function AdsReport() {
               </table>
             </CardContent>
           </Card>
+
+          <SignificancePanel rows={sigRows} />
 
           <FunnelReport days={days} />
 
