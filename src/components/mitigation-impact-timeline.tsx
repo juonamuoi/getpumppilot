@@ -264,6 +264,26 @@ export function MitigationImpactTimeline() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1 text-xs"
+                  disabled={!hasData}
+                >
+                  <Download className="h-3 w-3" /> Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("csv")}>
+                  Download CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("json")}>
+                  Download JSON
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {activeFilters > 0 && (
               <Button
                 size="sm"
@@ -277,6 +297,7 @@ export function MitigationImpactTimeline() {
                 <X className="h-3 w-3" /> Clear ({activeFilters})
               </Button>
             )}
+
             <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
               <SelectTrigger className="h-8 w-[140px] text-xs">
                 <SelectValue />
