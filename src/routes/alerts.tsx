@@ -1610,34 +1610,78 @@ function RollbackConfirmDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-1.5">
-          {batch.map((e) => (
-            <div
-              key={e.id}
-              className="rounded border border-border/60 bg-muted/20 p-2 text-[11px]"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-foreground">{e.ruleLabel}</span>
-                <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
-                  {e.source ?? "manual-save"}
-                </Badge>
+          {batch.map((e) => {
+            const delta = e.oldValue - e.newValue;
+            const stricter = e.operator === ">=" ? delta > 0 : delta < 0;
+            return (
+              <div
+                key={e.id}
+                className="rounded border border-border/60 bg-muted/20 p-2 text-[11px]"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-foreground">{e.ruleLabel}</span>
+                  <Badge variant="outline" className="h-4 px-1.5 text-[9px]">
+                    {e.source ?? "manual-save"}
+                  </Badge>
+                </div>
+
+                <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                  <div className="rounded border border-destructive/30 bg-destructive/10 p-1.5">
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                      Before (current)
+                    </div>
+                    <div className="font-mono text-[12px] text-destructive">
+                      {op(e.operator)} {e.newValue}
+                      {e.unit}
+                    </div>
+                  </div>
+                  <div className="rounded border border-emerald-500/30 bg-emerald-500/10 p-1.5">
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                      After (reverted)
+                    </div>
+                    <div className="font-mono text-[12px] font-semibold text-emerald-400">
+                      {op(e.operator)} {e.oldValue}
+                      {e.unit}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-1 grid grid-cols-2 gap-1.5 text-[9px]">
+                  <div className="flex items-center gap-1 rounded bg-background/50 px-1.5 py-1">
+                    <span className="text-muted-foreground">Operator</span>
+                    <span className="ml-auto font-mono text-foreground">
+                      {op(e.operator)} → {op(e.operator)}
+                    </span>
+                    <Badge variant="secondary" className="h-3.5 px-1 text-[8px]">
+                      unchanged
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 rounded bg-background/50 px-1.5 py-1">
+                    <span className="text-muted-foreground">Threshold</span>
+                    <span
+                      className={cn(
+                        "ml-auto font-mono",
+                        stricter ? "text-amber-400" : "text-emerald-400",
+                      )}
+                    >
+                      {delta > 0 ? "+" : ""}
+                      {Number(delta.toFixed(2))}
+                      {e.unit}
+                    </span>
+                    <Badge variant="secondary" className="h-3.5 px-1 text-[8px]">
+                      {delta === 0 ? "same" : stricter ? "stricter" : "looser"}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="mt-1 text-[9px] text-muted-foreground">
+                  Saved {new Date(e.ts).toLocaleString()}
+                  {e.mitigation ? ` · ${e.mitigation}` : ""}
+                </div>
               </div>
-              <div className="mt-1 flex items-center gap-2 font-mono">
-                <span className="text-destructive line-through">
-                  {op(e.operator)} {e.newValue}
-                  {e.unit}
-                </span>
-                <span className="text-muted-foreground">→</span>
-                <span className="font-semibold text-emerald-400">
-                  {op(e.operator)} {e.oldValue}
-                  {e.unit}
-                </span>
-              </div>
-              <div className="mt-0.5 text-[9px] text-muted-foreground">
-                Saved {new Date(e.ts).toLocaleString()}
-                {e.mitigation ? ` · ${e.mitigation}` : ""}
-              </div>
-            </div>
-          ))}
+            );
+          })}
+
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
