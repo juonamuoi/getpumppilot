@@ -1428,6 +1428,7 @@ function ScanIntervalControl({
  */
 function ThreatAlertChannels() {
   const monitor = useWalletMonitor();
+  const { scan } = useWalletSession();
   const [perm, setPerm] = useState<string>("default");
   const [testing, setTesting] = useState(false);
 
@@ -1462,17 +1463,23 @@ function ThreatAlertChannels() {
 
   const runTest = async () => {
     setTesting(true);
-    const res = await sendTestNotification({
-      push: monitor.pushOnNewThreats,
-      email: monitor.emailOnNewThreats,
-    });
+    const res = await sendTestNotification(
+      {
+        push: monitor.pushOnNewThreats,
+        email: monitor.emailOnNewThreats,
+        pdfReport: monitor.emailPdfReport,
+      },
+      scan,
+    );
     setTesting(false);
     const parts: string[] = [];
     if (monitor.pushOnNewThreats) parts.push(res.push ? "push sent" : "push failed");
     if (monitor.emailOnNewThreats) {
       parts.push(
         res.email
-          ? "email sent"
+          ? res.reportAttached
+            ? "email sent with PDF report"
+            : "email sent"
           : `email not sent (${
               res.emailReason === "email_not_configured"
                 ? "sender domain not verified yet"
