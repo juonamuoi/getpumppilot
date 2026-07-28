@@ -129,3 +129,104 @@ export async function trackFunnelStep(step: FunnelStep, userId?: string | null) 
     /* ignore */
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * CTA click attribution
+ *
+ * `trackFunnelStep` is deduped once per browser so the funnel report stays
+ * a clean per-visitor funnel. For CTA volume we also record EVERY click,
+ * tagged with the placement (hero, nav, footer, pricing card …), the landing
+ * variant and the first-touch UTM tags. The signup that follows is then
+ * attributed back to the last CTA the visitor tapped.
+ * ------------------------------------------------------------------ */
+
+const CTA_KEY = "pp_last_cta";
+
+export type CtaAttribution = {
+  placement: string;
+  variant: string;
+  landing_path: string;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  clicked_at: string;
+};
+
+/** The last "Start free" CTA this visitor clicked, if any. */
+export function getCtaAttribution(): CtaAttribution | null {
+  const raw = safeGet(CTA_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as CtaAttribution;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Record a "Start free" CTA click. Fires on every click (not deduped) and
+ * stores the attribution so the resulting signup can be tied to the exact
+ * CTA, landing variant and campaign.
+ */
+export async function trackCtaClick(placement: string, variantOverride?: string) {
+  if (typeof window === "undefined") return;
+  const ctx = captureUtmFromUrl() ?? getUtmContext();
+  const attribution: CtaAttribution = {
+    placement: placement.slice(0, 48),
+    variant: variantOverride ?? ctx?.variant ?? "site",
+    landing_path: window.location.pathname.slice(0, 200),
+    utm_source: ctx?.utm_source ?? null,
+    utm_medium: ctx?.utm_medium ?? null,
+    utm_campaign: ctx?.utm_campaign ?? null,
+    utm_content: ctx?.utm_content ?? null,
+    clicked_at: new Date().toISOString(),
+  };
+  safeSet(CTA_KEY, JSON.stringify(attribution));
+
+  // Per-visitor funnel step (deduped) + raw per-click row for CTA volume.
+  void trackFunnelStep("cta_click");
+  try {
+    await supabase.from("ad_creative_events").insert({
+      experiment: FUNNEL_EXPERIMENT,
+      variant: attribution.variant,
+      creative_id: `cta:${attribution.placement}`,
+      event: "cta_click_raw",
+      visitor_id: getVisitorId(),
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+    });
+  } catch {
+    /* analytics must never break the CTA */
+  }
+}
+
+/**
+ * Attribute a completed signup to the CTA that produced it. Called once per
+ * account from the auth store, alongside the deduped `signup` funnel step.
+ */
+export async function trackSignupAttribution(userId: string) {
+  if (typeof window === "undefined") return;
+  const cta = getCtaAttribution();
+  const ctx = getUtmContext();
+  const key = `pp_signup_attributed:${userId}`;
+  if (safeGet(key)) return;
+  safeSet(key, new Date().toISOString());
+
+  try {
+    await supabase.from("ad_creative_events").insert({
+      experiment: FUNNEL_EXPERIMENT,
+      variant: cta?.variant ?? ctx?.variant ?? "site",
+      creative_id: cta ? `cta:${cta.placement}` : "cta:none",
+      event: "signup_attributed",
+      visitor_id: getVisitorId(),
+      user_id: userId,
+      utm_source: cta?.utm_source ?? ctx?.utm_source ?? null,
+      utm_medium: cta?.utm_medium ?? ctx?.utm_medium ?? null,
+      utm_campaign: cta?.utm_campaign ?? ctx?.utm_campaign ?? null,
+    });
+  } catch {
+    /* ignore */
+  }
+}
