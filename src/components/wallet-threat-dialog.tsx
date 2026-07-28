@@ -25,7 +25,7 @@ import {
   Copy,
   ExternalLink,
 } from "lucide-react";
-import { exportWalletReportPdf } from "@/lib/wallet-report-pdf";
+import { WalletReportPreviewDialog } from "@/components/wallet-report-preview";
 import { exportWalletFindingsCsv } from "@/lib/wallet-report-csv";
 import {
   revokeApproval,
@@ -169,22 +169,7 @@ export function WalletThreatDialog({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
-  const [exporting, setExporting] = useState(false);
-
-  const exportPdf = useCallback(async () => {
-    if (!result) return;
-    setExporting(true);
-    try {
-      const file = await exportWalletReportPdf(result);
-      toast.success("Threat report exported", {
-        description: `${file} · correlation ID ${result.correlationId}`,
-      });
-    } catch {
-      toast.error("Could not generate the PDF report");
-    } finally {
-      setExporting(false);
-    }
-  }, [result]);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const revoke = useCallback(
     async (a: WalletApproval) => {
@@ -213,6 +198,7 @@ export function WalletThreatDialog({
   const threats = result?.threats ?? [];
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
@@ -335,15 +321,10 @@ export function WalletThreatDialog({
                 <Button
                   variant="outline"
                   className="w-full gap-2"
-                  disabled={exporting}
-                  onClick={() => void exportPdf()}
+                  onClick={() => setPreviewOpen(true)}
                 >
-                  {exporting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <FileDown className="h-4 w-4" />
-                  )}
-                  Export report (PDF)
+                  <FileDown className="h-4 w-4" />
+                  Preview &amp; export (PDF)
                 </Button>
                 <Button
                   variant="outline"
@@ -391,5 +372,11 @@ export function WalletThreatDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+      <WalletReportPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        result={result}
+      />
+    </>
   );
 }
