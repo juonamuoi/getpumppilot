@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowRight, Sparkles, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Sparkles, X } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { usePaper, type ScannerRules } from "@/lib/paper-store";
 import { cn } from "@/lib/utils";
