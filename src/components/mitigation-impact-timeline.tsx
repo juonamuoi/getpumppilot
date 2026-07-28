@@ -386,8 +386,10 @@ export function MitigationImpactTimeline() {
                     className="cursor-pointer"
                     onMouseEnter={() => setHover({ kind: "risk", point: p })}
                     onMouseLeave={() => setHover(null)}
+                    onClick={() => openAudit(p.correlationId)}
                   />
                 ))}
+
 
                 {/* signal delta baseline */}
                 <line
