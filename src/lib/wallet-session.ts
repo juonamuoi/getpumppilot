@@ -67,6 +67,8 @@ export type WalletMonitorSettings = {
   pushOnNewThreats: boolean;
   /** Email the signed-in account for new risky approvals. */
   emailOnNewThreats: boolean;
+  /** Attach a signed link to the full PDF threat report in those emails. */
+  emailPdfReport: boolean;
 };
 
 export const MONITOR_INTERVALS = [5, 15, 30, 60] as const;
@@ -96,6 +98,7 @@ const defaultMonitor: WalletMonitorSettings = {
   notifyOnNewThreats: true,
   pushOnNewThreats: false,
   emailOnNewThreats: false,
+  emailPdfReport: true,
 };
 
 function loadMonitor(): WalletMonitorSettings {

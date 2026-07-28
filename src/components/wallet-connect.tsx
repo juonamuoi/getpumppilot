@@ -95,10 +95,16 @@ export function WalletConnect() {
       // background sweeps and the first scan after connecting).
       const settings = getWalletMonitor();
       if (newThreats.length > 0 && (settings.pushOnNewThreats || settings.emailOnNewThreats)) {
-        void notifyNewThreats(DEMO_ADDRESS, newThreats, {
-          push: settings.pushOnNewThreats,
-          email: settings.emailOnNewThreats,
-        }).then((res) => {
+        void notifyNewThreats(
+          DEMO_ADDRESS,
+          newThreats,
+          {
+            push: settings.pushOnNewThreats,
+            email: settings.emailOnNewThreats,
+            pdfReport: settings.emailPdfReport,
+          },
+          result,
+        ).then((res) => {
           if (res.email === false && res.emailReason && res.emailReason !== "duplicate") {
             const why =
               res.emailReason === "email_not_configured"

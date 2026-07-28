@@ -52,6 +52,8 @@ export async function sendThreatAlertEmail(
         address: data.address ?? "demo wallet",
         correlationId: data.correlationId ?? "",
         count: findings.length,
+        reportUrl: data.reportUrl ?? "",
+        hasReport: !!data.reportUrl,
         valueAtRisk,
         findings,
       },

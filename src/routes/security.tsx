@@ -1428,6 +1428,7 @@ function ScanIntervalControl({
  */
 function ThreatAlertChannels() {
   const monitor = useWalletMonitor();
+  const { scan } = useWalletSession();
   const [perm, setPerm] = useState<string>("default");
   const [testing, setTesting] = useState(false);
 
@@ -1462,17 +1463,23 @@ function ThreatAlertChannels() {
 
   const runTest = async () => {
     setTesting(true);
-    const res = await sendTestNotification({
-      push: monitor.pushOnNewThreats,
-      email: monitor.emailOnNewThreats,
-    });
+    const res = await sendTestNotification(
+      {
+        push: monitor.pushOnNewThreats,
+        email: monitor.emailOnNewThreats,
+        pdfReport: monitor.emailPdfReport,
+      },
+      scan,
+    );
     setTesting(false);
     const parts: string[] = [];
     if (monitor.pushOnNewThreats) parts.push(res.push ? "push sent" : "push failed");
     if (monitor.emailOnNewThreats) {
       parts.push(
         res.email
-          ? "email sent"
+          ? res.reportAttached
+            ? "email sent with PDF report"
+            : "email sent"
           : `email not sent (${
               res.emailReason === "email_not_configured"
                 ? "sender domain not verified yet"
@@ -1525,6 +1532,22 @@ function ThreatAlertChannels() {
           />
           <span className="text-muted-foreground">Email to my account</span>
         </label>
+        <label className="flex items-center gap-2">
+          <Switch
+            checked={monitor.emailPdfReport}
+            disabled={!monitor.emailOnNewThreats}
+            onCheckedChange={(v) => {
+              setWalletMonitor({ emailPdfReport: v });
+              if (v)
+                toast.success(
+                  "Threat report PDF will be generated and linked in every new-threat email (private link, expires in 7 days)",
+                );
+            }}
+            aria-label="Attach the PDF threat report to alert emails"
+          />
+          <span className="text-muted-foreground">Include PDF report</span>
+        </label>
+
       </div>
       <Button size="sm" variant="outline" className="h-8 text-xs" disabled={testing} onClick={runTest}>
         {testing ? "Sending…" : "Send test alert"}

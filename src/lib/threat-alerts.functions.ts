@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendThreatAlertEmail } from "@/lib/threat-alerts.server";
+import { uploadThreatReport, MAX_PDF_BASE64_CHARS } from "@/lib/threat-report.server";
 
 export type ThreatFinding = {
   token: string;
@@ -17,6 +18,10 @@ export type ThreatEmailInput = {
   correlationId?: string;
   findings?: ThreatFinding[];
   test?: boolean;
+  /** Base64 PDF threat report rendered in the browser, attached as a signed link. */
+  pdfBase64?: string;
+  /** Signed download link for the stored PDF report (filled server-side). */
+  reportUrl?: string;
 };
 
 /**
@@ -28,8 +33,13 @@ export const sendThreatEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: ThreatEmailInput): ThreatEmailInput => {
     const findings = Array.isArray(data.findings) ? data.findings.slice(0, 10) : [];
+    const pdf =
+      typeof data.pdfBase64 === "string" && data.pdfBase64.length <= MAX_PDF_BASE64_CHARS
+        ? data.pdfBase64
+        : undefined;
     return {
       test: !!data.test,
+      pdfBase64: pdf,
       address: typeof data.address === "string" ? data.address.slice(0, 80) : undefined,
       correlationId:
         typeof data.correlationId === "string" ? data.correlationId.slice(0, 64) : undefined,
@@ -44,8 +54,29 @@ export const sendThreatEmail = createServerFn({ method: "POST" })
       })),
     };
   })
-  .handler(async ({ data, context }): Promise<{ sent: boolean; reason?: string }> => {
-    const email = (context.claims as { email?: string } | undefined)?.email;
-    if (!email) return { sent: false, reason: "no_account_email" };
-    return sendThreatAlertEmail(email, data);
-  });
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{ sent: boolean; reason?: string; reportUrl?: string }> => {
+      const email = (context.claims as { email?: string } | undefined)?.email;
+      if (!email) return { sent: false, reason: "no_account_email" };
+
+      let reportUrl: string | undefined;
+      if (data.pdfBase64) {
+        const up = await uploadThreatReport(
+          context.userId,
+          data.correlationId ?? `scan-${Date.now()}`,
+          data.pdfBase64,
+        );
+        reportUrl = up.url ?? undefined;
+      }
+
+      const res = await sendThreatAlertEmail(email, {
+        ...data,
+        pdfBase64: undefined,
+        reportUrl,
+      });
+      return { ...res, reportUrl };
+    },
+  );
