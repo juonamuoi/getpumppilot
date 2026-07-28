@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { TuningLogEntry } from "@/lib/paper-store";
+import { Undo2 } from "lucide-react";
+import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
 
 
