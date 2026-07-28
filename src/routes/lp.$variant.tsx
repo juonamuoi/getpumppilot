@@ -32,7 +32,7 @@ import {
   LANDING_VARIANTS,
 } from "@/lib/landing-variants";
 
-const SITE_URL = "https://crypto-spotter-pro.lovable.app";
+const SITE_URL = "https://www.getpumppilot.app";
 
 export const Route = createFileRoute("/lp/$variant")({
   loader: ({ params }) => {
