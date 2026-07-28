@@ -61,7 +61,7 @@ export function McpRateLimits({ userId, agentIds }: { userId: string; agentIds: 
   const load = useCallback(async () => {
     setLoading(true);
     const [e, o, a] = await Promise.all([
-      supabase.rpc("mcp_effective_limits", { _user_id: userId, _client_id: undefined }),
+      supabase.rpc("mcp_my_limits", { _client_id: undefined }),
       supabase
         .from("mcp_agent_rate_limits")
         .select("client_id, call_limit, updated_at")
