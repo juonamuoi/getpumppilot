@@ -13,6 +13,7 @@ import {
   buildTimelineJson,
   downloadTimelineExport,
 } from "@/lib/timeline-export";
+import { TimelineAggregateSummary } from "@/components/timeline-aggregate-summary";
 
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -396,6 +397,11 @@ export function MitigationImpactTimeline() {
           </div>
         ) : (
           <>
+            <TimelineAggregateSummary
+              riskPoints={riskPoints}
+              signalPoints={signalPoints}
+            />
+
             <div className="overflow-x-auto">
               <svg
                 viewBox={`0 0 ${W} ${H}`}
