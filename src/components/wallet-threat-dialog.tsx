@@ -172,6 +172,9 @@ export function WalletThreatDialog({
                       <li key={r}>{r}</li>
                     ))}
                   </ul>
+
+                  <ThreatContext approval={t} />
+
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <span className="font-mono text-[10px] opacity-70">
                       {t.rules.join(" · ")}
@@ -193,6 +196,7 @@ export function WalletThreatDialog({
                 </div>
               ))}
             </div>
+
 
             <Button
               variant="destructive"
