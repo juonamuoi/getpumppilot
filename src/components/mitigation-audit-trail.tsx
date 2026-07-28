@@ -196,6 +196,9 @@ export function MitigationAuditTrail({
     setRange("all");
     setOutcome("all");
     setQ("");
+    setTokens([]);
+    setWallets([]);
+    setAlertTypes([]);
     const t = window.setTimeout(
       () => focusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
       120,
@@ -213,14 +216,26 @@ export function MitigationAuditTrail({
     } catch {}
   };
 
-  const current: AuditFilterState = { q, outcome, range, correlationIds };
+  const current: AuditFilterState = {
+    q,
+    outcome,
+    range,
+    correlationIds,
+    tokens,
+    wallets,
+    alertTypes,
+  };
 
   const applyFilter = (f: AuditFilterState) => {
     setQ(f.q);
     setOutcome(f.outcome);
     setRange(f.range);
     setCorrelationIds(f.correlationIds ?? []);
+    setTokens(f.tokens ?? []);
+    setWallets(f.wallets ?? []);
+    setAlertTypes(f.alertTypes ?? []);
   };
+
 
   const saveCurrentFilter = () => {
     const name = filterName.trim();
