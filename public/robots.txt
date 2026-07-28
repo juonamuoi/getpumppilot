@@ -5,5 +5,7 @@ Disallow: /lp-report
 Disallow: /go-live-test
 Disallow: /mcp-console
 Disallow: /mcp
+Disallow: /seo-preview
+
 
 Sitemap: https://www.getpumppilot.app/sitemap.xml
