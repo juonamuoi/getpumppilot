@@ -240,6 +240,16 @@ export function RuleImpactPreview({
 
         {rows.length > 0 && <BeforeAfterChart rows={rows} />}
 
+        {rows.length > 0 && (
+          <RuleBacktestPanel
+            before={change.before}
+            after={change.after}
+            assets={scoped}
+            scopeLabel={SCOPES.find((s) => s.key === scope)?.label ?? "All mock assets"}
+          />
+        )}
+
+
         {rows.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             No assets in this scope yet — open a paper position or pick another scope.
