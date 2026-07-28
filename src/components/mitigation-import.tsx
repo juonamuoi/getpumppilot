@@ -64,16 +64,38 @@ export function MitigationImport({
     }
   };
 
+  const counts = useMemo(() => {
+    if (!result) return null;
+    const errors = result.issues.filter((i) => i.level === "error").length;
+    const warnings = result.issues.filter((i) => i.level === "warning").length;
+    return { errors, warnings, clean: result.entries.length - result.warned };
+  }, [result]);
+
+  const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const downloadReport = (kind: "csv" | "json") => {
+    if (!result) return;
+    if (kind === "csv") {
+      download(`mitigation-import-errors-${stamp()}.csv`, "text/csv;charset=utf-8", buildErrorReportCsv(result));
+    } else {
+      download(`mitigation-import-errors-${stamp()}.json`, "application/json", buildErrorReportJson(result));
+    }
+    toast.success("Error report downloaded");
+  };
+
   const confirm = () => {
     if (!result || result.entries.length === 0) return;
     onImport(result.entries);
     toast.success(`Imported ${result.entries.length} mitigation record(s)`, {
-      description: "Loaded into the audit trail for review — marked as imported, not applied.",
+      description:
+        result.skipped > 0 || result.warned > 0
+          ? `${result.skipped} skipped, ${result.warned} imported with warnings — download the report for details.`
+          : "Loaded into the audit trail for review — marked as imported, not applied.",
     });
     setResult(null);
     setFileName("");
     setOpen(false);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
