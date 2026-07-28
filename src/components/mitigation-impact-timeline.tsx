@@ -430,6 +430,46 @@ export function MitigationImpactTimeline() {
               />
             ))}
           </div>
+
+          <div className="flex items-center gap-1.5 pt-1 text-[11px] font-medium text-muted-foreground">
+            <Filter className="h-3 w-3" /> Mitigation action
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {ACTION_OPTIONS.map((o) => (
+              <TokenChip
+                key={o.key}
+                value={o.label}
+                active={actions.includes(o.key)}
+                onToggle={() =>
+                  setActions((prev) =>
+                    prev.includes(o.key) ? prev.filter((a) => a !== o.key) : [...prev, o.key],
+                  )
+                }
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 pt-1 text-[11px] font-medium text-muted-foreground">
+            <Filter className="h-3 w-3" /> Outcome
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {OUTCOME_OPTIONS.map((o) => (
+              <TokenChip
+                key={o.key}
+                value={o.label}
+                active={outcomes.includes(o.key)}
+                onToggle={() =>
+                  setOutcomes((prev) =>
+                    prev.includes(o.key) ? prev.filter((s) => s !== o.key) : [...prev, o.key],
+                  )
+                }
+              />
+            ))}
+          </div>
+          <p className="pt-1 text-[10px] text-muted-foreground">
+            Action and outcome filters apply to mitigation markers only; wallet risk scans stay
+            plotted for context.
+          </p>
         </div>
 
         {!hasData ? (
