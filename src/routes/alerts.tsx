@@ -3697,6 +3697,8 @@ function ReplayPanel() {
                   else next.min24hChangePct = value;
                   setScannerRules(next);
                   logTuning({
+                    source: meta.mitigation ? "mitigation" : "recommendation",
+                    kind: "rule",
                     rule: k,
                     ruleLabel: RULE_META[k].short,
                     operator: RULE_META[k].op,
@@ -3705,6 +3707,10 @@ function ReplayPanel() {
                     newValue: value,
                     preset: meta.preset,
                     scope: scopeOf(next),
+                    mitigation: meta.mitigation,
+                    trigger: meta.trigger,
+                    recommendedValue: meta.recommendedValue,
+                    fragilePct: meta.fragilePct,
 
                     window: result.window,
                     matchesBefore: meta.preview?.matchesBefore,
@@ -3714,8 +3720,38 @@ function ReplayPanel() {
                   });
                   toast.success(
                     `Applied ${RULE_META[k].short} ${RULE_META[k].op} ${value}${RULE_META[k].unit} — run replay to preview`,
+                    meta.mitigation
+                      ? { description: `Mitigation logged: ${meta.mitigation}` }
+                      : undefined,
                   );
                 }}
+                onLogBoundsChange={(e) => {
+                  logTuning({
+                    source: "mitigation",
+                    kind: "bounds",
+                    rule: `bounds:${e.label.toLowerCase().replace(/\s+/g, "-")}`,
+                    ruleLabel: e.label,
+                    operator: ">=",
+                    unit: e.unit,
+                    oldValue: e.oldValue,
+                    newValue: e.newValue,
+                    preset: "risk-bounds",
+                    scope: scopeOf(scannerRules),
+                    mitigation: e.mitigation,
+                    trigger: e.trigger,
+                    recommendedValue: e.recommendedValue,
+                    fragilePct: e.fragilePct,
+                    window: e.window,
+                    matchesBefore: e.preview?.matchesBefore,
+                    matchesAfter: e.preview?.matchesAfter,
+                    nearMissBefore: e.preview?.nearMissAnyBefore,
+                    nearMissAfter: e.preview?.nearMissAnyAfter,
+                  });
+                  toast.success(`${e.label} updated to ${e.newValue}${e.unit}`, {
+                    description: `Logged to the tuning audit trail (was ${e.oldValue}${e.unit}).`,
+                  });
+                }}
+
               />
 
               <TuningHistoryPanel
