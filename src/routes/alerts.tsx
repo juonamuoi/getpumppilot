@@ -1720,6 +1720,133 @@ function simulateScopeImpact(
   return { totals, assets };
 }
 
+function DeltaNum({ value, goodDown }: { value: number; goodDown?: boolean }) {
+  const good = goodDown ? value <= 0 : value >= 0;
+  return (
+    <span className={cn("text-[10px]", value === 0 ? "text-muted-foreground" : good ? "text-emerald-400" : "text-destructive")}>
+      {value >= 0 ? "+" : ""}
+      {value}
+    </span>
+  );
+}
+
+/**
+ * Scope-wide impact of a selected mitigation value: portfolio-level near-miss
+ * counts, expected signal deltas, and a per-asset breakdown across the replay
+ * window. Demo data only.
+ */
+function ScopeImpactPanel({
+  impact,
+  scopeLabel,
+}: {
+  impact: ScopeImpact;
+  scopeLabel: string;
+}) {
+  const t = impact.totals;
+  const dMatch = t.matchesAfter - t.matchesBefore;
+  const dNear = t.nearMissAfter - t.nearMissBefore;
+  if (t.snapshots === 0) {
+    return (
+      <div className="rounded-md border border-border/60 bg-background/40 p-2 text-[11px] text-muted-foreground">
+        No in-scope snapshots in this replay window to preview.
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-md border border-border/60 bg-background/40 p-2">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-medium">Scope-wide impact</div>
+        <Badge variant="outline" className="border-border/60 text-[10px]">
+          {scopeLabel} · {impact.assets.length} assets
+        </Badge>
+      </div>
+
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="rounded border border-border/50 p-1.5">
+          <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+            Portfolio signals
+          </div>
+          <div className="text-xs font-semibold">
+            {t.matchesBefore} → {t.matchesAfter} <DeltaNum value={dMatch} />
+          </div>
+        </div>
+        <div className="rounded border border-border/50 p-1.5">
+          <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+            Near-miss (all rules)
+          </div>
+          <div className="text-xs font-semibold">
+            {t.nearMissBefore} → {t.nearMissAfter} <DeltaNum value={dNear} goodDown />
+          </div>
+        </div>
+        <div className="rounded border border-border/50 p-1.5">
+          <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+            Newly matched
+          </div>
+          <div className="text-xs font-semibold text-emerald-400">{t.newlyMatched}</div>
+        </div>
+        <div className="rounded border border-border/50 p-1.5">
+          <div className="text-[9px] uppercase tracking-wide text-muted-foreground">
+            Signals lost
+          </div>
+          <div
+            className={cn(
+              "text-xs font-semibold",
+              t.lostMatches > 0 ? "text-destructive" : "text-muted-foreground",
+            )}
+          >
+            {t.lostMatches}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-2 max-h-40 overflow-auto rounded border border-border/50">
+        <table className="w-full text-[10px]">
+          <thead className="sticky top-0 bg-muted/40 text-muted-foreground">
+            <tr>
+              <th className="px-1.5 py-1 text-left font-medium">Asset</th>
+              <th className="px-1.5 py-1 text-right font-medium">Signals</th>
+              <th className="px-1.5 py-1 text-right font-medium">Δ</th>
+              <th className="px-1.5 py-1 text-right font-medium">Near-miss</th>
+              <th className="px-1.5 py-1 text-right font-medium">Δ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {impact.assets.map((a) => (
+              <tr key={a.symbol} className="border-t border-border/40">
+                <td className="px-1.5 py-1">
+                  <span className="font-medium">{a.symbol}</span>
+                  {a.category === "demo-smallcap" && (
+                    <span className="ml-1 text-[9px] text-muted-foreground">demo</span>
+                  )}
+                </td>
+                <td className="px-1.5 py-1 text-right tabular-nums">
+                  {a.matchesBefore} → {a.matchesAfter}
+                </td>
+                <td className="px-1.5 py-1 text-right">
+                  <DeltaNum value={a.matchesAfter - a.matchesBefore} />
+                </td>
+                <td className="px-1.5 py-1 text-right tabular-nums">
+                  {a.nearMissBefore} → {a.nearMissAfter}
+                </td>
+                <td className="px-1.5 py-1 text-right">
+                  <DeltaNum value={a.nearMissAfter - a.nearMissBefore} goodDown />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-1.5 text-[9px] text-muted-foreground">
+        Counts are snapshots across the replayed window on mock/demo data — indicative
+        only, not a return forecast.
+      </p>
+    </div>
+  );
+}
+
+
+
 
 
 function PreviewStat({
