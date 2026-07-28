@@ -1525,6 +1525,22 @@ function ThreatAlertChannels() {
           />
           <span className="text-muted-foreground">Email to my account</span>
         </label>
+        <label className="flex items-center gap-2">
+          <Switch
+            checked={monitor.emailPdfReport}
+            disabled={!monitor.emailOnNewThreats}
+            onCheckedChange={(v) => {
+              setWalletMonitor({ emailPdfReport: v });
+              if (v)
+                toast.success(
+                  "Threat report PDF will be generated and linked in every new-threat email (private link, expires in 7 days)",
+                );
+            }}
+            aria-label="Attach the PDF threat report to alert emails"
+          />
+          <span className="text-muted-foreground">Include PDF report</span>
+        </label>
+
       </div>
       <Button size="sm" variant="outline" className="h-8 text-xs" disabled={testing} onClick={runTest}>
         {testing ? "Sending…" : "Send test alert"}
