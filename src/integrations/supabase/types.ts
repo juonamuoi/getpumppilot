@@ -386,6 +386,48 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_signups: {
+        Row: {
+          confirmation_sent_at: string | null
+          created_at: string
+          email: string
+          followup_sent_at: string | null
+          id: string
+          source: string | null
+          status: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          confirmation_sent_at?: string | null
+          created_at?: string
+          email: string
+          followup_sent_at?: string | null
+          id?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          confirmation_sent_at?: string | null
+          created_at?: string
+          email?: string
+          followup_sent_at?: string | null
+          id?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
