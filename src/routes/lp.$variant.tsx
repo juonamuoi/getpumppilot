@@ -24,6 +24,7 @@ import {
   type Assignment,
 } from "@/lib/ad-creatives";
 import { trackCtaClick } from "@/lib/funnel";
+import { readUtmSourceMedium, tailorCopy, type TailoredCopy } from "@/lib/utm-copy";
 import {
   COMPLIANCE_FOOTER,
   getVariant,
@@ -71,6 +72,14 @@ function AdLandingVariant() {
     document.documentElement.classList.add("dark");
   }, []);
 
+  // Channel-tailored copy: resolved after mount so SSR keeps the base variant.
+  const [copy, setCopy] = useState<TailoredCopy>(() =>
+    tailorCopy(v, { source: null, medium: null }),
+  );
+  useEffect(() => {
+    setCopy(tailorCopy(v, readUtmSourceMedium()));
+  }, [v]);
+
   const [creative, setCreative] = useState<AdCreative | null>(null);
   const assignmentRef = useRef<Assignment | null>(null);
 
@@ -88,7 +97,7 @@ function AdLandingVariant() {
   };
 
   const ctaHref = user ? "/dashboard" : "/auth";
-  const ctaLabel = user ? "Launch dashboard" : creative?.cta ?? v.ctaPrimary;
+  const ctaLabel = user ? "Launch dashboard" : creative?.cta ?? copy.ctaPrimary;
 
   const Cta = ({ size = "lg" }: { size?: "lg" | "default" }) => (
     <div className="flex flex-col items-center gap-3">
@@ -135,24 +144,30 @@ function AdLandingVariant() {
               variant="outline"
               className="mb-4 border-emerald-500/30 px-3 py-1 text-emerald-300"
             >
-              <Sparkles className="mr-1.5 h-3 w-3" /> {v.badge}
+              <Sparkles className="mr-1.5 h-3 w-3" /> {copy.badge}
             </Badge>
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-              {(creative?.headline ?? v.headline)}{" "}
+              {(creative?.headline ?? copy.headline)}{" "}
               <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                {creative?.headlineAccent ?? v.headlineAccent}
+                {creative?.headlineAccent ?? copy.headlineAccent}
               </span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-              {creative?.description ?? v.subhead}
+              {creative?.description ?? copy.subhead}
             </p>
             <div className="mt-8">
               <Cta />
             </div>
             <p className="mx-auto mt-5 max-w-2xl rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
               <Lock className="mr-1.5 inline h-3 w-3 text-emerald-400" />
-              {v.complianceLine}
+              {copy.complianceLine}
             </p>
+            {copy.matched && (
+              <p className="mt-2 text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                Tailored for {copy.matched}
+                {copy.medium ? ` · ${copy.medium}` : ""}
+              </p>
+            )}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
               {v.proof.map((p) => (
                 <span key={p} className="inline-flex items-center gap-1">
