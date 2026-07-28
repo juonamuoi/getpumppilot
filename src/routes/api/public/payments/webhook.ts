@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
+import { type StripeEnv, verifyWebhook, createStripeClient } from "@/lib/stripe.server";
+import { creditsForPrice } from "@/lib/credits";
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -65,9 +66,46 @@ async function handleSubscriptionDeleted(sub: any, env: StripeEnv) {
   }).eq("stripe_subscription_id", sub.id).eq("environment", env);
 }
 
+/** One-time credit pack purchase → grant credits (idempotent via the Stripe session id). */
+async function handleCreditPurchase(session: any, env: StripeEnv) {
+  if (session.mode !== "payment") return;
+  if (session.payment_status !== "paid") return;
+  const userId = session.metadata?.userId;
+  if (!userId) { console.error("Credit purchase without userId metadata", session.id); return; }
+  if (session.metadata?.purpose === "go_live_test") return;
+
+  const stripe = createStripeClient(env);
+  const items = await stripe.checkout.sessions.listLineItems(session.id, { limit: 20, expand: ["data.price"] });
+
+  let total = 0;
+  const detail: { priceId: string; quantity: number; credits: number }[] = [];
+  for (const item of items.data) {
+    const price: any = item.price;
+    const lookup = price?.lookup_key || price?.metadata?.lovable_external_id;
+    const per = creditsForPrice(lookup);
+    if (!per) continue;
+    const qty = item.quantity ?? 1;
+    total += per * qty;
+    detail.push({ priceId: lookup, quantity: qty, credits: per * qty });
+  }
+  if (total <= 0) { console.log("No credit packs in session", session.id); return; }
+
+  const { error } = await (getSupabase() as any).rpc("grant_credits", {
+    _user_id: userId,
+    _amount: total,
+    _kind: "purchase",
+    _description: `Credit purchase — ${total.toLocaleString()} credits`,
+    _external_ref: `stripe:${env}:${session.id}`,
+    _metadata: { session_id: session.id, environment: env, items: detail },
+  });
+  if (error) console.error("grant_credits failed", error);
+}
+
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
   switch (event.type) {
+    case "checkout.session.completed": await handleCreditPurchase(event.data.object, env); break;
+    case "checkout.session.async_payment_succeeded": await handleCreditPurchase(event.data.object, env); break;
     case "customer.subscription.created": await handleSubscriptionCreated(event.data.object, env); break;
     case "customer.subscription.updated": await handleSubscriptionUpdated(event.data.object, env); break;
     case "customer.subscription.deleted": await handleSubscriptionDeleted(event.data.object, env); break;
