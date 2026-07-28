@@ -309,17 +309,34 @@ export function MitigationAuditTrail({ log }: { log: TuningLogEntry[] }) {
                       Reverted {format(new Date(e.revertedAt), "HH:mm:ss")}
                     </Badge>
                   )}
-                  <button
-                    type="button"
-                    className="ml-auto font-mono text-[10px] text-muted-foreground underline-offset-2 hover:underline"
-                    onClick={() => {
-                      navigator.clipboard?.writeText(e.correlationId ?? "");
-                      toast.success("Correlation ID copied");
-                    }}
-                    title="Copy correlation ID"
-                  >
-                    {e.correlationId ?? "—"}
-                  </button>
+                  {e.replayOf && (
+                    <Badge variant="outline" className="text-[10px]">
+                      Replay of {e.replayOf}
+                    </Badge>
+                  )}
+                  <div className="ml-auto flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => replay(e)}
+                      title="Re-run this mitigation with the same parameters"
+                    >
+                      <RotateCw className="mr-1 h-3 w-3" />
+                      Replay
+                    </Button>
+                    <button
+                      type="button"
+                      className="font-mono text-[10px] text-muted-foreground underline-offset-2 hover:underline"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(e.correlationId ?? "");
+                        toast.success("Correlation ID copied");
+                      }}
+                      title="Copy correlation ID"
+                    >
+                      {e.correlationId ?? "—"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
