@@ -457,6 +457,28 @@ function ScannerRulesPanel() {
             </Button>
           </div>
 
+          {rollbackUndo && (
+            <div className="flex flex-wrap items-center gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-[11px]">
+              <Undo2 className="h-3.5 w-3.5 text-amber-400" />
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-amber-200">Rollback applied</div>
+                <div className="truncate font-mono text-[10px] text-muted-foreground">
+                  Undo restores {rollbackUndo.label} ·{" "}
+                  {new Date(rollbackUndo.ts).toLocaleTimeString()} · expires in 30s
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1 px-2 text-[10px]"
+                onClick={() => undoRollback(rollbackUndo.rules)}
+              >
+                <Undo2 className="h-3 w-3" /> Undo rollback
+              </Button>
+            </div>
+          )}
+
+
           {lastBatch.length > 0 && (
             <Button
               variant="ghost"
