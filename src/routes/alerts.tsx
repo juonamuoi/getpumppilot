@@ -2358,6 +2358,21 @@ function TuningHistoryPanel({
                     nearMissAfter={e.nearMissAfter}
                   />
                 )}
+                {(e.scopeMatchesBefore != null || e.scopeNearMissBefore != null) && (
+                  <div className="mt-1 rounded-md border border-border/50 bg-background/40 p-1.5 text-[10px] text-muted-foreground">
+                    Scope-wide: signals {e.scopeMatchesBefore ?? 0} → {e.scopeMatchesAfter ?? 0}
+                    {" · "}near-miss {e.scopeNearMissBefore ?? 0} → {e.scopeNearMissAfter ?? 0}
+                    {e.scopeAssetsAffected != null && ` · ${e.scopeAssetsAffected} assets affected`}
+                  </div>
+                )}
+                {(e.previewedAt || e.appliedAt) && (
+                  <div className="mt-1 text-[10px] text-muted-foreground">
+                    {e.previewedAt &&
+                      `Previewed ${format(new Date(e.previewedAt), "MMM d, HH:mm:ss")}`}
+                    {e.previewedAt && e.appliedAt && " · "}
+                    {e.appliedAt && `Applied ${format(new Date(e.appliedAt), "MMM d, HH:mm:ss")}`}
+                  </div>
+                )}
                 {(e.mitigation || e.trigger) && (
                   <div className="mt-1 rounded-md border border-border/50 bg-muted/20 p-1.5 text-[10px] text-muted-foreground">
                     {e.mitigation && (
@@ -2376,7 +2391,7 @@ function TuningHistoryPanel({
                     {e.trigger && <div className="mt-0.5">Triggered by → {e.trigger}</div>}
                   </div>
                 )}
-                {!e.revertedAt && e.kind !== "bounds" && (
+                {!e.revertedAt && e.kind !== "bounds" && e.phase !== "preview" && (
                   <Button
                     size="sm"
                     variant="ghost"
