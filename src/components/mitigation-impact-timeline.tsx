@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Activity, ShieldAlert, Filter, X, ExternalLink, Download } from "lucide-react";
@@ -201,6 +201,57 @@ export function MitigationImpactTimeline() {
     </button>
   );
 
+
+  /** Roving keyboard navigation across every clickable timeline marker. */
+  const markerPrefix = useId().replace(/:/g, "");
+  const markerId = (kind: "risk" | "sig", i: number) => `${markerPrefix}-${kind}-${i}`;
+  const focusMarker = (order: string[], from: string, step: number | "first" | "last") => {
+    if (order.length === 0) return;
+    const cur = order.indexOf(from);
+    const next =
+      step === "first"
+        ? 0
+        : step === "last"
+          ? order.length - 1
+          : Math.min(order.length - 1, Math.max(0, (cur < 0 ? 0 : cur) + step));
+    const el = document.getElementById(order[next]) as SVGElement | null;
+    el?.focus();
+  };
+  const markerKeyDown = (
+    e: React.KeyboardEvent,
+    order: string[],
+    id: string,
+    open: () => void,
+  ) => {
+    switch (e.key) {
+      case "Enter":
+      case " ":
+      case "Spacebar":
+        e.preventDefault();
+        open();
+        break;
+      case "ArrowRight":
+      case "ArrowDown":
+        e.preventDefault();
+        focusMarker(order, id, 1);
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        e.preventDefault();
+        focusMarker(order, id, -1);
+        break;
+      case "Home":
+        e.preventDefault();
+        focusMarker(order, id, "first");
+        break;
+      case "End":
+        e.preventDefault();
+        focusMarker(order, id, "last");
+        break;
+      default:
+        break;
+    }
+  };
 
   const [range, setRange] = useState<RangeKey>("7d");
   const [wallets, setWallets] = useState<string[]>([]);
