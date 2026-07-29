@@ -47,6 +47,50 @@ import {
 
 
 
+/** One-click copy of an entry's plain-English "Why" explanation. */
+function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    const f = explainFields(entry);
+    const text = [
+      `Why: ${explainOutcome(entry)}`,
+      "",
+      `Correlation ID: ${entry.correlationId ?? "—"}`,
+      `Time: ${format(new Date(entry.at), "yyyy-MM-dd HH:mm:ss")}`,
+      f.change ? `Change: ${f.change}` : null,
+      f.strictness ? `Strictness: ${f.strictness}` : null,
+      f.impact ? `Impact: ${f.impact}` : null,
+      f.outcome ? `Outcome: ${f.outcome}` : null,
+      f.fragility ? `Fragility: ${f.fragility}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      toast.success("Why explanation copied");
+    } catch {
+      toast.error("Clipboard blocked by your browser");
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-6 shrink-0 gap-1 px-2 text-[10px]"
+      onClick={copy}
+      aria-label="Copy why explanation"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? "Copied" : "Copy"}
+    </Button>
+  );
+}
+
 
 /** A mitigation is attributed to wallets scanned within this window of it. */
 const WALLET_LINK_MS = 60 * 60 * 1000;
