@@ -114,6 +114,16 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   const { tuningLog, scannerRules } = usePaper();
   const [open, setOpen] = useState(false);
   const [onlyChanged, setOnlyChanged] = useState(true);
+  const [sortKey, setSortKey] = useState<SortKey>("change");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "symbol" || key === "category" || key === "gate" ? "asc" : "desc");
+    }
+  };
 
   const cid = entry.correlationId ?? entry.id;
 
