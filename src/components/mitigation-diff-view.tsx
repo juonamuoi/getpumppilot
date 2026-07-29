@@ -341,53 +341,94 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
                 {onlyChanged ? "Show all assets" : "Only changed"}
               </Button>
             </div>
-            <ScrollArea className="h-64 rounded-md border border-border/60">
-              <div className="divide-y divide-border/50">
-                {visible.length === 0 ? (
-                  <p className="p-4 text-center text-xs text-muted-foreground">
-                    No asset switched status with this change.
-                  </p>
-                ) : (
-                  visible.map(({ asset, bEval, aEval, changed }) => (
-                    <div key={asset.symbol} className="flex flex-wrap items-center gap-2 p-2 text-xs">
-                      <span className="w-16 font-medium">{asset.symbol}</span>
-                      <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[bEval.status])}>
-                        {STATUS_LABEL[bEval.status]}
-                      </Badge>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                      <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[aEval.status])}>
-                        {STATUS_LABEL[aEval.status]}
-                      </Badge>
-                      {changed && (
-                        <Badge
-                          className={cn(
-                            "text-[10px]",
-                            aEval.status === "matched"
-                              ? "bg-emerald-500/15 text-emerald-400"
-                              : bEval.status === "matched"
-                                ? "bg-rose-500/15 text-rose-400"
-                                : "bg-amber-500/15 text-amber-400",
+            <ScrollArea className="h-72 rounded-md border border-border/60">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 z-10 bg-card/95 backdrop-blur">
+                  <tr className="border-b border-border/60 text-left text-[10px] text-muted-foreground">
+                    <SortHeader label="Asset" k="symbol" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Type" k="category" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Before" k="before" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="After" k="after" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Transition" k="change" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Blocking gate" k="gate" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader
+                      label="Gate value (after)"
+                      k="gateValue"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {visible.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-4 text-center text-xs text-muted-foreground">
+                        No asset switched status with this change.
+                      </td>
+                    </tr>
+                  ) : (
+                    visible.map(({ asset, bEval, aEval, changed, gateAfter, gateBeforeText, gateAfterText }) => (
+                      <tr key={asset.symbol} className={cn(changed && "bg-primary/5")}>
+                        <td className="p-2 font-medium">{asset.symbol}</td>
+                        <td className="p-2 text-[10px] text-muted-foreground">
+                          {asset.category === "major" ? "Major" : "DEMO small-cap"}
+                        </td>
+                        <td className="p-2">
+                          <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[bEval.status])}>
+                            {STATUS_LABEL[bEval.status]}
+                          </Badge>
+                          <div className="mt-0.5 text-[9px] text-muted-foreground">{gateBeforeText}</div>
+                        </td>
+                        <td className="p-2">
+                          <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[aEval.status])}>
+                            {STATUS_LABEL[aEval.status]}
+                          </Badge>
+                        </td>
+                        <td className="p-2">
+                          {changed ? (
+                            <Badge
+                              className={cn(
+                                "text-[10px]",
+                                aEval.status === "matched"
+                                  ? "bg-emerald-500/15 text-emerald-400"
+                                  : bEval.status === "matched"
+                                    ? "bg-rose-500/15 text-rose-400"
+                                    : "bg-amber-500/15 text-amber-400",
+                              )}
+                              variant="secondary"
+                            >
+                              {aEval.status === "matched"
+                                ? bEval.status === "near-miss"
+                                  ? "Near-miss → matched"
+                                  : "Now matched"
+                                : bEval.status === "matched"
+                                  ? `Lost → ${STATUS_LABEL[aEval.status].toLowerCase()}`
+                                  : "Status shifted"}
+                            </Badge>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                              {STATUS_LABEL[bEval.status]}
+                              <ArrowRight className="h-3 w-3" />
+                              {STATUS_LABEL[aEval.status]}
+                            </span>
                           )}
-                          variant="secondary"
-                        >
-                          {aEval.status === "matched"
-                            ? bEval.status === "near-miss"
-                              ? "Near-miss → matched"
-                              : "Now matched"
-                            : bEval.status === "matched"
-                              ? `Lost → ${STATUS_LABEL[aEval.status].toLowerCase()}`
-                              : "Status shifted"}
-                        </Badge>
-                      )}
-                      <span className="ml-auto text-[10px] text-muted-foreground">
-                        {aEval.failed.length === 0
-                          ? "All gates pass"
-                          : `Blocked by ${aEval.failed.join(", ")}`}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
+                        </td>
+                        <td className="p-2 text-[10px] text-muted-foreground">
+                          {aEval.failed.length === 0
+                            ? "—"
+                            : `${aEval.failed[0]}${aEval.failed.length > 1 ? ` +${aEval.failed.length - 1}` : ""}`}
+                        </td>
+                        <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                          {gateAfter?.actual === null || gateAfter === null
+                            ? gateAfterText
+                            : `${gateAfter.actual}${gateAfter.unit} vs ${gateAfter.op} ${gateAfter.threshold}${gateAfter.unit}`}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </ScrollArea>
           </section>
         </div>
