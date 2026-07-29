@@ -14,12 +14,19 @@ export type AggRiskPoint = {
   address: string;
   threats: number;
   valueAtRisk: number;
+  correlationId?: string;
+  trigger?: string;
 };
 
 export type AggSignalPoint = {
   ts: number;
   matchDelta: number;
   nearMissDelta: number;
+  label?: string;
+  rule?: string;
+  symbols?: string[];
+  correlationId?: string;
+  outcome?: string;
 };
 
 export const RISK_NAME: Record<number, string> = {
@@ -33,8 +40,12 @@ export type Transition = {
   from: number;
   to: number;
   ts: number;
+  /** Timestamp of the preceding scan for this wallet (start of the window). */
+  prevTs: number;
   address: string;
   direction: "up" | "down";
+  correlationId?: string;
+  trigger?: string;
 };
 
 export type BucketKey = "hour" | "day" | "week";
@@ -110,7 +121,10 @@ export function computeTransitions(points: AggRiskPoint[]): {
         from,
         to,
         ts: list[i].ts,
+        prevTs: list[i - 1].ts,
         address,
+        correlationId: list[i].correlationId,
+        trigger: list[i].trigger,
         direction: to > from ? "up" : "down",
       });
     }
