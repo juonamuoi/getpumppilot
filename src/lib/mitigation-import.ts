@@ -439,3 +439,159 @@ export function buildErrorReportJson(result: ImportResult): string {
     2,
   );
 }
+
+
+/* ------------------------------------------------------------------ *
+ * Deduplication
+ *
+ * Imported files often overlap with what is already in the audit trail
+ * (re-exported ranges, repeated scheduled exports). Every incoming
+ * record gets an identity key; records that already exist are skipped,
+ * merged or imported as duplicates depending on the chosen strategy.
+ * ------------------------------------------------------------------ */
+
+export type DedupeStrategy = "skip" | "merge" | "duplicate";
+
+export const DEDUPE_LABEL: Record<DedupeStrategy, string> = {
+  skip: "Skip duplicates",
+  merge: "Merge into existing",
+  duplicate: "Import all (keep duplicates)",
+};
+
+export const DEDUPE_HINT: Record<DedupeStrategy, string> = {
+  skip: "Records already in the audit trail are ignored — nothing existing changes.",
+  merge: "Existing records are enriched with any fields the file has and they are missing (outcome, timestamps, revert reason).",
+  duplicate: "Every row is imported, even when an identical record already exists.",
+};
+
+/**
+ * Stable identity for a mitigation record. Prefers the correlation ID +
+ * phase (the export's own primary key); falls back to the rule change
+ * signature plus timestamp when no correlation ID was exported.
+ */
+export function dedupeKey(e: TuningLogEntry): string {
+  const phase = e.phase ?? "applied";
+  if (e.correlationId) return `cid:${e.correlationId}:${phase}`;
+  return [
+    "sig",
+    e.rule,
+    e.operator,
+    e.oldValue,
+    e.newValue,
+    phase,
+    // Bucket to the second so re-exported timestamps still match.
+    Math.floor(e.ts / 1000),
+  ].join(":");
+}
+
+/** Fill gaps on an existing record from an incoming duplicate. Pure. */
+function mergeEntries(existing: TuningLogEntry, incoming: TuningLogEntry): TuningLogEntry {
+  const merged: TuningLogEntry = { ...existing };
+  const keys = Object.keys(incoming) as (keyof TuningLogEntry)[];
+  for (const k of keys) {
+    if (k === "id") continue;
+    const value = incoming[k];
+    if (value === undefined || value === "" || value === null) continue;
+    if (merged[k] === undefined || merged[k] === "" || merged[k] === null) {
+      (merged as Record<string, unknown>)[k as string] = value;
+    }
+  }
+  // An outcome recorded later always wins over a missing/older one.
+  if (incoming.outcome && (!existing.outcome || incoming.outcome.ts > existing.outcome.ts)) {
+    merged.outcome = incoming.outcome;
+  }
+  if (incoming.revertedAt && !existing.revertedAt) {
+    merged.revertedAt = incoming.revertedAt;
+    merged.revertReason = incoming.revertReason ?? existing.revertReason;
+  }
+  return merged;
+}
+
+export type DedupePlan = {
+  strategy: DedupeStrategy;
+  /** New records to append to the imported set. */
+  add: TuningLogEntry[];
+  /** Existing imported records to replace (merge strategy only). */
+  replace: TuningLogEntry[];
+  /** Incoming records that matched something already present. */
+  duplicates: number;
+  /** Duplicates that matched a live (non-imported) audit entry. */
+  duplicatesInLog: number;
+  /** Duplicates found within the file itself. */
+  duplicatesInFile: number;
+  /** Duplicates that actually changed an existing record when merging. */
+  merged: number;
+};
+
+/**
+ * Resolve an import against what is already loaded.
+ *
+ * `existing` should contain both the live audit log and any previously
+ * imported records — live entries are never modified, only matched.
+ */
+export function planDedupe(
+  incoming: TuningLogEntry[],
+  existing: TuningLogEntry[],
+  strategy: DedupeStrategy,
+): DedupePlan {
+  const byKey = new Map<string, TuningLogEntry>();
+  for (const e of existing) {
+    const k = dedupeKey(e);
+    if (!byKey.has(k)) byKey.set(k, e);
+  }
+
+  const add: TuningLogEntry[] = [];
+  const replaceMap = new Map<string, TuningLogEntry>();
+  const seenInFile = new Set<string>();
+  let duplicates = 0;
+  let duplicatesInLog = 0;
+  let duplicatesInFile = 0;
+  let merged = 0;
+
+  for (const entry of incoming) {
+    const key = dedupeKey(entry);
+    const match = replaceMap.get(key) ?? byKey.get(key);
+    const inFile = seenInFile.has(key);
+
+    if (!match && !inFile) {
+      seenInFile.add(key);
+      add.push(entry);
+      continue;
+    }
+
+    duplicates++;
+    if (inFile) duplicatesInFile++;
+    else if (match && !isImportedEntry(match)) duplicatesInLog++;
+
+    if (strategy === "duplicate") {
+      add.push({ ...entry, id: `${entry.id}-dup${duplicates}` });
+      continue;
+    }
+    if (strategy === "skip") continue;
+
+    // merge
+    const target = match ?? add.find((a) => dedupeKey(a) === key);
+    if (!target) continue;
+    const next = mergeEntries(target, entry);
+    if (JSON.stringify(next) === JSON.stringify(target)) continue;
+    merged++;
+    if (match && !isImportedEntry(match)) {
+      // Never mutate live audit entries — keep the enriched copy as an import.
+      add.push({ ...next, id: `${IMPORT_PREFIX}merge-${duplicates}-${target.id}` });
+    } else {
+      const i = add.findIndex((a) => a.id === target.id);
+      if (i >= 0) add[i] = next;
+      else replaceMap.set(key, next);
+    }
+  }
+
+  return {
+    strategy,
+    add,
+    replace: [...replaceMap.values()],
+    duplicates,
+    duplicatesInLog,
+    duplicatesInFile,
+    merged,
+  };
+}
