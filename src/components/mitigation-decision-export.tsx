@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileJson, FileSpreadsheet, FileText, Save, X } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, FileText, Save, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -319,6 +319,7 @@ export function MitigationDecisionExport<F,>({
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [restored, setRestored] = useState<string | null>(null);
   const hydrated = useRef(false);
+  const presetFileRef = useRef<HTMLInputElement>(null);
 
   // Restore the last-used export configuration after hydration.
   useEffect(() => {
