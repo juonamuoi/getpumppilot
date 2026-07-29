@@ -162,6 +162,7 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   const { tuningLog, scannerRules } = usePaper();
   const [open, setOpen] = useState(false);
   const [onlyChanged, setOnlyChanged] = useState(true);
+  const [openGate, setOpenGate] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("change");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
