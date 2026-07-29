@@ -42,6 +42,45 @@ export const WEBSITE_ID = `${SITE_URL}/#website`;
 export const absoluteUrl = (path = "/") =>
   path.startsWith("http") ? path : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
+/**
+ * The one canonical URL for a route. Every `<link rel="canonical">`,
+ * `og:url` and schema `url` MUST come from here so a page never advertises
+ * two spellings of itself (the usual cause of duplicate-entity warnings).
+ * Home keeps its trailing slash; every other path is normalised without one.
+ */
+export function canonicalUrl(path = "/") {
+  const abs = absoluteUrl(path);
+  const [base] = abs.split("#");
+  if (base === SITE_URL || base === `${SITE_URL}/`) return `${SITE_URL}/`;
+  return base.endsWith("/") ? base.slice(0, -1) : base;
+}
+
+/**
+ * Per-page `@id` scheme: `<canonical URL>#<node>`.
+ *
+ * One fragment per node type per page means the same logical entity always
+ * carries the same identifier, and two different pages can never emit the
+ * same `@id` — which is what stops crawlers from merging or flagging them
+ * as duplicates.
+ */
+export const NODE = {
+  webpage: "webpage",
+  breadcrumb: "breadcrumb",
+  faq: "faq",
+  howto: "howto",
+  article: "article",
+  blog: "blog",
+  product: "product",
+  app: "app",
+  api: "api",
+  course: "course",
+} as const;
+
+export type NodeKind = (typeof NODE)[keyof typeof NODE] | (string & {});
+
+export const nodeId = (path: string, node: NodeKind) => `${canonicalUrl(path)}#${node}`;
+
+
 export const organizationSchema = {
   "@type": "Organization",
   "@id": ORG_ID,
