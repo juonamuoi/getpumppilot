@@ -30,69 +30,25 @@ import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
 import { isImportedEntry } from "@/lib/mitigation-import";
+import { MitigationScheduledExports } from "@/components/mitigation-scheduled-exports";
+import {
+  EMPTY_FILTER,
+  RANGE_LABEL,
+  RANGE_MS,
+  SAVED_FILTERS_KEY,
+  filterAuditEntries,
+  loadSavedFilters,
+  type AuditFilterState,
+  type OutcomeFilter,
+  type RangeFilter,
+  type SavedAuditFilter,
+} from "@/lib/audit-filters";
 
 
 
-
-type OutcomeFilter = "all" | "alerts-fired" | "no-matches" | "channels-muted" | "pending";
-type RangeFilter = "all" | "24h" | "7d" | "30d" | "90d";
-
-const RANGE_MS: Record<Exclude<RangeFilter, "all">, number> = {
-  "24h": 86_400_000,
-  "7d": 7 * 86_400_000,
-  "30d": 30 * 86_400_000,
-  "90d": 90 * 86_400_000,
-};
-
-const RANGE_LABEL: Record<RangeFilter, string> = {
-  all: "All time",
-  "24h": "Last 24 hours",
-  "7d": "Last 7 days",
-  "30d": "Last 30 days",
-  "90d": "Last 90 days",
-};
-
-/** Everything that defines an export scope, so it can be named and re-used. */
-type AuditFilterState = {
-  q: string;
-  outcome: OutcomeFilter;
-  range: RangeFilter;
-  correlationIds: string[];
-  /** Token symbols the mitigation's alert outcome touched (empty = all). */
-  tokens: string[];
-  /** Wallet addresses scanned around the mitigation (empty = all). */
-  wallets: string[];
-  /** Alert delivery channels, e.g. email / push / in-app (empty = all). */
-  alertTypes: string[];
-};
-
-type SavedAuditFilter = AuditFilterState & { id: string; name: string };
-
-const EMPTY_FILTER: AuditFilterState = {
-  q: "",
-  outcome: "all",
-  range: "all",
-  correlationIds: [],
-  tokens: [],
-  wallets: [],
-  alertTypes: [],
-};
 
 /** A mitigation is attributed to wallets scanned within this window of it. */
 const WALLET_LINK_MS = 60 * 60 * 1000;
-
-
-const SAVED_FILTERS_KEY = "pumppilot_audit_saved_filters";
-
-function loadSavedFilters(): SavedAuditFilter[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(SAVED_FILTERS_KEY);
-    return raw ? (JSON.parse(raw) as SavedAuditFilter[]) : [];
-  } catch {
-    return [];
-  }
-}
 
 const OUTCOME_LABEL: Record<string, string> = {
   "alerts-fired": "Alerts fired",
@@ -392,49 +348,16 @@ export function MitigationAuditTrail({
     [importedEntries, log],
   );
 
-  const entries = useMemo(() => {
-    return sourceLog
-      .filter((e) => e.source === "mitigation" && !!e.mitigation)
-      .filter((e) => {
-        if (outcome === "all") return true;
-        if (outcome === "pending") return !e.outcome;
-        return e.outcome?.status === outcome;
-      })
-      .filter((e) => {
-        if (range === "all") return true;
-        return Date.now() - e.ts <= RANGE_MS[range];
-      })
-      .filter((e) => {
-        if (correlationIds.length === 0) return true;
-        return !!e.correlationId && correlationIds.includes(e.correlationId);
-      })
-      .filter((e) => {
-        if (tokens.length === 0) return true;
-        return (e.outcome?.symbols ?? []).some((s) => tokens.includes(s));
-      })
-      .filter((e) => {
-        if (alertTypes.length === 0) return true;
-        return (e.outcome?.channels ?? []).some((c) => alertTypes.includes(c));
-      })
-      .filter((e) => {
-        if (wallets.length === 0) return true;
-        return (walletsForEntry.get(e.id) ?? []).some((w) => wallets.includes(w));
-      })
-      .filter((e) => {
-        if (!q.trim()) return true;
-        const hay = [
-          e.mitigation,
-          e.ruleLabel,
-          e.trigger,
-          e.correlationId,
-          e.outcome?.symbols.join(" "),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(q.trim().toLowerCase());
-      });
-  }, [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
+  const entries = useMemo(
+    () =>
+      filterAuditEntries(
+        sourceLog,
+        { q, outcome, range, correlationIds, tokens, alertTypes, wallets },
+        (e) => walletsForEntry.get(e.id) ?? [],
+      ),
+    [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry],
+  );
+
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
@@ -566,6 +489,10 @@ export function MitigationAuditTrail({
             <MitigationBulkExport
               entries={exportEntries}
               scope={exportFilters()}
+              walletsFor={(e) => walletsForEntry.get(e.id) ?? []}
+            />
+            <MitigationScheduledExports
+              log={sourceLog}
               walletsFor={(e) => walletsForEntry.get(e.id) ?? []}
             />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
