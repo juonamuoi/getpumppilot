@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner, DemoBadge } from "@/components/disclaimer";
+import { ShareLinks } from "@/components/share-links";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MomentumBadge } from "@/components/momentum";
 import { Sparkline } from "@/components/sparkline";
@@ -339,6 +340,8 @@ function Dashboard() {
               ))}
             </CardContent>
           </Card>
+
+          <ShareLinks path="/dashboard" />
         </div>
       </div>
     </AppShell>
