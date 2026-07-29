@@ -643,7 +643,33 @@ export function MitigationDecisionExport<F,>({
               <Save className="h-3.5 w-3.5" /> Save preset
             </Button>
           </div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-2">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Move between environments</span>
+            <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-[11px]" onClick={exportPresets}>
+              <FileJson className="h-3.5 w-3.5" /> Export presets (JSON)
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={() => presetFileRef.current?.click()}
+            >
+              <Upload className="h-3.5 w-3.5" /> Import presets
+            </Button>
+            <input
+              ref={presetFileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void importPresets(file);
+              }}
+            />
+          </div>
         </div>
+
 
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 bg-muted/20 p-3 text-xs">
 
