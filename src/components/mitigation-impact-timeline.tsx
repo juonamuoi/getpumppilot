@@ -391,7 +391,6 @@ export function MitigationImpactTimeline() {
           : "single";
 
     return applied
-      .filter((e) => e.ts >= cutoff)
       .filter((e) => {
         if (tokens.length === 0) return true;
         const syms = e.outcome?.symbols ?? [];
