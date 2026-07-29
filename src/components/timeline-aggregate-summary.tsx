@@ -685,10 +685,23 @@ export function TimelineAggregateSummary({
                   Peak {RISK_NAME[b.peakRisk]}
                 </Badge>
               )}
+              {flagged.length > 0 && onJump && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 gap-1 px-2 text-[10px] text-amber-400"
+                  onClick={() => onJump(flagged[0])}
+                >
+                  <Crosshair className="h-3 w-3" />
+                  Jump
+                </Button>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
     </div>
   );
 }
