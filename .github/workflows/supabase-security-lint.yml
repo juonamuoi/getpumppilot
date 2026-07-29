@@ -1,0 +1,32 @@
+name: Supabase security lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  supabase-lint:
+    name: SECURITY DEFINER + storage RLS guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Supabase migration lint (static)
+        run: bun run lint:supabase
+
+      - name: Supabase database linter (live, optional)
+        if: ${{ env.SUPABASE_DB_URL != '' }}
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: bun run lint:supabase:live
+
+      - name: Security regression suite
+        run: bun run test:security
