@@ -141,3 +141,50 @@ export const runSeoCrawlCheck = createServerFn({ method: "POST" })
       snapshotId: result.snapshotId,
     };
   });
+
+/**
+ * Re-run the sitemap fetch plus canonical / og:url checks now. Admin-only;
+ * the daily cron route (/api/public/hooks/seo-self-audit) runs the same code.
+ */
+export const runSeoSelfAudit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { maxUrls?: number }) => ({
+    maxUrls: Math.min(Math.max(Number(input?.maxUrls ?? 40), 1), 80),
+  }))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { runSeoAudit } = await import("@/lib/seo-audit.server");
+    const result = await runSeoAudit({
+      origin: process.env.SEO_MONITOR_ORIGIN ?? "https://www.getpumppilot.app",
+      source: "self-audit-manual",
+      maxUrls: data.maxUrls,
+    });
+    return {
+      ok: result.snapshot.ok,
+      error: result.snapshot.error,
+      urlsChecked: result.snapshot.urls_checked,
+      issues: result.snapshot.details.auditIssues.length,
+      newFailures: result.alerts.filter((a) => a.severity !== "info").length,
+      snapshotId: result.snapshotId,
+    };
+  });
+
+/** Unacknowledged warning/critical alerts, for the in-app notifier. */
+export const getOpenSeoFailures = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<SeoAlertRow[]> => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) return [];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("seo_crawl_alerts")
+      .select("*")
+      .is("acknowledged_at", null)
+      .neq("severity", "info")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return (rows ?? []) as unknown as SeoAlertRow[];
+  });
