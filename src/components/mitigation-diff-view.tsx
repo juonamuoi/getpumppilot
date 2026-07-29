@@ -121,6 +121,48 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   const changedRules = rules.filter((r) => r.changed);
   const visible = onlyChanged ? rows.filter((r) => r.changed) : rows;
 
+  const transitionLabel = (b: Status, a: Status) => {
+    if (b === a) return "unchanged";
+    if (a === "matched") return b === "near-miss" ? "near-miss → matched" : "no-match → matched";
+    if (b === "matched") return `matched → ${a}`;
+    return `${b} → ${a}`;
+  };
+
+  const buildPayload = (): DiffExportPayload => ({
+    correlationId: cid,
+    mitigation: entry.mitigation ?? "Rule change",
+    entryTs: entry.ts,
+    scope: onlyChanged ? "changed-only" : "all-assets",
+    rules: rules.map((r) => ({ label: r.label, before: r.b, after: r.a, changed: r.changed })),
+    assets: visible.map(({ asset, bEval, aEval, changed }) => ({
+      symbol: asset.symbol,
+      name: asset.name,
+      category: asset.category,
+      statusBefore: bEval.status,
+      statusAfter: aEval.status,
+      changed,
+      transition: transitionLabel(bEval.status, aEval.status),
+      failedGatesBefore: bEval.failed,
+      failedGatesAfter: aEval.failed,
+    })),
+    summary: {
+      rulesChanged: changedRules.length,
+      gainedMatches: gained.length,
+      lostMatches: lost.length,
+      newNearMisses: newNearMiss.length,
+      assetsChanged: rows.filter((r) => r.changed).length,
+      assetsTotal: rows.length,
+    },
+  });
+
+  const exportDiff = (kind: "csv" | "json") => {
+    const payload = buildPayload();
+    const count = downloadDiff(payload, kind);
+    toast.success(`Exported diff as ${kind.toUpperCase()}`, {
+      description: `${payload.rules.length} rule row(s) · ${payload.assets.length} asset row(s) · ${count} total`,
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
