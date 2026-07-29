@@ -41,6 +41,9 @@ import {
   SOCIAL_IMAGE_URL,
   faqSchema as buildFaqSchema,
   ldScript,
+  canonicalUrl,
+  nodeId,
+  NODE,
 } from "@/lib/structured-data";
 const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =
@@ -189,13 +192,13 @@ const homeFaqSchema = buildFaqSchema(faqs, "/");
 const productSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "@id": `${SITE_URL}/#app`,
+  "@id": nodeId("/", NODE.app),
   name: "PumpPilot AI",
   applicationCategory: "FinanceApplication",
   applicationSubCategory: "Crypto momentum scanner & paper trading",
   operatingSystem: "Web, iOS, Android",
   description: DESCRIPTION,
-  url: SITE_URL,
+  url: canonicalUrl("/"),
   image: LOGO_URL,
   inLanguage: "en",
   publisher: { "@id": ORG_ID },
@@ -215,7 +218,7 @@ const productSchema = {
     price: (pack.amountCents / 100).toFixed(2),
     priceCurrency: "USD",
     category: "One-time credit pack",
-    url: `${SITE_URL}/pricing`,
+    url: canonicalUrl("/pricing"),
     availability: "https://schema.org/InStock",
   })),
 };
@@ -223,13 +226,13 @@ const productSchema = {
 const homeWebPageSchema = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  "@id": `${SITE_URL}/#webpage`,
+  "@id": nodeId("/", NODE.webpage),
   name: TITLE,
   description: DESCRIPTION,
-  url: SITE_URL,
+  url: canonicalUrl("/"),
   inLanguage: "en",
   isPartOf: { "@id": WEBSITE_ID },
-  about: { "@id": `${SITE_URL}/#app` },
+  about: { "@id": nodeId("/", NODE.app) },
   primaryImageOfPage: { "@type": "ImageObject", url: LOGO_URL },
 };
 
@@ -266,7 +269,7 @@ export const Route = createFileRoute("/")({
         content: "PumpPilot AI — explainable crypto momentum dashboard",
       },
     ],
-    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
+    links: [{ rel: "canonical", href: canonicalUrl("/") }],
     scripts: [
       ldScript(homeWebPageSchema),
       ldScript(productSchema),

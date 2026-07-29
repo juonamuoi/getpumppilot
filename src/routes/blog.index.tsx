@@ -10,6 +10,8 @@ import {
   breadcrumbSchema,
   blogPostingSchema,
   ldScript,
+  nodeId,
+  NODE,
 } from "@/lib/structured-data";
 
 
@@ -32,7 +34,7 @@ export const Route = createFileRoute("/blog/")({
       ldScript({
         "@context": "https://schema.org",
         "@type": "Blog",
-        "@id": `${CANONICAL}#blog`,
+        "@id": nodeId("/blog", NODE.blog),
         name: "PumpPilot AI Blog",
         url: CANONICAL,
         description: "AI investment and crypto trading guides.",
