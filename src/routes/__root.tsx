@@ -160,9 +160,12 @@ function RootComponent() {
           <OnboardingProvider>
             <PaperProvider>
               <AppLockProvider>
-                <LockGate>
-                  <Outlet />
-                </LockGate>
+                <TourProvider>
+                  <LockGate>
+                    <Outlet />
+                  </LockGate>
+                  <GuidedTour />
+                </TourProvider>
                 <Toaster theme="dark" position="top-right" />
               </AppLockProvider>
             </PaperProvider>
