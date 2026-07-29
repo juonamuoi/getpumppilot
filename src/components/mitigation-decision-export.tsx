@@ -205,13 +205,20 @@ export type SchemaRow = {
   type: string;
   source: string;
   description: string;
+  /** 1-based position of this column in the export, matching the chosen order. */
+  position: number;
 };
 
 /** Build the column dictionary for exactly the fields included in an export. */
 export function buildSchemaRows(selectedKeys: string[]): SchemaRow[] {
-  return FIELDS.filter((f) => selectedKeys.includes(f.key)).map((f) => {
+  // Preserve the user's chosen column order, not the declaration order.
+  return selectedKeys
+    .map((key) => FIELDS.find((f) => f.key === key))
+    .filter((f): f is FieldDef => !!f)
+    .map((f, index) => {
     const doc = FIELD_DOC[f.key];
     return {
+      position: index + 1,
       column: f.key,
       label: f.label,
       group: GROUP_LABEL[f.group],
@@ -268,6 +275,7 @@ export function buildJsonSchema(selectedKeys: string[]) {
     "x-schemaVersion": EXPORT_SCHEMA_VERSION,
     "x-minCompatibleSchemaVersion": EXPORT_SCHEMA_MIN_COMPATIBLE,
     "x-compatibility": EXPORT_SCHEMA_COMPATIBILITY,
+    "x-columnOrder": rows.map((r) => r.column),
     type: "array",
     items: {
       type: "object",
@@ -704,8 +712,9 @@ export function MitigationDecisionExport<F,>({
   const rows = (): MitigationDecisionRow[] =>
     decisions.map((d) => {
       const row: MitigationDecisionRow = {};
-      FIELDS.filter((f) => selected.includes(f.key)).forEach((f) => {
-        row[f.key] = f.get(d);
+      selected.forEach((key) => {
+        const f = FIELDS.find((x) => x.key === key);
+        if (f) row[f.key] = f.get(d);
       });
       return row;
     });
