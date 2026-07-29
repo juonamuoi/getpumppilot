@@ -350,6 +350,19 @@ export function MitigationImpactTimeline() {
       .sort((a, b) => a.ts - b.ts);
   }, [tuningLog, cutoff, tokens, actions, outcomes]);
 
+  /** DOM ids of every focusable marker, in chronological order. */
+  const markerOrder = useMemo(
+    () =>
+      [
+        ...riskPoints.map((p, i) => ({ ts: p.ts, id: markerId("risk", i) })),
+        ...signalPoints.map((p, i) => ({ ts: p.ts, id: markerId("sig", i) })),
+      ]
+        .sort((a, b) => a.ts - b.ts)
+        .map((m) => m.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [riskPoints, signalPoints, markerPrefix],
+  );
+
   const hasData = riskPoints.length > 0 || signalPoints.length > 0;
 
   const bounds = useMemo(() => {
@@ -610,21 +623,33 @@ export function MitigationImpactTimeline() {
                 {riskPath && (
                   <path d={riskPath} fill="none" stroke="hsl(var(--primary))" strokeWidth={1.8} />
                 )}
-                {riskPoints.map((p) => (
-                  <circle
-                    key={`${p.correlationId}-${p.ts}`}
-                    cx={x(p.ts)}
-                    cy={yRisk(p.score)}
-                    r={4}
-                    fill={RISK_COLOR[p.score]}
-                    stroke="hsl(var(--background))"
-                    strokeWidth={1.5}
-                    className="cursor-pointer"
-                    onMouseEnter={() => setHover({ kind: "risk", point: p })}
-                    onMouseLeave={() => setHover(null)}
-                    onClick={() => openAudit(p.correlationId)}
-                  />
-                ))}
+                {riskPoints.map((p, i) => {
+                  const id = markerId("risk", i);
+                  return (
+                    <circle
+                      key={`${p.correlationId}-${p.ts}`}
+                      id={id}
+                      cx={x(p.ts)}
+                      cy={yRisk(p.score)}
+                      r={4}
+                      fill={RISK_COLOR[p.score]}
+                      stroke="hsl(var(--background))"
+                      strokeWidth={1.5}
+                      className="cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Wallet risk ${RISK_LABEL[p.score]} on ${format(new Date(p.ts), "d MMM HH:mm")}${p.correlationId ? `, correlation ${p.correlationId}. Press Enter to open the replay view.` : ""}`}
+                      onMouseEnter={() => setHover({ kind: "risk", point: p })}
+                      onMouseLeave={() => setHover(null)}
+                      onFocus={() => setHover({ kind: "risk", point: p })}
+                      onBlur={() => setHover(null)}
+                      onClick={() => openAudit(p.correlationId)}
+                      onKeyDown={(e) =>
+                        markerKeyDown(e, markerOrder, id, () => openAudit(p.correlationId))
+                      }
+                    />
+                  );
+                })}
 
 
                 {/* signal delta baseline */}
@@ -653,11 +678,21 @@ export function MitigationImpactTimeline() {
                   return (
                     <g
                       key={`${p.correlationId ?? "sig"}-${i}`}
+                      id={markerId("sig", i)}
                       onClick={() => openAudit(p.correlationId)}
-
-                      className="cursor-pointer"
+                      className="cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Mitigation marker on ${format(new Date(p.ts), "d MMM HH:mm")}, match delta ${p.matchDelta}, near-miss delta ${p.nearMissDelta}${p.correlationId ? `, correlation ${p.correlationId}. Press Enter to open the replay view.` : ""}`}
                       onMouseEnter={() => setHover({ kind: "signal", point: p })}
                       onMouseLeave={() => setHover(null)}
+                      onFocus={() => setHover({ kind: "signal", point: p })}
+                      onBlur={() => setHover(null)}
+                      onKeyDown={(e) =>
+                        markerKeyDown(e, markerOrder, markerId("sig", i), () =>
+                          openAudit(p.correlationId),
+                        )
+                      }
                     >
                       <line
                         x1={px}
