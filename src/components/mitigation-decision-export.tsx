@@ -31,7 +31,7 @@ export type MitigationDecisionRow = Record<string, string | number>;
 type FieldDef = {
   key: string;
   label: string;
-  group: "identity" | "decision" | "confirmation" | "outcome";
+  group: "identity" | "decision" | "confirmation" | "outcome" | "why";
   get: (d: Decision) => string | number;
 };
 
