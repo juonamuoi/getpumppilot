@@ -11,7 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowRight, Check, History, X } from "lucide-react";
+import { ArrowRight, Check, Download, History, X } from "lucide-react";
+import { toast } from "sonner";
 import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
 import {
   diffSeoSnapshots,
@@ -19,6 +20,11 @@ import {
   type CheckKey,
   type PageSeoCheck,
 } from "@/lib/mitigation-seo-checks";
+import {
+  buildReplayReportCsv,
+  buildReplayReportJson,
+  downloadReplayReport,
+} from "@/lib/replay-report";
 import { cn } from "@/lib/utils";
 
 const CHECKS: { key: CheckKey; label: string }[] = [
@@ -95,6 +101,14 @@ export function MitigationReplayDiff({ entry }: { entry: TuningLogEntry }) {
     });
   }, [prev, next]);
 
+  const exportReport = (format: "csv" | "json") => {
+    if (!available || !replayId) return;
+    const input = { previousId: prevId!, replayId, previous: prev, replay: next };
+    const body = format === "csv" ? buildReplayReportCsv(input) : buildReplayReportJson(input);
+    downloadReplayReport(body, format, replayId);
+    toast.success(`Replay report exported as ${format.toUpperCase()}`);
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -120,6 +134,20 @@ export function MitigationReplayDiff({ entry }: { entry: TuningLogEntry }) {
             {prevId} <ArrowRight className="inline h-3 w-3" /> {replayId ?? "—"}
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">
+            Export inputs, stored preview context, results and timestamps:
+          </span>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => exportReport("json")}>
+            <Download className="mr-1 h-3 w-3" />
+            JSON
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => exportReport("csv")}>
+            <Download className="mr-1 h-3 w-3" />
+            CSV
+          </Button>
+        </div>
 
         <ScrollArea className="max-h-[65vh] pr-3">
           <div className="space-y-5 text-xs">
