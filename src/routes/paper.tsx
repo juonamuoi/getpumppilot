@@ -174,7 +174,7 @@ function PaperPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-500/20 bg-emerald-500/5">
+          <Card data-tour="paper-order" className="border-emerald-500/20 bg-emerald-500/5">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Place paper order</CardTitle>
             </CardHeader>
