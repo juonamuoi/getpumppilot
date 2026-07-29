@@ -7,12 +7,19 @@ export interface SeoRouteAudit {
   canonical: string | null;
   ogUrl: string | null;
   robots: string | null;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImage: string | null;
+  twitterCard: string | null;
+  twitterSite: string | null;
   /** Canonical + og:url agree with each other */
   selfConsistent: boolean;
   /** Both tags point at the expected production host */
   hostMatches: boolean;
   /** Canonical/og:url resolve to this exact route path */
   pathMatches: boolean;
+  /** All five social tags present and well-formed */
+  socialComplete: boolean;
   issues: string[];
   error?: string;
 }
@@ -25,10 +32,30 @@ export interface SeoPreviewResult {
 }
 
 const EXPECTED_ORIGIN = "https://www.getpumppilot.app";
+const VALID_TWITTER_CARDS = ["summary", "summary_large_image", "app", "player"];
 
 function pick(html: string, re: RegExp): string | null {
   const m = html.match(re);
   return m ? m[1].trim() : null;
+}
+
+function meta(html: string, key: string, attr: "property" | "name"): string | null {
+  const esc = key.replace(/[:]/g, "\\:");
+  return (
+    pick(
+      html,
+      new RegExp(`<meta[^>]+${attr}=["']${esc}["'][^>]*content=["']([^"']*)["']`, "i"),
+    ) ??
+    pick(
+      html,
+      new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*${attr}=["']${esc}["']`, "i"),
+    )
+  );
+}
+
+/** og:* and twitter:* are emitted with either attribute in the wild — accept both. */
+function socialMeta(html: string, key: string): string | null {
+  return meta(html, key, "property") ?? meta(html, key, "name");
 }
 
 function parseHead(html: string) {
@@ -37,13 +64,17 @@ function parseHead(html: string) {
     canonical:
       pick(html, /<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["']/i) ??
       pick(html, /<link[^>]+href=["']([^"']+)["'][^>]*rel=["']canonical["']/i),
-    ogUrl:
-      pick(html, /<meta[^>]+property=["']og:url["'][^>]*content=["']([^"']+)["']/i) ??
-      pick(html, /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:url["']/i),
+    ogUrl: socialMeta(html, "og:url"),
+    ogTitle: socialMeta(html, "og:title"),
+    ogDescription: socialMeta(html, "og:description"),
+    ogImage: socialMeta(html, "og:image"),
+    twitterCard: socialMeta(html, "twitter:card"),
+    twitterSite: socialMeta(html, "twitter:site"),
     robots: pick(html, /<meta[^>]+name=["']robots["'][^>]*content=["']([^"']+)["']/i),
     canonicalCount: (html.match(/rel=["']canonical["']/gi) ?? []).length,
   };
 }
+
 
 function normalisePath(p: string) {
   if (p === "/") return "/";
