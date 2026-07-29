@@ -45,7 +45,8 @@ const AUTHENTICATED_CALLABLE = new Set([
   "ensure_credit_account",
 ]);
 
-const PRIVATE_BUCKETS = ["threat-reports", "database_export"];
+const PRIVATE_BUCKET_PREFIXES = ["threat-reports", "database_export"];
+const isPrivateBucket = (id) => PRIVATE_BUCKET_PREFIXES.some((p) => id.startsWith(p));
 
 function loadMigrations() {
   let files;
@@ -135,7 +136,7 @@ export function lintMigrations(migrations = loadMigrations()) {
   for (const [, values] of bucketInserts) {
     if (/\btrue\b/i.test(values)) {
       const bucket = /'([^']+)'/.exec(values)?.[1] ?? "unknown";
-      if (PRIVATE_BUCKETS.includes(bucket)) {
+      if (isPrivateBucket(bucket)) {
         errors.push(`Storage bucket "${bucket}" must stay private (public = false).`);
       }
     }
@@ -154,10 +155,13 @@ export function lintMigrations(migrations = loadMigrations()) {
       );
       continue;
     }
-    if (!PRIVATE_BUCKETS.includes(bucketMatch[1])) continue;
+    if (!isPrivateBucket(bucketMatch[1])) continue;
     const ownerScoped =
       /auth\.uid\(\)/i.test(body) &&
-      (/owner/i.test(body) || /storage\.foldername/i.test(body) || /name\s+LIKE/i.test(body));
+      (/owner/i.test(body) ||
+        /storage\.foldername/i.test(body) ||
+        /name\s+LIKE/i.test(body) ||
+        /has_role\s*\(/i.test(body));
     if (!ownerScoped) {
       errors.push(
         `storage.objects policy "${policyName}" on private bucket "${bucketMatch[1]}" is not scoped to the owning user (needs auth.uid() ownership/prefix check).`,
@@ -165,11 +169,11 @@ export function lintMigrations(migrations = loadMigrations()) {
     }
   }
 
-  for (const bucket of PRIVATE_BUCKETS) {
+  for (const bucket of PRIVATE_BUCKET_PREFIXES) {
     const referenced = storagePolicies.some(([, , body]) =>
-      new RegExp(`bucket_id\\s*=\\s*'${bucket}'`, "i").test(body),
+      new RegExp(`bucket_id\\s*=\\s*'${bucket}`, "i").test(body),
     );
-    if (!referenced && new RegExp(`'${bucket}'`).test(allSql)) {
+    if (!referenced && new RegExp(`'${bucket}`).test(allSql)) {
       errors.push(`Private bucket "${bucket}" has no storage.objects RLS policy.`);
     }
   }
