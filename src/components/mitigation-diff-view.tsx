@@ -137,8 +137,19 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
       ASSETS.map((asset) => {
         const bEval = evaluate(before, asset);
         const aEval = evaluate(after, asset);
-        return { asset, bEval, aEval, changed: bEval.status !== aEval.status };
-      }).sort((x, y) => Number(y.changed) - Number(x.changed) || x.asset.symbol.localeCompare(y.asset.symbol)),
+        const gateBefore = blockingGate(before, asset, bEval.failed);
+        const gateAfter = blockingGate(after, asset, aEval.failed);
+        return {
+          asset,
+          bEval,
+          aEval,
+          gateBefore,
+          gateAfter,
+          gateBeforeText: gateText(gateBefore, Math.max(0, bEval.failed.length - 1)),
+          gateAfterText: gateText(gateAfter, Math.max(0, aEval.failed.length - 1)),
+          changed: bEval.status !== aEval.status,
+        };
+      }),
     [before, after],
   );
 
@@ -149,7 +160,38 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   );
   const rules = ruleRows(before, after);
   const changedRules = rules.filter((r) => r.changed);
-  const visible = onlyChanged ? rows.filter((r) => r.changed) : rows;
+
+  const visible = useMemo(() => {
+    const list = onlyChanged ? rows.filter((r) => r.changed) : [...rows];
+    const dir = sortDir === "asc" ? 1 : -1;
+    const val = (r: (typeof rows)[number]) => {
+      switch (sortKey) {
+        case "symbol":
+          return r.asset.symbol;
+        case "category":
+          return r.asset.category;
+        case "before":
+          return STATUS_RANK[r.bEval.status];
+        case "after":
+          return STATUS_RANK[r.aEval.status];
+        case "change":
+          return (r.changed ? 1 : 0) * 10 + STATUS_RANK[r.aEval.status];
+        case "gate":
+          return r.gateAfter?.gate ?? "";
+        case "gateValue":
+          return r.gateAfter?.actual ?? Number.NEGATIVE_INFINITY;
+      }
+    };
+    return list.sort((x, y) => {
+      const a = val(x);
+      const b = val(y);
+      if (typeof a === "string" || typeof b === "string") {
+        return String(a).localeCompare(String(b)) * dir || x.asset.symbol.localeCompare(y.asset.symbol);
+      }
+      return ((a as number) - (b as number)) * dir || x.asset.symbol.localeCompare(y.asset.symbol);
+    });
+  }, [rows, onlyChanged, sortKey, sortDir]);
+
 
   const transitionLabel = (b: Status, a: Status) => {
     if (b === a) return "unchanged";
