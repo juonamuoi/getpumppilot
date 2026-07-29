@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 // @ts-expect-error - plain ESM script without type declarations
-import {
-  auditCrossUserExecute,
-  auditStoragePolicies,
-  resolveExecuteGrants,
-  loadMigrations,
-} from "../../../scripts/supabase-authz-check.mjs";
+import { auditCrossUserExecute, auditStoragePolicies, resolveExecuteGrants, loadMigrations } from "../../../scripts/supabase-authz-check.mjs";
+
 
 type Migration = { name: string; sql: string };
 type Audit = { errors: string[] };
