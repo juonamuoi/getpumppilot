@@ -92,8 +92,10 @@ function SeoPreviewPage() {
       ok: all.filter((r) => statusOf(r) === "ok").length,
       warn: all.filter((r) => statusOf(r) === "warn").length,
       fail: all.filter((r) => statusOf(r) === "fail").length,
+      social: all.filter((r) => r.socialComplete).length,
     };
   }, [query.data]);
+
 
   const readyToPublish = counts.total > 0 && counts.fail === 0;
 
