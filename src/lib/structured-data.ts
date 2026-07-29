@@ -10,6 +10,14 @@ export const SITE_URL = "https://www.getpumppilot.app";
 export const SITE_NAME = "PumpPilot AI";
 export const SITE_TAGLINE = "Spot momentum. Control risk. Trade smarter.";
 export const LOGO_URL = `${SITE_URL}/favicon.png`;
+/** 1200x640 social/article image — Google requires wide images for Article rich results. */
+export const SOCIAL_IMAGE_URL = `${SITE_URL}/og-cover.jpg`;
+export const SOCIAL_IMAGE = {
+  "@type": "ImageObject",
+  url: SOCIAL_IMAGE_URL,
+  width: 1200,
+  height: 640,
+} as const;
 
 /** Stable @id values let crawlers link nodes across pages into one graph. */
 export const ORG_ID = `${SITE_URL}/#organization`;
