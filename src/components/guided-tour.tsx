@@ -16,13 +16,15 @@ export function GuidedTour() {
 
   const step = tour.step;
 
-  // Auto-start the tour the first time someone opens paper trading or risk controls.
+  // Auto-start the tour the first time someone opens paper trading or risk
+  // controls — but never on top of the onboarding wizard.
   useEffect(() => {
     if (tour.seen || tour.active) return;
+    if (!onboarding.state.completed) return;
     if (location.pathname !== "/paper" && location.pathname !== "/risk") return;
     const t = setTimeout(() => tour.start(), 600);
     return () => clearTimeout(t);
-  }, [tour, location.pathname]);
+  }, [tour, onboarding.state.completed, location.pathname]);
 
   // Move to the route the current step lives on.
   useEffect(() => {
