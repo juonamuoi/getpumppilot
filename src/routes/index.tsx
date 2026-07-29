@@ -37,6 +37,7 @@ import {
   ORG_ID,
   WEBSITE_ID,
   LOGO_URL,
+  SOCIAL_IMAGE_URL,
   faqSchema as buildFaqSchema,
   ldScript,
 } from "@/lib/structured-data";
