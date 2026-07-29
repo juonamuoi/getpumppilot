@@ -34,8 +34,8 @@ const clamp = (n: number) => Math.max(0, Math.min(100, n));
  * Volatility widens the step; higher scores mean-revert slightly.
  */
 function nextScore(current: number, base: number, volatility: number) {
-  const step = (Math.random() - 0.5) * (2 + volatility / 20);
-  const pull = (base - current) * 0.08; // mean reversion to the baseline
+  const step = (Math.random() - 0.5) * (4 + volatility / 10);
+  const pull = (base - current) * 0.06; // mean reversion to the baseline
   return clamp(current + step + pull);
 }
 
