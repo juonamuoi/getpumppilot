@@ -176,24 +176,54 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
 
   const cid = entry.correlationId ?? entry.id;
 
-  const batch = useMemo(
-    () =>
-      tuningLog.filter(
-        (e) => (e.correlationId ?? e.id) === cid && e.kind !== "bounds" && e.rule !== "undo",
-      ),
-    [tuningLog, cid],
+  /** All correlation IDs present in the tuning log, newest first. */
+  const runs = useMemo(() => {
+    const map = new Map<string, { cid: string; ts: number; label: string }>();
+    for (const e of tuningLog) {
+      if (e.kind === "bounds" || e.rule === "undo") continue;
+      const c = e.correlationId ?? e.id;
+      const prev = map.get(c);
+      if (!prev || e.ts > prev.ts) {
+        map.set(c, { cid: c, ts: e.ts, label: e.mitigation ?? "Rule change" });
+      }
+    }
+    return [...map.values()].sort((a, b) => b.ts - a.ts);
+  }, [tuningLog]);
+
+  const [baseCid, setBaseCid] = useState<string>(SELF_BEFORE);
+  const [compareCid, setCompareCid] = useState<string>(cid);
+
+  const batchOf = useCallback(
+    (c: string) =>
+      tuningLog.filter((e) => (e.correlationId ?? e.id) === c && e.kind !== "bounds" && e.rule !== "undo"),
+    [tuningLog],
   );
 
-  const { before, after } = useMemo(() => {
-    const b: ScannerRules = { ...scannerRules, channels: { ...scannerRules.channels } };
-    const a: ScannerRules = { ...scannerRules, channels: { ...scannerRules.channels } };
-    for (const e of batch) {
-      if (!RULE_FIELD[e.rule]) continue;
-      applyRuleValue(b, e.rule, e.oldValue);
-      applyRuleValue(a, e.rule, e.newValue);
-    }
-    return { before: b, after: a };
-  }, [batch, scannerRules]);
+  const batch = useMemo(() => batchOf(cid), [batchOf, cid]);
+
+  /** Rule set produced by a run (old values for the "before" side of this entry). */
+  const rulesFor = useCallback(
+    (c: string, side: "old" | "new"): ScannerRules => {
+      const r: ScannerRules = { ...scannerRules, channels: { ...scannerRules.channels } };
+      for (const e of batchOf(c === SELF_BEFORE ? cid : c)) {
+        if (!RULE_FIELD[e.rule]) continue;
+        applyRuleValue(r, e.rule, side === "old" ? e.oldValue : e.newValue);
+      }
+      return r;
+    },
+    [batchOf, scannerRules, cid],
+  );
+
+  const comparingRuns = baseCid !== SELF_BEFORE;
+
+  const { before, after } = useMemo(
+    () => ({
+      before: rulesFor(baseCid, baseCid === SELF_BEFORE ? "old" : "new"),
+      after: rulesFor(compareCid, "new"),
+    }),
+    [rulesFor, baseCid, compareCid],
+  );
+
 
   const rows = useMemo(
     () =>
