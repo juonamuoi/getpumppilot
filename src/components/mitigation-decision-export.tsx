@@ -233,6 +233,15 @@ function saveBlob(blob: Blob, filename: string) {
 
 const PRESETS_KEY = "pumppilot_export_presets";
 
+/**
+ * Version of the exportable column schema. Bump this whenever FIELDS gains,
+ * renames or removes columns so saved presets can be migrated forward.
+ *
+ *  v1 — original decision/confirmation/outcome columns
+ *  v2 — added the "Why explanations" group + scope columns; renamed nothing
+ */
+export const EXPORT_SCHEMA_VERSION = 2;
+
 export type ExportPreset<F = unknown> = {
   id: string;
   name: string;
@@ -241,7 +250,67 @@ export type ExportPreset<F = unknown> = {
   /** Snapshot of the audit-trail filter scope active when the preset was saved. */
   filters?: F;
   savedAt: number;
+  /** Schema version the field list was saved against. */
+  schemaVersion?: number;
+  /** Set when the preset was upgraded from an older schema version. */
+  migratedFrom?: number;
+  migratedAt?: number;
 };
+
+/** Columns renamed between schema versions, applied oldest → newest. */
+const FIELD_RENAMES: Record<number, Record<string, string>> = {
+  1: {},
+};
+
+/** Columns added in each version, auto-selected when a preset is migrated. */
+const FIELDS_ADDED_IN: Record<number, string[]> = {
+  2: FIELDS.filter((f) => f.group === "why").map((f) => f.key),
+};
+
+/** Brings one preset's field list up to EXPORT_SCHEMA_VERSION. */
+export function migratePreset<F>(preset: ExportPreset<F>): { preset: ExportPreset<F>; changed: boolean } {
+  const from = typeof preset.schemaVersion === "number" ? preset.schemaVersion : 1;
+  let fields = [...preset.fields];
+
+  for (let v = from; v < EXPORT_SCHEMA_VERSION; v++) {
+    const renames = FIELD_RENAMES[v] ?? {};
+    fields = fields.map((k) => renames[k] ?? k);
+    for (const added of FIELDS_ADDED_IN[v + 1] ?? []) {
+      if (!fields.includes(added)) fields.push(added);
+    }
+  }
+
+  // Drop columns that no longer exist, keeping the saved order.
+  const known = fields.filter((k) => FIELDS.some((f) => f.key === k));
+  const changed =
+    from !== EXPORT_SCHEMA_VERSION ||
+    known.length !== preset.fields.length ||
+    known.some((k, i) => k !== preset.fields[i]);
+
+  if (!changed) return { preset: { ...preset, schemaVersion: EXPORT_SCHEMA_VERSION }, changed: false };
+
+  return {
+    preset: {
+      ...preset,
+      fields: known,
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+      migratedFrom: from,
+      migratedAt: Date.now(),
+    },
+    changed: true,
+  };
+}
+
+/** Migrates a whole list, reporting how many presets were upgraded. */
+export function migratePresets<F>(list: ExportPreset<F>[]): { presets: ExportPreset<F>[]; migrated: string[] } {
+  const migrated: string[] = [];
+  const presets = list.map((p) => {
+    const res = migratePreset(p);
+    if (res.changed) migrated.push(res.preset.name);
+    return res.preset;
+  });
+  return { presets, migrated };
+}
 
 function loadPresets(): ExportPreset[] {
   if (typeof window === "undefined") return [];
@@ -252,6 +321,7 @@ function loadPresets(): ExportPreset[] {
     return [];
   }
 }
+
 
 /* ------------------ last-used export configuration ------------------- */
 
