@@ -21,6 +21,8 @@
     "lint:supabase:authz": "node scripts/supabase-authz-check.mjs",
     "test:security": "vitest run --config vitest.security.config.ts",
     "test:seo": "vitest run --config vitest.seo.config.ts",
+    "check:jsonld": "bun scripts/jsonld-build-check.mjs",
+    "check:jsonld:json": "bun scripts/jsonld-build-check.mjs --json",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
 
   },
