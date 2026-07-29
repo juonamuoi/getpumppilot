@@ -675,7 +675,33 @@ export function MitigationAuditTrail({
           </div>
 
         </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] text-muted-foreground">Outcome:</span>
+          {(
+            [
+              ["all", "All"],
+              ["alerts-fired", "Alerts fired"],
+              ["channels-muted", "Muted"],
+              ["no-matches", "Found nothing"],
+              ["pending", "Pending"],
+            ] as Array<[OutcomeFilter, string]>
+          ).map(([key, label]) => (
+            <Button
+              key={key}
+              type="button"
+              size="sm"
+              variant={outcome === key ? "default" : "outline"}
+              aria-pressed={outcome === key}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setOutcome(key)}
+            >
+              {label}
+              <span className="tabular-nums opacity-70">{outcomeCounts[key]}</span>
+            </Button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2">
+
           <div className="relative w-full max-w-xs">
             <Input
               value={q}
