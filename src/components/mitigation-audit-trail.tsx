@@ -491,6 +491,10 @@ export function MitigationAuditTrail({
               scope={exportFilters()}
               walletsFor={(e) => walletsForEntry.get(e.id) ?? []}
             />
+            <MitigationScheduledExports
+              log={sourceLog}
+              walletsFor={(e) => walletsForEntry.get(e.id) ?? []}
+            />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
               Quick CSV
             </Button>
