@@ -12,6 +12,7 @@ import {
   breadcrumbSchema,
   webPageSchema,
   ldScript,
+  NODE,
   faqSchema,
 } from "@/lib/structured-data";
 
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/learn")({
             "Micro-lessons and a glossary covering momentum trading, reading signals, position sizing and risk control.",
           path: "/learn",
           type: "LearningResource",
+          node: NODE.course,
         }),
         learningResourceType: "Lesson series",
         educationalLevel: "Beginner",

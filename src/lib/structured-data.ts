@@ -42,6 +42,45 @@ export const WEBSITE_ID = `${SITE_URL}/#website`;
 export const absoluteUrl = (path = "/") =>
   path.startsWith("http") ? path : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
+/**
+ * The one canonical URL for a route. Every `<link rel="canonical">`,
+ * `og:url` and schema `url` MUST come from here so a page never advertises
+ * two spellings of itself (the usual cause of duplicate-entity warnings).
+ * Home keeps its trailing slash; every other path is normalised without one.
+ */
+export function canonicalUrl(path = "/") {
+  const abs = absoluteUrl(path);
+  const [base] = abs.split("#");
+  if (base === SITE_URL || base === `${SITE_URL}/`) return `${SITE_URL}/`;
+  return base.endsWith("/") ? base.slice(0, -1) : base;
+}
+
+/**
+ * Per-page `@id` scheme: `<canonical URL>#<node>`.
+ *
+ * One fragment per node type per page means the same logical entity always
+ * carries the same identifier, and two different pages can never emit the
+ * same `@id` — which is what stops crawlers from merging or flagging them
+ * as duplicates.
+ */
+export const NODE = {
+  webpage: "webpage",
+  breadcrumb: "breadcrumb",
+  faq: "faq",
+  howto: "howto",
+  article: "article",
+  blog: "blog",
+  product: "product",
+  app: "app",
+  api: "api",
+  course: "course",
+} as const;
+
+export type NodeKind = (typeof NODE)[keyof typeof NODE] | (string & {});
+
+export const nodeId = (path: string, node: NodeKind) => `${canonicalUrl(path)}#${node}`;
+
+
 export const organizationSchema = {
   "@type": "Organization",
   "@id": ORG_ID,
@@ -108,12 +147,12 @@ export function blogPostingSchema(
   post: BlogPostMeta,
   opts: { standalone?: boolean } = {},
 ) {
-  const url = absoluteUrl(`/blog/${post.slug}`);
+  const url = canonicalUrl(`/blog/${post.slug}`);
   const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
   const node: Record<string, unknown> = {
     ...(opts.standalone ? { "@context": "https://schema.org" } : {}),
     "@type": "BlogPosting",
-    "@id": `${url}#article`,
+    "@id": `${url}#${NODE.article}`,
     headline: post.title,
     name: post.title,
     description: post.description,
@@ -134,7 +173,7 @@ export function blogPostingSchema(
       caption: post.imageAlt ?? post.title,
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
-    isPartOf: { "@id": `${SITE_URL}/blog#blog` },
+    isPartOf: { "@id": nodeId("/blog", NODE.blog) },
     url,
     inLanguage: "en",
   };
@@ -158,13 +197,13 @@ export function breadcrumbSchema(crumbs: Crumb[]) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "@id": `${absoluteUrl(current.path)}#breadcrumb`,
+    "@id": nodeId(current.path, NODE.breadcrumb),
     name: trail.map((c) => c.name).join(" › "),
     itemListElement: trail.map((c, i) => ({
       "@type": "ListItem",
       position: i + 1,
       name: c.name,
-      item: absoluteUrl(c.path),
+      item: canonicalUrl(c.path),
     })),
   };
 }
@@ -176,14 +215,16 @@ export function webPageSchema(opts: {
   description: string;
   path: string;
   type?: string;
+  /** Overrides the `@id` fragment when a page emits more than one page-level node. */
+  node?: NodeKind;
   datePublished?: string;
   dateModified?: string;
 }) {
-  const url = absoluteUrl(opts.path);
+  const url = canonicalUrl(opts.path);
   return {
     "@context": "https://schema.org",
     "@type": opts.type ?? "WebPage",
-    "@id": `${url}#webpage`,
+    "@id": `${url}#${opts.node ?? NODE.webpage}`,
     name: opts.name,
     description: opts.description,
     url,
@@ -227,13 +268,13 @@ export function legalPageSchema(opts: {
  * eligible for FAQ rich results.
  */
 export function faqSchema(faqs: { q: string; a: string }[], path?: string) {
-  const url = path ? absoluteUrl(path) : undefined;
+  const url = path ? canonicalUrl(path) : undefined;
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     ...(url
       ? {
-          "@id": `${url}#faq`,
+          "@id": `${url}#${NODE.faq}`,
           url,
           mainEntityOfPage: { "@type": "WebPage", "@id": url },
           isPartOf: { "@id": WEBSITE_ID },
@@ -270,11 +311,11 @@ export function howToSchema(opts: {
   tools?: string[];
   steps: HowToStep[];
 }) {
-  const url = absoluteUrl(opts.path);
+  const url = canonicalUrl(opts.path);
   return {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    "@id": `${url}#howto`,
+    "@id": `${url}#${NODE.howto}`,
     name: opts.name,
     description: opts.description,
     url,

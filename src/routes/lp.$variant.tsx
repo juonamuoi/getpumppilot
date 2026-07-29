@@ -1,3 +1,4 @@
+import { canonicalUrl } from "@/lib/structured-data";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -58,7 +59,7 @@ export const Route = createFileRoute("/lp/$variant")({
         { name: "twitter:description", content: v.metaDescription },
         { name: "twitter:image", content: `${SITE_URL}/favicon.png` },
       ],
-      links: [{ rel: "canonical", href: SITE_URL }],
+      links: [{ rel: "canonical", href: canonicalUrl("/") }],
     };
   },
   component: AdLandingVariant,

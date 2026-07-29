@@ -13,6 +13,8 @@ import {
   LOGO_URL,
   breadcrumbSchema,
   ldScript,
+  nodeId,
+  NODE,
 } from "@/lib/structured-data";
 
 
@@ -56,7 +58,7 @@ export const Route = createFileRoute("/developers")({
       ldScript({
         "@context": "https://schema.org",
         "@type": "WebAPI",
-        "@id": `${BASE}/developers#api`,
+        "@id": nodeId("/developers", NODE.api),
         name: "PumpPilot AI Public Momentum API",
         description:
           "Free JSON API and embeddable iframe widget serving PumpPilot AI crypto momentum scores. Attribution-friendly, no API key required.",

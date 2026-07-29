@@ -12,7 +12,7 @@ import { StripeEmbeddedCheckout } from "@/components/stripe-embedded-checkout";
 import { useAuth } from "@/lib/auth-store";
 import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS, CREDIT_LABELS, CREDIT_PACKS, costPerDollar, packByPriceId } from "@/lib/credits";
-import { SITE_URL, ORG_ID, LOGO_URL, breadcrumbSchema, ldScript, faqSchema } from "@/lib/structured-data";
+import { SITE_URL, ORG_ID, LOGO_URL, breadcrumbSchema, ldScript, faqSchema, nodeId, NODE } from "@/lib/structured-data";
 import { toast } from "sonner";
 
 type SearchParams = { checkout?: string; session_id?: string; plan?: string };
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/pricing")({
       ldScript({
         "@context": "https://schema.org",
         "@type": "Product",
-        "@id": `${SITE_URL}/pricing#credits`,
+        "@id": nodeId("/pricing", NODE.product),
         name: "PumpPilot AI Credits",
         description:
           "Pay-as-you-go credits for PumpPilot AI. Spend credits on momentum predictions, Copilot answers, backtests, Portfolio Doctor audits and paper-bot orders. Credits never expire.",
