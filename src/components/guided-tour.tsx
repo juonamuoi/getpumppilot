@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { useOnboarding } from "@/lib/onboarding-store";
 import { useTour } from "@/lib/tour-store";
 import { GraduationCap, X } from "lucide-react";
 
