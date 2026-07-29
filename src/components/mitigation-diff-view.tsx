@@ -11,9 +11,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowRight, GitCompare } from "lucide-react";
+import { ArrowRight, Download, GitCompare } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { applyRuleValue, usePaper, type ScannerRules, type TuningLogEntry } from "@/lib/paper-store";
+import { toast } from "sonner";
+import { downloadDiff, type DiffExportPayload } from "@/lib/diff-export";
 import { cn } from "@/lib/utils";
 
 type Asset = (typeof ASSETS)[number];
@@ -121,6 +123,48 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   const changedRules = rules.filter((r) => r.changed);
   const visible = onlyChanged ? rows.filter((r) => r.changed) : rows;
 
+  const transitionLabel = (b: Status, a: Status) => {
+    if (b === a) return "unchanged";
+    if (a === "matched") return b === "near-miss" ? "near-miss → matched" : "no-match → matched";
+    if (b === "matched") return `matched → ${a}`;
+    return `${b} → ${a}`;
+  };
+
+  const buildPayload = (): DiffExportPayload => ({
+    correlationId: cid,
+    mitigation: entry.mitigation ?? "Rule change",
+    entryTs: entry.ts,
+    scope: onlyChanged ? "changed-only" : "all-assets",
+    rules: rules.map((r) => ({ label: r.label, before: r.b, after: r.a, changed: r.changed })),
+    assets: visible.map(({ asset, bEval, aEval, changed }) => ({
+      symbol: asset.symbol,
+      name: asset.name,
+      category: asset.category,
+      statusBefore: bEval.status,
+      statusAfter: aEval.status,
+      changed,
+      transition: transitionLabel(bEval.status, aEval.status),
+      failedGatesBefore: bEval.failed,
+      failedGatesAfter: aEval.failed,
+    })),
+    summary: {
+      rulesChanged: changedRules.length,
+      gainedMatches: gained.length,
+      lostMatches: lost.length,
+      newNearMisses: newNearMiss.length,
+      assetsChanged: rows.filter((r) => r.changed).length,
+      assetsTotal: rows.length,
+    },
+  });
+
+  const exportDiff = (kind: "csv" | "json") => {
+    const payload = buildPayload();
+    const count = downloadDiff(payload, kind);
+    toast.success(`Exported diff as ${kind.toUpperCase()}`, {
+      description: `${payload.rules.length} rule row(s) · ${payload.assets.length} asset row(s) · ${count} total`,
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -142,6 +186,21 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
             illustration only.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/40 p-2 text-[11px] text-muted-foreground">
+          <Download className="h-3.5 w-3.5" />
+          <span>
+            Export rule changes + asset transitions ({onlyChanged ? "changed assets only" : "all assets"})
+          </span>
+          <div className="ml-auto flex gap-2">
+            <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => exportDiff("csv")}>
+              CSV
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => exportDiff("json")}>
+              JSON
+            </Button>
+          </div>
+        </div>
 
         <div className="space-y-4">
           <section>
