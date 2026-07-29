@@ -144,7 +144,58 @@ export function faqSchema(faqs: { q: string; a: string }[]) {
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   };
+
+export type HowToStep = {
+  name: string;
+  text: string;
+  /** Optional in-page anchor so each step deep-links to the visible UI. */
+  anchor?: string;
+};
+
+/**
+ * HowTo — targets the step-by-step rich result for help flows.
+ * The steps MUST mirror the visible instructions rendered on the page.
+ */
+export function howToSchema(opts: {
+  name: string;
+  description: string;
+  path: string;
+  /** ISO 8601 duration, e.g. "PT3M". */
+  totalTime?: string;
+  tools?: string[];
+  steps: HowToStep[];
+}) {
+  const url = absoluteUrl(opts.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "@id": `${url}#howto`,
+    name: opts.name,
+    description: opts.description,
+    url,
+    inLanguage: "en",
+    isPartOf: { "@id": WEBSITE_ID },
+    publisher: { "@id": ORG_ID },
+    image: SOCIAL_IMAGE,
+    ...(opts.totalTime ? { totalTime: opts.totalTime } : {}),
+    ...(opts.tools?.length
+      ? { tool: opts.tools.map((t) => ({ "@type": "HowToTool", name: t })) }
+      : {}),
+    estimatedCost: {
+      "@type": "MonetaryAmount",
+      currency: "USD",
+      value: "0",
+    },
+    step: opts.steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+      url: s.anchor ? `${url}#${s.anchor}` : url,
+    })),
+  };
 }
+
 
 /** Convenience wrapper so routes can pass objects straight into head().scripts. */
 export const ldScript = (schema: unknown) => ({
