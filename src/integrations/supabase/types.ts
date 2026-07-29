@@ -454,6 +454,45 @@ export type Database = {
         }
         Relationships: []
       }
+      storage_access_audit: {
+        Row: {
+          bucket: string
+          correlation_id: string | null
+          created_at: string
+          decision: string
+          id: string
+          object_path: string
+          operation: string
+          path_owner_id: string | null
+          reason: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bucket: string
+          correlation_id?: string | null
+          created_at?: string
+          decision: string
+          id?: string
+          object_path: string
+          operation: string
+          path_owner_id?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bucket?: string
+          correlation_id?: string | null
+          created_at?: string
+          decision?: string
+          id?: string
+          object_path?: string
+          operation?: string
+          path_owner_id?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       strategies: {
         Row: {
           author_id: string
