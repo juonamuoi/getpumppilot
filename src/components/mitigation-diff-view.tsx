@@ -80,6 +80,10 @@ const STATUS_CLASS: Record<Status, string> = {
   "no-match": "text-muted-foreground border-border/60 bg-muted/20",
 };
 
+const STATUS_RANK: Record<Status, number> = { matched: 2, "near-miss": 1, "no-match": 0 };
+
+type SortKey = "symbol" | "category" | "before" | "after" | "change" | "gate" | "gateValue";
+
 const RULE_FIELD: Record<string, keyof ScannerRules> = {
   momentum: "minMomentum",
   volume: "minVolumeScore",
