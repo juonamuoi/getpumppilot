@@ -1,3 +1,5 @@
+import { FaqSection } from "@/components/faq-section";
+import { learnFaqs } from "@/lib/page-faqs";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +11,7 @@ import {
   ORG_ID,
   breadcrumbSchema,
   webPageSchema,
-  ldScript,
-} from "@/lib/structured-data";
+  ldScript, faqSchema, } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/learn")({
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/learn` }],
     scripts: [
+      ldScript(faqSchema(learnFaqs, "/learn")),
       ldScript({
         ...webPageSchema({
           name: "Learn momentum trading and risk — PumpPilot AI",
@@ -122,6 +124,7 @@ function LearnPage() {
             </Accordion>
           </CardContent>
         </Card>
+        <FaqSection faqs={learnFaqs} title="Learning FAQ" />
       </div>
     </AppShell>
   );

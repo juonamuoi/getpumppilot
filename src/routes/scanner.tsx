@@ -1,3 +1,6 @@
+import { faqSchema, ldScript } from "@/lib/structured-data";
+import { FaqSection } from "@/components/faq-section";
+import { scannerFaqs } from "@/lib/page-faqs";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -22,6 +25,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/scanner")({
   head: () => ({
+    scripts: [ldScript(faqSchema(scannerFaqs, "/scanner"))],
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/scanner" }],
     meta: [
       { property: "og:url", content: "https://www.getpumppilot.app/scanner" },
@@ -376,6 +380,7 @@ function Scanner() {
             </div>
           </CardContent>
         </Card>
+        <FaqSection faqs={scannerFaqs} title="Market scanner FAQ" />
       </div>
     </AppShell>
   );

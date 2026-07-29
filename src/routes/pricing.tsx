@@ -1,3 +1,5 @@
+import { FaqSection } from "@/components/faq-section";
+import { pricingFaqs } from "@/lib/page-faqs";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check, Sparkles, ArrowLeft, Zap, History } from "lucide-react";
@@ -10,7 +12,7 @@ import { StripeEmbeddedCheckout } from "@/components/stripe-embedded-checkout";
 import { useAuth } from "@/lib/auth-store";
 import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS, CREDIT_LABELS, CREDIT_PACKS, costPerDollar, packByPriceId } from "@/lib/credits";
-import { SITE_URL, ORG_ID, LOGO_URL, breadcrumbSchema, ldScript } from "@/lib/structured-data";
+import { SITE_URL, ORG_ID, LOGO_URL, breadcrumbSchema, ldScript faqSchema, } from "@/lib/structured-data";
 import { toast } from "sonner";
 
 type SearchParams = { checkout?: string; session_id?: string; plan?: string };
@@ -32,6 +34,7 @@ export const Route = createFileRoute("/pricing")({
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/pricing` }],
     scripts: [
+      ldScript(faqSchema(pricingFaqs, "/pricing")),
       ldScript({
         "@context": "https://schema.org",
         "@type": "Product",
@@ -272,6 +275,7 @@ function PricingPage() {
             to verify checkout and statement descriptor.
           </p>
         </Card>
+        <FaqSection faqs={pricingFaqs} title="Credits & pricing FAQ" />
       </div>
     </AppShell>
   );
