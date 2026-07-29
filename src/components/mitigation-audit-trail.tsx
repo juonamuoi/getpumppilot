@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +28,7 @@ import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
-import { explainOutcome } from "@/lib/mitigation-explain";
+import { explainOutcome, explainFields } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
 import { isImportedEntry } from "@/lib/mitigation-import";
 import { MitigationScheduledExports } from "@/components/mitigation-scheduled-exports";
@@ -46,6 +46,50 @@ import {
 } from "@/lib/audit-filters";
 
 
+
+/** One-click copy of an entry's plain-English "Why" explanation. */
+function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    const f = explainFields(entry);
+    const text = [
+      `Why: ${explainOutcome(entry)}`,
+      "",
+      `Correlation ID: ${entry.correlationId ?? "—"}`,
+      `Time: ${format(new Date(entry.ts), "yyyy-MM-dd HH:mm:ss")}`,
+      f.change ? `Change: ${f.change}` : null,
+      f.strictness ? `Strictness: ${f.strictness}` : null,
+      f.impact ? `Impact: ${f.impact}` : null,
+      f.outcome ? `Outcome: ${f.outcome}` : null,
+      f.fragility ? `Fragility: ${f.fragility}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      toast.success("Why explanation copied");
+    } catch {
+      toast.error("Clipboard blocked by your browser");
+    }
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-6 shrink-0 gap-1 px-2 text-[10px]"
+      onClick={copy}
+      aria-label="Copy why explanation"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? "Copied" : "Copy"}
+    </Button>
+  );
+}
 
 
 /** A mitigation is attributed to wallets scanned within this window of it. */
@@ -742,10 +786,16 @@ export function MitigationAuditTrail({
                   <p className="mt-2 text-[11px] text-muted-foreground">Trigger: {e.trigger}</p>
                 )}
 
-                <p className="mt-2 rounded-md border border-border/50 bg-muted/20 p-2 text-[11px] leading-relaxed text-muted-foreground">
-                  <span className="font-medium text-foreground">Why: </span>
-                  {explainOutcome(e)}
-                </p>
+                <div className="mt-2 rounded-md border border-border/50 bg-muted/20 p-2 text-[11px] leading-relaxed text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <p className="flex-1">
+                      <span className="font-medium text-foreground">Why: </span>
+                      {explainOutcome(e)}
+                    </p>
+                    <CopyWhyButton entry={e} />
+                  </div>
+                </div>
+
 
 
                 <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border/50 pt-2 text-[11px]">
