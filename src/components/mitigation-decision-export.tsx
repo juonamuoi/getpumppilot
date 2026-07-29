@@ -233,6 +233,15 @@ function saveBlob(blob: Blob, filename: string) {
 
 const PRESETS_KEY = "pumppilot_export_presets";
 
+/**
+ * Version of the exportable column schema. Bump this whenever FIELDS gains,
+ * renames or removes columns so saved presets can be migrated forward.
+ *
+ *  v1 — original decision/confirmation/outcome columns
+ *  v2 — added the "Why explanations" group + scope columns; renamed nothing
+ */
+export const EXPORT_SCHEMA_VERSION = 2;
+
 export type ExportPreset<F = unknown> = {
   id: string;
   name: string;
@@ -241,7 +250,67 @@ export type ExportPreset<F = unknown> = {
   /** Snapshot of the audit-trail filter scope active when the preset was saved. */
   filters?: F;
   savedAt: number;
+  /** Schema version the field list was saved against. */
+  schemaVersion?: number;
+  /** Set when the preset was upgraded from an older schema version. */
+  migratedFrom?: number;
+  migratedAt?: number;
 };
+
+/** Columns renamed between schema versions, applied oldest → newest. */
+const FIELD_RENAMES: Record<number, Record<string, string>> = {
+  1: {},
+};
+
+/** Columns added in each version, auto-selected when a preset is migrated. */
+const FIELDS_ADDED_IN: Record<number, string[]> = {
+  2: FIELDS.filter((f) => f.group === "why").map((f) => f.key),
+};
+
+/** Brings one preset's field list up to EXPORT_SCHEMA_VERSION. */
+export function migratePreset<F>(preset: ExportPreset<F>): { preset: ExportPreset<F>; changed: boolean } {
+  const from = typeof preset.schemaVersion === "number" ? preset.schemaVersion : 1;
+  let fields = [...preset.fields];
+
+  for (let v = from; v < EXPORT_SCHEMA_VERSION; v++) {
+    const renames = FIELD_RENAMES[v] ?? {};
+    fields = fields.map((k) => renames[k] ?? k);
+    for (const added of FIELDS_ADDED_IN[v + 1] ?? []) {
+      if (!fields.includes(added)) fields.push(added);
+    }
+  }
+
+  // Drop columns that no longer exist, keeping the saved order.
+  const known = fields.filter((k) => FIELDS.some((f) => f.key === k));
+  const changed =
+    from !== EXPORT_SCHEMA_VERSION ||
+    known.length !== preset.fields.length ||
+    known.some((k, i) => k !== preset.fields[i]);
+
+  if (!changed) return { preset: { ...preset, schemaVersion: EXPORT_SCHEMA_VERSION }, changed: false };
+
+  return {
+    preset: {
+      ...preset,
+      fields: known,
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+      migratedFrom: from,
+      migratedAt: Date.now(),
+    },
+    changed: true,
+  };
+}
+
+/** Migrates a whole list, reporting how many presets were upgraded. */
+export function migratePresets<F>(list: ExportPreset<F>[]): { presets: ExportPreset<F>[]; migrated: string[] } {
+  const migrated: string[] = [];
+  const presets = list.map((p) => {
+    const res = migratePreset(p);
+    if (res.changed) migrated.push(res.preset.name);
+    return res.preset;
+  });
+  return { presets, migrated };
+}
 
 function loadPresets(): ExportPreset[] {
   if (typeof window === "undefined") return [];
@@ -252,6 +321,7 @@ function loadPresets(): ExportPreset[] {
     return [];
   }
 }
+
 
 /* ------------------ last-used export configuration ------------------- */
 
@@ -322,6 +392,7 @@ export function MitigationDecisionExport<F,>({
   const presetFileRef = useRef<HTMLInputElement>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [migratedNames, setMigratedNames] = useState<string[]>([]);
 
   // Restore the last-used export configuration after hydration.
   useEffect(() => {
@@ -332,6 +403,15 @@ export function MitigationDecisionExport<F,>({
       setIncludeSchema(last.includeSchema);
       setActivePreset(last.presetId);
       setRestored(last.presetName ?? "Last used export settings");
+    }
+    // Upgrade any presets saved against an older export schema.
+    const { presets: upgraded, migrated } = migratePresets(loadPresets() as ExportPreset<F>[]);
+    if (migrated.length > 0) {
+      setPresets(upgraded);
+      try {
+        window.localStorage.setItem(PRESETS_KEY, JSON.stringify(upgraded));
+      } catch {}
+      setMigratedNames(migrated);
     }
     hydrated.current = true;
   }, []);
@@ -370,6 +450,7 @@ export function MitigationDecisionExport<F,>({
       includePreviewOnly,
       filters,
       savedAt: Date.now(),
+      schemaVersion: EXPORT_SCHEMA_VERSION,
     };
     persistPresets(existing ? presets.map((p) => (p.id === existing.id ? preset : p)) : [...presets, preset]);
     setActivePreset(preset.id);
@@ -406,7 +487,13 @@ export function MitigationDecisionExport<F,>({
     let name = base;
     let n = 2;
     while (presets.some((o) => o.name.toLowerCase() === name.toLowerCase())) name = `${base} ${n++}`;
-    const copy: ExportPreset<F> = { ...p, id: `${Date.now()}`, name, savedAt: Date.now() };
+    const copy: ExportPreset<F> = {
+      ...p,
+      id: `${Date.now()}`,
+      name,
+      savedAt: Date.now(),
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+    };
     persistPresets([...presets, copy]);
     setActivePreset(copy.id);
     setRenamingId(copy.id);
@@ -429,6 +516,7 @@ export function MitigationDecisionExport<F,>({
     const payload = {
       kind: "pumppilot.mitigation-export-presets",
       version: 1,
+      schemaVersion: EXPORT_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       presets,
     };
@@ -465,6 +553,7 @@ export function MitigationDecisionExport<F,>({
           includePreviewOnly: p.includePreviewOnly !== false,
           filters: p.filters,
           savedAt: typeof p.savedAt === "number" ? p.savedAt : Date.now(),
+          schemaVersion: typeof p.schemaVersion === "number" ? p.schemaVersion : 1,
         });
       }
       if (valid.length === 0) {
@@ -473,6 +562,11 @@ export function MitigationDecisionExport<F,>({
         });
         return;
       }
+
+      const { presets: upgraded, migrated } = migratePresets(valid);
+      valid.length = 0;
+      valid.push(...upgraded);
+      if (migrated.length > 0) setMigratedNames(migrated);
 
       // Merge by name: an imported preset replaces a local one with the same name.
       const byName = new Map(presets.map((p) => [p.name.toLowerCase(), p]));
@@ -607,7 +701,7 @@ export function MitigationDecisionExport<F,>({
               Saved export presets
             </p>
             <span className="text-[10px] text-muted-foreground">
-              Fields · preview-only toggle{filters ? " · filter scope" : ""}
+              Schema v{EXPORT_SCHEMA_VERSION} · fields · preview-only toggle{filters ? " · filter scope" : ""}
             </span>
           </div>
           {restored && (
@@ -628,6 +722,22 @@ export function MitigationDecisionExport<F,>({
                 }}
               >
                 Reset to defaults
+              </button>
+            </p>
+          )}
+          {migratedNames.length > 0 && (
+            <p className="flex flex-wrap items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-muted-foreground">
+              <Badge variant="outline" className="h-4 px-1 text-[9px] uppercase">
+                Migrated
+              </Badge>
+              {migratedNames.length} preset{migratedNames.length === 1 ? "" : "s"} upgraded to schema v
+              {EXPORT_SCHEMA_VERSION} ({migratedNames.join(", ")}) — new columns were added and removed ones dropped.
+              <button
+                type="button"
+                className="underline hover:text-foreground"
+                onClick={() => setMigratedNames([])}
+              >
+                Dismiss
               </button>
             </p>
           )}
@@ -666,6 +776,18 @@ export function MitigationDecisionExport<F,>({
                         {p.name}
                       </button>
                       <span className="text-muted-foreground">({p.fields.length})</span>
+                      <Badge
+                        variant="outline"
+                        title={
+                          p.migratedFrom
+                            ? `Migrated from schema v${p.migratedFrom} on ${new Date(p.migratedAt ?? p.savedAt).toLocaleString()}`
+                            : `Saved against schema v${p.schemaVersion ?? 1}`
+                        }
+                        className="h-4 px-1 text-[9px]"
+                      >
+                        v{p.schemaVersion ?? 1}
+                        {p.migratedFrom ? " ↑" : ""}
+                      </Badge>
                       <button
                         type="button"
                         aria-label={`Rename preset ${p.name}`}
