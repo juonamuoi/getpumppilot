@@ -767,6 +767,16 @@ export function MitigationImpactTimeline() {
             <TimelineAggregateSummary
               riskPoints={riskPoints}
               signalPoints={signalPoints}
+              scope={{
+                rangeLabel: RANGES.find((r) => r.key === range)?.label,
+                from: cutoff || null,
+                to: Date.now(),
+                wallets,
+                tokens,
+                actions,
+                outcomes,
+                correlationId: drawerId ?? undefined,
+              }}
             />
 
             <div className="overflow-x-auto">
