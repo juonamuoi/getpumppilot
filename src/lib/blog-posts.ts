@@ -6,6 +6,9 @@ export interface BlogPost {
   readMinutes: number;
   keywords: string[];
   tags: string[];
+  /** Unique social/share cover image path (served from /public). */
+  image?: string;
+  imageAlt?: string;
   // Body is an array of blocks for simple structured rendering.
   body: BlogBlock[];
 }
@@ -21,6 +24,8 @@ export type BlogBlock =
 export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "best-ai-investment-app-2026",
+    image: "/blog/best-ai-investment-app-2026.jpg",
+    imageAlt: "Abstract rising candlestick chart in teal and violet on a dark background",
     title: "Best AI Investment App in 2026: An Honest Comparison",
     description:
       "How to choose the best AI investment app in 2026. We compare explainability, safety, paper trading, and live execution across the top AI trading platforms.",
@@ -50,6 +55,8 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "ai-crypto-trading-explained",
+    image: "/blog/ai-crypto-trading-explained.jpg",
+    imageAlt: "Glowing neural-network brain above a crypto price waveform",
     title: "AI Crypto Trading, Explained: Signals, Risk, and Realistic Returns",
     description:
       "What AI crypto trading actually does — how momentum signals work, why explainability matters, and how to avoid the biggest mistakes new traders make.",
@@ -72,6 +79,8 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "paper-trading-vs-live-trading",
+    image: "/blog/paper-trading-vs-live-trading.jpg",
+    imageAlt: "Split view contrasting a simulated chart with a live chart",
     title: "Paper Trading vs Live Trading: The Case for Rehearsal",
     description:
       "Why paper trading is the single highest-ROI habit for new traders — and how to know when a strategy is actually ready for live capital.",
@@ -97,6 +106,8 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "pumppilot-vs-autopilot-comparison",
+    image: "/blog/pumppilot-vs-autopilot-comparison.jpg",
+    imageAlt: "Two glowing orbs facing off, representing two trading approaches",
     title: "PumpPilot AI vs Autopilot App: Explainable Momentum vs Copy Trading",
     description:
       "A side-by-side comparison of PumpPilot AI and copy-trading autopilot apps: explainable momentum scores and paper trading first, versus mirroring someone else's trades.",
@@ -135,6 +146,8 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     slug: "pumppilot-vs-tradingview-paper-trading",
+    image: "/blog/pumppilot-vs-tradingview-paper-trading.jpg",
+    imageAlt: "Chart grid beside a glowing momentum score dial",
     title: "PumpPilot AI vs TradingView Paper Trading: Charts vs the 'Why'",
     description:
       "TradingView gives you the charts; PumpPilot AI gives you the reasoning. A head-to-head on crypto paper trading, explainable AI momentum signals and risk coaching.",

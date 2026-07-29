@@ -6,7 +6,7 @@ import {
   SITE_URL as BASE,
   ORG_ID,
   WEBSITE_ID,
-  SOCIAL_IMAGE,
+
   SOCIAL_IMAGE_URL,
   breadcrumbSchema,
   ldScript,
@@ -31,20 +31,34 @@ export const Route = createFileRoute("/blog/$slug")({
     const post = loaderData?.post;
     const url = `${BASE}/blog/${params.slug}`;
     if (!post) return { meta: [{ title: "Post not found" }] };
+    const imageUrl = post.image ? `${BASE}${post.image}` : SOCIAL_IMAGE_URL;
+    const imageAlt = post.imageAlt ?? post.title;
+    const socialTitle = `${post.title} | PumpPilot AI`;
     return {
       meta: [
         { title: `${post.title} — PumpPilot AI` },
         { name: "description", content: post.description },
         { name: "keywords", content: post.keywords.join(", ") },
-        { property: "og:title", content: post.title },
+        { property: "og:title", content: socialTitle },
         { property: "og:description", content: post.description },
         { property: "og:type", content: "article" },
         { property: "og:url", content: url },
+        { property: "og:site_name", content: "PumpPilot AI" },
+        { property: "og:locale", content: "en_US" },
         { property: "article:published_time", content: post.date },
-        { property: "og:image", content: SOCIAL_IMAGE_URL },
+        { property: "article:modified_time", content: post.date },
+        { property: "article:section", content: post.tags[0] ?? "Guides" },
+        ...post.tags.map((t) => ({ property: "article:tag", content: t })),
+        { property: "og:image", content: imageUrl },
+        { property: "og:image:secure_url", content: imageUrl },
+        { property: "og:image:type", content: "image/jpeg" },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: imageAlt },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:image", content: SOCIAL_IMAGE_URL },
-        { name: "twitter:title", content: post.title },
+        { name: "twitter:image", content: imageUrl },
+        { name: "twitter:image:alt", content: imageAlt },
+        { name: "twitter:title", content: socialTitle },
         { name: "twitter:description", content: post.description },
       ],
       links: [{ rel: "canonical", href: url }],
@@ -64,7 +78,13 @@ export const Route = createFileRoute("/blog/$slug")({
             url: BASE,
           },
           publisher: { "@id": ORG_ID },
-          image: SOCIAL_IMAGE,
+          image: {
+            "@type": "ImageObject",
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            caption: imageAlt,
+          },
           mainEntityOfPage: { "@type": "WebPage", "@id": url },
           isPartOf: { "@id": `${BASE}/blog#blog` },
           url,
