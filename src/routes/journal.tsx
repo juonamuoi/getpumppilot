@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
+import { ShareLinks } from "@/components/share-links";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { usePaper } from "@/lib/paper-store";
@@ -326,6 +327,8 @@ function JournalPage() {
             )}
           </CardContent>
         </Card>
+
+        <ShareLinks path="/journal" />
       </div>
     </AppShell>
   );

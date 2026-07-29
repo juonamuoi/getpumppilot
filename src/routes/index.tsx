@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/accordion";
 import { useAuth } from "@/lib/auth-store";
 import { WaitlistForm } from "@/components/waitlist-form";
+import { ShareLinks } from "@/components/share-links";
 
 
 import { CREDIT_PACKS } from "@/lib/credits";
@@ -644,6 +645,13 @@ function LandingPage() {
         </div>
       </section>
 
+
+      {/* Share */}
+      <section className="px-4 pb-4">
+        <div className="mx-auto max-w-3xl">
+          <ShareLinks path="/" />
+        </div>
+      </section>
 
       {/* Trust / disclaimers */}
       <section className="px-4 pb-16">
