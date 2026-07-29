@@ -11,6 +11,7 @@ const PAD = 8;
 
 export function GuidedTour() {
   const tour = useTour();
+  const onboarding = useOnboarding();
   const navigate = useNavigate();
   const location = useLocation();
   const [rect, setRect] = useState<Rect | null>(null);
