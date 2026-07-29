@@ -365,9 +365,14 @@ export function MitigationImpactTimeline() {
         };
       })
       .sort((a, b) => a.ts - b.ts);
-  }, [runs, cutoff, wallets, tokens]);
+  }, [runs, wallets, tokens]);
 
-  const signalPoints = useMemo<SignalPoint[]>(() => {
+  const riskPoints = useMemo<RiskPoint[]>(
+    () => allRiskPoints.filter((p) => p.ts >= cutoff),
+    [allRiskPoints, cutoff],
+  );
+
+  const allSignalPoints = useMemo<SignalPoint[]>(() => {
     const applied = tuningLog.filter(
       (e): e is TuningLogEntry => e.source === "mitigation" && e.phase !== "preview",
     );
