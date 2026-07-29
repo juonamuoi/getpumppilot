@@ -21,3 +21,16 @@ jobs:
 
       - name: JSON-LD + sitemap/canonical suite
         run: bun run test:seo
+
+      # Production build + rendered-output JSON-LD validation. Catches
+      # malformed nodes that only appear in the built SSR output.
+      - name: Production build
+        run: bun run build
+
+      - name: Start SSR server
+        run: |
+          bun run dev --port 8080 > /tmp/ssr.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:8080/ && break; sleep 2; done
+
+      - name: Validate rendered JSON-LD
+        run: bun run check:jsonld
