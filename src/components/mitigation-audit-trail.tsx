@@ -91,6 +91,39 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
   );
 }
 
+/** One-click copy of a single entry's correlation ID. */
+function CopyCorrelationIdButton({ id }: { id?: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    if (!id) return;
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      toast.success("Correlation ID copied", { description: id });
+    } catch {
+      toast.error("Clipboard blocked by your browser");
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      disabled={!id}
+      onClick={copy}
+      title={id ? `Copy correlation ID ${id}` : "No correlation ID"}
+      aria-label={id ? `Copy correlation ID ${id}` : "No correlation ID"}
+      className="h-6 gap-1 px-2 font-mono text-[10px] text-muted-foreground"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {id ?? "—"}
+    </Button>
+  );
+}
+
 /** Expandable per-entry summary of alerts fired, muted and assets affected. */
 function OutcomeBreakdown({ entry }: { entry: TuningLogEntry }) {
   const [open, setOpen] = useState(false);
