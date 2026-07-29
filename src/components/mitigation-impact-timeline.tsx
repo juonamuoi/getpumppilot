@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { Activity, ShieldAlert, Filter, X, ExternalLink, Download } from "lucide-react";
 import {
   DropdownMenu,
@@ -14,6 +13,7 @@ import {
   downloadTimelineExport,
 } from "@/lib/timeline-export";
 import { TimelineAggregateSummary } from "@/components/timeline-aggregate-summary";
+import { AuditEntryDrawer } from "@/components/audit-entry-drawer";
 
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -712,6 +712,10 @@ export function MitigationImpactTimeline() {
           </>
         )}
       </CardContent>
+      <AuditEntryDrawer
+        correlationId={drawerId}
+        onOpenChange={(o) => !o && setDrawerId(null)}
+      />
     </Card>
   );
 }
