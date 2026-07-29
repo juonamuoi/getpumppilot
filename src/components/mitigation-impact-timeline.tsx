@@ -31,6 +31,8 @@ import { useScanHistory } from "@/lib/wallet-session";
 import { usePaper } from "@/lib/paper-store";
 import type { ApprovalRisk } from "@/lib/wallet-scan";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { explainFields } from "@/lib/mitigation-explain";
+
 
 /* ------------------------------------------------------------------ *
  * Mitigation impact timeline
@@ -108,7 +110,17 @@ type SignalPoint = {
   symbols: string[];
   correlationId?: string;
   outcome?: string;
+  diff?: string;
+  ruleBefore?: string;
+  ruleAfter?: string;
+  why?: string;
+  whyChange?: string;
+  whyStrictness?: string;
+  whyImpact?: string;
+  whyOutcome?: string;
+  whyFragility?: string;
 };
+
 
 function short(addr: string) {
   return addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
@@ -332,21 +344,31 @@ export function MitigationImpactTimeline() {
         const status = e.outcome?.status;
         return status ? outcomes.includes(status) : false;
       })
-      .map((e) => ({
-        ts: e.appliedAt ?? e.ts,
-        label: e.mitigation ?? "Mitigation",
-        rule: `${e.ruleLabel} ${e.operator} ${e.newValue}${e.unit}`,
-        action: actionOf(e),
-        matchDelta: (e.matchesAfter ?? 0) - (e.matchesBefore ?? 0),
-        nearMissDelta: (e.nearMissAfter ?? 0) - (e.nearMissBefore ?? 0),
-        matchesBefore: e.matchesBefore,
-        matchesAfter: e.matchesAfter,
-        nearMissBefore: e.nearMissBefore,
-        nearMissAfter: e.nearMissAfter,
-        symbols: e.outcome?.symbols ?? [],
-        correlationId: e.correlationId,
-        outcome: e.outcome?.status,
-      }))
+      .map((e) => {
+        const fields = explainFields(e);
+        const before = `${e.ruleLabel} ${e.operator} ${e.oldValue}${e.unit}`;
+        const after = `${e.ruleLabel} ${e.operator} ${e.newValue}${e.unit}`;
+        return {
+          ts: e.appliedAt ?? e.ts,
+          label: e.mitigation ?? "Mitigation",
+          rule: after,
+          action: actionOf(e),
+          matchDelta: (e.matchesAfter ?? 0) - (e.matchesBefore ?? 0),
+          nearMissDelta: (e.nearMissAfter ?? 0) - (e.nearMissBefore ?? 0),
+          matchesBefore: e.matchesBefore,
+          matchesAfter: e.matchesAfter,
+          nearMissBefore: e.nearMissBefore,
+          nearMissAfter: e.nearMissAfter,
+          symbols: e.outcome?.symbols ?? [],
+          correlationId: e.correlationId,
+          outcome: e.outcome?.status,
+          ruleBefore: before,
+          ruleAfter: after,
+          diff: before === after ? `${after} (unchanged)` : `${before} → ${after}`,
+          ...fields,
+        };
+      })
+
       .sort((a, b) => a.ts - b.ts);
   }, [tuningLog, cutoff, tokens, actions, outcomes]);
 

@@ -30,6 +30,17 @@ export type TimelineSignalRow = {
   symbols: string[];
   correlationId?: string;
   outcome?: string;
+  /** Exact rule change, e.g. "RSI ≥ 60 → RSI ≥ 55". */
+  diff?: string;
+  ruleBefore?: string;
+  ruleAfter?: string;
+  /** Plain-English explanation and its segments. */
+  why?: string;
+  whyChange?: string;
+  whyStrictness?: string;
+  whyImpact?: string;
+  whyOutcome?: string;
+  whyFragility?: string;
 };
 
 export type TimelineFilters = {
@@ -109,6 +120,15 @@ export function buildTimelineJson(
         tokens: p.symbols,
         outcome: p.outcome ?? null,
         correlationId: p.correlationId ?? null,
+        diff: p.diff ?? null,
+        ruleBefore: p.ruleBefore ?? null,
+        ruleAfter: p.ruleAfter ?? null,
+        why: p.why ?? null,
+        whyChange: p.whyChange ?? null,
+        whyStrictness: p.whyStrictness ?? null,
+        whyImpact: p.whyImpact ?? null,
+        whyOutcome: p.whyOutcome ?? null,
+        whyFragility: p.whyFragility ?? null,
       })),
     },
     null,
@@ -175,6 +195,15 @@ export function buildTimelineCsv(
       "tokens",
       "outcome",
       "correlation_id",
+      "diff",
+      "rule_before",
+      "rule_after",
+      "why",
+      "why_change",
+      "why_strictness",
+      "why_impact",
+      "why_outcome",
+      "why_fragility",
     ],
     signals.map((p) => [
       new Date(p.ts).toISOString(),
@@ -190,6 +219,15 @@ export function buildTimelineCsv(
       p.symbols.join(" | "),
       p.outcome ?? "",
       p.correlationId ?? "",
+      p.diff ?? "",
+      p.ruleBefore ?? "",
+      p.ruleAfter ?? "",
+      p.why ?? "",
+      p.whyChange ?? "",
+      p.whyStrictness ?? "",
+      p.whyImpact ?? "",
+      p.whyOutcome ?? "",
+      p.whyFragility ?? "",
     ]),
   );
 
