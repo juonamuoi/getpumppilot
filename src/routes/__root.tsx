@@ -86,6 +86,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      {
+        name: "google-site-verification",
+        content: "0z-jV2z_Fo8iSNrL331OsmPN763jf0Te_Xq4b6BKAFY",
+      },
       { title: "PumpPilot AI — Spot momentum. Control risk. Trade smarter." },
       {
         name: "description",
