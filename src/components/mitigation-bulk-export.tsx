@@ -15,6 +15,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { explainFields } from "@/lib/mitigation-explain";
 
 /* ------------------------------------------------------------------ *
  * Bulk export — current filtered scope only
@@ -42,7 +43,7 @@ type Ctx = { entry: TuningLogEntry; scope: BulkExportScope; wallets: string[] };
 type Col = {
   key: string;
   label: string;
-  group: "identity" | "time" | "change" | "outcome";
+  group: "identity" | "time" | "change" | "outcome" | "why";
   get: (c: Ctx) => string | number;
 };
 
@@ -88,6 +89,13 @@ const COLUMNS: Col[] = [
   { key: "outcomeSymbols", label: "Outcome tokens", group: "outcome", get: (c) => c.entry.outcome?.symbols.join("|") ?? "" },
   { key: "outcomeChannels", label: "Outcome channels", group: "outcome", get: (c) => c.entry.outcome?.channels.join("|") ?? "" },
   { key: "outcomeAt", label: "Outcome recorded at", group: "outcome", get: (c) => iso(c.entry.outcome?.ts) },
+
+  { key: "why", label: "Why (plain English)", group: "why", get: (c) => explainFields(c.entry).why },
+  { key: "whyChange", label: "Why — rule change", group: "why", get: (c) => explainFields(c.entry).whyChange },
+  { key: "whyStrictness", label: "Why — strictness", group: "why", get: (c) => explainFields(c.entry).whyStrictness },
+  { key: "whyImpact", label: "Why — expected impact", group: "why", get: (c) => explainFields(c.entry).whyImpact },
+  { key: "whyOutcome", label: "Why — outcome", group: "why", get: (c) => explainFields(c.entry).whyOutcome },
+  { key: "whyFragility", label: "Why — fragility", group: "why", get: (c) => explainFields(c.entry).whyFragility },
 ];
 
 const GROUP_LABEL: Record<Col["group"], string> = {
@@ -95,7 +103,9 @@ const GROUP_LABEL: Record<Col["group"], string> = {
   time: "Timestamps & time range",
   change: "Rule change",
   outcome: "Alert outcome",
+  why: "Why explanations",
 };
+
 
 /** Correlation ID and the time-range columns ship selected by default. */
 const DEFAULT_COLUMNS = COLUMNS.filter(

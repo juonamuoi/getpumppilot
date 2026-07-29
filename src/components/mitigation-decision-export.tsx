@@ -17,6 +17,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { explainFields } from "@/lib/mitigation-explain";
 
 /* ------------------------------------------------------------------ *
  * Mitigation decision export
@@ -31,7 +32,7 @@ export type MitigationDecisionRow = Record<string, string | number>;
 type FieldDef = {
   key: string;
   label: string;
-  group: "identity" | "decision" | "confirmation" | "outcome";
+  group: "identity" | "decision" | "confirmation" | "outcome" | "why";
   get: (d: Decision) => string | number;
 };
 
@@ -86,6 +87,13 @@ const FIELDS: FieldDef[] = [
   { key: "outcomeAt", label: "Outcome recorded at", group: "outcome", get: (d) => iso(d.primary.outcome?.ts) },
   { key: "revertedAt", label: "Reverted at", group: "outcome", get: (d) => iso(d.primary.revertedAt) },
   { key: "revertReason", label: "Revert reason", group: "outcome", get: (d) => d.primary.revertReason ?? "" },
+
+  { key: "why", label: "Why (plain English)", group: "why", get: (d) => explainFields(d.primary).why },
+  { key: "whyChange", label: "Why — rule change", group: "why", get: (d) => explainFields(d.primary).whyChange },
+  { key: "whyStrictness", label: "Why — strictness", group: "why", get: (d) => explainFields(d.primary).whyStrictness },
+  { key: "whyImpact", label: "Why — expected impact", group: "why", get: (d) => explainFields(d.primary).whyImpact },
+  { key: "whyOutcome", label: "Why — outcome", group: "why", get: (d) => explainFields(d.primary).whyOutcome },
+  { key: "whyFragility", label: "Why — fragility", group: "why", get: (d) => explainFields(d.primary).whyFragility },
 ];
 
 const GROUP_LABEL: Record<FieldDef["group"], string> = {
@@ -93,7 +101,9 @@ const GROUP_LABEL: Record<FieldDef["group"], string> = {
   decision: "Rule change",
   confirmation: "Confirmation summary",
   outcome: "Outcome & rollback",
+  why: "Why explanations",
 };
+
 
 const DEFAULT_FIELDS = FIELDS.filter((f) => f.group !== "decision" || !["kind", "preset", "unit"].includes(f.key)).map(
   (f) => f.key,
@@ -145,7 +155,15 @@ const FIELD_DOC: Record<string, FieldDoc> = {
   outcomeAt: { type: "timestamp", source: "tuningLog.outcome.ts", description: "ISO time the outcome was recorded after the change took effect." },
   revertedAt: { type: "timestamp", source: "tuningLog.revertedAt", description: "ISO time the change was rolled back, if it was reverted." },
   revertReason: { type: "string", source: "tuningLog.revertReason", description: "Reason captured at rollback time (manual undo, risk bounds breach, etc.)." },
+
+  why: { type: "string", source: "derived (explainOutcome)", description: "Full plain-English explanation of what changed, why, and what it did." },
+  whyChange: { type: "string", source: "derived (rule + values)", description: "Plain-English sentence describing the threshold move." },
+  whyStrictness: { type: "enum", source: "derived (operator + direction)", description: "loosened | tightened | unchanged — direction of the filter change." },
+  whyImpact: { type: "string", source: "derived (match/near-miss deltas)", description: "Plain-English expected impact on matches and near-misses." },
+  whyOutcome: { type: "string", source: "derived (outcome)", description: "Plain-English account of what the alert run actually did." },
+  whyFragility: { type: "string", source: "derived (fragilePct)", description: "Plain-English fragility read for the resulting rule set." },
 };
+
 
 export type SchemaRow = {
   column: string;
@@ -387,7 +405,7 @@ export function MitigationDecisionExport<F,>({
   };
 
 
-  const groups: FieldDef["group"][] = ["identity", "decision", "confirmation", "outcome"];
+  const groups: FieldDef["group"][] = ["identity", "decision", "confirmation", "outcome", "why"];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
