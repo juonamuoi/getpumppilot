@@ -458,12 +458,29 @@ export function MitigationImpactTimeline() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("csv")}>
-                  Download CSV
+                  Download CSV{drawerId ? ` — ${drawerId}` : ""}
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("json")}>
-                  Download JSON
+                  Download JSON{drawerId ? ` — ${drawerId}` : ""}
                 </DropdownMenuItem>
+                {drawerId && (
+                  <>
+                    <DropdownMenuItem
+                      className="text-xs"
+                      onSelect={() => exportTimeline("csv", false)}
+                    >
+                      Download CSV — all filtered
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-xs"
+                      onSelect={() => exportTimeline("json", false)}
+                    >
+                      Download JSON — all filtered
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
+
             </DropdownMenu>
             {activeFilters > 0 && (
               <Button
