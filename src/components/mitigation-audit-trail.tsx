@@ -984,17 +984,8 @@ export function MitigationAuditTrail({
                     <MitigationDiffView entry={e} />
                     <MitigationReplayDiff entry={e} />
                     <MitigationReplayButton entry={e} imported={isImportedEntry(e)} />
-                    <button
-                      type="button"
-                      className="font-mono text-[10px] text-muted-foreground underline-offset-2 hover:underline"
-                      onClick={() => {
-                        navigator.clipboard?.writeText(e.correlationId ?? "");
-                        toast.success("Correlation ID copied");
-                      }}
-                      title="Copy correlation ID"
-                    >
-                      {e.correlationId ?? "—"}
-                    </button>
+                    <CopyCorrelationIdButton id={e.correlationId} />
+
                   </div>
                 </div>
               </div>
