@@ -40,18 +40,54 @@ export async function uploadThreatReport(
   pdfBase64: string,
   expiresSeconds: number = EXPIRES_SECONDS,
 ): Promise<{ url: string | null; reason?: string; path?: string; expiresAt?: number }> {
+  const { logStorageAccess, ownsPath } = await import("@/lib/storage-audit.server");
+  const safeId = correlationId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "report";
+  const path = `${userId}/${new Date().toISOString().slice(0, 10)}/${safeId}.pdf`;
+
+  // Objects are always written under the caller's own folder. A mismatch means
+  // the path was tampered with upstream — record the denial and stop.
+  if (!ownsPath(userId, path)) {
+    await logStorageAccess({
+      userId,
+      bucket: BUCKET,
+      objectPath: path,
+      operation: "upload",
+      decision: "deny",
+      reason: "path_owner_mismatch",
+      correlationId,
+    });
+    return { url: null, reason: "forbidden_path" };
+  }
+
   try {
     const bytes = base64ToBytes(pdfBase64);
-    if (bytes.length === 0) return { url: null, reason: "empty_pdf" };
-
-    const safeId = correlationId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "report";
-    const path = `${userId}/${new Date().toISOString().slice(0, 10)}/${safeId}.pdf`;
+    if (bytes.length === 0) {
+      await logStorageAccess({
+        userId,
+        bucket: BUCKET,
+        objectPath: path,
+        operation: "upload",
+        decision: "deny",
+        reason: "empty_pdf",
+        correlationId,
+      });
+      return { url: null, reason: "empty_pdf" };
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const up = await supabaseAdmin.storage
       .from(BUCKET)
       .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+    await logStorageAccess({
+      userId,
+      bucket: BUCKET,
+      objectPath: path,
+      operation: "upload",
+      decision: up.error ? "deny" : "allow",
+      reason: up.error ? `upload_failed: ${up.error.message}` : undefined,
+      correlationId,
+    });
     if (up.error) {
       console.error("[threat-report] upload failed", up.error.message);
       return { url: null, reason: "upload_failed" };
@@ -60,16 +96,37 @@ export async function uploadThreatReport(
     const signed = await supabaseAdmin.storage
       .from(BUCKET)
       .createSignedUrl(path, expiresSeconds);
-    if (signed.error || !signed.data?.signedUrl) {
-      return { url: null, reason: "sign_failed" };
-    }
+    const signFailed = !!signed.error || !signed.data?.signedUrl;
+    await logStorageAccess({
+      userId,
+      bucket: BUCKET,
+      objectPath: path,
+      operation: "sign",
+      decision: signFailed ? "deny" : "allow",
+      reason: signFailed
+        ? `sign_failed: ${signed.error?.message ?? "no_url"}`
+        : `signed_ttl_${expiresSeconds}s`,
+      correlationId,
+    });
+    if (signFailed) return { url: null, reason: "sign_failed" };
+
     return {
-      url: signed.data.signedUrl,
+      url: signed.data!.signedUrl,
       path,
       expiresAt: Date.now() + expiresSeconds * 1000,
     };
   } catch (e) {
+    await logStorageAccess({
+      userId,
+      bucket: BUCKET,
+      objectPath: path,
+      operation: "upload",
+      decision: "deny",
+      reason: `unexpected: ${e instanceof Error ? e.message : "error"}`,
+      correlationId,
+    });
     console.error("[threat-report] unexpected failure", e instanceof Error ? e.message : e);
     return { url: null, reason: "report_failed" };
   }
 }
+
