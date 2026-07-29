@@ -2,6 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
+import { FaqSection } from "@/components/faq-section";
+import { alertsFaqs } from "@/lib/page-faqs";
+import {
+  breadcrumbSchema,
+  faqSchema,
+  ldScript,
+  webPageSchema,
+} from "@/lib/structured-data";
+
 import { TuningDeltaChart } from "@/components/tuning-delta-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -115,7 +124,20 @@ export const Route = createFileRoute("/alerts")({
         content: "Momentum scanner rules and delivery history.",
       },
     ],
+    scripts: [
+      ldScript(
+        webPageSchema({
+          name: "Momentum alerts & scanner rules",
+          description:
+            "Configure momentum scanner thresholds, per-asset alerts and browse a searchable alert delivery history in PumpPilot AI. Demo data only.",
+          path: "/alerts",
+        }),
+      ),
+      ldScript(breadcrumbSchema([{ name: "Alerts", path: "/alerts" }])),
+      ldScript(faqSchema(alertsFaqs)),
+    ],
   }),
+
   component: AlertsPage,
 });
 
@@ -168,6 +190,9 @@ function AlertsPage() {
             <HistoryPanel />
           </TabsContent>
         </Tabs>
+
+        <FaqSection faqs={alertsFaqs} title="Alerts FAQ" />
+
       </div>
     </AppShell>
   );
