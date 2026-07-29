@@ -17,6 +17,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { explainFields } from "@/lib/mitigation-explain";
 
 /* ------------------------------------------------------------------ *
  * Mitigation decision export
@@ -396,7 +397,7 @@ export function MitigationDecisionExport<F,>({
   };
 
 
-  const groups: FieldDef["group"][] = ["identity", "decision", "confirmation", "outcome"];
+  const groups: FieldDef["group"][] = ["identity", "decision", "confirmation", "outcome", "why"];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
