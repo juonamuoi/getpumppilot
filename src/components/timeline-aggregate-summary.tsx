@@ -31,28 +31,60 @@ function Stat({
   value,
   hint,
   tone = "neutral",
+  compare,
+  delta,
 }: {
   label: string;
   value: string;
   hint?: string;
   tone?: "neutral" | "good" | "bad";
+  /** Value for the comparison window (overlay mode). */
+  compare?: string;
+  /** Rendered change vs the comparison window (overlay + diff modes). */
+  delta?: { text: string; tone: "neutral" | "good" | "bad" };
 }) {
-  const toneClass =
-    tone === "good"
-      ? "text-emerald-400"
-      : tone === "bad"
-        ? "text-destructive"
-        : "text-foreground";
+  const toneOf = (t: "neutral" | "good" | "bad") =>
+    t === "good" ? "text-emerald-400" : t === "bad" ? "text-destructive" : "text-foreground";
   return (
     <div className="rounded-lg border border-border/60 bg-muted/10 p-3">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`mt-0.5 font-mono text-lg leading-tight ${toneClass}`}>{value}</div>
+      <div className={`mt-0.5 font-mono text-lg leading-tight ${toneOf(tone)}`}>{value}</div>
+      {compare !== undefined && (
+        <div className="font-mono text-[11px] leading-tight text-muted-foreground">
+          vs {compare}
+        </div>
+      )}
+      {delta && (
+        <div className={`font-mono text-[11px] leading-tight ${toneOf(delta.tone)}`}>
+          Δ {delta.text}
+        </div>
+      )}
       {hint && <div className="mt-0.5 text-[10px] text-muted-foreground">{hint}</div>}
     </div>
   );
 }
 
 const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
+
+type CompareKey = "off" | "prev" | "prev2" | "week" | "month" | "custom";
+
+const COMPARE_OPTIONS: { key: CompareKey; label: string }[] = [
+  { key: "off", label: "No comparison" },
+  { key: "prev", label: "Previous period" },
+  { key: "prev2", label: "2 periods back" },
+  { key: "week", label: "Same period, 1 week earlier" },
+  { key: "month", label: "Same period, 30 days earlier" },
+  { key: "custom", label: "Custom window" },
+];
+
+const DAY = 24 * 3600_000;
+
+/** `datetime-local` value <-> epoch ms helpers (local time). */
+const toLocalInput = (ts: number) => {
+  const d = new Date(ts - new Date(ts).getTimezoneOffset() * 60_000);
+  return d.toISOString().slice(0, 16);
+};
+
 
 /**
  * Aggregate roll-up of the currently filtered timeline: total signal delta and
