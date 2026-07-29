@@ -245,11 +245,21 @@ function SeoPreviewPage() {
                         <span className="text-foreground">Title:</span> {row.title}
                       </p>
                     )}
-                    <dl className="grid gap-1 text-xs sm:grid-cols-[7rem_1fr]">
+                    <dl className="grid gap-1 text-xs sm:grid-cols-[9rem_1fr]">
                       <dt className="text-muted-foreground">canonical</dt>
                       <dd className="break-all font-mono">{row.canonical ?? "—"}</dd>
                       <dt className="text-muted-foreground">og:url</dt>
                       <dd className="break-all font-mono">{row.ogUrl ?? "—"}</dd>
+                      <dt className="text-muted-foreground">og:title</dt>
+                      <dd className="break-all">{row.ogTitle ?? "—"}</dd>
+                      <dt className="text-muted-foreground">og:description</dt>
+                      <dd className="break-all">{row.ogDescription ?? "—"}</dd>
+                      <dt className="text-muted-foreground">og:image</dt>
+                      <dd className="break-all font-mono">{row.ogImage ?? "—"}</dd>
+                      <dt className="text-muted-foreground">twitter:card</dt>
+                      <dd className="font-mono">{row.twitterCard ?? "—"}</dd>
+                      <dt className="text-muted-foreground">twitter:site</dt>
+                      <dd className="font-mono">{row.twitterSite ?? "—"}</dd>
                       {row.robots && (
                         <>
                           <dt className="text-muted-foreground">robots</dt>
@@ -257,6 +267,7 @@ function SeoPreviewPage() {
                         </>
                       )}
                     </dl>
+
                     {row.issues.length > 0 && (
                       <ul className="list-inside list-disc text-xs text-amber-400">
                         {row.issues.map((issue) => (
