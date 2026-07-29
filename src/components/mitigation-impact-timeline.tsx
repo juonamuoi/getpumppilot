@@ -108,7 +108,17 @@ type SignalPoint = {
   symbols: string[];
   correlationId?: string;
   outcome?: string;
+  diff?: string;
+  ruleBefore?: string;
+  ruleAfter?: string;
+  why?: string;
+  whyChange?: string;
+  whyStrictness?: string;
+  whyImpact?: string;
+  whyOutcome?: string;
+  whyFragility?: string;
 };
+
 
 function short(addr: string) {
   return addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
