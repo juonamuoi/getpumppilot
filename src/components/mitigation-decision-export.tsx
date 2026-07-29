@@ -242,6 +242,12 @@ const PRESETS_KEY = "pumppilot_export_presets";
  */
 export const EXPORT_SCHEMA_VERSION = 2;
 
+/** Minimum schema version a consumer must understand to read current files. */
+export const EXPORT_SCHEMA_MIN_COMPATIBLE = 1;
+
+/** Human-readable compatibility contract embedded in every export payload. */
+export const EXPORT_SCHEMA_COMPATIBILITY = `Schema v${EXPORT_SCHEMA_VERSION} (backward compatible with v${EXPORT_SCHEMA_MIN_COMPATIBLE}+). Columns are additive: new versions may append columns, so parse by column name and ignore unknown names. Removed columns are dropped, never repurposed. Presets saved against older versions are migrated automatically on load.`;
+
 export type ExportPreset<F = unknown> = {
   id: string;
   name: string;
@@ -517,6 +523,8 @@ export function MitigationDecisionExport<F,>({
       kind: "pumppilot.mitigation-export-presets",
       version: 1,
       schemaVersion: EXPORT_SCHEMA_VERSION,
+      minCompatibleSchemaVersion: EXPORT_SCHEMA_MIN_COMPATIBLE,
+      compatibility: EXPORT_SCHEMA_COMPATIBILITY,
       exportedAt: new Date().toISOString(),
       presets,
     };
@@ -619,6 +627,9 @@ export function MitigationDecisionExport<F,>({
     }
     if (kind === "json") {
       const payload = {
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        minCompatibleSchemaVersion: EXPORT_SCHEMA_MIN_COMPATIBLE,
+        compatibility: EXPORT_SCHEMA_COMPATIBILITY,
         generatedAt: new Date().toISOString(),
         appliesTo: `mitigation-decisions-${stamp}.${kind === "json" ? "json" : "csv"}`,
         columnCount: schema.length,
@@ -630,8 +641,14 @@ export function MitigationDecisionExport<F,>({
         `mitigation-decisions-schema-${stamp}.json`,
       );
     } else {
+      const versioned = schema.map((row) => ({
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        minCompatibleSchemaVersion: EXPORT_SCHEMA_MIN_COMPATIBLE,
+        compatibility: EXPORT_SCHEMA_COMPATIBILITY,
+        ...(row as Record<string, string | number>),
+      }));
       saveBlob(
-        new Blob([toCsv(schema as unknown as MitigationDecisionRow[])], { type: "text/csv" }),
+        new Blob([toCsv(versioned as unknown as MitigationDecisionRow[])], { type: "text/csv" }),
         `mitigation-decisions-schema-${stamp}.csv`,
       );
     }
@@ -651,11 +668,21 @@ export function MitigationDecisionExport<F,>({
     if (kind === "json") {
       const preset = presets.find((p) => p.id === activePreset);
       const payload = {
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        minCompatibleSchemaVersion: EXPORT_SCHEMA_MIN_COMPATIBLE,
+        compatibility: EXPORT_SCHEMA_COMPATIBILITY,
         exportedAt: new Date().toISOString(),
         recordCount: data.length,
         fields: selected,
         includesPreviewOnly: includePreviewOnly,
-        preset: preset ? { name: preset.name, savedAt: new Date(preset.savedAt).toISOString() } : null,
+        preset: preset
+          ? {
+              name: preset.name,
+              savedAt: new Date(preset.savedAt).toISOString(),
+              schemaVersion: preset.schemaVersion ?? 1,
+              migratedFrom: preset.migratedFrom ?? null,
+            }
+          : null,
         filters: filters ?? null,
         schema: schemaRows(),
         note: "PumpPilot AI mitigation decisions — simulated/demo data.",
@@ -888,6 +915,9 @@ export function MitigationDecisionExport<F,>({
           >
             <FileText className="h-3.5 w-3.5" /> Schema only
           </Button>
+          <span className="text-[10px] text-muted-foreground">
+            v{EXPORT_SCHEMA_VERSION} · compatible with v{EXPORT_SCHEMA_MIN_COMPATIBLE}+ readers
+          </span>
 
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setSelected(FIELDS.map((f) => f.key))}>
