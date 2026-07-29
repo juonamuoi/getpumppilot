@@ -233,3 +233,119 @@ export function formatDuration(ms: number) {
   }
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
+
+/* ------------------------------------------------------------------ *
+ * Anomaly detection
+ *
+ * Flags buckets whose total signal delta spikes far away from the
+ * typical bucket (robust median + MAD, so a single huge bucket does not
+ * hide the rest) and buckets with rapid risk escalation / de-escalation.
+ * ------------------------------------------------------------------ */
+
+export type AnomalyKind = "signal-spike" | "escalation-burst" | "deescalation-burst";
+
+export type Anomaly = {
+  kind: AnomalyKind;
+  /** Bucket window the anomaly was detected in. */
+  start: number;
+  end: number;
+  /** Observed value (net signal delta, or transition count). */
+  value: number;
+  /** Typical value for comparison (median / threshold). */
+  baseline: number;
+  /** Robust deviation score; higher = more unusual. */
+  score: number;
+  severity: "warning" | "critical";
+  message: string;
+  /** Best correlation ID inside the window, for jumping to the audit entry. */
+  correlationId?: string;
+  /** Representative timestamp to jump to on the timeline. */
+  ts: number;
+};
+
+function median(values: number[]) {
+  if (!values.length) return 0;
+  const s = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+export function detectAnomalies(
+  agg: TimelineAggregate,
+  signalPoints: AggSignalPoint[] = [],
+  opts: { z?: number; burst?: number } = {},
+): Anomaly[] {
+  const zLimit = opts.z ?? 3;
+  const burstLimit = opts.burst ?? 3;
+  const out: Anomaly[] = [];
+  const buckets = agg.buckets;
+  if (buckets.length < 2) return out;
+
+  const nets = buckets.map((b) => b.matchDelta - b.nearMissDelta);
+  const med = median(nets);
+  const mad = median(nets.map((v) => Math.abs(v - med))) || 1;
+
+  const idFor = (start: number, end: number) => {
+    const inWindow = signalPoints
+      .filter((s) => s.ts >= start && s.ts < end && s.correlationId)
+      .sort(
+        (a, b) =>
+          Math.abs(b.matchDelta) + Math.abs(b.nearMissDelta) -
+          (Math.abs(a.matchDelta) + Math.abs(a.nearMissDelta)),
+      );
+    return { correlationId: inWindow[0]?.correlationId, ts: inWindow[0]?.ts };
+  };
+
+  buckets.forEach((b, i) => {
+    const net = nets[i];
+    const score = Math.abs(net - med) / (1.4826 * mad);
+    const focus = idFor(b.start, b.end);
+
+    if (score >= zLimit && Math.abs(net) >= 2) {
+      out.push({
+        kind: "signal-spike",
+        start: b.start,
+        end: b.end,
+        value: net,
+        baseline: med,
+        score,
+        severity: score >= zLimit * 1.8 ? "critical" : "warning",
+        message: `Signal delta ${net > 0 ? "surged" : "collapsed"} to ${net > 0 ? "+" : ""}${net} vs a typical ${med > 0 ? "+" : ""}${med}`,
+        correlationId: focus.correlationId,
+        ts: focus.ts ?? b.start,
+      });
+    }
+
+    if (b.escalations >= burstLimit) {
+      out.push({
+        kind: "escalation-burst",
+        start: b.start,
+        end: b.end,
+        value: b.escalations,
+        baseline: burstLimit,
+        score: b.escalations / burstLimit,
+        severity: b.escalations >= burstLimit * 2 ? "critical" : "warning",
+        message: `${b.escalations} risk escalations in one window`,
+        correlationId: focus.correlationId,
+        ts: focus.ts ?? b.start,
+      });
+    }
+
+    if (b.deEscalations >= burstLimit) {
+      out.push({
+        kind: "deescalation-burst",
+        start: b.start,
+        end: b.end,
+        value: b.deEscalations,
+        baseline: burstLimit,
+        score: b.deEscalations / burstLimit,
+        severity: "warning",
+        message: `${b.deEscalations} rapid de-escalations in one window`,
+        correlationId: focus.correlationId,
+        ts: focus.ts ?? b.start,
+      });
+    }
+  });
+
+  return out.sort((a, b) => b.score - a.score);
+}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { ArrowDownRight, ArrowUpRight, Download, GitCompare, Minus, Sigma } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Crosshair, Download, GitCompare, Minus, Sigma } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,13 @@ import {
 } from "@/lib/aggregate-export";
 import {
   aggregateTimeline,
+  detectAnomalies,
   formatDuration,
   BUCKETS,
   RISK_NAME,
   type AggRiskPoint,
   type AggSignalPoint,
+  type Anomaly,
   type BucketKey,
 } from "@/lib/timeline-aggregate";
 
@@ -97,6 +99,7 @@ export function TimelineAggregateSummary({
   allSignalPoints,
   window: viewWindow,
   scope,
+  onJump,
 }: {
   riskPoints: AggRiskPoint[];
   signalPoints: AggSignalPoint[];
@@ -107,11 +110,18 @@ export function TimelineAggregateSummary({
   window?: { from: number | null; to: number };
   /** Current wallet / token / range selection, recorded in the export. */
   scope?: AggregateScope;
+  /** Jump to the matching moment on the timeline chart / audit entry. */
+  onJump?: (anomaly: Anomaly) => void;
 }) {
   const [bucket, setBucket] = useState<BucketKey>("day");
   const agg = useMemo(
     () => aggregateTimeline(riskPoints, signalPoints, bucket),
     [riskPoints, signalPoints, bucket],
+  );
+
+  const anomalies = useMemo(
+    () => detectAnomalies(agg, signalPoints),
+    [agg, signalPoints],
   );
 
   /* -------- Interactive heatmap drill-down -------- */
@@ -577,17 +587,77 @@ export function TimelineAggregateSummary({
       )}
 
 
+      {/* Anomalies */}
+      {anomalies.length > 0 && (
+        <div className="space-y-1.5 rounded-lg border border-amber-400/40 bg-amber-400/5 p-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+            <span className="text-[11px] font-medium">
+              {anomalies.length} anomal{anomalies.length === 1 ? "y" : "ies"} detected
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              sudden signal spikes or rapid risk shifts
+            </span>
+          </div>
+          {anomalies.slice(0, 6).map((a, i) => (
+            <div
+              key={`${a.kind}-${a.start}-${i}`}
+              className="flex flex-wrap items-center gap-2 rounded-md border border-border/50 bg-background/40 px-2 py-1.5 text-[11px]"
+            >
+              <Badge
+                variant="outline"
+                className={`text-[10px] ${a.severity === "critical" ? "text-destructive" : "text-amber-400"}`}
+              >
+                {a.kind === "signal-spike"
+                  ? "Signal spike"
+                  : a.kind === "escalation-burst"
+                    ? "Escalation burst"
+                    : "Rapid de-escalation"}
+              </Badge>
+              <span className="font-mono text-muted-foreground">
+                {format(a.start, bucketFmt)}
+              </span>
+              <span className="truncate">{a.message}</span>
+              <span className="ml-auto flex items-center gap-2">
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  σ {a.score.toFixed(1)}
+                </span>
+                {onJump && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 gap-1 px-2 text-[10px]"
+                    onClick={() => onJump(a)}
+                  >
+                    <Crosshair className="h-3 w-3" />
+                    Jump to timeline
+                  </Button>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Per-period breakdown */}
       {agg.buckets.length > 0 && (
         <div className="space-y-1">
-          {agg.buckets.map((b) => (
+          {agg.buckets.map((b) => {
+            const flagged = anomalies.filter((a) => a.start === b.start);
+            return (
             <div
               key={b.start}
-              className="flex flex-wrap items-center gap-2 rounded-md border border-border/40 bg-muted/10 px-2 py-1.5 text-[11px]"
+              className={`flex flex-wrap items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] ${
+                flagged.length
+                  ? "border-amber-400/60 bg-amber-400/10"
+                  : "border-border/40 bg-muted/10"
+              }`}
             >
-              <span className="w-[110px] shrink-0 text-muted-foreground">
+              <span className="flex w-[110px] shrink-0 items-center gap-1 text-muted-foreground">
+                {flagged.length > 0 && <AlertTriangle className="h-3 w-3 text-amber-400" />}
                 {format(b.start, bucketFmt)}
               </span>
+
               <span className="flex items-center gap-1">
                 <span
                   className="inline-block h-2 rounded-sm"
@@ -625,10 +695,23 @@ export function TimelineAggregateSummary({
                   Peak {RISK_NAME[b.peakRisk]}
                 </Badge>
               )}
+              {flagged.length > 0 && onJump && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 gap-1 px-2 text-[10px] text-amber-400"
+                  onClick={() => onJump(flagged[0])}
+                >
+                  <Crosshair className="h-3 w-3" />
+                  Jump
+                </Button>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
     </div>
   );
 }

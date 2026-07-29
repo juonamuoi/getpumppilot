@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -178,6 +178,7 @@ export function MitigationImpactTimeline() {
   };
   const urlId = search.audit ?? null;
   const [drawerId, setDrawerId] = useState<string | null>(urlId);
+  const chartRef = useRef<HTMLDivElement | null>(null);
 
 
   // Restore from local UI state when the URL has no focus (e.g. plain reload).
@@ -789,9 +790,13 @@ export function MitigationImpactTimeline() {
                 outcomes,
                 correlationId: drawerId ?? undefined,
               }}
+              onJump={(a) => {
+                if (a.correlationId) openAudit(a.correlationId);
+                chartRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
             />
 
-            <div className="overflow-x-auto">
+            <div ref={chartRef} className="overflow-x-auto">
               <svg
                 viewBox={`0 0 ${W} ${H}`}
                 className="h-[220px] w-full min-w-[560px]"
