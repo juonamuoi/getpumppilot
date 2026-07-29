@@ -348,49 +348,16 @@ export function MitigationAuditTrail({
     [importedEntries, log],
   );
 
-  const entries = useMemo(() => {
-    return sourceLog
-      .filter((e) => e.source === "mitigation" && !!e.mitigation)
-      .filter((e) => {
-        if (outcome === "all") return true;
-        if (outcome === "pending") return !e.outcome;
-        return e.outcome?.status === outcome;
-      })
-      .filter((e) => {
-        if (range === "all") return true;
-        return Date.now() - e.ts <= RANGE_MS[range];
-      })
-      .filter((e) => {
-        if (correlationIds.length === 0) return true;
-        return !!e.correlationId && correlationIds.includes(e.correlationId);
-      })
-      .filter((e) => {
-        if (tokens.length === 0) return true;
-        return (e.outcome?.symbols ?? []).some((s) => tokens.includes(s));
-      })
-      .filter((e) => {
-        if (alertTypes.length === 0) return true;
-        return (e.outcome?.channels ?? []).some((c) => alertTypes.includes(c));
-      })
-      .filter((e) => {
-        if (wallets.length === 0) return true;
-        return (walletsForEntry.get(e.id) ?? []).some((w) => wallets.includes(w));
-      })
-      .filter((e) => {
-        if (!q.trim()) return true;
-        const hay = [
-          e.mitigation,
-          e.ruleLabel,
-          e.trigger,
-          e.correlationId,
-          e.outcome?.symbols.join(" "),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(q.trim().toLowerCase());
-      });
-  }, [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
+  const entries = useMemo(
+    () =>
+      filterAuditEntries(
+        sourceLog,
+        { q, outcome, range, correlationIds, tokens, alertTypes, wallets },
+        (e) => walletsForEntry.get(e.id) ?? [],
+      ),
+    [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry],
+  );
+
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
