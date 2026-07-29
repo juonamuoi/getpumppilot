@@ -16,6 +16,7 @@
     "cap:assets": "capacitor-assets generate --iconBackgroundColor '#0B0F19' --splashBackgroundColor '#0B0F19'",
     "lint:supabase": "node scripts/supabase-lint-check.mjs",
     "lint:supabase:live": "node scripts/supabase-lint-check.mjs --live",
+    "lint:supabase:authz": "node scripts/supabase-authz-check.mjs",
     "test:security": "vitest run --config vitest.security.config.ts",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
   },
