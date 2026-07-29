@@ -176,8 +176,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="space-y-2 p-3">
                 <CreditMeter />
+                <AccountButton onNavigate={() => setOpen(false)} />
                 <LiveLockedCard />
               </div>
+
             </SheetContent>
           </Sheet>
         </div>
