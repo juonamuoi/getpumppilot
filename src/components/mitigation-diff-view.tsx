@@ -106,6 +106,54 @@ function ruleRows(before: ScannerRules, after: ScannerRules) {
   ].map((r) => ({ ...r, changed: r.b !== r.a }));
 }
 
+/** Plain-English definition of every gate the scanner applies, keyed by gate name. */
+const RULE_DEFS: {
+  gate: string;
+  label: string;
+  definition: string;
+  threshold: (r: ScannerRules) => string;
+  value?: (a: Asset) => number;
+  unit?: string;
+}[] = [
+  {
+    gate: "Momentum",
+    label: "Min momentum",
+    definition: "Pass when the asset's composite momentum score is greater than or equal to the minimum.",
+    threshold: (r) => `≥ ${r.minMomentum}`,
+    value: (a) => a.momentum.total,
+  },
+  {
+    gate: "Volume",
+    label: "Min volume score",
+    definition: "Pass when the volume sub-score (relative trading activity) meets the minimum.",
+    threshold: (r) => `≥ ${r.minVolumeScore}`,
+    value: (a) => a.momentum.volume,
+  },
+  {
+    gate: "Volatility",
+    label: "Max volatility",
+    definition: "Pass when the volatility sub-score stays at or below the ceiling — a fragility guard.",
+    threshold: (r) => `≤ ${r.maxVolatility}`,
+    value: (a) => a.momentum.volatility,
+  },
+  {
+    gate: "24h change",
+    label: "Min 24h change",
+    definition: "Pass when the 24-hour price change is at least the minimum percentage.",
+    threshold: (r) => `≥ ${r.min24hChangePct}%`,
+    value: (a) => a.change24h,
+    unit: "%",
+  },
+  {
+    gate: "Scope",
+    label: "Universe scope",
+    definition:
+      "Pass when the asset's category is included in the scan universe (majors and/or DEMO small-caps).",
+    threshold: (r) =>
+      `majors: ${r.includeMajors ? "on" : "off"} · DEMO: ${r.includeDemoSmallCaps ? "on" : "off"}`,
+  },
+];
+
 /**
  * Before/after diff for one mitigation batch: exactly which rules changed and
  * which assets crossed the matched / near-miss / no-match boundary.
@@ -114,6 +162,7 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   const { tuningLog, scannerRules } = usePaper();
   const [open, setOpen] = useState(false);
   const [onlyChanged, setOnlyChanged] = useState(true);
+  const [openGate, setOpenGate] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("change");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -174,6 +223,42 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   );
   const rules = ruleRows(before, after);
   const changedRules = rules.filter((r) => r.changed);
+
+  /** Per-gate drill-down: definition, thresholds, and why each asset's gate flipped. */
+  const drilldown = useMemo(
+    () =>
+      RULE_DEFS.map((def) => {
+        const flips = rows
+          .map((r) => {
+            const passBefore = r.bEval.checks[def.gate];
+            const passAfter = r.aEval.checks[def.gate];
+            if (passBefore === passAfter) return null;
+            const v = def.value ? def.value(r.asset) : null;
+            return {
+              symbol: r.asset.symbol,
+              direction: passAfter ? ("pass" as const) : ("fail" as const),
+              reason:
+                v === null
+                  ? `${r.asset.category === "major" ? "Major" : "DEMO small-cap"} scope turned ${passAfter ? "on" : "off"}`
+                  : `value ${v}${def.unit ?? ""} now ${passAfter ? "satisfies" : "violates"} ${def.threshold(after)}`,
+              statusBefore: r.bEval.status,
+              statusAfter: r.aEval.status,
+              decisive: r.bEval.status !== r.aEval.status,
+            };
+          })
+          .filter((f): f is NonNullable<typeof f> => f !== null);
+        return {
+          ...def,
+          before: def.threshold(before),
+          after: def.threshold(after),
+          changed: def.threshold(before) !== def.threshold(after),
+          flips,
+          nowPass: flips.filter((f) => f.direction === "pass").length,
+          nowFail: flips.filter((f) => f.direction === "fail").length,
+        };
+      }),
+    [rows, before, after],
+  );
 
   const visible = useMemo(() => {
     const list = onlyChanged ? rows.filter((r) => r.changed) : [...rows];
@@ -262,7 +347,7 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
           Diff
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Before / after diff — {entry.mitigation ?? "Rule change"}</DialogTitle>
           <DialogDescription>
@@ -318,6 +403,119 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
                     {r.label}: {r.b} (unchanged)
                   </span>
                 ))}
+            </div>
+          </section>
+
+          <section>
+            <h4 className="mb-2 text-xs font-medium text-muted-foreground">
+              Rule drill-down ({drilldown.filter((d) => d.changed).length} changed ·{" "}
+              {drilldown.reduce((n, d) => n + d.flips.length, 0)} gate flips)
+            </h4>
+            <div className="space-y-1">
+              {drilldown.map((d) => {
+                const isOpen = openGate === d.gate;
+                return (
+                  <div
+                    key={d.gate}
+                    className={cn(
+                      "rounded-md border text-xs",
+                      d.changed ? "border-primary/30 bg-primary/5" : "border-border/60 bg-card/30",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenGate(isOpen ? null : d.gate)}
+                      className="flex w-full items-center gap-2 px-2 py-1.5 text-left"
+                      aria-expanded={isOpen}
+                    >
+                      {isOpen ? (
+                        <ChevronUp className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="w-40 shrink-0 font-medium">{d.label}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground line-through">
+                        {d.before}
+                      </span>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                      <span
+                        className={cn(
+                          "font-mono text-[10px] font-medium",
+                          d.changed ? "text-primary" : "text-muted-foreground",
+                        )}
+                      >
+                        {d.after}
+                      </span>
+                      <span className="ml-auto flex gap-1">
+                        {d.nowPass > 0 && (
+                          <Badge variant="secondary" className="bg-emerald-500/15 text-[10px] text-emerald-400">
+                            +{d.nowPass} pass
+                          </Badge>
+                        )}
+                        {d.nowFail > 0 && (
+                          <Badge variant="secondary" className="bg-rose-500/15 text-[10px] text-rose-400">
+                            +{d.nowFail} fail
+                          </Badge>
+                        )}
+                        {d.flips.length === 0 && (
+                          <span className="text-[10px] text-muted-foreground">no outcome change</span>
+                        )}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="space-y-2 border-t border-border/50 px-2 py-2">
+                        <p className="text-[11px] text-muted-foreground">{d.definition}</p>
+                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                          <div className="rounded border border-border/60 p-1.5">
+                            <div className="text-muted-foreground">Previous threshold</div>
+                            <div className="font-mono text-foreground">{d.before}</div>
+                          </div>
+                          <div className="rounded border border-border/60 p-1.5">
+                            <div className="text-muted-foreground">New threshold</div>
+                            <div className="font-mono text-foreground">{d.after}</div>
+                          </div>
+                        </div>
+                        {d.flips.length === 0 ? (
+                          <p className="text-[10px] text-muted-foreground">
+                            {d.changed
+                              ? "Threshold moved, but no asset crossed this gate — every asset stayed on the same side."
+                              : "Threshold unchanged, so this gate's outcome is identical for every asset."}
+                          </p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {d.flips.map((f) => (
+                              <li
+                                key={f.symbol}
+                                className="flex flex-wrap items-center gap-1.5 rounded border border-border/50 px-1.5 py-1 text-[10px]"
+                              >
+                                <span className="w-14 font-medium">{f.symbol}</span>
+                                <Badge
+                                  variant="secondary"
+                                  className={cn(
+                                    "text-[9px]",
+                                    f.direction === "pass"
+                                      ? "bg-emerald-500/15 text-emerald-400"
+                                      : "bg-rose-500/15 text-rose-400",
+                                  )}
+                                >
+                                  gate {f.direction === "pass" ? "fail → pass" : "pass → fail"}
+                                </Badge>
+                                <span className="text-muted-foreground">{f.reason}</span>
+                                {f.decisive && (
+                                  <span className="ml-auto text-primary">
+                                    flipped asset: {STATUS_LABEL[f.statusBefore]} →{" "}
+                                    {STATUS_LABEL[f.statusAfter]}
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 
