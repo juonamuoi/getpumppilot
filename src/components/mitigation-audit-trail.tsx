@@ -676,7 +676,13 @@ export function MitigationAuditTrail({
           <div className="flex gap-2">
             <MitigationRetentionSettings />
             <MitigationImport
-              onImport={(rows) => setImportedEntries((prev) => [...prev, ...rows])}
+              onImport={({ add, replace }) =>
+                setImportedEntries((prev) => {
+                  const byId = new Map(replace.map((e) => [e.id, e]));
+                  return [...prev.map((e) => byId.get(e.id) ?? e), ...add];
+                })
+              }
+              existingEntries={[...log, ...importedEntries]}
               importedCount={importedEntries.length}
               onClear={() => setImportedEntries([])}
             />
