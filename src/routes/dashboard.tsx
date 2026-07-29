@@ -193,6 +193,10 @@ function Dashboard() {
           <LiveMarket />
         </div>
 
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Realtime alerts</h2>
+        <RealtimeMomentumAlerts />
+
+
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">AI coaching</h2>
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
