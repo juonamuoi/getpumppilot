@@ -13,6 +13,9 @@ import { toast } from "sonner";
 import { Sparkles, Share2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
+import { HowToSteps } from "@/components/how-to-steps";
+import { STRATEGY_BUILDER_FLOW } from "@/lib/help-flows";
+import { howToSchema, ldScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/strategy")({
   head: () => ({
@@ -30,6 +33,18 @@ export const Route = createFileRoute("/strategy")({
         property: "og:description",
         content: "Compose momentum, volume and volatility rules into a paper strategy.",
       },
+    ],
+    scripts: [
+      ldScript(
+        howToSchema({
+          name: STRATEGY_BUILDER_FLOW.name,
+          description: STRATEGY_BUILDER_FLOW.description,
+          path: STRATEGY_BUILDER_FLOW.path,
+          totalTime: STRATEGY_BUILDER_FLOW.totalTime,
+          tools: STRATEGY_BUILDER_FLOW.tools,
+          steps: STRATEGY_BUILDER_FLOW.steps,
+        }),
+      ),
     ],
   }),
   component: StrategyPage,
@@ -184,6 +199,7 @@ function StrategyPage() {
             </CardContent>
           </Card>
         </div>
+        <HowToSteps flow={STRATEGY_BUILDER_FLOW} />
       </div>
     </AppShell>
   );
