@@ -20,11 +20,14 @@ import {
   buildErrorReportCsv,
   buildErrorReportJson,
   planDedupe,
+  applyMapping,
+  suggestMapping,
   DEDUPE_LABEL,
   DEDUPE_HINT,
   type DedupeStrategy,
   type ImportResult,
 } from "@/lib/mitigation-import";
+import { MitigationColumnMapper } from "@/components/mitigation-column-mapper";
 
 function download(name: string, mime: string, body: string) {
   const url = URL.createObjectURL(new Blob([body], { type: mime }));
@@ -54,6 +57,8 @@ export function MitigationImport({
 }) {
   const [strategy, setStrategy] = useState<DedupeStrategy>("skip");
   const [open, setOpen] = useState(false);
+  const [raw, setRaw] = useState<ImportResult | null>(null);
+  const [mapping, setMapping] = useState<Record<string, string>>({});
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
@@ -62,14 +67,23 @@ export function MitigationImport({
   const handleFile = async (file: File) => {
     setError(null);
     setResult(null);
+    setRaw(null);
     setFileName(file.name);
     try {
       const text = await file.text();
       const parsed = parseMitigationExport(file.name, text);
-      setResult(parsed);
+      const guess = suggestMapping(parsed.headers ?? []);
+      setRaw(parsed);
+      setMapping(guess);
+      setResult(applyMapping(parsed, guess));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not read that file.");
     }
+  };
+
+  const remap = (next: Record<string, string>) => {
+    setMapping(next);
+    if (raw) setResult(applyMapping(raw, next));
   };
 
   const counts = useMemo(() => {
@@ -103,6 +117,7 @@ export function MitigationImport({
         description: `All ${result.entries.length} record(s) already exist in the audit trail.`,
       });
       setResult(null);
+      setRaw(null);
       setFileName("");
       setOpen(false);
       return;
@@ -120,6 +135,7 @@ export function MitigationImport({
       description: `${dupNote}${result.warned > 0 ? ` ${result.warned} with warnings.` : ""}`,
     });
     setResult(null);
+    setRaw(null);
     setFileName("");
     setOpen(false);
   };
@@ -306,6 +322,15 @@ export function MitigationImport({
               )
             )}
 
+
+            {raw && (raw.headers?.length ?? 0) > 0 && (
+              <MitigationColumnMapper
+                headers={raw.headers ?? []}
+                mapping={mapping}
+                onChange={remap}
+                sample={(raw.records?.[0] ?? undefined) as Record<string, unknown> | undefined}
+              />
+            )}
 
             <div className="space-y-2 rounded-md border border-border/60 bg-muted/10 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">

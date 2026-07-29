@@ -48,6 +48,16 @@ export type ImportResult = {
     preset?: string | null;
   };
   range?: { from: number; to: number };
+  /** Raw records exactly as read from the file, for re-mapping. */
+  records?: ImportRecord[];
+  /** Column headers / JSON keys found in the file. */
+  headers?: string[];
+  /** Header → audit field mapping applied to produce `entries`. */
+  mapping?: Record<string, string>;
+  /** Headers not mapped to any audit field. */
+  unmapped?: string[];
+  /** Offset used to report CSV line numbers, kept so remaps stay accurate. */
+  lineOffset?: number;
 };
 
 export const IMPORT_PREFIX = "imported-";
@@ -112,6 +122,8 @@ const list = (v: unknown) =>
     .filter(Boolean);
 
 type Raw = Record<string, unknown>;
+
+export type ImportRecord = Raw;
 
 const short = (v: unknown) => {
   const s = String(v ?? "");
@@ -284,7 +296,138 @@ function finalize(
     fileName: opts.fileName,
     meta: opts.meta,
     range,
+    records,
+    headers: [...new Set(records.flatMap((r) => Object.keys(r)))],
+    lineOffset: opts.lineOffset ?? 0,
   };
+}
+
+/* ------------------------------------------------------------------ *
+ * Column mapping
+ *
+ * Files exported from other tools (or older schema versions) use
+ * different header names. Each source header can be mapped onto an
+ * audit-trail field before the records are turned into entries.
+ * ------------------------------------------------------------------ */
+
+export type ImportFieldDef = { key: string; label: string; required?: boolean; aliases: string[] };
+
+/** Audit-trail fields an imported column can be mapped onto. */
+export const IMPORT_FIELDS: ImportFieldDef[] = [
+  { key: "correlationId", label: "Correlation ID", required: true, aliases: ["correlation", "correlation_id", "batchid", "batch", "groupid"] },
+  { key: "decisionId", label: "Entry ID", aliases: ["id", "entryid", "recordid", "rowid", "decision_id"] },
+  { key: "decision", label: "Decision", aliases: ["state", "status", "result"] },
+  { key: "phase", label: "Phase", aliases: ["stage", "lifecycle"] },
+  { key: "mitigation", label: "Mitigation", required: true, aliases: ["action", "mitigationname", "fix", "remediation"] },
+  { key: "trigger", label: "Trigger", aliases: ["cause", "reason", "triggeredby"] },
+  { key: "rule", label: "Rule", required: true, aliases: ["rulelabel", "rulename", "signal", "metric"] },
+  { key: "kind", label: "Change type", aliases: ["changetype", "type"] },
+  { key: "operator", label: "Operator", aliases: ["comparator", "op"] },
+  { key: "oldValue", label: "Old value", aliases: ["before", "previous", "from", "oldthreshold", "previousthreshold"] },
+  { key: "newValue", label: "New value", aliases: ["after", "to", "newthreshold", "threshold"] },
+  { key: "unit", label: "Unit", aliases: ["units", "measure"] },
+  { key: "recommendedValue", label: "Recommended value", aliases: ["recommended", "suggestedvalue"] },
+  { key: "preset", label: "Preset", aliases: ["profile", "mode"] },
+  { key: "window", label: "Replay window", aliases: ["timewindow", "lookback"] },
+  { key: "scope", label: "Asset scope", aliases: ["assetscope", "universe"] },
+  { key: "timestamp", label: "Timestamp", required: true, aliases: ["time", "date", "datetime", "when", "createdat", "ts", "occurredat"] },
+  { key: "previewedAt", label: "Previewed at", aliases: ["previewtime", "confirmedat", "reviewedat"] },
+  { key: "appliedAt", label: "Applied at", aliases: ["appliedtime", "savedat"] },
+  { key: "matchesBefore", label: "Matches before", aliases: ["matchbefore", "matchesprior"] },
+  { key: "matchesAfter", label: "Matches after", aliases: ["matchafter"] },
+  { key: "nearMissBefore", label: "Near-miss before", aliases: ["nearmissprior"] },
+  { key: "nearMissAfter", label: "Near-miss after", aliases: [] },
+  { key: "scopeMatchesBefore", label: "Scope matches before", aliases: [] },
+  { key: "scopeMatchesAfter", label: "Scope matches after", aliases: [] },
+  { key: "scopeNearMissBefore", label: "Scope near-miss before", aliases: [] },
+  { key: "scopeNearMissAfter", label: "Scope near-miss after", aliases: [] },
+  { key: "scopeAssetsAffected", label: "Assets affected", aliases: ["assetsaffected", "affectedassets"] },
+  { key: "fragilePct", label: "Fragility %", aliases: ["fragility", "fragile"] },
+  { key: "outcomeStatus", label: "Alert outcome", aliases: ["alerttype", "alertstatus", "outcome"] },
+  { key: "outcomeMatched", label: "Outcome matches", aliases: ["matched"] },
+  { key: "outcomeDelivered", label: "Alerts delivered", aliases: ["delivered", "alertssent"] },
+  { key: "outcomeSymbols", label: "Outcome tokens", aliases: ["symbols", "tokens", "assets"] },
+  { key: "outcomeChannels", label: "Outcome channels", aliases: ["channels"] },
+  { key: "outcomeAt", label: "Outcome recorded at", aliases: ["outcometime"] },
+  { key: "revertedAt", label: "Reverted at", aliases: ["rollbackat", "revertedon"] },
+  { key: "revertReason", label: "Revert reason", aliases: ["rollbackreason"] },
+];
+
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const ALIAS_INDEX: Record<string, string> = (() => {
+  const idx: Record<string, string> = {};
+  for (const f of IMPORT_FIELDS) {
+    idx[norm(f.key)] = f.key;
+    idx[norm(f.label)] = f.key;
+    for (const a of f.aliases) idx[norm(a)] = f.key;
+  }
+  return idx;
+})();
+
+/** Sentinel mapping value meaning "drop this column". */
+export const IGNORE_COLUMN = "__ignore__";
+
+const FIELD_KEYS = new Set(IMPORT_FIELDS.map((f) => f.key));
+
+/**
+ * Best-guess header → field mapping. Headers that already match an audit
+ * field keep their own name; unrecognised headers map to "" (passed through
+ * untouched) unless a confident alias match exists.
+ */
+export function suggestMapping(headers: string[]): Record<string, string> {
+  const mapping: Record<string, string> = {};
+  const taken = new Set<string>();
+  for (const h of headers) {
+    if (FIELD_KEYS.has(h)) {
+      mapping[h] = h;
+      taken.add(h);
+    }
+  }
+  for (const h of headers) {
+    if (mapping[h]) continue;
+    const n = norm(h);
+    let key = ALIAS_INDEX[n] ?? "";
+    if (!key) {
+      const hit = IMPORT_FIELDS.find((f) => n.includes(norm(f.key)));
+      key = hit?.key ?? "";
+    }
+    mapping[h] = key && !taken.has(key) ? key : "";
+    if (mapping[h]) taken.add(mapping[h]);
+  }
+  return mapping;
+}
+
+/** Required audit fields that the current mapping does not cover. */
+export function missingRequiredFields(mapping: Record<string, string>): ImportFieldDef[] {
+  const mapped = new Set(Object.values(mapping).filter((v) => v && v !== IGNORE_COLUMN));
+  return IMPORT_FIELDS.filter((f) => f.required && !mapped.has(f.key));
+}
+
+/** Re-run the import with an explicit header → field mapping. */
+export function applyMapping(result: ImportResult, mapping: Record<string, string>): ImportResult {
+  const source = result.records ?? [];
+  const remapped: ImportRecord[] = source.map((r) => {
+    const o: ImportRecord = {};
+    for (const [header, value] of Object.entries(r)) {
+      const target = mapping[header];
+      if (target === IGNORE_COLUMN) continue;
+      o[target || header] = value;
+    }
+    return o;
+  });
+  const unmapped = (result.headers ?? []).filter((h) => mapping[h] === IGNORE_COLUMN);
+  const warnings = [...result.warnings.filter((w) => !w.startsWith("Column mapping"))];
+  const changed = Object.entries(mapping).filter(([h, k]) => k && k !== IGNORE_COLUMN && k !== h).length;
+  if (changed > 0) warnings.push(`Column mapping: ${changed} header(s) remapped.`);
+  if (unmapped.length > 0) warnings.push(`Column mapping: ${unmapped.length} column(s) ignored.`);
+
+  const next = finalize(remapped, result.format, warnings, {
+    fileName: result.fileName,
+    lineOffset: result.lineOffset ?? 0,
+    meta: result.meta,
+  });
+  return { ...next, records: source, headers: result.headers, mapping, unmapped };
 }
 
 
