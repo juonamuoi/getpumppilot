@@ -190,6 +190,61 @@ export function buildSchemaRows(selectedKeys: string[]): SchemaRow[] {
 }
 
 
+/** JSON type for each documented column type. */
+const JSON_TYPE: Record<FieldDoc["type"], { type: string; format?: string }> = {
+  string: { type: "string" },
+  enum: { type: "string" },
+  number: { type: "number" },
+  timestamp: { type: "string", format: "date-time" },
+};
+
+/**
+ * Build a standard JSON Schema (Draft 2020-12) describing one exported
+ * mitigation decision row, restricted to the currently selected columns.
+ */
+export function buildJsonSchema(selectedKeys: string[]) {
+  const rows = buildSchemaRows(selectedKeys);
+  const properties: Record<string, Record<string, unknown>> = {};
+
+  for (const row of rows) {
+    const base = JSON_TYPE[row.type as FieldDoc["type"]] ?? { type: "string" };
+    const prop: Record<string, unknown> = {
+      title: row.label,
+      description: row.description || row.label,
+      $comment: `group: ${row.group}${row.source ? ` · source: ${row.source}` : ""}`,
+    };
+    // Numeric and timestamp columns are emitted as "" when the value is absent.
+    if (row.type === "number") {
+      prop.type = ["number", "string"];
+      prop.anyOf = [{ type: "number" }, { type: "string", maxLength: 0 }];
+    } else {
+      prop.type = base.type;
+      if (base.format) prop.format = base.format;
+    }
+    properties[row.column] = prop;
+  }
+
+  return {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    $id: `https://getpumppilot.app/schemas/mitigation-decisions-v${EXPORT_SCHEMA_VERSION}.schema.json`,
+    title: "PumpPilot AI — mitigation decision export",
+    description:
+      "One object per mitigation decision (applied, preview-only or reverted), joined to the confirmation summary reviewed before it was applied. Simulated/demo data.",
+    version: EXPORT_SCHEMA_VERSION,
+    $comment: EXPORT_SCHEMA_COMPATIBILITY,
+    "x-schemaVersion": EXPORT_SCHEMA_VERSION,
+    "x-minCompatibleSchemaVersion": EXPORT_SCHEMA_MIN_COMPATIBLE,
+    "x-compatibility": EXPORT_SCHEMA_COMPATIBILITY,
+    type: "array",
+    items: {
+      type: "object",
+      properties,
+      required: rows.map((r) => r.column),
+      additionalProperties: true,
+    },
+  };
+}
+
 /** Pair each applied mitigation with the preview it was confirmed against. */
 export function buildDecisions(log: TuningLogEntry[]): Decision[] {
   const mitigations = log.filter((e) => e.source === "mitigation" && !!e.mitigation);
@@ -390,6 +445,7 @@ export function MitigationDecisionExport<F,>({
   const [selected, setSelected] = useState<string[]>(DEFAULT_FIELDS);
   const [includePreviewOnly, setIncludePreviewOnly] = useState(true);
   const [includeSchema, setIncludeSchema] = useState(true);
+  const [includeJsonSchema, setIncludeJsonSchema] = useState(false);
   const [presets, setPresets] = useState<ExportPreset<F>[]>(() => loadPresets() as ExportPreset<F>[]);
   const [presetName, setPresetName] = useState("");
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -619,6 +675,21 @@ export function MitigationDecisionExport<F,>({
 
   const schemaRows = () => buildSchemaRows(selected);
 
+  const downloadJsonSchema = (stamp = new Date().toISOString().replace(/[:.]/g, "-")) => {
+    if (selected.length === 0) {
+      toast.error("Select at least one field first");
+      return;
+    }
+    const schema = buildJsonSchema(selected);
+    saveBlob(
+      new Blob([JSON.stringify(schema, null, 2)], { type: "application/schema+json" }),
+      `mitigation-decisions-v${EXPORT_SCHEMA_VERSION}-${stamp}.schema.json`,
+    );
+    toast.success("JSON Schema downloaded", {
+      description: `Draft 2020-12 · ${selected.length} propert${selected.length === 1 ? "y" : "ies"} · schema v${EXPORT_SCHEMA_VERSION}`,
+    });
+  };
+
   const downloadSchema = (kind: "csv" | "json", stamp = new Date().toISOString().replace(/[:.]/g, "-")) => {
     const schema = schemaRows();
     if (schema.length === 0) {
@@ -693,7 +764,10 @@ export function MitigationDecisionExport<F,>({
     } else {
       saveBlob(new Blob([toCsv(data)], { type: "text/csv" }), `mitigation-decisions-${stamp}.csv`);
     }
-    if (includeSchema) downloadSchema(kind, stamp);
+    if (includeSchema) {
+      downloadSchema(kind, stamp);
+      if (includeJsonSchema) downloadJsonSchema(stamp);
+    }
     toast.success(`Exported ${data.length} decision${data.length === 1 ? "" : "s"} as ${kind.toUpperCase()}`, {
       description: includeSchema
         ? `${selected.length} fields · column schema file included`
@@ -727,7 +801,15 @@ export function MitigationDecisionExport<F,>({
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Saved export presets
             </p>
-            <span className="text-[10px] text-muted-foreground">
+            <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => downloadJsonSchema()}
+          >
+            <FileJson className="h-3.5 w-3.5" /> JSON Schema
+          </Button>
+          <span className="text-[10px] text-muted-foreground">
               Schema v{EXPORT_SCHEMA_VERSION} · fields · preview-only toggle{filters ? " · filter scope" : ""}
             </span>
           </div>
