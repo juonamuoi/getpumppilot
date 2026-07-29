@@ -143,8 +143,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
           </button>
           <CreditMeter />
+          <AccountButton />
           <LiveLockedCard />
         </div>
+
       </aside>
 
       {/* Mobile top bar */}
