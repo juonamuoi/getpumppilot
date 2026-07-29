@@ -742,10 +742,16 @@ export function MitigationAuditTrail({
                   <p className="mt-2 text-[11px] text-muted-foreground">Trigger: {e.trigger}</p>
                 )}
 
-                <p className="mt-2 rounded-md border border-border/50 bg-muted/20 p-2 text-[11px] leading-relaxed text-muted-foreground">
-                  <span className="font-medium text-foreground">Why: </span>
-                  {explainOutcome(e)}
-                </p>
+                <div className="mt-2 rounded-md border border-border/50 bg-muted/20 p-2 text-[11px] leading-relaxed text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <p className="flex-1">
+                      <span className="font-medium text-foreground">Why: </span>
+                      {explainOutcome(e)}
+                    </p>
+                    <CopyWhyButton entry={e} />
+                  </div>
+                </div>
+
 
 
                 <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border/50 pt-2 text-[11px]">
