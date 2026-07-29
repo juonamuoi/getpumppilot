@@ -87,9 +87,8 @@ import { shortAddress } from "@/lib/wallet-scan";
 
 export const Route = createFileRoute("/security")({
   /** `audit` keeps the focused mitigation correlation ID across refreshes. */
-  validateSearch: (search: Record<string, unknown>) => ({
-    audit: typeof search.audit === "string" ? search.audit : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { audit?: string } =>
+    typeof search.audit === "string" ? { audit: search.audit } : {},
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/security" }],
     meta: [

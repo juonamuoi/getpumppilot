@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Activity, ShieldAlert, Filter, X, ExternalLink, Download } from "lucide-react";
@@ -202,6 +202,57 @@ export function MitigationImpactTimeline() {
   );
 
 
+  /** Roving keyboard navigation across every clickable timeline marker. */
+  const markerPrefix = useId().replace(/:/g, "");
+  const markerId = (kind: "risk" | "sig", i: number) => `${markerPrefix}-${kind}-${i}`;
+  const focusMarker = (order: string[], from: string, step: number | "first" | "last") => {
+    if (order.length === 0) return;
+    const cur = order.indexOf(from);
+    const next =
+      step === "first"
+        ? 0
+        : step === "last"
+          ? order.length - 1
+          : Math.min(order.length - 1, Math.max(0, (cur < 0 ? 0 : cur) + step));
+    const el = document.getElementById(order[next]) as SVGElement | null;
+    el?.focus();
+  };
+  const markerKeyDown = (
+    e: React.KeyboardEvent,
+    order: string[],
+    id: string,
+    open: () => void,
+  ) => {
+    switch (e.key) {
+      case "Enter":
+      case " ":
+      case "Spacebar":
+        e.preventDefault();
+        open();
+        break;
+      case "ArrowRight":
+      case "ArrowDown":
+        e.preventDefault();
+        focusMarker(order, id, 1);
+        break;
+      case "ArrowLeft":
+      case "ArrowUp":
+        e.preventDefault();
+        focusMarker(order, id, -1);
+        break;
+      case "Home":
+        e.preventDefault();
+        focusMarker(order, id, "first");
+        break;
+      case "End":
+        e.preventDefault();
+        focusMarker(order, id, "last");
+        break;
+      default:
+        break;
+    }
+  };
+
   const [range, setRange] = useState<RangeKey>("7d");
   const [wallets, setWallets] = useState<string[]>([]);
   const [tokens, setTokens] = useState<string[]>([]);
@@ -298,6 +349,19 @@ export function MitigationImpactTimeline() {
       }))
       .sort((a, b) => a.ts - b.ts);
   }, [tuningLog, cutoff, tokens, actions, outcomes]);
+
+  /** DOM ids of every focusable marker, in chronological order. */
+  const markerOrder = useMemo(
+    () =>
+      [
+        ...riskPoints.map((p, i) => ({ ts: p.ts, id: markerId("risk", i) })),
+        ...signalPoints.map((p, i) => ({ ts: p.ts, id: markerId("sig", i) })),
+      ]
+        .sort((a, b) => a.ts - b.ts)
+        .map((m) => m.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [riskPoints, signalPoints, markerPrefix],
+  );
 
   const hasData = riskPoints.length > 0 || signalPoints.length > 0;
 
@@ -559,21 +623,33 @@ export function MitigationImpactTimeline() {
                 {riskPath && (
                   <path d={riskPath} fill="none" stroke="hsl(var(--primary))" strokeWidth={1.8} />
                 )}
-                {riskPoints.map((p) => (
-                  <circle
-                    key={`${p.correlationId}-${p.ts}`}
-                    cx={x(p.ts)}
-                    cy={yRisk(p.score)}
-                    r={4}
-                    fill={RISK_COLOR[p.score]}
-                    stroke="hsl(var(--background))"
-                    strokeWidth={1.5}
-                    className="cursor-pointer"
-                    onMouseEnter={() => setHover({ kind: "risk", point: p })}
-                    onMouseLeave={() => setHover(null)}
-                    onClick={() => openAudit(p.correlationId)}
-                  />
-                ))}
+                {riskPoints.map((p, i) => {
+                  const id = markerId("risk", i);
+                  return (
+                    <circle
+                      key={`${p.correlationId}-${p.ts}`}
+                      id={id}
+                      cx={x(p.ts)}
+                      cy={yRisk(p.score)}
+                      r={4}
+                      fill={RISK_COLOR[p.score]}
+                      stroke="hsl(var(--background))"
+                      strokeWidth={1.5}
+                      className="cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Wallet risk ${RISK_LABEL[p.score]} on ${format(new Date(p.ts), "d MMM HH:mm")}${p.correlationId ? `, correlation ${p.correlationId}. Press Enter to open the replay view.` : ""}`}
+                      onMouseEnter={() => setHover({ kind: "risk", point: p })}
+                      onMouseLeave={() => setHover(null)}
+                      onFocus={() => setHover({ kind: "risk", point: p })}
+                      onBlur={() => setHover(null)}
+                      onClick={() => openAudit(p.correlationId)}
+                      onKeyDown={(e) =>
+                        markerKeyDown(e, markerOrder, id, () => openAudit(p.correlationId))
+                      }
+                    />
+                  );
+                })}
 
 
                 {/* signal delta baseline */}
@@ -602,11 +678,21 @@ export function MitigationImpactTimeline() {
                   return (
                     <g
                       key={`${p.correlationId ?? "sig"}-${i}`}
+                      id={markerId("sig", i)}
                       onClick={() => openAudit(p.correlationId)}
-
-                      className="cursor-pointer"
+                      className="cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Mitigation marker on ${format(new Date(p.ts), "d MMM HH:mm")}, match delta ${p.matchDelta}, near-miss delta ${p.nearMissDelta}${p.correlationId ? `, correlation ${p.correlationId}. Press Enter to open the replay view.` : ""}`}
                       onMouseEnter={() => setHover({ kind: "signal", point: p })}
                       onMouseLeave={() => setHover(null)}
+                      onFocus={() => setHover({ kind: "signal", point: p })}
+                      onBlur={() => setHover(null)}
+                      onKeyDown={(e) =>
+                        markerKeyDown(e, markerOrder, markerId("sig", i), () =>
+                          openAudit(p.correlationId),
+                        )
+                      }
                     >
                       <line
                         x1={px}
