@@ -89,9 +89,15 @@ async function auditPath(origin: string, path: string): Promise<SeoRouteAudit> {
     canonical: null,
     ogUrl: null,
     robots: null,
+    ogTitle: null,
+    ogDescription: null,
+    ogImage: null,
+    twitterCard: null,
+    twitterSite: null,
     selfConsistent: false,
     hostMatches: false,
     pathMatches: false,
+    socialComplete: false,
     issues: [],
   };
 
@@ -131,6 +137,34 @@ async function auditPath(origin: string, path: string): Promise<SeoRouteAudit> {
     if (canonicalUrl && !pathMatches)
       issues.push(`Canonical points at ${canonicalUrl.pathname}`);
 
+    // --- social card validation -------------------------------------------
+    const socialIssues: string[] = [];
+    if (!head.ogTitle) socialIssues.push("Missing og:title");
+    else if (head.ogTitle.length > 95) socialIssues.push("og:title over 95 chars");
+
+    if (!head.ogDescription) socialIssues.push("Missing og:description");
+    else if (head.ogDescription.length > 200)
+      socialIssues.push("og:description over 200 chars");
+
+    const ogImageUrl = head.ogImage ? safeUrl(head.ogImage, EXPECTED_ORIGIN) : null;
+    if (!head.ogImage) socialIssues.push("Missing og:image");
+    else if (!ogImageUrl || !/^https?:$/.test(ogImageUrl.protocol))
+      socialIssues.push("og:image is not an absolute http(s) URL");
+    else if (!/^https:/.test(head.ogImage))
+      socialIssues.push("og:image must be an absolute https URL");
+
+    if (!head.twitterCard) socialIssues.push("Missing twitter:card");
+    else if (!VALID_TWITTER_CARDS.includes(head.twitterCard))
+      socialIssues.push(`Invalid twitter:card "${head.twitterCard}"`);
+    else if (head.ogImage && head.twitterCard === "summary")
+      socialIssues.push("twitter:card is summary despite an og:image (use summary_large_image)");
+
+    if (!head.twitterSite) socialIssues.push("Missing twitter:site");
+    else if (!/^@[A-Za-z0-9_]{1,15}$/.test(head.twitterSite))
+      socialIssues.push(`twitter:site "${head.twitterSite}" is not an @handle`);
+
+    issues.push(...socialIssues);
+
     return {
       ...base,
       status: res.status,
@@ -138,11 +172,18 @@ async function auditPath(origin: string, path: string): Promise<SeoRouteAudit> {
       canonical: head.canonical,
       ogUrl: head.ogUrl,
       robots: head.robots,
+      ogTitle: head.ogTitle,
+      ogDescription: head.ogDescription,
+      ogImage: head.ogImage,
+      twitterCard: head.twitterCard,
+      twitterSite: head.twitterSite,
       selfConsistent,
       hostMatches,
       pathMatches,
+      socialComplete: socialIssues.length === 0,
       issues,
     };
+
   } catch (err) {
     return {
       ...base,
