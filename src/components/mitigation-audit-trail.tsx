@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X, Copy, Check } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check, ChevronRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -58,11 +58,11 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
       "",
       `Correlation ID: ${entry.correlationId ?? "—"}`,
       `Time: ${format(new Date(entry.ts), "yyyy-MM-dd HH:mm:ss")}`,
-      f.change ? `Change: ${f.change}` : null,
-      f.strictness ? `Strictness: ${f.strictness}` : null,
-      f.impact ? `Impact: ${f.impact}` : null,
-      f.outcome ? `Outcome: ${f.outcome}` : null,
-      f.fragility ? `Fragility: ${f.fragility}` : null,
+      f.whyChange ? `Change: ${f.whyChange}` : null,
+      f.whyStrictness ? `Strictness: ${f.whyStrictness}` : null,
+      f.whyImpact ? `Impact: ${f.whyImpact}` : null,
+      f.whyOutcome ? `Outcome: ${f.whyOutcome}` : null,
+      f.whyFragility ? `Fragility: ${f.whyFragility}` : null,
     ]
       .filter(Boolean)
       .join("\n");
@@ -899,6 +899,8 @@ export function MitigationAuditTrail({
                     <CopyWhyButton entry={e} />
                   </div>
                 </div>
+
+                <OutcomeBreakdown entry={e} />
 
 
 
