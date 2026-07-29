@@ -43,7 +43,7 @@ type Ctx = { entry: TuningLogEntry; scope: BulkExportScope; wallets: string[] };
 type Col = {
   key: string;
   label: string;
-  group: "identity" | "time" | "change" | "outcome";
+  group: "identity" | "time" | "change" | "outcome" | "why";
   get: (c: Ctx) => string | number;
 };
 
