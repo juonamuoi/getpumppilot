@@ -155,7 +155,15 @@ const FIELD_DOC: Record<string, FieldDoc> = {
   outcomeAt: { type: "timestamp", source: "tuningLog.outcome.ts", description: "ISO time the outcome was recorded after the change took effect." },
   revertedAt: { type: "timestamp", source: "tuningLog.revertedAt", description: "ISO time the change was rolled back, if it was reverted." },
   revertReason: { type: "string", source: "tuningLog.revertReason", description: "Reason captured at rollback time (manual undo, risk bounds breach, etc.)." },
+
+  why: { type: "string", source: "derived (explainOutcome)", description: "Full plain-English explanation of what changed, why, and what it did." },
+  whyChange: { type: "string", source: "derived (rule + values)", description: "Plain-English sentence describing the threshold move." },
+  whyStrictness: { type: "enum", source: "derived (operator + direction)", description: "loosened | tightened | unchanged — direction of the filter change." },
+  whyImpact: { type: "string", source: "derived (match/near-miss deltas)", description: "Plain-English expected impact on matches and near-misses." },
+  whyOutcome: { type: "string", source: "derived (outcome)", description: "Plain-English account of what the alert run actually did." },
+  whyFragility: { type: "string", source: "derived (fragilePct)", description: "Plain-English fragility read for the resulting rule set." },
 };
+
 
 export type SchemaRow = {
   column: string;
