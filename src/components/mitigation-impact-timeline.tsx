@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Activity, ShieldAlert, Filter, X, ExternalLink, Download } from "lucide-react";
 import {
