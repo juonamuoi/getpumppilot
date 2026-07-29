@@ -30,6 +30,7 @@ import { CommandPalette } from "./command-palette";
 import { OnboardingDialog } from "./onboarding-dialog";
 import { AICopilot } from "./ai-copilot";
 import { CreditBadge, CreditMeter } from "./credit-badge";
+import { AccountButton } from "./account-button";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -142,8 +143,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
           </button>
           <CreditMeter />
+          <AccountButton />
           <LiveLockedCard />
         </div>
+
       </aside>
 
       {/* Mobile top bar */}
@@ -173,8 +176,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="space-y-2 p-3">
                 <CreditMeter />
+                <AccountButton onNavigate={() => setOpen(false)} />
                 <LiveLockedCard />
               </div>
+
             </SheetContent>
           </Sheet>
         </div>
