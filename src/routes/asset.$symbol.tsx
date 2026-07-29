@@ -13,24 +13,56 @@ import { trackFunnelStep } from "@/lib/funnel";
 import { toast } from "sonner";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { FaqSection } from "@/components/faq-section";
+import { assetFaqs } from "@/lib/page-faqs";
+import {
+  absoluteUrl,
+  breadcrumbSchema,
+  faqSchema,
+  ldScript,
+  webPageSchema,
+} from "@/lib/structured-data";
+
 
 export const Route = createFileRoute("/asset/$symbol")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.symbol.toUpperCase()} — PumpPilot AI` },
-      {
-        name: "description",
-        content: `${params.symbol.toUpperCase()} momentum, chart and paper trading. Demo data only.`,
-      },
-      { property: "og:title", content: `${params.symbol.toUpperCase()} — PumpPilot AI` },
-      {
-        property: "og:description",
-        content: "Explainable momentum and paper trading.",
-      },
-    ],
-  }),
+  head: ({ params }) => {
+    const sym = params.symbol.toUpperCase();
+    const asset = getAsset(params.symbol);
+    const name = asset?.name ?? sym;
+    const description = `${sym} momentum, chart and paper trading. Demo data only.`;
+    return {
+      links: [{ rel: "canonical", href: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) }],
+      meta: [
+        { title: `${sym} — PumpPilot AI` },
+        { name: "description", content: description },
+        { property: "og:title", content: `${sym} — PumpPilot AI` },
+        {
+          property: "og:description",
+          content: "Explainable momentum and paper trading.",
+        },
+        { property: "og:url", content: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) },
+      ],
+      scripts: [
+        ldScript(
+          webPageSchema({
+            name: `${name} (${sym}) momentum & paper trading`,
+            description,
+            path: `/asset/${params.symbol.toLowerCase()}`,
+          }),
+        ),
+        ldScript(
+          breadcrumbSchema([
+            { name: "Scanner", path: "/scanner" },
+            { name: sym, path: `/asset/${params.symbol.toLowerCase()}` },
+          ]),
+        ),
+        ldScript(faqSchema(assetFaqs(sym, name))),
+      ],
+    };
+  },
   component: AssetPage,
 });
+
 
 function AssetPage() {
   const { symbol } = Route.useParams();
