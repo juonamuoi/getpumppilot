@@ -144,6 +144,8 @@ export function faqSchema(faqs: { q: string; a: string }[]) {
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   };
+}
+
 
 export type HowToStep = {
   name: string;
