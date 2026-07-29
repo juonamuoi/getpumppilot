@@ -145,9 +145,21 @@ export function MitigationImport({
             ? `${plan.duplicates} duplicate(s) skipped.`
             : `${plan.duplicates} duplicate(s) kept as separate records.`
         : "No duplicates found.";
-    toast.success(`Imported ${plan.add.length} new record(s)`, {
-      description: `${dupNote}${result.warned > 0 ? ` ${result.warned} with warnings.` : ""}`,
-    });
+    const partial = summary?.status === "partial";
+    const note = partial
+      ? ` ${result.skipped} row(s) skipped, ${result.warned} with warnings — download the error report for details.`
+      : result.warned > 0
+        ? ` ${result.warned} with warnings.`
+        : "";
+    if (partial) {
+      toast.warning(`Partially imported ${plan.add.length} record(s)`, {
+        description: `${dupNote}${note}`,
+      });
+    } else {
+      toast.success(`Imported ${plan.add.length} new record(s)`, {
+        description: `${dupNote}${note}`,
+      });
+    }
     setResult(null);
     setRaw(null);
     setFileName("");
