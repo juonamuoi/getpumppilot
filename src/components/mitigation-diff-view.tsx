@@ -21,6 +21,9 @@ import { cn } from "@/lib/utils";
 type Asset = (typeof ASSETS)[number];
 type Status = "matched" | "near-miss" | "no-match";
 
+/** Sentinel: compare against this entry's own pre-change rule state. */
+const SELF_BEFORE = "__self_before__";
+
 /** Same 5 gates the scanner uses; 4/5 passing = near-miss. */
 function evaluate(rules: ScannerRules, a: Asset) {
   const checks: Record<string, boolean> = {
