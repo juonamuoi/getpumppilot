@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Lock, RotateCcw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { HowToSteps } from "@/components/how-to-steps";
+import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript } from "@/lib/structured-data";
 
@@ -90,16 +91,22 @@ function PaperPage() {
               Practice with simulated cash. No real orders are ever placed.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5">
-            <Lock className="h-3.5 w-3.5 text-amber-400" />
-            <span className="text-xs text-amber-200">Live execution</span>
-            <Switch checked={false} disabled />
+          <div className="flex flex-wrap items-center gap-2">
+            <TourStartButton />
+            <div
+              data-tour="paper-live-lock"
+              className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5"
+            >
+              <Lock className="h-3.5 w-3.5 text-amber-400" />
+              <span className="text-xs text-amber-200">Live execution</span>
+              <Switch checked={false} disabled />
+            </div>
           </div>
         </div>
 
         <DisclaimerBanner />
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div data-tour="paper-balances" className="grid gap-3 sm:grid-cols-3">
           <StatBlock label="Equity" value={fmtUsd(paper.equity)} />
           <StatBlock label="Cash" value={fmtUsd(paper.cash)} />
           <StatBlock label="Positions" value={String(paper.positions.length)} />
@@ -167,7 +174,7 @@ function PaperPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-500/20 bg-emerald-500/5">
+          <Card data-tour="paper-order" className="border-emerald-500/20 bg-emerald-500/5">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Place paper order</CardTitle>
             </CardHeader>
@@ -214,7 +221,7 @@ function PaperPage() {
           </Card>
         </div>
 
-        <Card className="border-border/60 bg-card/60">
+        <Card data-tour="paper-trades" className="border-border/60 bg-card/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Recent paper trades</CardTitle>
           </CardHeader>
