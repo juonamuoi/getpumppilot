@@ -22,7 +22,7 @@ export function SeoAlertNotifier() {
 
   const { data } = useQuery({
     queryKey: ["seo-open-failures"],
-    queryFn: () => fetchFailures({ data: {} }),
+    queryFn: () => fetchFailures(undefined as never),
     refetchInterval: 5 * 60_000,
     refetchOnWindowFocus: true,
     retry: false,
@@ -78,7 +78,7 @@ export function SeoAlertBadge() {
   const fetchFailures = useServerFn(getOpenSeoFailures);
   const { data } = useQuery({
     queryKey: ["seo-open-failures"],
-    queryFn: () => fetchFailures({ data: {} }),
+    queryFn: () => fetchFailures(undefined as never),
     retry: false,
     staleTime: 60_000,
   });
