@@ -1,3 +1,4 @@
+import { canonicalUrl } from "@/lib/structured-data";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
