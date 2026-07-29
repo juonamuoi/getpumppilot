@@ -143,7 +143,7 @@ export function lintMigrations(migrations = loadMigrations()) {
 
   const storagePolicies = [
     ...allSql.matchAll(
-      /CREATE\s+POLICY\s+"([^"]+)"[\s\S]*?ON\s+storage\.objects([\s\S]*?);/gi,
+      /CREATE\s+POLICY\s+"([^"]+)"\s+ON\s+storage\.objects([^;]*);/gi,
     ),
   ];
   for (const [, policyName, body] of storagePolicies) {
