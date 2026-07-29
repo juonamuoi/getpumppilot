@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowRight, Download, GitCompare } from "lucide-react";
+import { ArrowRight, ArrowUpDown, ChevronDown, ChevronUp, Download, GitCompare } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { applyRuleValue, usePaper, type ScannerRules, type TuningLogEntry } from "@/lib/paper-store";
 import { toast } from "sonner";
