@@ -53,6 +53,7 @@ import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[
 import { Route as ApiPublicMomentumRouteImport } from './routes/api/public/momentum'
 import { Route as ApiPublicWaitlistRouteImport } from './routes/api/public/waitlist'
 import { Route as ApiPublicHooksSeoCrawlCheckRouteImport } from './routes/api/public/hooks/seo-crawl-check'
+import { Route as ApiPublicHooksSeoSelfAuditRouteImport } from './routes/api/public/hooks/seo-self-audit'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicWaitlistFollowupRouteImport } from './routes/api/public/waitlist/followup'
 
@@ -280,6 +281,12 @@ const ApiPublicHooksSeoCrawlCheckRoute =
     path: '/api/public/hooks/seo-crawl-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSeoSelfAuditRoute =
+  ApiPublicHooksSeoSelfAuditRouteImport.update({
+    id: '/api/public/hooks/seo-self-audit',
+    path: '/api/public/hooks/seo-self-audit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -338,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
   '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
+  '/api/public/hooks/seo-self-audit': typeof ApiPublicHooksSeoSelfAuditRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -386,6 +394,7 @@ export interface FileRoutesByTo {
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
   '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
+  '/api/public/hooks/seo-self-audit': typeof ApiPublicHooksSeoSelfAuditRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -435,6 +444,7 @@ export interface FileRoutesById {
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
   '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
+  '/api/public/hooks/seo-self-audit': typeof ApiPublicHooksSeoSelfAuditRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -485,6 +495,7 @@ export interface FileRouteTypes {
     | '/api/public/momentum'
     | '/api/public/waitlist'
     | '/api/public/hooks/seo-crawl-check'
+    | '/api/public/hooks/seo-self-audit'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   fileRoutesByTo: FileRoutesByTo
@@ -533,6 +544,7 @@ export interface FileRouteTypes {
     | '/api/public/momentum'
     | '/api/public/waitlist'
     | '/api/public/hooks/seo-crawl-check'
+    | '/api/public/hooks/seo-self-audit'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   id:
@@ -581,6 +593,7 @@ export interface FileRouteTypes {
     | '/api/public/momentum'
     | '/api/public/waitlist'
     | '/api/public/hooks/seo-crawl-check'
+    | '/api/public/hooks/seo-self-audit'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   fileRoutesById: FileRoutesById
@@ -630,6 +643,7 @@ export interface RootRouteChildren {
   ApiPublicMomentumRoute: typeof ApiPublicMomentumRoute
   ApiPublicWaitlistRoute: typeof ApiPublicWaitlistRouteWithChildren
   ApiPublicHooksSeoCrawlCheckRoute: typeof ApiPublicHooksSeoCrawlCheckRoute
+  ApiPublicHooksSeoSelfAuditRoute: typeof ApiPublicHooksSeoSelfAuditRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -943,6 +957,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSeoCrawlCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/seo-self-audit': {
+      id: '/api/public/hooks/seo-self-audit'
+      path: '/api/public/hooks/seo-self-audit'
+      fullPath: '/api/public/hooks/seo-self-audit'
+      preLoaderRoute: typeof ApiPublicHooksSeoSelfAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -1017,6 +1038,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMomentumRoute: ApiPublicMomentumRoute,
   ApiPublicWaitlistRoute: ApiPublicWaitlistRouteWithChildren,
   ApiPublicHooksSeoCrawlCheckRoute: ApiPublicHooksSeoCrawlCheckRoute,
+  ApiPublicHooksSeoSelfAuditRoute: ApiPublicHooksSeoSelfAuditRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport

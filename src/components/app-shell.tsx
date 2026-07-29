@@ -31,6 +31,7 @@ import { OnboardingDialog } from "./onboarding-dialog";
 import { AICopilot } from "./ai-copilot";
 import { CreditBadge, CreditMeter } from "./credit-badge";
 import { AccountButton } from "./account-button";
+import { SeoAlertNotifier } from "./seo-alert-notifier";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -184,6 +185,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Sheet>
         </div>
       </header>
+
+      <SeoAlertNotifier />
 
       <main className="lg:ml-64">
         <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>

@@ -38,6 +38,7 @@ import {
   getSeoCrawlAlerts,
   getSeoCrawlHistory,
   runSeoCrawlCheck,
+  runSeoSelfAudit,
   type SeoAlertRow,
 } from "@/lib/seo-monitor.functions";
 import { useAuth } from "@/lib/auth-store";
@@ -91,6 +92,8 @@ function SeoMonitorPage() {
   const fetchAlerts = useServerFn(getSeoCrawlAlerts);
   const ack = useServerFn(acknowledgeSeoAlerts);
   const runCheck = useServerFn(runSeoCrawlCheck);
+  const runAudit = useServerFn(runSeoSelfAudit);
+  const [auditing, setAuditing] = useState(false);
 
   const history = useQuery({
     queryKey: ["seo-crawl-history", days],
@@ -139,6 +142,27 @@ function SeoMonitorPage() {
     }
   }
 
+  async function onRunAudit() {
+    setAuditing(true);
+    try {
+      const res = await runAudit({ data: { maxUrls: 40 } });
+      if (res.ok) {
+        toast.success(
+          `Audit complete — ${res.urlsChecked} URLs, ${res.issues} issue${res.issues === 1 ? "" : "s"}, ${res.newFailures} new failure${res.newFailures === 1 ? "" : "s"}`,
+        );
+      } else {
+        toast.error(res.error ?? "Audit could not complete");
+      }
+      await qc.invalidateQueries({ queryKey: ["seo-crawl-history"] });
+      await qc.invalidateQueries({ queryKey: ["seo-crawl-alerts"] });
+      await qc.invalidateQueries({ queryKey: ["seo-open-failures"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Audit failed");
+    } finally {
+      setAuditing(false);
+    }
+  }
+
   async function onAckAll() {
     const ids = openAlerts.map((a) => a.id);
     if (!ids.length) return;
@@ -168,7 +192,9 @@ function SeoMonitorPage() {
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             Tracks sitemap errors, indexing coverage and Google&apos;s canonical selection over
-            time. Every run is compared against the previous one, and any change raises an alert.
+            time, and a daily scheduled audit re-fetches the sitemap and re-checks canonical and og:url
+            tags on every advertised URL. Each run is compared against the previous one, and new
+            failures raise an alert and an in-app notification.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -183,6 +209,10 @@ function SeoMonitorPage() {
               <SelectItem value="365">Last year</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={onRunAudit} disabled={auditing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${auditing ? "animate-spin" : ""}`} />
+            Run sitemap + canonical audit
+          </Button>
           <Button onClick={onRun} disabled={running}>
             <RefreshCw className={`mr-2 h-4 w-4 ${running ? "animate-spin" : ""}`} />
             Run check now
