@@ -501,6 +501,27 @@ export function MitigationDecisionExport<F,>({
               Fields · preview-only toggle{filters ? " · filter scope" : ""}
             </span>
           </div>
+          {restored && (
+            <p className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+              <Badge variant="outline" className="h-4 px-1 text-[9px] uppercase">
+                Restored
+              </Badge>
+              Loaded your last-used export settings{restored === "Last used export settings" ? "" : ` from "${restored}"`}.
+              <button
+                type="button"
+                className="underline hover:text-foreground"
+                onClick={() => {
+                  setSelected(DEFAULT_FIELDS);
+                  setIncludePreviewOnly(true);
+                  setIncludeSchema(true);
+                  setActivePreset(null);
+                  setRestored(null);
+                }}
+              >
+                Reset to defaults
+              </button>
+            </p>
+          )}
           {presets.length === 0 ? (
             <p className="text-[11px] text-muted-foreground">
               No presets yet — configure your export below, then name and save it.
