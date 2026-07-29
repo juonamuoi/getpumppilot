@@ -50,6 +50,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMomentumRouteImport } from './routes/api/public/momentum'
 import { Route as ApiPublicWaitlistRouteImport } from './routes/api/public/waitlist'
+import { Route as ApiPublicHooksSeoCrawlCheckRouteImport } from './routes/api/public/hooks/seo-crawl-check'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicWaitlistFollowupRouteImport } from './routes/api/public/waitlist/followup'
 
@@ -261,6 +262,12 @@ const ApiPublicWaitlistRoute = ApiPublicWaitlistRouteImport.update({
   path: '/api/public/waitlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSeoCrawlCheckRoute =
+  ApiPublicHooksSeoCrawlCheckRouteImport.update({
+    id: '/api/public/hooks/seo-crawl-check',
+    path: '/api/public/hooks/seo-crawl-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -316,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
+  '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -361,6 +369,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
+  '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -407,6 +416,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
+  '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -454,6 +464,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
     | '/api/public/waitlist'
+    | '/api/public/hooks/seo-crawl-check'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   fileRoutesByTo: FileRoutesByTo
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
     | '/api/public/waitlist'
+    | '/api/public/hooks/seo-crawl-check'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   id:
@@ -544,6 +556,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
     | '/api/public/waitlist'
+    | '/api/public/hooks/seo-crawl-check'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   fileRoutesById: FileRoutesById
@@ -590,6 +603,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMomentumRoute: typeof ApiPublicMomentumRoute
   ApiPublicWaitlistRoute: typeof ApiPublicWaitlistRouteWithChildren
+  ApiPublicHooksSeoCrawlCheckRoute: typeof ApiPublicHooksSeoCrawlCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -882,6 +896,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWaitlistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/seo-crawl-check': {
+      id: '/api/public/hooks/seo-crawl-check'
+      path: '/api/public/hooks/seo-crawl-check'
+      fullPath: '/api/public/hooks/seo-crawl-check'
+      preLoaderRoute: typeof ApiPublicHooksSeoCrawlCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -953,6 +974,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMomentumRoute: ApiPublicMomentumRoute,
   ApiPublicWaitlistRoute: ApiPublicWaitlistRouteWithChildren,
+  ApiPublicHooksSeoCrawlCheckRoute: ApiPublicHooksSeoCrawlCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
