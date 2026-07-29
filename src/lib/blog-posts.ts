@@ -6,6 +6,9 @@ export interface BlogPost {
   readMinutes: number;
   keywords: string[];
   tags: string[];
+  /** Unique social/share cover image path (served from /public). */
+  image?: string;
+  imageAlt?: string;
   // Body is an array of blocks for simple structured rendering.
   body: BlogBlock[];
 }
