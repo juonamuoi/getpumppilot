@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Copy, Download, FileJson, FileSpreadsheet, FileText, Pencil, Save, Upload, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Download, FileJson, FileSpreadsheet, FileText, ListOrdered, Pencil, Save, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -205,13 +205,20 @@ export type SchemaRow = {
   type: string;
   source: string;
   description: string;
+  /** 1-based position of this column in the export, matching the chosen order. */
+  position: number;
 };
 
 /** Build the column dictionary for exactly the fields included in an export. */
 export function buildSchemaRows(selectedKeys: string[]): SchemaRow[] {
-  return FIELDS.filter((f) => selectedKeys.includes(f.key)).map((f) => {
+  // Preserve the user's chosen column order, not the declaration order.
+  return selectedKeys
+    .map((key) => FIELDS.find((f) => f.key === key))
+    .filter((f): f is FieldDef => !!f)
+    .map((f, index) => {
     const doc = FIELD_DOC[f.key];
     return {
+      position: index + 1,
       column: f.key,
       label: f.label,
       group: GROUP_LABEL[f.group],
@@ -268,6 +275,7 @@ export function buildJsonSchema(selectedKeys: string[]) {
     "x-schemaVersion": EXPORT_SCHEMA_VERSION,
     "x-minCompatibleSchemaVersion": EXPORT_SCHEMA_MIN_COMPATIBLE,
     "x-compatibility": EXPORT_SCHEMA_COMPATIBILITY,
+    "x-columnOrder": rows.map((r) => r.column),
     type: "array",
     items: {
       type: "object",
@@ -704,8 +712,9 @@ export function MitigationDecisionExport<F,>({
   const rows = (): MitigationDecisionRow[] =>
     decisions.map((d) => {
       const row: MitigationDecisionRow = {};
-      FIELDS.filter((f) => selected.includes(f.key)).forEach((f) => {
-        row[f.key] = f.get(d);
+      selected.forEach((key) => {
+        const f = FIELDS.find((x) => x.key === key);
+        if (f) row[f.key] = f.get(d);
       });
       return row;
     });
@@ -813,6 +822,19 @@ export function MitigationDecisionExport<F,>({
     setOpen(false);
   };
 
+
+  const move = (key: string, dir: -1 | 1) =>
+    setSelected((prev) => {
+      const i = prev.indexOf(key);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+
+  const resetOrder = () =>
+    setSelected((prev) => FIELDS.filter((f) => prev.includes(f.key)).map((f) => f.key));
 
   const groups: FieldDef["group"][] = ["identity", "provenance", "decision", "confirmation", "outcome", "why"];
 
@@ -1057,6 +1079,64 @@ export function MitigationDecisionExport<F,>({
               Reset
             </Button>
           </div>
+        </div>
+
+        <div className="space-y-2 rounded-md border border-border/60 bg-muted/10 p-3">
+          <div className="flex items-center justify-between">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <ListOrdered className="h-3.5 w-3.5" /> Column order ({selected.length})
+            </p>
+            <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={resetOrder}>
+              Reset order
+            </Button>
+          </div>
+          {selected.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">Select fields below to build your column order.</p>
+          ) : (
+            <ScrollArea className="max-h-[140px] pr-3">
+              <ol className="space-y-1">
+                {selected.map((key, i) => {
+                  const f = FIELDS.find((x) => x.key === key);
+                  if (!f) return null;
+                  return (
+                    <li
+                      key={key}
+                      className="flex items-center gap-2 rounded border border-border/40 bg-background/60 px-2 py-1 text-[11px]"
+                    >
+                      <span className="w-5 shrink-0 text-right tabular-nums text-muted-foreground">{i + 1}.</span>
+                      <span className="truncate">{f.label}</span>
+                      <code className="truncate text-[10px] text-muted-foreground">{f.key}</code>
+                      <div className="ml-auto flex shrink-0 gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          disabled={i === 0}
+                          aria-label={`Move ${f.label} up`}
+                          onClick={() => move(key, -1)}
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          disabled={i === selected.length - 1}
+                          aria-label={`Move ${f.label} down`}
+                          onClick={() => move(key, 1)}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </ScrollArea>
+          )}
+          <p className="text-[10px] text-muted-foreground">
+            CSV columns, JSON key order and the companion schema files all follow this exact order.
+          </p>
         </div>
 
         <ScrollArea className="max-h-[320px] pr-3">
