@@ -40,6 +40,34 @@ function evaluate(rules: ScannerRules, a: Asset) {
   return { checks, failed, status };
 }
 
+/**
+ * Human-readable "actual vs threshold" for the gate that blocks an asset.
+ * Returns null when nothing blocks it (i.e. it matched).
+ */
+function blockingGate(rules: ScannerRules, a: Asset, failed: string[]) {
+  const gate = failed[0];
+  if (!gate) return null;
+  switch (gate) {
+    case "Momentum":
+      return { gate, actual: a.momentum.total, threshold: rules.minMomentum, op: "≥", unit: "" };
+    case "Volume":
+      return { gate, actual: a.momentum.volume, threshold: rules.minVolumeScore, op: "≥", unit: "" };
+    case "Volatility":
+      return { gate, actual: a.momentum.volatility, threshold: rules.maxVolatility, op: "≤", unit: "" };
+    case "24h change":
+      return { gate, actual: a.change24h, threshold: rules.min24hChangePct, op: "≥", unit: "%" };
+    default:
+      return { gate, actual: null, threshold: null, op: "", unit: "" };
+  }
+}
+
+function gateText(g: ReturnType<typeof blockingGate>, extra = 0) {
+  if (!g) return "All gates pass";
+  const more = extra > 0 ? ` (+${extra} more)` : "";
+  if (g.actual === null || g.threshold === null) return `${g.gate} excluded${more}`;
+  return `${g.gate} ${g.actual}${g.unit} vs ${g.op} ${g.threshold}${g.unit}${more}`;
+}
+
 const STATUS_LABEL: Record<Status, string> = {
   matched: "Matched",
   "near-miss": "Near-miss",
