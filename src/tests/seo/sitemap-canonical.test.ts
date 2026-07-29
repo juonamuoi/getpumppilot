@@ -157,11 +157,8 @@ describe("sitemap + canonical validation", () => {
         .map((r) => toPathname(r.canonical!))
         .filter((p): p is string => Boolean(p)),
     );
-    // Asset detail pages are generated per symbol; accept any /asset/* in the sitemap.
-    for (const loc of parseSitemapLocs(sitemapXml)) {
-      const path = toPathname(loc);
-      if (path?.startsWith("/asset/")) canonicalPaths.add(path);
-    }
+
+
 
     const expected = new Set(
       routes
