@@ -507,6 +507,23 @@ export function MitigationAuditTrail({
     [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry],
   );
 
+  /** Same scope as `entries` but ignoring the outcome filter, for chip counts. */
+  const outcomeCounts = useMemo(() => {
+    const base = filterAuditEntries(
+      sourceLog,
+      { q, outcome: "all", range, correlationIds, tokens, alertTypes, wallets },
+      (e) => walletsForEntry.get(e.id) ?? [],
+    );
+    return {
+      all: base.length,
+      "alerts-fired": base.filter((e) => e.outcome?.status === "alerts-fired").length,
+      "channels-muted": base.filter((e) => e.outcome?.status === "channels-muted").length,
+      "no-matches": base.filter((e) => e.outcome?.status === "no-matches").length,
+      pending: base.filter((e) => !e.outcome).length,
+    } as Record<OutcomeFilter, number>;
+  }, [sourceLog, q, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
+
+
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
@@ -658,7 +675,33 @@ export function MitigationAuditTrail({
           </div>
 
         </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] text-muted-foreground">Outcome:</span>
+          {(
+            [
+              ["all", "All"],
+              ["alerts-fired", "Alerts fired"],
+              ["channels-muted", "Muted"],
+              ["no-matches", "Found nothing"],
+              ["pending", "Pending"],
+            ] as Array<[OutcomeFilter, string]>
+          ).map(([key, label]) => (
+            <Button
+              key={key}
+              type="button"
+              size="sm"
+              variant={outcome === key ? "default" : "outline"}
+              aria-pressed={outcome === key}
+              className="h-7 gap-1 px-2 text-[11px]"
+              onClick={() => setOutcome(key)}
+            >
+              {label}
+              <span className="tabular-nums opacity-70">{outcomeCounts[key]}</span>
+            </Button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2">
+
           <div className="relative w-full max-w-xs">
             <Input
               value={q}
