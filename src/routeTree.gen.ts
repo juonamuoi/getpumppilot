@@ -36,6 +36,7 @@ import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SeoPreviewRouteImport } from './routes/seo-preview'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as StorageAuditRouteImport } from './routes/storage-audit'
 import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -187,6 +188,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StorageAuditRoute = StorageAuditRouteImport.update({
+  id: '/storage-audit',
+  path: '/storage-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StrategyRoute = StrategyRouteImport.update({
   id: '/strategy',
   path: '/strategy',
@@ -296,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
+  '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
+  '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -385,6 +393,7 @@ export interface FileRoutesById {
   '/security': typeof SecurityRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
+  '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -431,6 +440,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/seo-preview'
     | '/settings'
+    | '/storage-audit'
     | '/strategy'
     | '/terms'
     | '/.mcp/list-tools'
@@ -475,6 +485,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/seo-preview'
     | '/settings'
+    | '/storage-audit'
     | '/strategy'
     | '/terms'
     | '/.mcp/list-tools'
@@ -519,6 +530,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/seo-preview'
     | '/settings'
+    | '/storage-audit'
     | '/strategy'
     | '/terms'
     | '/.mcp/list-tools'
@@ -564,6 +576,7 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   SeoPreviewRoute: typeof SeoPreviewRoute
   SettingsRoute: typeof SettingsRoute
+  StorageAuditRoute: typeof StorageAuditRoute
   StrategyRoute: typeof StrategyRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -771,6 +784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/storage-audit': {
+      id: '/storage-audit'
+      path: '/storage-audit'
+      fullPath: '/storage-audit'
+      preLoaderRoute: typeof StorageAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/strategy': {
       id: '/strategy'
       path: '/strategy'
@@ -918,6 +938,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   SeoPreviewRoute: SeoPreviewRoute,
   SettingsRoute: SettingsRoute,
+  StorageAuditRoute: StorageAuditRoute,
   StrategyRoute: StrategyRoute,
   TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
