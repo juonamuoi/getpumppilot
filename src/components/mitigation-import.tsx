@@ -19,6 +19,10 @@ import {
   parseMitigationExport,
   buildErrorReportCsv,
   buildErrorReportJson,
+  planDedupe,
+  DEDUPE_LABEL,
+  DEDUPE_HINT,
+  type DedupeStrategy,
   type ImportResult,
 } from "@/lib/mitigation-import";
 
@@ -40,11 +44,15 @@ export function MitigationImport({
   onImport,
   importedCount,
   onClear,
+  existingEntries = [],
 }: {
-  onImport: (entries: TuningLogEntry[]) => void;
+  onImport: (result: { add: TuningLogEntry[]; replace: TuningLogEntry[] }) => void;
   importedCount: number;
   onClear: () => void;
+  /** Live audit entries plus already-imported records, used for dedupe matching. */
+  existingEntries?: TuningLogEntry[];
 }) {
+  const [strategy, setStrategy] = useState<DedupeStrategy>("skip");
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +79,11 @@ export function MitigationImport({
     return { errors, warnings, clean: result.entries.length - result.warned };
   }, [result]);
 
+  const plan = useMemo(
+    () => (result ? planDedupe(result.entries, existingEntries, strategy) : null),
+    [result, existingEntries, strategy],
+  );
+
   const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   const downloadReport = (kind: "csv" | "json") => {
     if (!result) return;
@@ -83,13 +96,28 @@ export function MitigationImport({
   };
 
   const confirm = () => {
-    if (!result || result.entries.length === 0) return;
-    onImport(result.entries);
-    toast.success(`Imported ${result.entries.length} mitigation record(s)`, {
-      description:
-        result.skipped > 0 || result.warned > 0
-          ? `${result.skipped} skipped, ${result.warned} imported with warnings — download the report for details.`
-          : "Loaded into the audit trail for review — marked as imported, not applied.",
+    if (!result || !plan) return;
+    const applied = plan.add.length + plan.replace.length;
+    if (applied === 0) {
+      toast.info("Nothing to import", {
+        description: `All ${result.entries.length} record(s) already exist in the audit trail.`,
+      });
+      setResult(null);
+      setFileName("");
+      setOpen(false);
+      return;
+    }
+    onImport({ add: plan.add, replace: plan.replace });
+    const dupNote =
+      plan.duplicates > 0
+        ? strategy === "merge"
+          ? `${plan.merged} merged into existing, ${plan.duplicates - plan.merged} already identical.`
+          : strategy === "skip"
+            ? `${plan.duplicates} duplicate(s) skipped.`
+            : `${plan.duplicates} duplicate(s) kept as separate records.`
+        : "No duplicates found.";
+    toast.success(`Imported ${plan.add.length} new record(s)`, {
+      description: `${dupNote}${result.warned > 0 ? ` ${result.warned} with warnings.` : ""}`,
     });
     setResult(null);
     setFileName("");
@@ -278,6 +306,53 @@ export function MitigationImport({
               )
             )}
 
+
+            <div className="space-y-2 rounded-md border border-border/60 bg-muted/10 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Duplicate handling
+                </p>
+                {plan && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {plan.duplicates} duplicate{plan.duplicates === 1 ? "" : "s"} detected
+                    {plan.duplicates > 0 &&
+                      ` (${plan.duplicatesInLog} already in the trail, ${plan.duplicatesInFile} inside the file)`}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(["skip", "merge", "duplicate"] as DedupeStrategy[]).map((s) => (
+                  <Button
+                    key={s}
+                    size="sm"
+                    variant={strategy === s ? "default" : "outline"}
+                    className="h-7 text-[11px]"
+                    onClick={() => setStrategy(s)}
+                  >
+                    {DEDUPE_LABEL[s]}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">{DEDUPE_HINT[strategy]}</p>
+              {plan && (
+                <div className="grid grid-cols-3 gap-2 text-[11px]">
+                  {[
+                    { label: "New", value: plan.add.length },
+                    { label: strategy === "merge" ? "Merged" : "Skipped", value: strategy === "merge" ? plan.merged : plan.duplicates },
+                    { label: "Records after import", value: importedCount + plan.add.length },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded border border-border/50 bg-background/60 px-2 py-1">
+                      <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+                      <p className="font-mono">{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground">
+                Records match on correlation ID + phase, or on the rule change signature and timestamp
+                when no correlation ID was exported. Live audit entries are never modified.
+              </p>
+            </div>
 
             <ScrollArea className="max-h-56 rounded-md border border-border/60">
               <table className="w-full text-[11px]">
