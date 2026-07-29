@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Lock, RotateCcw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { HowToSteps } from "@/components/how-to-steps";
+import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript } from "@/lib/structured-data";
 
