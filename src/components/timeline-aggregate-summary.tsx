@@ -414,11 +414,16 @@ export function TimelineAggregateSummary({
                           : c < r
                             ? "text-emerald-400"
                             : "text-foreground";
+                    const b = cmp?.matrix[r][c];
                     return (
                       <td key={c} className={`py-1 text-center font-mono ${tone}`}>
-                        {n}
+                        {mode === "diff" && b !== undefined ? signed(n - b) : n}
+                        {overlay && b !== undefined && (
+                          <span className="ml-1 text-[10px] text-muted-foreground">({b})</span>
+                        )}
                       </td>
                     );
+
                   })}
                 </tr>
               ))}
