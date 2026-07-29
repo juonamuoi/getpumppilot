@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { ArrowDownRight, ArrowUpRight, Download, GitCompare, Minus, Sigma } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Crosshair, Download, GitCompare, Minus, Sigma } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,13 @@ import {
 } from "@/lib/aggregate-export";
 import {
   aggregateTimeline,
+  detectAnomalies,
   formatDuration,
   BUCKETS,
   RISK_NAME,
   type AggRiskPoint,
   type AggSignalPoint,
+  type Anomaly,
   type BucketKey,
 } from "@/lib/timeline-aggregate";
 
@@ -97,6 +99,7 @@ export function TimelineAggregateSummary({
   allSignalPoints,
   window: viewWindow,
   scope,
+  onJump,
 }: {
   riskPoints: AggRiskPoint[];
   signalPoints: AggSignalPoint[];
@@ -107,11 +110,18 @@ export function TimelineAggregateSummary({
   window?: { from: number | null; to: number };
   /** Current wallet / token / range selection, recorded in the export. */
   scope?: AggregateScope;
+  /** Jump to the matching moment on the timeline chart / audit entry. */
+  onJump?: (anomaly: Anomaly) => void;
 }) {
   const [bucket, setBucket] = useState<BucketKey>("day");
   const agg = useMemo(
     () => aggregateTimeline(riskPoints, signalPoints, bucket),
     [riskPoints, signalPoints, bucket],
+  );
+
+  const anomalies = useMemo(
+    () => detectAnomalies(agg, signalPoints),
+    [agg, signalPoints],
   );
 
   /* -------- Interactive heatmap drill-down -------- */
