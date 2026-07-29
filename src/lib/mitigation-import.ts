@@ -365,18 +365,31 @@ const ALIAS_INDEX: Record<string, string> = (() => {
   return idx;
 })();
 
-/** Best-guess header → field mapping. Unmatched headers map to "" (ignored). */
+/** Sentinel mapping value meaning "drop this column". */
+export const IGNORE_COLUMN = "__ignore__";
+
+const FIELD_KEYS = new Set(IMPORT_FIELDS.map((f) => f.key));
+
+/**
+ * Best-guess header → field mapping. Headers that already match an audit
+ * field keep their own name; unrecognised headers map to "" (passed through
+ * untouched) unless a confident alias match exists.
+ */
 export function suggestMapping(headers: string[]): Record<string, string> {
   const mapping: Record<string, string> = {};
   const taken = new Set<string>();
   for (const h of headers) {
+    if (FIELD_KEYS.has(h)) {
+      mapping[h] = h;
+      taken.add(h);
+    }
+  }
+  for (const h of headers) {
+    if (mapping[h]) continue;
     const n = norm(h);
-    let key = ALIAS_INDEX[n];
+    let key = ALIAS_INDEX[n] ?? "";
     if (!key) {
-      // Loose contains-match as a fallback (e.g. "alert_outcome_status").
-      const hit = IMPORT_FIELDS.find(
-        (f) => n.includes(norm(f.key)) || [f.label, ...f.aliases].some((a) => a && n === norm(a)),
-      );
+      const hit = IMPORT_FIELDS.find((f) => n.includes(norm(f.key)));
       key = hit?.key ?? "";
     }
     mapping[h] = key && !taken.has(key) ? key : "";
@@ -387,7 +400,7 @@ export function suggestMapping(headers: string[]): Record<string, string> {
 
 /** Required audit fields that the current mapping does not cover. */
 export function missingRequiredFields(mapping: Record<string, string>): ImportFieldDef[] {
-  const mapped = new Set(Object.values(mapping).filter(Boolean));
+  const mapped = new Set(Object.values(mapping).filter((v) => v && v !== IGNORE_COLUMN));
   return IMPORT_FIELDS.filter((f) => f.required && !mapped.has(f.key));
 }
 
@@ -398,16 +411,16 @@ export function applyMapping(result: ImportResult, mapping: Record<string, strin
     const o: ImportRecord = {};
     for (const [header, value] of Object.entries(r)) {
       const target = mapping[header];
-      if (!target) continue;
-      o[target] = value;
+      if (target === IGNORE_COLUMN) continue;
+      o[target || header] = value;
     }
     return o;
   });
-  const unmapped = (result.headers ?? []).filter((h) => !mapping[h]);
+  const unmapped = (result.headers ?? []).filter((h) => mapping[h] === IGNORE_COLUMN);
   const warnings = [...result.warnings.filter((w) => !w.startsWith("Column mapping"))];
-  const changed = Object.entries(mapping).filter(([h, k]) => k && k !== h).length;
-  if (changed > 0) warnings.push(`Column mapping applied to ${changed} header(s).`);
-  if (unmapped.length > 0) warnings.push(`Column mapping ignored ${unmapped.length} unmapped column(s).`);
+  const changed = Object.entries(mapping).filter(([h, k]) => k && k !== IGNORE_COLUMN && k !== h).length;
+  if (changed > 0) warnings.push(`Column mapping: ${changed} header(s) remapped.`);
+  if (unmapped.length > 0) warnings.push(`Column mapping: ${unmapped.length} column(s) ignored.`);
 
   const next = finalize(remapped, result.format, warnings, {
     fileName: result.fileName,
