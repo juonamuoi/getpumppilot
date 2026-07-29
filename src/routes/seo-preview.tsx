@@ -170,7 +170,11 @@ function SeoPreviewPage() {
                 <Badge className="bg-emerald-500/15 text-emerald-400">{counts.ok} clean</Badge>
                 <Badge className="bg-amber-500/15 text-amber-400">{counts.warn} warnings</Badge>
                 <Badge className="bg-destructive/15 text-destructive">{counts.fail} failing</Badge>
+                <Badge variant="outline">
+                  {counts.social}/{counts.total} social cards complete
+                </Badge>
               </div>
+
               <p className="text-xs text-muted-foreground">
                 Expected host{" "}
                 <code className="text-foreground">{query.data?.expectedOrigin ?? "—"}</code> ·
