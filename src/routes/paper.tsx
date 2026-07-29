@@ -221,7 +221,7 @@ function PaperPage() {
           </Card>
         </div>
 
-        <Card className="border-border/60 bg-card/60">
+        <Card data-tour="paper-trades" className="border-border/60 bg-card/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Recent paper trades</CardTitle>
           </CardHeader>
