@@ -58,30 +58,89 @@ function decodeEntities(raw) {
 
 const root = ROOTS.find((candidate) => candidate && existsSync(candidate));
 
-if (!root) {
-  const message = `No build output found (looked in: ${ROOTS.join(", ")}). Run \`bun run build\` first.`;
-  console[ALLOW_MISSING ? "warn" : "error"](message);
-  process.exit(ALLOW_MISSING ? 0 : 1);
+const serverArg = args.indexOf("--server");
+const SERVER = serverArg !== -1 ? args[serverArg + 1] : null;
+
+/** Routes to render when checking a live SSR server (from public/sitemap.xml). */
+async function sitemapPaths() {
+  try {
+    const xml = await readFile("public/sitemap.xml", "utf8");
+    const urls = [...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map((m) => m[1]);
+    const paths = urls.map((u) => {
+      try {
+        return new URL(u).pathname;
+      } catch {
+        return u.startsWith("/") ? u : `/${u}`;
+      }
+    });
+    return [...new Set(paths.length ? paths : ["/"])];
+  } catch {
+    return ["/"];
+  }
 }
 
-const info = await stat(root);
-const files = info.isDirectory() ? await walk(root) : [root];
+let sources = []; // { label, html }
+
+const root = ROOTS.find((candidate) => candidate && existsSync(candidate));
+let scope = root ?? SERVER ?? "";
+
+if (root && !SERVER) {
+  const info = await stat(root);
+  const files = info.isDirectory() ? await walk(root) : [root];
+  for (const file of files) {
+    sources.push({ label: path.relative(root, file), html: await readFile(file, "utf8") });
+  }
+}
+
+// Prerendered HTML is optional (edge/worker presets emit none). Fall back to
+// rendering routes against a running SSR server so CI still validates output.
+if (sources.length === 0) {
+  const base = (SERVER ?? "http://localhost:8080").replace(/\/$/, "");
+  scope = base;
+  const paths = await sitemapPaths();
+  let reachable = false;
+  for (const routePath of paths) {
+    try {
+      const response = await fetch(`${base}${routePath}`, {
+        headers: { accept: "text/html" },
+      });
+      reachable = true;
+      if (!response.ok) {
+        failures.push({
+          file: routePath,
+          block: 0,
+          path: "http",
+          message: `expected 200, got ${response.status}`,
+        });
+        continue;
+      }
+      sources.push({ label: routePath, html: await response.text() });
+    } catch {
+      /* server not reachable — reported below */
+    }
+  }
+  if (!reachable) {
+    const message = `No prerendered HTML in build output and no SSR server reachable at ${base}. Start the app (or pass --server <url>) before running the JSON-LD check.`;
+    console[ALLOW_MISSING ? "warn" : "error"](message);
+    process.exit(ALLOW_MISSING ? 0 : 1);
+  }
+}
 
 let blocks = 0;
 let pages = 0;
-const failures = [];
 
-for (const file of files) {
-  const html = await readFile(file, "utf8");
+for (const { label, html } of sources) {
   const matches = [...html.matchAll(LD_RE)];
   if (matches.length === 0) continue;
   pages += 1;
   matches.forEach((match, index) => {
     blocks += 1;
-    const label = `${path.relative(root, file)} #${index + 1}`;
-    const issues = validateJsonLdSource(decodeEntities(match[1].trim()), label);
+    const issues = validateJsonLdSource(
+      decodeEntities(match[1].trim()),
+      `${label} #${index + 1}`,
+    );
     for (const issue of issues) {
-      failures.push({ file: path.relative(root, file), block: index + 1, ...issue });
+      failures.push({ file: label, block: index + 1, ...issue });
     }
   });
 }
@@ -89,14 +148,14 @@ for (const file of files) {
 if (AS_JSON) {
   console.log(
     JSON.stringify(
-      { root, htmlFiles: files.length, pagesWithJsonLd: pages, blocks, failures },
+      { scope, documents: sources.length, pagesWithJsonLd: pages, blocks, failures },
       null,
       2,
     ),
   );
 } else {
-  console.log(`JSON-LD build check — ${root}`);
-  console.log(`  HTML files scanned : ${files.length}`);
+  console.log(`JSON-LD build check — ${scope}`);
+  console.log(`  Documents scanned  : ${sources.length}`);
   console.log(`  Pages with JSON-LD : ${pages}`);
   console.log(`  JSON-LD blocks     : ${blocks}`);
   if (failures.length === 0) {
@@ -105,15 +164,17 @@ if (AS_JSON) {
     console.log(`  Malformed nodes    : ${failures.length}`);
     console.log("");
     for (const failure of failures) {
-      console.log(`  ✗ ${failure.file} (block ${failure.block}) ${failure.path}: ${failure.message}`);
+      console.log(
+        `  ✗ ${failure.file} (block ${failure.block}) ${failure.path}: ${failure.message}`,
+      );
     }
   }
 }
 
-if (blocks === 0) {
-  console.warn(
-    "No JSON-LD found in the build output — the prerender may not have emitted HTML pages.",
-  );
+if (blocks === 0 && failures.length === 0) {
+  console.error("No JSON-LD found in any scanned document — structured data is missing.");
+  process.exit(1);
 }
 
 process.exit(failures.length > 0 ? 1 : 0);
+
