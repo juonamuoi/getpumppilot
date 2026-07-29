@@ -115,7 +115,20 @@ export const Route = createFileRoute("/alerts")({
         content: "Momentum scanner rules and delivery history.",
       },
     ],
+    scripts: [
+      ldScript(
+        webPageSchema({
+          name: "Momentum alerts & scanner rules",
+          description:
+            "Configure momentum scanner thresholds, per-asset alerts and browse a searchable alert delivery history in PumpPilot AI. Demo data only.",
+          path: "/alerts",
+        }),
+      ),
+      ldScript(breadcrumbSchema([{ name: "Alerts", path: "/alerts" }])),
+      ldScript(faqSchema(alertsFaqs)),
+    ],
   }),
+
   component: AlertsPage,
 });
 
