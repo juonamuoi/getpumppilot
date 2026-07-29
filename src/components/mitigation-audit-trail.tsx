@@ -507,6 +507,23 @@ export function MitigationAuditTrail({
     [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry],
   );
 
+  /** Same scope as `entries` but ignoring the outcome filter, for chip counts. */
+  const outcomeCounts = useMemo(() => {
+    const base = filterAuditEntries(
+      sourceLog,
+      { q, outcome: "all", range, correlationIds, tokens, alertTypes, wallets },
+      (e) => walletsForEntry.get(e.id) ?? [],
+    );
+    return {
+      all: base.length,
+      "alerts-fired": base.filter((e) => e.outcome?.status === "alerts-fired").length,
+      "channels-muted": base.filter((e) => e.outcome?.status === "channels-muted").length,
+      "no-matches": base.filter((e) => e.outcome?.status === "no-matches").length,
+      pending: base.filter((e) => !e.outcome).length,
+    } as Record<OutcomeFilter, number>;
+  }, [sourceLog, q, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
+
+
 
   /** Export scope honours the retention policy's preview toggle. */
   const exportEntries = paper.retention.includePreviewsInExport
