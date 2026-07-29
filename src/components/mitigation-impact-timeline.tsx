@@ -23,6 +23,8 @@ import {
 } from "@/lib/timeline-export";
 import { TimelineAggregateSummary } from "@/components/timeline-aggregate-summary";
 import { AuditEntryDrawer } from "@/components/audit-entry-drawer";
+import { TimelineColumnPicker } from "@/components/timeline-column-picker";
+import { useTimelineExportColumns } from "@/lib/timeline-export-prefs";
 
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -477,6 +479,9 @@ export function MitigationImpactTimeline() {
     })
     .join(" ");
 
+  // Per-user CSV column selection (persisted).
+  const columnPrefs = useTimelineExportColumns();
+
   // Which sections land in the export file (all selected by default).
   const [sections, setSections] = useState<TimelineSection[]>(ALL_TIMELINE_SECTIONS);
   const toggleSection = (key: TimelineSection) =>
@@ -505,6 +510,11 @@ export function MitigationImpactTimeline() {
       toast.error("Pick at least one section to export");
       return;
     }
+    const cols = columnPrefs.columns;
+    if (fmt === "csv" && !cols.meta.length && !cols.risk.length && !cols.mitigation.length) {
+      toast.error("Pick at least one CSV column to export");
+      return;
+    }
     const focus = scoped ? drawerId : null;
     const rp = focus ? riskPoints.filter((p) => p.correlationId === focus) : riskPoints;
     const sp = focus ? signalPoints.filter((p) => p.correlationId === focus) : signalPoints;
@@ -521,6 +531,7 @@ export function MitigationImpactTimeline() {
       outcomes,
       correlationId: focus ?? undefined,
       sections,
+      columns: cols,
     };
     const body =
       fmt === "csv" ? buildTimelineCsv(filters, rp, sp) : buildTimelineJson(filters, rp, sp);
@@ -552,6 +563,7 @@ export function MitigationImpactTimeline() {
             >
               <Link2 className="h-3 w-3" /> Share view
             </Button>
+            <TimelineColumnPicker {...columnPrefs} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button

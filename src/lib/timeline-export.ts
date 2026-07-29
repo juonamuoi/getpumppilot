@@ -90,7 +90,104 @@ export type TimelineFilters = {
   correlationId?: string;
   /** Sections included in this export (empty/undefined = all). */
   sections?: TimelineSection[];
+  /** CSV columns to include (undefined = every column). */
+  columns?: TimelineColumnSelection;
 };
+
+/* ------------------------------------------------------------------ *
+ * CSV column catalogue
+ * ------------------------------------------------------------------ */
+
+export type TimelineColumnGroup = "meta" | "risk" | "mitigation";
+
+export type TimelineColumnSelection = {
+  meta?: string[];
+  risk?: string[];
+  mitigation?: string[];
+};
+
+type MetaColumn = { key: string; label: string; value: (f: TimelineFilters, sections: TimelineSection[]) => unknown };
+type RiskColumn = { key: string; label: string; value: (p: TimelineRiskRow) => unknown };
+type SignalColumn = { key: string; label: string; value: (p: TimelineSignalRow) => unknown };
+
+export const TIMELINE_META_COLUMNS: MetaColumn[] = [
+  { key: "export", label: "Export name", value: () => "mitigation-impact-timeline" },
+  { key: "generated_at", label: "Generated at", value: () => new Date().toISOString() },
+  { key: "data_source", label: "Data source", value: () => "demo/mock data - not financial advice" },
+  { key: "range", label: "Range", value: (f) => f.rangeLabel },
+  { key: "from", label: "From", value: (f) => (f.from ? new Date(f.from).toISOString() : "all time") },
+  { key: "to", label: "To", value: (f) => new Date(f.to).toISOString() },
+  { key: "wallets", label: "Wallets", value: (f) => (f.wallets.length ? f.wallets.join(" | ") : "all") },
+  { key: "tokens", label: "Tokens", value: (f) => (f.tokens.length ? f.tokens.join(" | ") : "all") },
+  { key: "actions", label: "Actions", value: (f) => (f.actions?.length ? f.actions.join(" | ") : "all") },
+  { key: "outcomes", label: "Outcomes", value: (f) => (f.outcomes?.length ? f.outcomes.join(" | ") : "all") },
+  { key: "correlation_id", label: "Correlation ID", value: (f) => f.correlationId ?? "all" },
+  { key: "sections", label: "Sections", value: (_f, sections) => sections.join(" | ") },
+];
+
+export const TIMELINE_RISK_COLUMNS: RiskColumn[] = [
+  { key: "timestamp", label: "Timestamp", value: (p) => new Date(p.ts).toISOString() },
+  { key: "wallet", label: "Wallet", value: (p) => p.address },
+  { key: "risk_level", label: "Risk level", value: (p) => RISK_LABELS[p.score] ?? "unknown" },
+  { key: "risk_score", label: "Risk score", value: (p) => p.score },
+  { key: "threats", label: "Threats", value: (p) => p.threats },
+  { key: "value_at_risk_usd", label: "Value at risk (USD)", value: (p) => p.valueAtRisk.toFixed(2) },
+  { key: "trigger", label: "Trigger", value: (p) => p.trigger },
+  { key: "correlation_id", label: "Correlation ID", value: (p) => p.correlationId },
+];
+
+export const TIMELINE_MITIGATION_COLUMNS: SignalColumn[] = [
+  { key: "timestamp", label: "Timestamp", value: (p) => new Date(p.ts).toISOString() },
+  { key: "mitigation", label: "Mitigation", value: (p) => p.label },
+  { key: "action", label: "Action", value: (p) => p.action ?? "" },
+  { key: "rule", label: "Rule", value: (p) => p.rule },
+  { key: "matches_before", label: "Matches before", value: (p) => p.matchesBefore ?? "" },
+  { key: "matches_after", label: "Matches after", value: (p) => p.matchesAfter ?? "" },
+  { key: "match_delta", label: "Match delta", value: (p) => p.matchDelta },
+  { key: "near_miss_before", label: "Near-miss before", value: (p) => p.nearMissBefore ?? "" },
+  { key: "near_miss_after", label: "Near-miss after", value: (p) => p.nearMissAfter ?? "" },
+  { key: "near_miss_delta", label: "Near-miss delta", value: (p) => p.nearMissDelta },
+  { key: "tokens", label: "Tokens", value: (p) => p.symbols.join(" | ") },
+  { key: "outcome", label: "Outcome", value: (p) => p.outcome ?? "" },
+  { key: "correlation_id", label: "Correlation ID", value: (p) => p.correlationId ?? "" },
+  { key: "section", label: "Section", value: (p) => sectionOfSignal(p) },
+  { key: "diff", label: "Diff", value: (p) => p.diff ?? "" },
+  { key: "rule_before", label: "Rule before", value: (p) => p.ruleBefore ?? "" },
+  { key: "rule_after", label: "Rule after", value: (p) => p.ruleAfter ?? "" },
+  { key: "why", label: "Why", value: (p) => p.why ?? "" },
+  { key: "why_change", label: "Why · change", value: (p) => p.whyChange ?? "" },
+  { key: "why_strictness", label: "Why · strictness", value: (p) => p.whyStrictness ?? "" },
+  { key: "why_impact", label: "Why · impact", value: (p) => p.whyImpact ?? "" },
+  { key: "why_outcome", label: "Why · outcome", value: (p) => p.whyOutcome ?? "" },
+  { key: "why_fragility", label: "Why · fragility", value: (p) => p.whyFragility ?? "" },
+];
+
+export const TIMELINE_COLUMN_GROUPS: {
+  key: TimelineColumnGroup;
+  label: string;
+  columns: { key: string; label: string }[];
+}[] = [
+  { key: "meta", label: "Metadata", columns: TIMELINE_META_COLUMNS.map((c) => ({ key: c.key, label: c.label })) },
+  { key: "risk", label: "Risk point columns", columns: TIMELINE_RISK_COLUMNS.map((c) => ({ key: c.key, label: c.label })) },
+  {
+    key: "mitigation",
+    label: "Mitigation columns",
+    columns: TIMELINE_MITIGATION_COLUMNS.map((c) => ({ key: c.key, label: c.label })),
+  },
+];
+
+/** Every column selected — the default. */
+export function allTimelineColumns(): Required<TimelineColumnSelection> {
+  return {
+    meta: TIMELINE_META_COLUMNS.map((c) => c.key),
+    risk: TIMELINE_RISK_COLUMNS.map((c) => c.key),
+    mitigation: TIMELINE_MITIGATION_COLUMNS.map((c) => c.key),
+  };
+}
+
+function pick<T extends { key: string }>(all: T[], selected: string[] | undefined) {
+  return selected ? all.filter((c) => selected.includes(c.key)) : all;
+}
 
 const RISK_LABELS = ["safe", "medium", "high", "critical"];
 
@@ -182,102 +279,30 @@ export function buildTimelineCsv(
   const scoped = filterTimelineSections(filters.sections, allRisk, allSignals);
   const risk = scoped.risk;
   const signals = scoped.signals;
+  const cols = filters.columns ?? {};
+  const metaCols = pick(TIMELINE_META_COLUMNS, cols.meta);
+  const riskCols = pick(TIMELINE_RISK_COLUMNS, cols.risk);
+  const signalCols = pick(TIMELINE_MITIGATION_COLUMNS, cols.mitigation);
+
   const meta = csvSection(
     ["field", "value"],
-    [
-      ["export", "mitigation-impact-timeline"],
-      ["generated_at", new Date().toISOString()],
-      ["data_source", "demo/mock data - not financial advice"],
-      ["range", filters.rangeLabel],
-      ["from", filters.from ? new Date(filters.from).toISOString() : "all time"],
-      ["to", new Date(filters.to).toISOString()],
-      ["wallets", filters.wallets.length ? filters.wallets.join(" | ") : "all"],
-      ["tokens", filters.tokens.length ? filters.tokens.join(" | ") : "all"],
-      ["actions", filters.actions?.length ? filters.actions.join(" | ") : "all"],
-      ["outcomes", filters.outcomes?.length ? filters.outcomes.join(" | ") : "all"],
-      ["sections", scoped.sections.join(" | ")],
-    ],
+    metaCols.map((c) => [c.key, c.value(filters, scoped.sections)]),
   );
 
   const riskCsv = csvSection(
-    [
-      "timestamp",
-      "wallet",
-      "risk_level",
-      "risk_score",
-      "threats",
-      "value_at_risk_usd",
-      "trigger",
-      "correlation_id",
-    ],
-    risk.map((p) => [
-      new Date(p.ts).toISOString(),
-      p.address,
-      RISK_LABELS[p.score] ?? "unknown",
-      p.score,
-      p.threats,
-      p.valueAtRisk.toFixed(2),
-      p.trigger,
-      p.correlationId,
-    ]),
+    riskCols.map((c) => c.key),
+    risk.map((p) => riskCols.map((c) => c.value(p))),
   );
 
   const signalCsv = csvSection(
-    [
-      "timestamp",
-      "mitigation",
-      "action",
-      "rule",
-      "matches_before",
-      "matches_after",
-      "match_delta",
-      "near_miss_before",
-      "near_miss_after",
-      "near_miss_delta",
-      "tokens",
-      "outcome",
-      "correlation_id",
-      "section",
-      "diff",
-      "rule_before",
-      "rule_after",
-      "why",
-      "why_change",
-      "why_strictness",
-      "why_impact",
-      "why_outcome",
-      "why_fragility",
-    ],
-    signals.map((p) => [
-      new Date(p.ts).toISOString(),
-      p.label,
-      p.action ?? "",
-      p.rule,
-      p.matchesBefore ?? "",
-      p.matchesAfter ?? "",
-      p.matchDelta,
-      p.nearMissBefore ?? "",
-      p.nearMissAfter ?? "",
-      p.nearMissDelta,
-      p.symbols.join(" | "),
-      p.outcome ?? "",
-      p.correlationId ?? "",
-      sectionOfSignal(p),
-      p.diff ?? "",
-      p.ruleBefore ?? "",
-      p.ruleAfter ?? "",
-      p.why ?? "",
-      p.whyChange ?? "",
-      p.whyStrictness ?? "",
-      p.whyImpact ?? "",
-      p.whyOutcome ?? "",
-      p.whyFragility ?? "",
-    ]),
+    signalCols.map((c) => c.key),
+    signals.map((p) => signalCols.map((c) => c.value(p))),
   );
 
-  const parts = [meta];
-  if (scoped.sections.includes("risk")) parts.push(`# wallet_risk_points\n${riskCsv}`);
-  if (scoped.sections.some((s) => s !== "risk"))
+  const parts: string[] = [];
+  if (metaCols.length) parts.push(meta);
+  if (scoped.sections.includes("risk") && riskCols.length) parts.push(`# wallet_risk_points\n${riskCsv}`);
+  if (scoped.sections.some((s) => s !== "risk") && signalCols.length)
     parts.push(`# mitigation_signal_points\n${signalCsv}`);
   return `${parts.join("\n\n")}\n`;
 }
