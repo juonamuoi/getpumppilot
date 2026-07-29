@@ -8,7 +8,6 @@
  * ------------------------------------------------------------------ */
 
 import { RISK_NAME, type BucketKey, type TimelineAggregate } from "@/lib/timeline-aggregate";
-import { downloadTimelineExport } from "@/lib/timeline-export";
 
 export type AggregateScope = {
   rangeLabel?: string;
@@ -114,10 +113,10 @@ export function buildAggregateCsv(
       ["range", scope.rangeLabel ?? "all"],
       ["from", scope.from ? new Date(scope.from).toISOString() : "all time"],
       ["to", new Date(scope.to ?? Date.now()).toISOString()],
-      ["wallets", Array.isArray(list(scope.wallets)) ? (scope.wallets ?? []).join(" | ") : "all"],
-      ["tokens", Array.isArray(list(scope.tokens)) ? (scope.tokens ?? []).join(" | ") : "all"],
-      ["actions", Array.isArray(list(scope.actions)) ? (scope.actions ?? []).join(" | ") : "all"],
-      ["outcomes", Array.isArray(list(scope.outcomes)) ? (scope.outcomes ?? []).join(" | ") : "all"],
+      ["wallets", scope.wallets?.length ? scope.wallets.join(" | ") : "all"],
+      ["tokens", scope.tokens?.length ? scope.tokens.join(" | ") : "all"],
+      ["actions", scope.actions?.length ? scope.actions.join(" | ") : "all"],
+      ["outcomes", scope.outcomes?.length ? scope.outcomes.join(" | ") : "all"],
       ["correlation_id", scope.correlationId ?? "all"],
     ],
   );
@@ -209,6 +208,3 @@ export function downloadAggregateExport(body: string, format: "csv" | "json") {
   a.remove();
   URL.revokeObjectURL(url);
 }
-
-// Keeps the shared helper referenced for callers that prefer it.
-export { downloadTimelineExport };

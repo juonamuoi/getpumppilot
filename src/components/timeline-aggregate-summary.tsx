@@ -1,9 +1,21 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { ArrowDownRight, ArrowUpRight, Minus, Sigma } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Download, Minus, Sigma } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  buildAggregateCsv,
+  buildAggregateJson,
+  downloadAggregateExport,
+  type AggregateScope,
+} from "@/lib/aggregate-export";
 import {
   aggregateTimeline,
   formatDuration,
@@ -49,9 +61,12 @@ const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
 export function TimelineAggregateSummary({
   riskPoints,
   signalPoints,
+  scope,
 }: {
   riskPoints: AggRiskPoint[];
   signalPoints: AggSignalPoint[];
+  /** Current wallet / token / range selection, recorded in the export. */
+  scope?: AggregateScope;
 }) {
   const [bucket, setBucket] = useState<BucketKey>("day");
   const agg = useMemo(
@@ -75,7 +90,7 @@ export function TimelineAggregateSummary({
             (current wallet / token / range selection · demo data)
           </span>
         </div>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
           {BUCKETS.map((b) => (
             <Button
               key={b.key}
@@ -87,6 +102,36 @@ export function TimelineAggregateSummary({
               {b.label}
             </Button>
           ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 gap-1 px-2 text-[11px]"
+                title="Export the aggregate summary for the current selection"
+              >
+                <Download className="h-3 w-3" /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-xs"
+                onSelect={() =>
+                  downloadAggregateExport(buildAggregateCsv(agg, bucket, scope ?? {}), "csv")
+                }
+              >
+                Summary CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-xs"
+                onSelect={() =>
+                  downloadAggregateExport(buildAggregateJson(agg, bucket, scope ?? {}), "json")
+                }
+              >
+                Summary JSON
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
