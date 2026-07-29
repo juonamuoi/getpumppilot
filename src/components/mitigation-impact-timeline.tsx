@@ -428,7 +428,12 @@ export function MitigationImpactTimeline() {
       })
 
       .sort((a, b) => a.ts - b.ts);
-  }, [tuningLog, cutoff, tokens, actions, outcomes]);
+  }, [tuningLog, tokens, actions, outcomes]);
+
+  const signalPoints = useMemo<SignalPoint[]>(
+    () => allSignalPoints.filter((p) => p.ts >= cutoff),
+    [allSignalPoints, cutoff],
+  );
 
   /** DOM ids of every focusable marker, in chronological order. */
   const markerOrder = useMemo(
