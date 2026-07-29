@@ -454,6 +454,110 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_crawl_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          current_value: number | null
+          delta: number | null
+          id: string
+          message: string
+          metric: string
+          previous_value: number | null
+          severity: string
+          site_url: string
+          snapshot_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          current_value?: number | null
+          delta?: number | null
+          id?: string
+          message: string
+          metric: string
+          previous_value?: number | null
+          severity?: string
+          site_url: string
+          snapshot_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          current_value?: number | null
+          delta?: number | null
+          id?: string
+          message?: string
+          metric?: string
+          previous_value?: number | null
+          severity?: string
+          site_url?: string
+          snapshot_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_crawl_alerts_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "seo_crawl_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seo_crawl_snapshots: {
+        Row: {
+          canonical_mismatches: number
+          crawl_errors: number
+          created_at: string
+          details: Json
+          error: string | null
+          id: string
+          indexed_urls: number
+          ok: boolean
+          site_url: string
+          sitemap_errors: number
+          sitemap_warnings: number
+          source: string
+          submitted_urls: number
+          urls_checked: number
+        }
+        Insert: {
+          canonical_mismatches?: number
+          crawl_errors?: number
+          created_at?: string
+          details?: Json
+          error?: string | null
+          id?: string
+          indexed_urls?: number
+          ok?: boolean
+          site_url: string
+          sitemap_errors?: number
+          sitemap_warnings?: number
+          source?: string
+          submitted_urls?: number
+          urls_checked?: number
+        }
+        Update: {
+          canonical_mismatches?: number
+          crawl_errors?: number
+          created_at?: string
+          details?: Json
+          error?: string | null
+          id?: string
+          indexed_urls?: number
+          ok?: boolean
+          site_url?: string
+          sitemap_errors?: number
+          sitemap_warnings?: number
+          source?: string
+          submitted_urls?: number
+          urls_checked?: number
+        }
+        Relationships: []
+      }
       storage_access_audit: {
         Row: {
           bucket: string
