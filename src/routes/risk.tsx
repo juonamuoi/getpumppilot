@@ -103,6 +103,7 @@ function RiskPage() {
                 suffix="%"
               />
               <Button
+                data-tour="risk-save"
                 className="w-full"
                 onClick={() => {
                   paper.setRisk(r);
