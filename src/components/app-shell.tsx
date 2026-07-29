@@ -30,6 +30,7 @@ import { CommandPalette } from "./command-palette";
 import { OnboardingDialog } from "./onboarding-dialog";
 import { AICopilot } from "./ai-copilot";
 import { CreditBadge, CreditMeter } from "./credit-badge";
+import { AccountButton } from "./account-button";
 import { cn } from "@/lib/utils";
 
 const nav = [
