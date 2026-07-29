@@ -137,33 +137,31 @@ function TokenChip({
   );
 }
 
-/**
- * Deep link from a timeline marker to the exact preview + reviewed mitigation
- * entries for that correlation ID in the audit trail.
- */
-function CorrelationLink({ id }: { id: string }) {
-  return (
-    <Link
-      to="/alerts"
-      search={{ tab: "replay", audit: id }}
-      className="inline-flex items-center gap-1 font-mono text-[10px] text-primary underline-offset-2 hover:underline"
-      title="Open the matching audit entries"
-    >
-      {id}
-      <ExternalLink className="h-3 w-3" />
-    </Link>
-  );
-}
-
 export function MitigationImpactTimeline() {
 
   const runs = useScanHistory();
   const { tuningLog } = usePaper();
-  const navigate = useNavigate();
+  const [drawerId, setDrawerId] = useState<string | null>(null);
   const openAudit = (id?: string) => {
     if (!id) return;
-    navigate({ to: "/alerts", search: { tab: "replay", audit: id } });
+    setDrawerId(id);
   };
+
+  /**
+   * Timeline marker → opens the focused audit entries in a right-side drawer,
+   * without leaving the page.
+   */
+  const CorrelationLink = ({ id }: { id: string }) => (
+    <button
+      type="button"
+      onClick={() => openAudit(id)}
+      className="inline-flex items-center gap-1 font-mono text-[10px] text-primary underline-offset-2 hover:underline"
+      title="Open the matching audit entries in a side drawer"
+    >
+      {id}
+      <ExternalLink className="h-3 w-3" />
+    </button>
+  );
 
 
   const [range, setRange] = useState<RangeKey>("7d");
