@@ -8,6 +8,7 @@ import {
   WEBSITE_ID,
 
   SOCIAL_IMAGE_URL,
+  socialImageUrl,
   breadcrumbSchema,
   ldScript,
 } from "@/lib/structured-data";
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/blog/$slug")({
     const post = loaderData?.post;
     const url = `${BASE}/blog/${params.slug}`;
     if (!post) return { meta: [{ title: "Post not found" }] };
-    const imageUrl = post.image ? `${BASE}${post.image}` : SOCIAL_IMAGE_URL;
+    const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
     const imageAlt = post.imageAlt ?? post.title;
     const socialTitle = `${post.title} | PumpPilot AI`;
     return {

@@ -6,12 +6,28 @@
  * search engines can merge them into one entity graph.
  */
 
+import { SOCIAL_IMAGE_HASHES } from "./social-image-hashes";
+
 export const SITE_URL = "https://www.getpumppilot.app";
 export const SITE_NAME = "PumpPilot AI";
 export const SITE_TAGLINE = "Spot momentum. Control risk. Trade smarter.";
-export const LOGO_URL = `${SITE_URL}/favicon.png`;
+
+/**
+ * Absolute, content-versioned URL for a social preview image.
+ *
+ * Social platforms cache og:image by URL, so a re-published image with the
+ * same path keeps showing the old preview. Appending the content hash gives
+ * every new version of the file a new URL.
+ */
+export const socialImageUrl = (publicPath: string) => {
+  const p = publicPath.startsWith("/") ? publicPath : `/${publicPath}`;
+  const hash = SOCIAL_IMAGE_HASHES[p];
+  return `${SITE_URL}${p}${hash ? `?v=${hash}` : ""}`;
+};
+
+export const LOGO_URL = socialImageUrl("/favicon.png");
 /** 1200x640 social/article image — Google requires wide images for Article rich results. */
-export const SOCIAL_IMAGE_URL = `${SITE_URL}/og-cover.jpg`;
+export const SOCIAL_IMAGE_URL = socialImageUrl("/og-cover.jpg");
 export const SOCIAL_IMAGE = {
   "@type": "ImageObject",
   url: SOCIAL_IMAGE_URL,

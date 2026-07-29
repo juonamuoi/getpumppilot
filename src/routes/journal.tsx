@@ -1,3 +1,4 @@
+import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { AppShell } from "@/components/app-shell";
@@ -16,7 +17,7 @@ const J_TITLE = "Trade Journal — PumpPilot AI";
 const J_DESC =
   "Paper trading performance analytics: win rate, expectancy, profit factor, equity curve and per-asset attribution. Demo data.";
 const J_OG_DESC = "Win rate, expectancy, equity curve — measure your paper trading edge.";
-const J_IMAGE = "https://www.getpumppilot.app/og-cover.jpg";
+const J_IMAGE = SOCIAL_IMAGE_URL;
 
 export const Route = createFileRoute("/journal")({
   head: () => ({
