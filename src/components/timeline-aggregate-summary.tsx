@@ -114,6 +114,30 @@ export function TimelineAggregateSummary({
     [riskPoints, signalPoints, bucket],
   );
 
+  /* -------- Interactive heatmap drill-down -------- */
+  const [selected, setSelected] = useState<{ from: number; to: number } | null>(null);
+  const maxCell = useMemo(
+    () => Math.max(0, ...agg.matrix.flatMap((row, r) => row.map((n, c) => (r === c ? 0 : n)))),
+    [agg.matrix],
+  );
+  const drill = useMemo(() => {
+    if (!selected) return [];
+    return agg.transitions
+      .filter((t) => t.from === selected.from && t.to === selected.to)
+      .map((transition) => {
+        const inWindow = signalPoints.filter(
+          (s) => s.ts >= transition.prevTs && s.ts <= transition.ts,
+        );
+        return {
+          transition,
+          matched: inWindow.filter((s) => s.matchDelta !== 0),
+          nearMiss: inWindow.filter((s) => s.matchDelta === 0 && s.nearMissDelta !== 0),
+        };
+      });
+  }, [selected, agg.transitions, signalPoints]);
+
+
+
   /* ---------------- Comparison mode ---------------- */
   const canCompare = Boolean(allRiskPoints && allSignalPoints && viewWindow);
   const [compareKey, setCompareKey] = useState<CompareKey>("off");
