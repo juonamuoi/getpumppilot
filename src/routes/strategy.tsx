@@ -1,3 +1,5 @@
+import { FaqSection } from "@/components/faq-section";
+import { strategyFaqs } from "@/lib/page-faqs";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -15,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { HowToSteps } from "@/components/how-to-steps";
 import { STRATEGY_BUILDER_FLOW } from "@/lib/help-flows";
-import { howToSchema, ldScript } from "@/lib/structured-data";
+import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/strategy")({
   head: () => ({
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/strategy")({
       },
     ],
     scripts: [
+      ldScript(faqSchema(strategyFaqs, "/strategy")),
       ldScript(
         howToSchema({
           name: STRATEGY_BUILDER_FLOW.name,
@@ -200,6 +203,7 @@ function StrategyPage() {
           </Card>
         </div>
         <HowToSteps flow={STRATEGY_BUILDER_FLOW} />
+        <FaqSection faqs={strategyFaqs} title="Strategy builder FAQ" />
       </div>
     </AppShell>
   );

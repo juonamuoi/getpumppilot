@@ -134,7 +134,7 @@ export const Route = createFileRoute("/alerts")({
         }),
       ),
       ldScript(breadcrumbSchema([{ name: "Alerts", path: "/alerts" }])),
-      ldScript(faqSchema(alertsFaqs)),
+      ldScript(faqSchema(alertsFaqs, "/alerts")),
     ],
   }),
 

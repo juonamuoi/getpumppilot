@@ -57,7 +57,7 @@ export const Route = createFileRoute("/asset/$symbol")({
             { name: sym, path: `/asset/${params.symbol.toLowerCase()}` },
           ]),
         ),
-        ldScript(faqSchema(assetFaqs(sym, name))),
+        ldScript(faqSchema(assetFaqs(sym, name), `/asset/${sym.toLowerCase()}`)),
       ],
     };
   },

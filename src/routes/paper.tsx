@@ -1,3 +1,5 @@
+import { FaqSection } from "@/components/faq-section";
+import { paperFaqs } from "@/lib/page-faqs";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -23,7 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { HowToSteps } from "@/components/how-to-steps";
 import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
-import { howToSchema, ldScript } from "@/lib/structured-data";
+import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/paper")({
   head: () => ({
@@ -43,6 +45,7 @@ export const Route = createFileRoute("/paper")({
       },
     ],
     scripts: [
+      ldScript(faqSchema(paperFaqs, "/paper")),
       ldScript(
         howToSchema({
           name: PAPER_TRADING_FLOW.name,
@@ -259,6 +262,7 @@ function PaperPage() {
           </CardContent>
         </Card>
         <HowToSteps flow={PAPER_TRADING_FLOW} />
+        <FaqSection faqs={paperFaqs} title="Paper trading FAQ" />
       </div>
     </AppShell>
   );

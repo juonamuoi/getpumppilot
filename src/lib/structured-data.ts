@@ -221,10 +221,26 @@ export function legalPageSchema(opts: {
   };
 }
 
-export function faqSchema(faqs: { q: string; a: string }[]) {
+/**
+ * FAQPage node. Pass the route path to bind the FAQ to that exact URL with a
+ * stable @id — Google needs the Q&A tied to the page it is rendered on to be
+ * eligible for FAQ rich results.
+ */
+export function faqSchema(faqs: { q: string; a: string }[], path?: string) {
+  const url = path ? absoluteUrl(path) : undefined;
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
+    ...(url
+      ? {
+          "@id": `${url}#faq`,
+          url,
+          mainEntityOfPage: { "@type": "WebPage", "@id": url },
+          isPartOf: { "@id": WEBSITE_ID },
+          publisher: { "@id": ORG_ID },
+          inLanguage: "en",
+        }
+      : {}),
     mainEntity: faqs.map((f) => ({
       "@type": "Question",
       name: f.q,

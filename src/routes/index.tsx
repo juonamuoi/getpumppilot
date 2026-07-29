@@ -184,7 +184,7 @@ const plans = [
     highlight: false,
   },
 ];
-const homeFaqSchema = buildFaqSchema(faqs);
+const homeFaqSchema = buildFaqSchema(faqs, "/");
 
 const productSchema = {
   "@context": "https://schema.org",
