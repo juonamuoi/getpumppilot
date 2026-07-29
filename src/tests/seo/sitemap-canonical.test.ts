@@ -56,8 +56,24 @@ const DYNAMIC_VALUES: Record<string, string[]> = {
   symbol: ASSETS.map((a) => a.symbol.toLowerCase()),
 };
 
-/** Routes that render HTML but are deliberately left out of the sitemap. */
-const NOT_IN_SITEMAP = new Set(["/lp/momentum-scanner"]);
+/**
+ * Routes that render HTML but are deliberately left out of the sitemap.
+ * The app routes below require a connected wallet / signed-in session and hold
+ * no crawlable value, so they are excluded to protect crawl budget.
+ */
+const NOT_IN_SITEMAP = new Set([
+  "/lp/momentum-scanner",
+  "/dashboard",
+  "/paper",
+  "/journal",
+  "/alerts",
+  "/backtest",
+  "/strategy",
+  "/risk",
+  "/copilot",
+  "/doctor",
+  "/security",
+]);
 
 
 type HeadLink = { rel?: string; href?: string };
