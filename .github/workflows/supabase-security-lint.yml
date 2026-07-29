@@ -22,6 +22,9 @@ jobs:
       - name: Supabase migration lint (static)
         run: bun run lint:supabase
 
+      - name: Cross-user execute + storage path scoping audit
+        run: bun run lint:supabase:authz
+
       - name: Supabase database linter (live, optional)
         if: ${{ env.SUPABASE_DB_URL != '' }}
         env:
