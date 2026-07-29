@@ -158,9 +158,17 @@ export function MitigationImpactTimeline() {
   const { tuningLog } = usePaper();
   const navigate = useNavigate();
   /** URL is the source of truth so a refresh restores the focused batch. */
-  const search = useSearch({ strict: false }) as { audit?: string };
+  const search = useSearch({ strict: false }) as {
+    audit?: string;
+    tlrange?: string;
+    tlw?: string;
+    tlt?: string;
+    tla?: string;
+    tlo?: string;
+  };
   const urlId = search.audit ?? null;
   const [drawerId, setDrawerId] = useState<string | null>(urlId);
+
 
   // Restore from local UI state when the URL has no focus (e.g. plain reload).
   useEffect(() => {
