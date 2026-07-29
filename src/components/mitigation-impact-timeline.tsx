@@ -31,6 +31,8 @@ import { useScanHistory } from "@/lib/wallet-session";
 import { usePaper } from "@/lib/paper-store";
 import type { ApprovalRisk } from "@/lib/wallet-scan";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { explainFields } from "@/lib/mitigation-explain";
+
 
 /* ------------------------------------------------------------------ *
  * Mitigation impact timeline
