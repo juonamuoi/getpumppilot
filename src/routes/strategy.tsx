@@ -199,7 +199,6 @@ function StrategyPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
         <HowToSteps flow={STRATEGY_BUILDER_FLOW} />
       </div>
     </AppShell>

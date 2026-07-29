@@ -251,7 +251,6 @@ function PaperPage() {
             )}
           </CardContent>
         </Card>
-      </div>
         <HowToSteps flow={PAPER_TRADING_FLOW} />
       </div>
     </AppShell>
