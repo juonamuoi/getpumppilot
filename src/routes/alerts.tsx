@@ -2,6 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
+import { FaqSection } from "@/components/faq-section";
+import { alertsFaqs } from "@/lib/page-faqs";
+import {
+  breadcrumbSchema,
+  faqSchema,
+  ldScript,
+  webPageSchema,
+} from "@/lib/structured-data";
+
 import { TuningDeltaChart } from "@/components/tuning-delta-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
