@@ -11,6 +11,7 @@ import {
   SOCIAL_IMAGE_URL,
   socialImageUrl,
   breadcrumbSchema,
+  blogPostingSchema,
   ldScript,
 } from "@/lib/structured-data";
 
@@ -65,37 +66,12 @@ export const Route = createFileRoute("/blog/$slug")({
       ],
       links: [{ rel: "canonical", href: url }],
       scripts: [
-        ldScript({
-          "@context": "https://schema.org",
-          "@type": "BlogPosting",
-          "@id": `${url}#article`,
-          headline: post.title,
-          description: post.description,
-          datePublished: post.date,
-          dateModified: post.date,
-          author: {
-            "@type": "Organization",
-            "@id": ORG_ID,
-            name: "PumpPilot AI",
-            url: BASE,
-          },
-          publisher: { "@id": ORG_ID },
-          image: {
-            "@type": "ImageObject",
-            url: imageUrl,
-            width: 1200,
-            height: 630,
-            caption: imageAlt,
-          },
-          mainEntityOfPage: { "@type": "WebPage", "@id": url },
-          isPartOf: { "@id": `${BASE}/blog#blog` },
-          url,
-          inLanguage: "en",
-          keywords: post.keywords.join(", "),
-          articleSection: post.tags,
-          wordCount: countWords(post.body),
-          timeRequired: `PT${post.readMinutes}M`,
-        }),
+        ldScript(
+          blogPostingSchema(
+            { ...post, wordCount: countWords(post.body) },
+            { standalone: true },
+          ),
+        ),
         ldScript(
           breadcrumbSchema([
             { name: "Blog", path: "/blog" },

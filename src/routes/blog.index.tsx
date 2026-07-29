@@ -7,8 +7,8 @@ import {
   SITE_URL,
   ORG_ID,
   WEBSITE_ID,
-  SOCIAL_IMAGE,
   breadcrumbSchema,
+  blogPostingSchema,
   ldScript,
 } from "@/lib/structured-data";
 
@@ -39,17 +39,7 @@ export const Route = createFileRoute("/blog/")({
         inLanguage: "en",
         isPartOf: { "@id": WEBSITE_ID },
         publisher: { "@id": ORG_ID },
-        blogPost: BLOG_POSTS.map((p) => ({
-          "@type": "BlogPosting",
-          "@id": `${CANONICAL}/${p.slug}#article`,
-          headline: p.title,
-          description: p.description,
-          datePublished: p.date,
-          author: { "@id": ORG_ID },
-          image: SOCIAL_IMAGE,
-          keywords: p.keywords.join(", "),
-          url: `${CANONICAL}/${p.slug}`,
-        })),
+        blogPost: BLOG_POSTS.map((p) => blogPostingSchema(p)),
 
       }),
       ldScript(breadcrumbSchema([{ name: "Blog", path: "/blog" }])),

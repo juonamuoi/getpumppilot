@@ -2,7 +2,9 @@ export interface BlogPost {
   slug: string;
   title: string;
   description: string;
-  date: string; // ISO
+  date: string; // ISO publish date
+  /** ISO last-updated date; falls back to `date` for dateModified. */
+  updated?: string;
   readMinutes: number;
   keywords: string[];
   tags: string[];
