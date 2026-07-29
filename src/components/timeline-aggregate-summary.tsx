@@ -93,10 +93,18 @@ const toLocalInput = (ts: number) => {
 export function TimelineAggregateSummary({
   riskPoints,
   signalPoints,
+  allRiskPoints,
+  allSignalPoints,
+  window: viewWindow,
   scope,
 }: {
   riskPoints: AggRiskPoint[];
   signalPoints: AggSignalPoint[];
+  /** Unfiltered-by-time points so a comparison window can reach further back. */
+  allRiskPoints?: AggRiskPoint[];
+  allSignalPoints?: AggSignalPoint[];
+  /** The active time window of `riskPoints` / `signalPoints`. */
+  window?: { from: number | null; to: number };
   /** Current wallet / token / range selection, recorded in the export. */
   scope?: AggregateScope;
 }) {
@@ -105,6 +113,78 @@ export function TimelineAggregateSummary({
     () => aggregateTimeline(riskPoints, signalPoints, bucket),
     [riskPoints, signalPoints, bucket],
   );
+
+  /* ---------------- Comparison mode ---------------- */
+  const canCompare = Boolean(allRiskPoints && allSignalPoints && viewWindow);
+  const [compareKey, setCompareKey] = useState<CompareKey>("off");
+  const [mode, setMode] = useState<"overlay" | "diff">("overlay");
+
+  const baseWindow = useMemo(() => {
+    const to = viewWindow?.to ?? Date.now();
+    const earliest = Math.min(
+      ...[...riskPoints, ...signalPoints].map((p) => p.ts),
+      to,
+    );
+    return { from: viewWindow?.from ?? earliest, to };
+  }, [viewWindow, riskPoints, signalPoints]);
+
+  const [customFrom, setCustomFrom] = useState(() => toLocalInput(baseWindow.from - 7 * DAY));
+  const [customTo, setCustomTo] = useState(() => toLocalInput(baseWindow.from));
+
+  const compareWindow = useMemo(() => {
+    const span = Math.max(1, baseWindow.to - baseWindow.from);
+    switch (compareKey) {
+      case "prev":
+        return { from: baseWindow.from - span, to: baseWindow.from };
+      case "prev2":
+        return { from: baseWindow.from - 2 * span, to: baseWindow.from - span };
+      case "week":
+        return { from: baseWindow.from - 7 * DAY, to: baseWindow.to - 7 * DAY };
+      case "month":
+        return { from: baseWindow.from - 30 * DAY, to: baseWindow.to - 30 * DAY };
+      case "custom": {
+        const f = new Date(customFrom).getTime();
+        const t = new Date(customTo).getTime();
+        if (!Number.isFinite(f) || !Number.isFinite(t) || t <= f) return null;
+        return { from: f, to: t };
+      }
+      default:
+        return null;
+    }
+  }, [compareKey, baseWindow, customFrom, customTo]);
+
+  const compareAgg = useMemo(() => {
+    if (!compareWindow || !allRiskPoints || !allSignalPoints) return null;
+    const inWin = <T extends { ts: number }>(p: T) =>
+      p.ts >= compareWindow.from && p.ts < compareWindow.to;
+    return aggregateTimeline(
+      allRiskPoints.filter(inWin),
+      allSignalPoints.filter(inWin),
+      bucket,
+    );
+  }, [compareWindow, allRiskPoints, allSignalPoints, bucket]);
+
+  /** Delta chip for a metric; `goodWhen` says which direction reads as healthy. */
+  const deltaOf = (
+    a: number,
+    b: number | undefined,
+    goodWhen: "up" | "down" | "none" = "none",
+    fmt: (n: number) => string = signed,
+  ) => {
+    if (b === undefined) return undefined;
+    const d = a - b;
+    const tone: "neutral" | "good" | "bad" =
+      d === 0 || goodWhen === "none"
+        ? "neutral"
+        : (d > 0) === (goodWhen === "up")
+          ? "good"
+          : "bad";
+    return { text: fmt(d), tone };
+  };
+  const cmp = compareAgg ?? undefined;
+  const showCompare = Boolean(cmp);
+  const overlay = showCompare && mode === "overlay";
+
 
   const bucketFmt = bucket === "hour" ? "d MMM HH:mm" : "d MMM yyyy";
   const maxBar = Math.max(
