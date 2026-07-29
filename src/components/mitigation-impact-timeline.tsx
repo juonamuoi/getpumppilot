@@ -752,7 +752,7 @@ export function MitigationImpactTimeline() {
       </CardContent>
       <AuditEntryDrawer
         correlationId={drawerId}
-        onOpenChange={(o) => !o && setDrawerId(null)}
+        onOpenChange={(o) => !o && setFocus(null)}
       />
     </Card>
   );
