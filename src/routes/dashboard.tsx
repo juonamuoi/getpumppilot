@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { PlainSignalCard } from "@/components/plain-signal";
 import { PortfolioHealthCard } from "@/components/portfolio-health";
 import { LiveMarket } from "@/components/live-market";
+import { RealtimeMomentumAlerts } from "@/components/realtime-momentum-alerts";
 import { Term } from "@/components/glossary";
 import { useOnboarding } from "@/lib/onboarding-store";
 
