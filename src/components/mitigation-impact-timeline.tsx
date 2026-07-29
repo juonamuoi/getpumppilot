@@ -346,9 +346,9 @@ export function MitigationImpactTimeline() {
     return Number.isFinite(ms) ? Date.now() - ms : 0;
   }, [range]);
 
-  const riskPoints = useMemo<RiskPoint[]>(() => {
+  /** All-time points (no time filter) so comparison windows can look further back. */
+  const allRiskPoints = useMemo<RiskPoint[]>(() => {
     return runs
-      .filter((r) => r.scannedAt >= cutoff)
       .filter((r) => wallets.length === 0 || wallets.includes(r.address))
       .map((r) => {
         const threats =
