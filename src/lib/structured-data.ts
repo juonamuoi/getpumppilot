@@ -83,6 +83,68 @@ export const siteGraph = {
   "@graph": [organizationSchema, websiteSchema],
 };
 
+export type BlogPostMeta = {
+  slug: string;
+  title: string;
+  description: string;
+  /** ISO publish date. */
+  date: string;
+  /** ISO last-updated date; falls back to `date`. */
+  updated?: string;
+  keywords?: string[];
+  tags?: string[];
+  image?: string;
+  imageAlt?: string;
+  readMinutes?: number;
+  wordCount?: number;
+};
+
+/**
+ * BlogPosting node for a single post. Shared by the blog index (embedded in
+ * the `Blog` node) and each post route so headline, description, author,
+ * publisher and publish/update dates are always identical for the same URL.
+ */
+export function blogPostingSchema(
+  post: BlogPostMeta,
+  opts: { standalone?: boolean } = {},
+) {
+  const url = absoluteUrl(`/blog/${post.slug}`);
+  const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
+  const node: Record<string, unknown> = {
+    ...(opts.standalone ? { "@context": "https://schema.org" } : {}),
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    headline: post.title,
+    name: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.updated ?? post.date,
+    author: {
+      "@type": "Organization",
+      "@id": ORG_ID,
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
+    publisher: { "@id": ORG_ID },
+    image: {
+      "@type": "ImageObject",
+      url: imageUrl,
+      width: 1200,
+      height: 630,
+      caption: post.imageAlt ?? post.title,
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    isPartOf: { "@id": `${SITE_URL}/blog#blog` },
+    url,
+    inLanguage: "en",
+  };
+  if (post.keywords?.length) node.keywords = post.keywords.join(", ");
+  if (post.tags?.length) node.articleSection = post.tags;
+  if (post.wordCount) node.wordCount = post.wordCount;
+  if (post.readMinutes) node.timeRequired = `PT${post.readMinutes}M`;
+  return node;
+}
+
 export type Crumb = { name: string; path: string };
 
 /**
