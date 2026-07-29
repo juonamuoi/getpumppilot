@@ -30,6 +30,7 @@ import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome, explainFields } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
+import { MitigationImportDiff } from "@/components/mitigation-import-diff";
 import { isImportedEntry } from "@/lib/mitigation-import";
 import { MitigationScheduledExports } from "@/components/mitigation-scheduled-exports";
 import {
@@ -685,6 +686,11 @@ export function MitigationAuditTrail({
               existingEntries={[...log, ...importedEntries]}
               importedCount={importedEntries.length}
               onClear={() => setImportedEntries([])}
+            />
+            <MitigationImportDiff
+              imported={importedEntries}
+              scope={entries.filter((e) => !isImportedEntry(e))}
+              scopeLabel={`${RANGE_LABEL[range]}${outcome === "all" ? "" : `, ${outcome}`}${q.trim() ? `, search "${q.trim()}"` : ""}`}
             />
             <MitigationDecisionExport
               log={exportEntries}
