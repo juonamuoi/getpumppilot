@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +28,7 @@ import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
-import { explainOutcome } from "@/lib/mitigation-explain";
+import { explainOutcome, explainFields } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
 import { isImportedEntry } from "@/lib/mitigation-import";
 import { MitigationScheduledExports } from "@/components/mitigation-scheduled-exports";
@@ -57,7 +57,7 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
       `Why: ${explainOutcome(entry)}`,
       "",
       `Correlation ID: ${entry.correlationId ?? "—"}`,
-      `Time: ${format(new Date(entry.at), "yyyy-MM-dd HH:mm:ss")}`,
+      `Time: ${format(new Date(entry.ts), "yyyy-MM-dd HH:mm:ss")}`,
       f.change ? `Change: ${f.change}` : null,
       f.strictness ? `Strictness: ${f.strictness}` : null,
       f.impact ? `Impact: ${f.impact}` : null,
