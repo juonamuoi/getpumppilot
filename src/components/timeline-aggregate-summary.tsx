@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { ArrowDownRight, ArrowUpRight, Download, Minus, Sigma } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Download, GitCompare, Minus, Sigma } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
