@@ -26,6 +26,7 @@ import { MitigationBulkExport } from "@/components/mitigation-bulk-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
+import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
@@ -494,6 +495,11 @@ export function MitigationAuditTrail({
             <MitigationScheduledExports
               log={sourceLog}
               walletsFor={(e) => walletsForEntry.get(e.id) ?? []}
+            />
+            <MitigationBulkReplay
+              entries={entries}
+              scopeLabel={RANGE_LABEL[range]}
+              isImported={isImportedEntry}
             />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
               Quick CSV
