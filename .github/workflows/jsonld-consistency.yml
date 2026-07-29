@@ -1,4 +1,4 @@
-name: Structured data (JSON-LD) consistency
+name: SEO structured data, sitemap and canonical checks
 
 on:
   pull_request:
@@ -6,8 +6,8 @@ on:
     branches: [main]
 
 jobs:
-  jsonld:
-    name: Every route renders valid JSON-LD
+  seo:
+    name: JSON-LD, sitemap and canonical validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,5 +19,5 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: JSON-LD consistency suite
+      - name: JSON-LD + sitemap/canonical suite
         run: bun run test:seo
