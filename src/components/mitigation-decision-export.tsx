@@ -253,6 +253,50 @@ function loadPresets(): ExportPreset[] {
   }
 }
 
+/* ------------------ last-used export configuration ------------------- */
+
+const LAST_USED_KEY = "pumppilot_export_last_used";
+
+type LastUsedExport = {
+  presetId: string | null;
+  presetName?: string;
+  fields: string[];
+  includePreviewOnly: boolean;
+  includeSchema: boolean;
+  savedAt: number;
+};
+
+function loadLastUsed(): LastUsedExport | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LAST_USED_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as LastUsedExport;
+    const fields = Array.isArray(parsed.fields)
+      ? parsed.fields.filter((k) => FIELDS.some((f) => f.key === k))
+      : [];
+    if (fields.length === 0) return null;
+    return {
+      presetId: parsed.presetId ?? null,
+      presetName: parsed.presetName,
+      fields,
+      includePreviewOnly: parsed.includePreviewOnly !== false,
+      includeSchema: parsed.includeSchema !== false,
+      savedAt: parsed.savedAt ?? 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveLastUsed(next: Omit<LastUsedExport, "savedAt">) {
+  try {
+    window.localStorage.setItem(LAST_USED_KEY, JSON.stringify({ ...next, savedAt: Date.now() }));
+  } catch {
+    /* storage unavailable — keep the in-memory selection */
+  }
+}
+
 export function MitigationDecisionExport<F,>({
   log,
   label = "Export decisions",
@@ -273,6 +317,29 @@ export function MitigationDecisionExport<F,>({
   const [presets, setPresets] = useState<ExportPreset<F>[]>(() => loadPresets() as ExportPreset<F>[]);
   const [presetName, setPresetName] = useState("");
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [restored, setRestored] = useState<string | null>(null);
+  const hydrated = useRef(false);
+
+  // Restore the last-used export configuration after hydration.
+  useEffect(() => {
+    const last = loadLastUsed();
+    if (last) {
+      setSelected(last.fields);
+      setIncludePreviewOnly(last.includePreviewOnly);
+      setIncludeSchema(last.includeSchema);
+      setActivePreset(last.presetId);
+      setRestored(last.presetName ?? "Last used export settings");
+    }
+    hydrated.current = true;
+  }, []);
+
+  // Auto-save the configuration so it becomes the default next time.
+  useEffect(() => {
+    if (!hydrated.current) return;
+    if (selected.length === 0) return;
+    const name = presets.find((p) => p.id === activePreset)?.name;
+    saveLastUsed({ presetId: activePreset, presetName: name, fields: selected, includePreviewOnly, includeSchema });
+  }, [selected, includePreviewOnly, includeSchema, activePreset, presets]);
 
   const persistPresets = (next: ExportPreset<F>[]) => {
     setPresets(next);
@@ -280,6 +347,7 @@ export function MitigationDecisionExport<F,>({
       window.localStorage.setItem(PRESETS_KEY, JSON.stringify(next));
     } catch {}
   };
+
 
   const savePreset = () => {
     const name = presetName.trim();
