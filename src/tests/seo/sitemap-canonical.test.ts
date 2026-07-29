@@ -42,11 +42,20 @@ const SKIP = [
   /ads-report/,
   /seo-preview/,
   /settings\./,
-  /alerts\./,
 ];
 
+/**
+ * Every value a dynamic segment can take, so each generated URL is validated
+ * against its own canonical instead of only one sample.
+ */
+const DYNAMIC_VALUES: Record<string, string[]> = {
+  slug: BLOG_POSTS.map((p) => p.slug),
+  symbol: ASSETS.map((a) => a.symbol.toLowerCase()),
+};
+
 /** Routes that render HTML but are deliberately left out of the sitemap. */
-const NOT_IN_SITEMAP = new Set(["/lp/momentum-scanner", "/asset/btc"]);
+const NOT_IN_SITEMAP = new Set(["/lp/momentum-scanner"]);
+
 
 type HeadLink = { rel?: string; href?: string };
 type HeadFn = (ctx: { params: Record<string, string>; loaderData: unknown; match: unknown }) =>
