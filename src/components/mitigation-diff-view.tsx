@@ -347,7 +347,7 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
           Diff
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Before / after diff — {entry.mitigation ?? "Rule change"}</DialogTitle>
           <DialogDescription>
