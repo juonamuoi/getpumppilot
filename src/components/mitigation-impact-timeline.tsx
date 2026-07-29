@@ -6,13 +6,20 @@ import { Activity, ShieldAlert, Filter, X, ExternalLink, Download, Link2 } from 
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuCheckboxItem,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  ALL_TIMELINE_SECTIONS,
+  TIMELINE_SECTIONS,
   buildTimelineCsv,
   buildTimelineJson,
   downloadTimelineExport,
+  filterTimelineSections,
+  type TimelineSection,
 } from "@/lib/timeline-export";
 import { TimelineAggregateSummary } from "@/components/timeline-aggregate-summary";
 import { AuditEntryDrawer } from "@/components/audit-entry-drawer";
@@ -470,11 +477,34 @@ export function MitigationImpactTimeline() {
     })
     .join(" ");
 
+  // Which sections land in the export file (all selected by default).
+  const [sections, setSections] = useState<TimelineSection[]>(ALL_TIMELINE_SECTIONS);
+  const toggleSection = (key: TimelineSection) =>
+    setSections((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  const sectionCounts = useMemo(() => {
+    const counts: Record<TimelineSection, number> = {
+      risk: riskPoints.length,
+      matched: 0,
+      nearMiss: 0,
+      noMatch: 0,
+    };
+    for (const key of ["matched", "nearMiss", "noMatch"] as const) {
+      counts[key] = filterTimelineSections([key], [], signalPoints).signals.length;
+    }
+    return counts;
+  }, [riskPoints, signalPoints]);
+
   const activeFilters = wallets.length + tokens.length + actions.length + outcomes.length;
 
   // Exports the filtered view; when a correlation ID is focused (deep link /
   // timeline marker drawer), exports default to that correlation scope.
   const exportTimeline = (fmt: "csv" | "json", scoped = !!drawerId) => {
+    if (sections.length === 0) {
+      toast.error("Pick at least one section to export");
+      return;
+    }
     const focus = scoped ? drawerId : null;
     const rp = focus ? riskPoints.filter((p) => p.correlationId === focus) : riskPoints;
     const sp = focus ? signalPoints.filter((p) => p.correlationId === focus) : signalPoints;
@@ -490,6 +520,7 @@ export function MitigationImpactTimeline() {
       actions,
       outcomes,
       correlationId: focus ?? undefined,
+      sections,
     };
     const body =
       fmt === "csv" ? buildTimelineCsv(filters, rp, sp) : buildTimelineJson(filters, rp, sp);
@@ -532,7 +563,46 @@ export function MitigationImpactTimeline() {
                   <Download className="h-3 w-3" /> Export
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel className="text-xs">Sections to export</DropdownMenuLabel>
+                {TIMELINE_SECTIONS.map((s) => (
+                  <DropdownMenuCheckboxItem
+                    key={s.key}
+                    className="text-xs"
+                    checked={sections.includes(s.key)}
+                    onCheckedChange={() => toggleSection(s.key)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <span className="flex w-full items-center justify-between gap-2">
+                      <span>
+                        {s.label}
+                        <span className="block text-[10px] text-muted-foreground">{s.hint}</span>
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {sectionCounts[s.key]}
+                      </span>
+                    </span>
+                  </DropdownMenuCheckboxItem>
+                ))}
+                <div className="flex gap-2 px-2 pb-1 pt-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 flex-1 text-[10px]"
+                    onClick={() => setSections(ALL_TIMELINE_SECTIONS)}
+                  >
+                    Select all
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 flex-1 text-[10px]"
+                    onClick={() => setSections([])}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("csv")}>
                   Download CSV{drawerId ? ` — ${drawerId}` : ""}
                 </DropdownMenuItem>
