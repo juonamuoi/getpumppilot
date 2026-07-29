@@ -776,6 +776,9 @@ export function MitigationImpactTimeline() {
             <TimelineAggregateSummary
               riskPoints={riskPoints}
               signalPoints={signalPoints}
+              allRiskPoints={allRiskPoints}
+              allSignalPoints={allSignalPoints}
+              window={{ from: cutoff || null, to: Date.now() }}
               scope={{
                 rangeLabel: RANGES.find((r) => r.key === range)?.label,
                 from: cutoff || null,
