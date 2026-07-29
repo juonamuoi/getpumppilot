@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { HowToSteps } from "@/components/how-to-steps";
 import { STRATEGY_BUILDER_FLOW } from "@/lib/help-flows";
-import { howToSchema, ldScript faqSchema, } from "@/lib/structured-data";
+import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/strategy")({
   head: () => ({

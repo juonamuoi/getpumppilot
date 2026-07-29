@@ -11,7 +11,9 @@ import {
   ORG_ID,
   breadcrumbSchema,
   webPageSchema,
-  ldScript, faqSchema, } from "@/lib/structured-data";
+  ldScript,
+  faqSchema,
+} from "@/lib/structured-data";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
