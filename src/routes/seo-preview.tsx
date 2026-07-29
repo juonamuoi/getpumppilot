@@ -38,6 +38,9 @@ function statusOf(row: SeoRouteAudit) {
     (i) =>
       i.startsWith("HTTP") ||
       i.startsWith("Missing") ||
+      i.startsWith("Invalid twitter:card") ||
+      i.startsWith("og:image must") ||
+      i.startsWith("og:image is not") ||
       i.startsWith("Host mismatch") ||
       i.startsWith("Canonical points") ||
       i === "canonical and og:url differ" ||
@@ -45,6 +48,7 @@ function statusOf(row: SeoRouteAudit) {
   );
   return blocking ? ("fail" as const) : ("warn" as const);
 }
+
 
 function download(name: string, body: string, type: string) {
   const url = URL.createObjectURL(new Blob([body], { type }));
