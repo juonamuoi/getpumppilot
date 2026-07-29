@@ -118,7 +118,7 @@ export function GuidedTour() {
       )}
 
       <div
-        className="absolute mx-auto max-w-md rounded-xl border border-emerald-500/30 bg-card p-4 shadow-2xl sm:left-1/2 sm:right-auto sm:w-[26rem] sm:-translate-x-1/2"
+        className="absolute left-4 right-4 mx-auto max-w-md rounded-xl border border-emerald-500/30 bg-card p-4 shadow-2xl sm:left-1/2 sm:right-auto sm:w-[26rem] sm:max-w-none sm:-translate-x-1/2"
         style={cardStyle}
       >
         <div className="flex items-start justify-between gap-3">
