@@ -273,11 +273,47 @@ export function MitigationImpactTimeline() {
     }
   };
 
-  const [range, setRange] = useState<RangeKey>("7d");
-  const [wallets, setWallets] = useState<string[]>([]);
-  const [tokens, setTokens] = useState<string[]>([]);
-  const [actions, setActions] = useState<MitigationAction[]>([]);
-  const [outcomes, setOutcomes] = useState<OutcomeKey[]>([]);
+  /** Shareable view state: seeded from the URL, then written back on change. */
+  const csv = (v?: string) => (v ? v.split(",").filter(Boolean) : []);
+  const [range, setRange] = useState<RangeKey>(
+    (RANGES.some((r) => r.key === search.tlrange) ? (search.tlrange as RangeKey) : "7d"),
+  );
+  const [wallets, setWallets] = useState<string[]>(() => csv(search.tlw));
+  const [tokens, setTokens] = useState<string[]>(() => csv(search.tlt));
+  const [actions, setActions] = useState<MitigationAction[]>(
+    () => csv(search.tla) as MitigationAction[],
+  );
+  const [outcomes, setOutcomes] = useState<OutcomeKey[]>(() => csv(search.tlo) as OutcomeKey[]);
+
+  // Keep the URL in sync so the current view can be copied and shared as-is.
+  useEffect(() => {
+    navigate({
+      to: ".",
+      search: (p: Record<string, unknown>) => ({
+        ...p,
+        tlrange: range === "7d" ? undefined : range,
+        tlw: wallets.length ? wallets.join(",") : undefined,
+        tlt: tokens.length ? tokens.join(",") : undefined,
+        tla: actions.length ? actions.join(",") : undefined,
+        tlo: outcomes.length ? outcomes.join(",") : undefined,
+      }),
+      replace: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range, wallets, tokens, actions, outcomes]);
+
+  const copyShareLink = async () => {
+    if (typeof window === "undefined") return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Share link copied", {
+        description: "Opens this timeline with the same filters and focus.",
+      });
+    } catch {
+      toast.error("Could not copy link");
+    }
+  };
+
   const [hover, setHover] = useState<
     | { kind: "risk"; point: RiskPoint }
     | { kind: "signal"; point: SignalPoint }
