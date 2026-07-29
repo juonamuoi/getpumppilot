@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { BLOG_POSTS, getPostBySlug, type BlogBlock } from "@/lib/blog-posts";
 import { Badge } from "@/components/ui/badge";
+import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import {
   SITE_URL as BASE,
@@ -164,6 +165,14 @@ function PostPage() {
   return (
     <div className="min-h-screen bg-background">
       <article className="mx-auto max-w-3xl px-6 py-12">
+        <PageBreadcrumbs
+          className="mb-4"
+          crumbs={[
+            { name: "Blog", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]}
+        />
+
         <Link to="/blog" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> All posts
         </Link>

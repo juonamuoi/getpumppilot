@@ -12,6 +12,7 @@ import { usePaper } from "@/lib/paper-store";
 import { trackFunnelStep } from "@/lib/funnel";
 import { toast } from "sonner";
 import { ArrowLeft, Lock } from "lucide-react";
+import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
@@ -107,6 +108,13 @@ function AssetPage() {
   return (
     <AppShell>
       <div className="space-y-5">
+        <PageBreadcrumbs
+          crumbs={[
+            { name: "Scanner", path: "/scanner" },
+            { name: asset.symbol, path: `/asset/${asset.symbol.toLowerCase()}` },
+          ]}
+        />
+
         <Link
           to="/scanner"
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
