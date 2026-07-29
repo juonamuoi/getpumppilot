@@ -247,44 +247,126 @@ export function TimelineAggregateSummary({
         </div>
       </div>
 
+      {/* Comparison mode */}
+      {canCompare && (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/50 bg-muted/10 px-2 py-1.5 text-[11px]">
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
+            <GitCompare className="h-3.5 w-3.5" /> Compare
+          </span>
+          <select
+            value={compareKey}
+            onChange={(e) => setCompareKey(e.target.value as CompareKey)}
+            className="h-7 rounded-md border border-border/60 bg-background px-2 text-[11px]"
+            aria-label="Comparison window"
+          >
+            {COMPARE_OPTIONS.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {compareKey === "custom" && (
+            <>
+              <input
+                type="datetime-local"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                aria-label="Comparison window start"
+                className="h-7 rounded-md border border-border/60 bg-background px-2 text-[11px]"
+              />
+              <input
+                type="datetime-local"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                aria-label="Comparison window end"
+                className="h-7 rounded-md border border-border/60 bg-background px-2 text-[11px]"
+              />
+            </>
+          )}
+          {showCompare && (
+            <div className="flex items-center gap-1">
+              {(["overlay", "diff"] as const).map((m) => (
+                <Button
+                  key={m}
+                  size="sm"
+                  variant={mode === m ? "secondary" : "ghost"}
+                  className="h-7 px-2 text-[11px] capitalize"
+                  onClick={() => setMode(m)}
+                >
+                  {m}
+                </Button>
+              ))}
+            </div>
+          )}
+          {compareWindow && (
+            <span className="text-muted-foreground">
+              A {format(baseWindow.from, "d MMM HH:mm")} → {format(baseWindow.to, "d MMM HH:mm")}
+              {"  ·  "}B {format(compareWindow.from, "d MMM HH:mm")} →{" "}
+              {format(compareWindow.to, "d MMM HH:mm")}
+            </span>
+          )}
+          {compareKey === "custom" && !compareWindow && (
+            <span className="text-destructive">Pick a valid start before end.</span>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <Stat
           label="Total match Δ"
           value={signed(agg.totalMatchDelta)}
           hint={`${agg.mitigations} mitigation${agg.mitigations === 1 ? "" : "s"}`}
           tone={agg.totalMatchDelta > 0 ? "good" : agg.totalMatchDelta < 0 ? "bad" : "neutral"}
+          compare={overlay ? signed(cmp!.totalMatchDelta) : undefined}
+          delta={deltaOf(agg.totalMatchDelta, cmp?.totalMatchDelta, "up")}
         />
         <Stat
           label="Total near-miss Δ"
           value={signed(agg.totalNearMissDelta)}
           hint="Fragility proxy"
           tone={agg.totalNearMissDelta > 0 ? "bad" : agg.totalNearMissDelta < 0 ? "good" : "neutral"}
+          compare={overlay ? signed(cmp!.totalNearMissDelta) : undefined}
+          delta={deltaOf(agg.totalNearMissDelta, cmp?.totalNearMissDelta, "down")}
         />
         <Stat
           label="Net signal Δ"
           value={signed(agg.netSignalDelta)}
           hint="Matches − near-miss"
           tone={agg.netSignalDelta > 0 ? "good" : agg.netSignalDelta < 0 ? "bad" : "neutral"}
+          compare={overlay ? signed(cmp!.netSignalDelta) : undefined}
+          delta={deltaOf(agg.netSignalDelta, cmp?.netSignalDelta, "up")}
         />
         <Stat
           label="Escalations"
           value={String(agg.escalations)}
           hint="Risk level moved up"
           tone={agg.escalations > 0 ? "bad" : "neutral"}
+          compare={overlay ? String(cmp!.escalations) : undefined}
+          delta={deltaOf(agg.escalations, cmp?.escalations, "down")}
         />
         <Stat
           label="De-escalations"
           value={String(agg.deEscalations)}
           hint="Risk level moved down"
           tone={agg.deEscalations > 0 ? "good" : "neutral"}
+          compare={overlay ? String(cmp!.deEscalations) : undefined}
+          delta={deltaOf(agg.deEscalations, cmp?.deEscalations, "up")}
         />
         <Stat
           label="Time at high+"
           value={formatDuration(agg.timeAtOrAboveHighMs)}
           hint={`${agg.scans} scan${agg.scans === 1 ? "" : "s"}, ${agg.unchanged} flat`}
           tone={agg.timeAtOrAboveHighMs > 0 ? "bad" : "good"}
+          compare={overlay ? formatDuration(cmp!.timeAtOrAboveHighMs) : undefined}
+          delta={deltaOf(
+            agg.timeAtOrAboveHighMs,
+            cmp?.timeAtOrAboveHighMs,
+            "down",
+            (n) => `${n >= 0 ? "+" : "−"}${formatDuration(Math.abs(n))}`,
+          )}
         />
       </div>
+
 
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
         <span>
