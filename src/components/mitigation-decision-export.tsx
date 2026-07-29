@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileJson, FileSpreadsheet, FileText, Save, X } from "lucide-react";
+import { Download, FileJson, FileSpreadsheet, FileText, Save, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -319,6 +319,7 @@ export function MitigationDecisionExport<F,>({
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [restored, setRestored] = useState<string | null>(null);
   const hydrated = useRef(false);
+  const presetFileRef = useRef<HTMLInputElement>(null);
 
   // Restore the last-used export configuration after hydration.
   useEffect(() => {
@@ -390,6 +391,87 @@ export function MitigationDecisionExport<F,>({
     persistPresets(presets.filter((p) => p.id !== id));
     if (activePreset === id) setActivePreset(null);
   };
+
+  /* --------------- preset portability (JSON export/import) --------------- */
+
+  const exportPresets = () => {
+    if (presets.length === 0) {
+      toast.error("No presets to export yet");
+      return;
+    }
+    const payload = {
+      kind: "pumppilot.mitigation-export-presets",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      presets,
+    };
+    saveBlob(
+      new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+      `mitigation-export-presets-${new Date().toISOString().slice(0, 10)}.json`,
+    );
+    toast.success(`Exported ${presets.length} preset${presets.length === 1 ? "" : "s"}`, {
+      description: "Import this file in another environment to restore them.",
+    });
+  };
+
+  const importPresets = async (file: File) => {
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const list = Array.isArray(parsed)
+        ? parsed
+        : (parsed as { presets?: unknown }).presets;
+      if (!Array.isArray(list)) throw new Error("No presets array found in file");
+
+      const valid: ExportPreset<F>[] = [];
+      let skipped = 0;
+      for (const raw of list) {
+        const p = raw as Partial<ExportPreset<F>>;
+        const fields = Array.isArray(p.fields) ? p.fields.filter((k) => FIELDS.some((f) => f.key === k)) : [];
+        if (typeof p.name !== "string" || !p.name.trim() || fields.length === 0) {
+          skipped += 1;
+          continue;
+        }
+        valid.push({
+          id: typeof p.id === "string" ? p.id : `${Date.now()}-${valid.length}`,
+          name: p.name.trim(),
+          fields,
+          includePreviewOnly: p.includePreviewOnly !== false,
+          filters: p.filters,
+          savedAt: typeof p.savedAt === "number" ? p.savedAt : Date.now(),
+        });
+      }
+      if (valid.length === 0) {
+        toast.error("No valid presets in that file", {
+          description: skipped ? `${skipped} entr${skipped === 1 ? "y" : "ies"} were unreadable.` : undefined,
+        });
+        return;
+      }
+
+      // Merge by name: an imported preset replaces a local one with the same name.
+      const byName = new Map(presets.map((p) => [p.name.toLowerCase(), p]));
+      let replaced = 0;
+      for (const p of valid) {
+        const key = p.name.toLowerCase();
+        const existing = byName.get(key);
+        if (existing) replaced += 1;
+        byName.set(key, { ...p, id: existing?.id ?? p.id });
+      }
+      persistPresets([...byName.values()]);
+      toast.success(`Imported ${valid.length} preset${valid.length === 1 ? "" : "s"}`, {
+        description: [
+          replaced ? `${replaced} updated by name` : null,
+          skipped ? `${skipped} skipped` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ") || "Added to your saved presets.",
+      });
+    } catch (err) {
+      toast.error("Could not import presets", {
+        description: err instanceof Error ? err.message : "The file is not valid JSON.",
+      });
+    }
+  };
+
 
   const decisions = useMemo(() => {
     const all = buildDecisions(log);
@@ -562,7 +644,33 @@ export function MitigationDecisionExport<F,>({
               <Save className="h-3.5 w-3.5" /> Save preset
             </Button>
           </div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-2">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Move between environments</span>
+            <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-[11px]" onClick={exportPresets}>
+              <FileJson className="h-3.5 w-3.5" /> Export presets (JSON)
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={() => presetFileRef.current?.click()}
+            >
+              <Upload className="h-3.5 w-3.5" /> Import presets
+            </Button>
+            <input
+              ref={presetFileRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void importPresets(file);
+              }}
+            />
+          </div>
         </div>
+
 
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 bg-muted/20 p-3 text-xs">
 
