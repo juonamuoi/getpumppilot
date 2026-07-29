@@ -106,6 +106,54 @@ function ruleRows(before: ScannerRules, after: ScannerRules) {
   ].map((r) => ({ ...r, changed: r.b !== r.a }));
 }
 
+/** Plain-English definition of every gate the scanner applies, keyed by gate name. */
+const RULE_DEFS: {
+  gate: string;
+  label: string;
+  definition: string;
+  threshold: (r: ScannerRules) => string;
+  value?: (a: Asset) => number;
+  unit?: string;
+}[] = [
+  {
+    gate: "Momentum",
+    label: "Min momentum",
+    definition: "Pass when the asset's composite momentum score is greater than or equal to the minimum.",
+    threshold: (r) => `≥ ${r.minMomentum}`,
+    value: (a) => a.momentum.total,
+  },
+  {
+    gate: "Volume",
+    label: "Min volume score",
+    definition: "Pass when the volume sub-score (relative trading activity) meets the minimum.",
+    threshold: (r) => `≥ ${r.minVolumeScore}`,
+    value: (a) => a.momentum.volume,
+  },
+  {
+    gate: "Volatility",
+    label: "Max volatility",
+    definition: "Pass when the volatility sub-score stays at or below the ceiling — a fragility guard.",
+    threshold: (r) => `≤ ${r.maxVolatility}`,
+    value: (a) => a.momentum.volatility,
+  },
+  {
+    gate: "24h change",
+    label: "Min 24h change",
+    definition: "Pass when the 24-hour price change is at least the minimum percentage.",
+    threshold: (r) => `≥ ${r.min24hChangePct}%`,
+    value: (a) => a.change24h,
+    unit: "%",
+  },
+  {
+    gate: "Scope",
+    label: "Universe scope",
+    definition:
+      "Pass when the asset's category is included in the scan universe (majors and/or DEMO small-caps).",
+    threshold: (r) =>
+      `majors: ${r.includeMajors ? "on" : "off"} · DEMO: ${r.includeDemoSmallCaps ? "on" : "off"}`,
+  },
+];
+
 /**
  * Before/after diff for one mitigation batch: exactly which rules changed and
  * which assets crossed the matched / near-miss / no-match boundary.
