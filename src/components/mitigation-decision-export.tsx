@@ -86,6 +86,13 @@ const FIELDS: FieldDef[] = [
   { key: "outcomeAt", label: "Outcome recorded at", group: "outcome", get: (d) => iso(d.primary.outcome?.ts) },
   { key: "revertedAt", label: "Reverted at", group: "outcome", get: (d) => iso(d.primary.revertedAt) },
   { key: "revertReason", label: "Revert reason", group: "outcome", get: (d) => d.primary.revertReason ?? "" },
+
+  { key: "why", label: "Why (plain English)", group: "why", get: (d) => explainFields(d.primary).why },
+  { key: "whyChange", label: "Why — rule change", group: "why", get: (d) => explainFields(d.primary).whyChange },
+  { key: "whyStrictness", label: "Why — strictness", group: "why", get: (d) => explainFields(d.primary).whyStrictness },
+  { key: "whyImpact", label: "Why — expected impact", group: "why", get: (d) => explainFields(d.primary).whyImpact },
+  { key: "whyOutcome", label: "Why — outcome", group: "why", get: (d) => explainFields(d.primary).whyOutcome },
+  { key: "whyFragility", label: "Why — fragility", group: "why", get: (d) => explainFields(d.primary).whyFragility },
 ];
 
 const GROUP_LABEL: Record<FieldDef["group"], string> = {
@@ -93,7 +100,9 @@ const GROUP_LABEL: Record<FieldDef["group"], string> = {
   decision: "Rule change",
   confirmation: "Confirmation summary",
   outcome: "Outcome & rollback",
+  why: "Why explanations",
 };
+
 
 const DEFAULT_FIELDS = FIELDS.filter((f) => f.group !== "decision" || !["kind", "preset", "unit"].includes(f.key)).map(
   (f) => f.key,
