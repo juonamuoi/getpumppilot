@@ -617,13 +617,55 @@ export function MitigationDecisionExport<F,>({
                     activePreset === p.id ? "border-primary/60 bg-primary/10" : "border-border/60 bg-muted/20"
                   }`}
                 >
-                  <button type="button" className="hover:underline" onClick={() => applyPreset(p)}>
-                    {p.name}
-                  </button>
-                  <span className="text-muted-foreground">({p.fields.length})</span>
+                  {renamingId === p.id ? (
+                    <Input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => commitRename(p)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitRename(p);
+                        }
+                        if (e.key === "Escape") setRenamingId(null);
+                      }}
+                      aria-label={`Rename preset ${p.name}`}
+                      className="h-5 w-40 px-1 py-0 text-[11px]"
+                    />
+                  ) : (
+                    <>
+                      <button type="button" className="hover:underline" onClick={() => applyPreset(p)}>
+                        {p.name}
+                      </button>
+                      <span className="text-muted-foreground">({p.fields.length})</span>
+                      <button
+                        type="button"
+                        aria-label={`Rename preset ${p.name}`}
+                        title="Rename"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setRenamingId(p.id);
+                          setRenameValue(p.name);
+                        }}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Duplicate preset ${p.name}`}
+                        title="Duplicate"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => duplicatePreset(p)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     aria-label={`Delete preset ${p.name}`}
+                    title="Delete"
                     className="text-muted-foreground hover:text-destructive"
                     onClick={() => deletePreset(p.id)}
                   >
@@ -633,6 +675,7 @@ export function MitigationDecisionExport<F,>({
               ))}
             </div>
           )}
+
           <div className="flex gap-2">
             <Input
               value={presetName}
