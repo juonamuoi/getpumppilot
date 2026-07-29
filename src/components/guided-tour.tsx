@@ -96,9 +96,9 @@ export function GuidedTour() {
   const below = spotlight ? spotlight.top + spotlight.height + 14 : 0;
   const cardStyle: React.CSSProperties = spotlight
     ? below + 240 < viewportH
-      ? { top: below, left: 16, right: 16 }
-      : { bottom: Math.max(16, viewportH - spotlight.top + 14), left: 16, right: 16 }
-    : { top: "50%", left: 16, right: 16, transform: "translateY(-50%)" };
+      ? { top: below }
+      : { bottom: Math.max(16, viewportH - spotlight.top + 14) }
+    : { top: "50%" };
 
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Guided tour">
