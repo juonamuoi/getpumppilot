@@ -237,8 +237,11 @@ function AssetPage() {
             </CardContent>
           </Card>
         </div>
+
+        <FaqSection faqs={assetFaqs(asset.symbol, asset.name)} title={`${asset.symbol.toUpperCase()} FAQ`} />
       </div>
     </AppShell>
+
   );
 }
 
