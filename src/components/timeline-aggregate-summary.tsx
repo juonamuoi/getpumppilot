@@ -386,51 +386,172 @@ export function TimelineAggregateSummary({
         )}
       </div>
 
-      {/* Transition matrix */}
+      {/* Transition heatmap */}
       {agg.transitions.length + agg.unchanged > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[380px] text-[11px]">
-            <thead>
-              <tr className="text-muted-foreground">
-                <th className="py-1 text-left font-medium">From \ To</th>
-                {[0, 1, 2, 3].map((c) => (
-                  <th key={c} className="py-1 text-center font-medium">
-                    {RISK_NAME[c]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[0, 1, 2, 3].map((r) => (
-                <tr key={r} className="border-t border-border/40">
-                  <td className="py-1 text-muted-foreground">{RISK_NAME[r]}</td>
-                  {[0, 1, 2, 3].map((c) => {
-                    const n = agg.matrix[r][c];
-                    const tone =
-                      n === 0
-                        ? "text-muted-foreground/40"
-                        : c > r
-                          ? "text-destructive"
-                          : c < r
-                            ? "text-emerald-400"
-                            : "text-foreground";
-                    const b = cmp?.matrix[r][c];
-                    return (
-                      <td key={c} className={`py-1 text-center font-mono ${tone}`}>
-                        {mode === "diff" && b !== undefined ? signed(n - b) : n}
-                        {overlay && b !== undefined && (
-                          <span className="ml-1 text-[10px] text-muted-foreground">({b})</span>
-                        )}
-                      </td>
-                    );
-
-                  })}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Risk transition heatmap — click a cell to inspect events
+            </span>
+            {selected && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[10px]"
+                onClick={() => setSelected(null)}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[380px] text-[11px]">
+              <thead>
+                <tr className="text-muted-foreground">
+                  <th className="py-1 text-left font-medium">From \ To</th>
+                  {[0, 1, 2, 3].map((c) => (
+                    <th key={c} className="py-1 text-center font-medium">
+                      {RISK_NAME[c]}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[0, 1, 2, 3].map((r) => (
+                  <tr key={r} className="border-t border-border/40">
+                    <td className="py-1 text-muted-foreground">{RISK_NAME[r]}</td>
+                    {[0, 1, 2, 3].map((c) => {
+                      const n = agg.matrix[r][c];
+                      const tone =
+                        n === 0
+                          ? "text-muted-foreground/40"
+                          : c > r
+                            ? "text-destructive"
+                            : c < r
+                              ? "text-emerald-400"
+                              : "text-foreground";
+                      const b = cmp?.matrix[r][c];
+                      const clickable = r !== c && n > 0;
+                      const isActive = selected?.from === r && selected?.to === c;
+                      const pct = maxCell > 0 ? Math.round((n / maxCell) * 70) : 0;
+                      return (
+                        <td key={c} className="p-0.5">
+                          <button
+                            type="button"
+                            disabled={!clickable}
+                            aria-pressed={isActive}
+                            aria-label={`${RISK_NAME[r]} to ${RISK_NAME[c]}: ${n} transitions`}
+                            onClick={() => setSelected(isActive ? null : { from: r, to: c })}
+                            className={`w-full rounded-md py-1 text-center font-mono transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tone} ${
+                              clickable ? "cursor-pointer hover:brightness-125" : "cursor-default"
+                            } ${isActive ? "ring-2 ring-ring" : ""}`}
+                            style={{
+                              backgroundColor:
+                                n > 0
+                                  ? `color-mix(in oklab, currentColor ${pct}%, transparent)`
+                                  : undefined,
+                            }}
+                          >
+                            {mode === "diff" && b !== undefined ? signed(n - b) : n}
+                            {overlay && b !== undefined && (
+                              <span className="ml-1 text-[10px] text-muted-foreground">({b})</span>
+                            )}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {selected && (
+            <div className="rounded-lg border border-border/60 bg-muted/10 p-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="text-[10px]">
+                  {RISK_NAME[selected.from]} → {RISK_NAME[selected.to]}
+                </Badge>
+                <span className="text-[11px] text-muted-foreground">
+                  {drill.length} transition{drill.length === 1 ? "" : "s"} ·{" "}
+                  {drill.reduce((s, d) => s + d.matched.length, 0)} matched ·{" "}
+                  {drill.reduce((s, d) => s + d.nearMiss.length, 0)} near-miss rule events
+                </span>
+              </div>
+              {drill.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">
+                  No transitions in the current selection.
+                </p>
+              ) : (
+                <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {drill.map((d, i) => (
+                    <div
+                      key={`${d.transition.address}-${d.transition.ts}-${i}`}
+                      className="rounded-md border border-border/50 bg-background/40 p-2"
+                    >
+                      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                        <span className="font-mono text-muted-foreground">
+                          {format(d.transition.ts, "MMM d, HH:mm")}
+                        </span>
+                        <span className="font-mono">
+                          {d.transition.address.slice(0, 6)}…{d.transition.address.slice(-4)}
+                        </span>
+                        {d.transition.correlationId && (
+                          <Badge variant="outline" className="font-mono text-[10px]">
+                            {d.transition.correlationId}
+                          </Badge>
+                        )}
+                        {d.transition.trigger && (
+                          <span className="text-muted-foreground">{d.transition.trigger}</span>
+                        )}
+                      </div>
+                      {d.matched.length + d.nearMiss.length === 0 ? (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          No matched or near-miss rule events in this window.
+                        </p>
+                      ) : (
+                        <ul className="mt-1 space-y-1">
+                          {[
+                            ...d.matched.map((s) => ({ s, kind: "Matched" as const })),
+                            ...d.nearMiss.map((s) => ({ s, kind: "Near-miss" as const })),
+                          ].map(({ s, kind }, j) => (
+                            <li
+                              key={`${s.ts}-${kind}-${j}`}
+                              className="flex flex-wrap items-center gap-2 text-[11px]"
+                            >
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] ${
+                                  kind === "Matched" ? "text-emerald-400" : "text-amber-400"
+                                }`}
+                              >
+                                {kind}
+                              </Badge>
+                              <span className="font-mono text-muted-foreground">
+                                {format(s.ts, "HH:mm")}
+                              </span>
+                              <span className="truncate">{s.rule ?? s.label ?? "Rule change"}</span>
+                              {s.symbols && s.symbols.length > 0 && (
+                                <span className="font-mono text-muted-foreground">
+                                  {s.symbols.slice(0, 4).join(", ")}
+                                </span>
+                              )}
+                              <span className="ml-auto font-mono text-muted-foreground">
+                                {signed(s.matchDelta)} match / {signed(s.nearMissDelta)} near
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
+
 
       {/* Per-period breakdown */}
       {agg.buckets.length > 0 && (
