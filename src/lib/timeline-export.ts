@@ -43,6 +43,38 @@ export type TimelineSignalRow = {
   whyFragility?: string;
 };
 
+/** Selectable export sections. */
+export type TimelineSection = "risk" | "matched" | "nearMiss" | "noMatch";
+
+export const TIMELINE_SECTIONS: { key: TimelineSection; label: string; hint: string }[] = [
+  { key: "risk", label: "Risk points", hint: "Wallet risk scan history" },
+  { key: "matched", label: "Matched", hint: "Mitigations with matches after the change" },
+  { key: "nearMiss", label: "Near-miss", hint: "No matches, but assets inside the near-miss band" },
+  { key: "noMatch", label: "No-match", hint: "Mitigations that matched nothing" },
+];
+
+export const ALL_TIMELINE_SECTIONS: TimelineSection[] = TIMELINE_SECTIONS.map((s) => s.key);
+
+/** Buckets a mitigation row into matched / near-miss / no-match. */
+export function sectionOfSignal(p: TimelineSignalRow): Exclude<TimelineSection, "risk"> {
+  if ((p.matchesAfter ?? 0) > 0) return "matched";
+  if ((p.nearMissAfter ?? 0) > 0) return "nearMiss";
+  return "noMatch";
+}
+
+export function filterTimelineSections(
+  sections: TimelineSection[] | undefined,
+  risk: TimelineRiskRow[],
+  signals: TimelineSignalRow[],
+) {
+  const sel = sections?.length ? sections : ALL_TIMELINE_SECTIONS;
+  return {
+    sections: sel,
+    risk: sel.includes("risk") ? risk : [],
+    signals: signals.filter((p) => sel.includes(sectionOfSignal(p))),
+  };
+}
+
 export type TimelineFilters = {
   range: string;
   rangeLabel: string;
@@ -56,7 +88,8 @@ export type TimelineFilters = {
   outcomes?: string[];
   /** Focused correlation ID scope, when exporting from a deep link. */
   correlationId?: string;
-
+  /** Sections included in this export (empty/undefined = all). */
+  sections?: TimelineSection[];
 };
 
 const RISK_LABELS = ["safe", "medium", "high", "critical"];
@@ -72,9 +105,12 @@ function csvSection(headers: string[], rows: unknown[][]) {
 
 export function buildTimelineJson(
   filters: TimelineFilters,
-  risk: TimelineRiskRow[],
-  signals: TimelineSignalRow[],
+  allRisk: TimelineRiskRow[],
+  allSignals: TimelineSignalRow[],
 ) {
+  const scoped = filterTimelineSections(filters.sections, allRisk, allSignals);
+  const risk = scoped.risk;
+  const signals = scoped.signals;
   return JSON.stringify(
     {
       export: "mitigation-impact-timeline",
@@ -88,6 +124,7 @@ export function buildTimelineJson(
         tokens: filters.tokens.length ? filters.tokens : "all",
         actions: filters.actions?.length ? filters.actions : "all",
         outcomes: filters.outcomes?.length ? filters.outcomes : "all",
+        sections: scoped.sections,
       },
       totals: {
         riskPoints: risk.length,
@@ -123,6 +160,7 @@ export function buildTimelineJson(
         diff: p.diff ?? null,
         ruleBefore: p.ruleBefore ?? null,
         ruleAfter: p.ruleAfter ?? null,
+        section: sectionOfSignal(p),
         why: p.why ?? null,
         whyChange: p.whyChange ?? null,
         whyStrictness: p.whyStrictness ?? null,
@@ -138,9 +176,12 @@ export function buildTimelineJson(
 
 export function buildTimelineCsv(
   filters: TimelineFilters,
-  risk: TimelineRiskRow[],
-  signals: TimelineSignalRow[],
+  allRisk: TimelineRiskRow[],
+  allSignals: TimelineSignalRow[],
 ) {
+  const scoped = filterTimelineSections(filters.sections, allRisk, allSignals);
+  const risk = scoped.risk;
+  const signals = scoped.signals;
   const meta = csvSection(
     ["field", "value"],
     [
@@ -154,6 +195,7 @@ export function buildTimelineCsv(
       ["tokens", filters.tokens.length ? filters.tokens.join(" | ") : "all"],
       ["actions", filters.actions?.length ? filters.actions.join(" | ") : "all"],
       ["outcomes", filters.outcomes?.length ? filters.outcomes.join(" | ") : "all"],
+      ["sections", scoped.sections.join(" | ")],
     ],
   );
 
@@ -195,6 +237,7 @@ export function buildTimelineCsv(
       "tokens",
       "outcome",
       "correlation_id",
+      "section",
       "diff",
       "rule_before",
       "rule_after",
@@ -219,6 +262,7 @@ export function buildTimelineCsv(
       p.symbols.join(" | "),
       p.outcome ?? "",
       p.correlationId ?? "",
+      sectionOfSignal(p),
       p.diff ?? "",
       p.ruleBefore ?? "",
       p.ruleAfter ?? "",
@@ -231,7 +275,11 @@ export function buildTimelineCsv(
     ]),
   );
 
-  return `${meta}\n\n# wallet_risk_points\n${riskCsv}\n\n# mitigation_signal_points\n${signalCsv}\n`;
+  const parts = [meta];
+  if (scoped.sections.includes("risk")) parts.push(`# wallet_risk_points\n${riskCsv}`);
+  if (scoped.sections.some((s) => s !== "risk"))
+    parts.push(`# mitigation_signal_points\n${signalCsv}`);
+  return `${parts.join("\n\n")}\n`;
 }
 
 export function downloadTimelineExport(body: string, format: "csv" | "json") {
