@@ -56,7 +56,8 @@ function decodeEntities(raw) {
     .replace(/&amp;/g, "&");
 }
 
-const root = ROOTS.find((candidate) => candidate && existsSync(candidate));
+
+
 
 const serverArg = args.indexOf("--server");
 const SERVER = serverArg !== -1 ? args[serverArg + 1] : null;
