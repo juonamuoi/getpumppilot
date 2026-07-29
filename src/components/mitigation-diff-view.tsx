@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowRight, Download, GitCompare } from "lucide-react";
+import { ArrowRight, ArrowUpDown, ChevronDown, ChevronUp, Download, GitCompare } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { applyRuleValue, usePaper, type ScannerRules, type TuningLogEntry } from "@/lib/paper-store";
 import { toast } from "sonner";
@@ -40,6 +40,34 @@ function evaluate(rules: ScannerRules, a: Asset) {
   return { checks, failed, status };
 }
 
+/**
+ * Human-readable "actual vs threshold" for the gate that blocks an asset.
+ * Returns null when nothing blocks it (i.e. it matched).
+ */
+function blockingGate(rules: ScannerRules, a: Asset, failed: string[]) {
+  const gate = failed[0];
+  if (!gate) return null;
+  switch (gate) {
+    case "Momentum":
+      return { gate, actual: a.momentum.total, threshold: rules.minMomentum, op: "≥", unit: "" };
+    case "Volume":
+      return { gate, actual: a.momentum.volume, threshold: rules.minVolumeScore, op: "≥", unit: "" };
+    case "Volatility":
+      return { gate, actual: a.momentum.volatility, threshold: rules.maxVolatility, op: "≤", unit: "" };
+    case "24h change":
+      return { gate, actual: a.change24h, threshold: rules.min24hChangePct, op: "≥", unit: "%" };
+    default:
+      return { gate, actual: null, threshold: null, op: "", unit: "" };
+  }
+}
+
+function gateText(g: ReturnType<typeof blockingGate>, extra = 0) {
+  if (!g) return "All gates pass";
+  const more = extra > 0 ? ` (+${extra} more)` : "";
+  if (g.actual === null || g.threshold === null) return `${g.gate} excluded${more}`;
+  return `${g.gate} ${g.actual}${g.unit} vs ${g.op} ${g.threshold}${g.unit}${more}`;
+}
+
 const STATUS_LABEL: Record<Status, string> = {
   matched: "Matched",
   "near-miss": "Near-miss",
@@ -51,6 +79,10 @@ const STATUS_CLASS: Record<Status, string> = {
   "near-miss": "text-amber-400 border-amber-500/40 bg-amber-500/10",
   "no-match": "text-muted-foreground border-border/60 bg-muted/20",
 };
+
+const STATUS_RANK: Record<Status, number> = { matched: 2, "near-miss": 1, "no-match": 0 };
+
+type SortKey = "symbol" | "category" | "before" | "after" | "change" | "gate" | "gateValue";
 
 const RULE_FIELD: Record<string, keyof ScannerRules> = {
   momentum: "minMomentum",
@@ -82,6 +114,16 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   const { tuningLog, scannerRules } = usePaper();
   const [open, setOpen] = useState(false);
   const [onlyChanged, setOnlyChanged] = useState(true);
+  const [sortKey, setSortKey] = useState<SortKey>("change");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "symbol" || key === "category" || key === "gate" ? "asc" : "desc");
+    }
+  };
 
   const cid = entry.correlationId ?? entry.id;
 
@@ -109,8 +151,19 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
       ASSETS.map((asset) => {
         const bEval = evaluate(before, asset);
         const aEval = evaluate(after, asset);
-        return { asset, bEval, aEval, changed: bEval.status !== aEval.status };
-      }).sort((x, y) => Number(y.changed) - Number(x.changed) || x.asset.symbol.localeCompare(y.asset.symbol)),
+        const gateBefore = blockingGate(before, asset, bEval.failed);
+        const gateAfter = blockingGate(after, asset, aEval.failed);
+        return {
+          asset,
+          bEval,
+          aEval,
+          gateBefore,
+          gateAfter,
+          gateBeforeText: gateText(gateBefore, Math.max(0, bEval.failed.length - 1)),
+          gateAfterText: gateText(gateAfter, Math.max(0, aEval.failed.length - 1)),
+          changed: bEval.status !== aEval.status,
+        };
+      }),
     [before, after],
   );
 
@@ -121,7 +174,38 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   );
   const rules = ruleRows(before, after);
   const changedRules = rules.filter((r) => r.changed);
-  const visible = onlyChanged ? rows.filter((r) => r.changed) : rows;
+
+  const visible = useMemo(() => {
+    const list = onlyChanged ? rows.filter((r) => r.changed) : [...rows];
+    const dir = sortDir === "asc" ? 1 : -1;
+    const val = (r: (typeof rows)[number]) => {
+      switch (sortKey) {
+        case "symbol":
+          return r.asset.symbol;
+        case "category":
+          return r.asset.category;
+        case "before":
+          return STATUS_RANK[r.bEval.status];
+        case "after":
+          return STATUS_RANK[r.aEval.status];
+        case "change":
+          return (r.changed ? 1 : 0) * 10 + STATUS_RANK[r.aEval.status];
+        case "gate":
+          return r.gateAfter?.gate ?? "";
+        case "gateValue":
+          return r.gateAfter?.actual ?? Number.NEGATIVE_INFINITY;
+      }
+    };
+    return list.sort((x, y) => {
+      const a = val(x);
+      const b = val(y);
+      if (typeof a === "string" || typeof b === "string") {
+        return String(a).localeCompare(String(b)) * dir || x.asset.symbol.localeCompare(y.asset.symbol);
+      }
+      return ((a as number) - (b as number)) * dir || x.asset.symbol.localeCompare(y.asset.symbol);
+    });
+  }, [rows, onlyChanged, sortKey, sortDir]);
+
 
   const transitionLabel = (b: Status, a: Status) => {
     if (b === a) return "unchanged";
@@ -257,58 +341,139 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
                 {onlyChanged ? "Show all assets" : "Only changed"}
               </Button>
             </div>
-            <ScrollArea className="h-64 rounded-md border border-border/60">
-              <div className="divide-y divide-border/50">
-                {visible.length === 0 ? (
-                  <p className="p-4 text-center text-xs text-muted-foreground">
-                    No asset switched status with this change.
-                  </p>
-                ) : (
-                  visible.map(({ asset, bEval, aEval, changed }) => (
-                    <div key={asset.symbol} className="flex flex-wrap items-center gap-2 p-2 text-xs">
-                      <span className="w-16 font-medium">{asset.symbol}</span>
-                      <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[bEval.status])}>
-                        {STATUS_LABEL[bEval.status]}
-                      </Badge>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                      <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[aEval.status])}>
-                        {STATUS_LABEL[aEval.status]}
-                      </Badge>
-                      {changed && (
-                        <Badge
-                          className={cn(
-                            "text-[10px]",
-                            aEval.status === "matched"
-                              ? "bg-emerald-500/15 text-emerald-400"
-                              : bEval.status === "matched"
-                                ? "bg-rose-500/15 text-rose-400"
-                                : "bg-amber-500/15 text-amber-400",
+            <ScrollArea className="h-72 rounded-md border border-border/60">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 z-10 bg-card/95 backdrop-blur">
+                  <tr className="border-b border-border/60 text-left text-[10px] text-muted-foreground">
+                    <SortHeader label="Asset" k="symbol" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Type" k="category" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Before" k="before" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="After" k="after" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Transition" k="change" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader label="Blocking gate" k="gate" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+                    <SortHeader
+                      label="Gate value (after)"
+                      k="gateValue"
+                      sortKey={sortKey}
+                      sortDir={sortDir}
+                      onSort={toggleSort}
+                    />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {visible.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-4 text-center text-xs text-muted-foreground">
+                        No asset switched status with this change.
+                      </td>
+                    </tr>
+                  ) : (
+                    visible.map(({ asset, bEval, aEval, changed, gateAfter, gateBeforeText, gateAfterText }) => (
+                      <tr key={asset.symbol} className={cn(changed && "bg-primary/5")}>
+                        <td className="p-2 font-medium">{asset.symbol}</td>
+                        <td className="p-2 text-[10px] text-muted-foreground">
+                          {asset.category === "major" ? "Major" : "DEMO small-cap"}
+                        </td>
+                        <td className="p-2">
+                          <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[bEval.status])}>
+                            {STATUS_LABEL[bEval.status]}
+                          </Badge>
+                          <div className="mt-0.5 text-[9px] text-muted-foreground">{gateBeforeText}</div>
+                        </td>
+                        <td className="p-2">
+                          <Badge variant="outline" className={cn("text-[10px]", STATUS_CLASS[aEval.status])}>
+                            {STATUS_LABEL[aEval.status]}
+                          </Badge>
+                        </td>
+                        <td className="p-2">
+                          {changed ? (
+                            <Badge
+                              className={cn(
+                                "text-[10px]",
+                                aEval.status === "matched"
+                                  ? "bg-emerald-500/15 text-emerald-400"
+                                  : bEval.status === "matched"
+                                    ? "bg-rose-500/15 text-rose-400"
+                                    : "bg-amber-500/15 text-amber-400",
+                              )}
+                              variant="secondary"
+                            >
+                              {aEval.status === "matched"
+                                ? bEval.status === "near-miss"
+                                  ? "Near-miss → matched"
+                                  : "Now matched"
+                                : bEval.status === "matched"
+                                  ? `Lost → ${STATUS_LABEL[aEval.status].toLowerCase()}`
+                                  : "Status shifted"}
+                            </Badge>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                              {STATUS_LABEL[bEval.status]}
+                              <ArrowRight className="h-3 w-3" />
+                              {STATUS_LABEL[aEval.status]}
+                            </span>
                           )}
-                          variant="secondary"
-                        >
-                          {aEval.status === "matched"
-                            ? bEval.status === "near-miss"
-                              ? "Near-miss → matched"
-                              : "Now matched"
-                            : bEval.status === "matched"
-                              ? `Lost → ${STATUS_LABEL[aEval.status].toLowerCase()}`
-                              : "Status shifted"}
-                        </Badge>
-                      )}
-                      <span className="ml-auto text-[10px] text-muted-foreground">
-                        {aEval.failed.length === 0
-                          ? "All gates pass"
-                          : `Blocked by ${aEval.failed.join(", ")}`}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
+                        </td>
+                        <td className="p-2 text-[10px] text-muted-foreground">
+                          {aEval.failed.length === 0
+                            ? "—"
+                            : `${aEval.failed[0]}${aEval.failed.length > 1 ? ` +${aEval.failed.length - 1}` : ""}`}
+                        </td>
+                        <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                          {gateAfter?.actual === null || gateAfter === null
+                            ? gateAfterText
+                            : `${gateAfter.actual}${gateAfter.unit} vs ${gateAfter.op} ${gateAfter.threshold}${gateAfter.unit}`}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </ScrollArea>
           </section>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SortHeader({
+  label,
+  k,
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: "asc" | "desc";
+  onSort: (k: SortKey) => void;
+}) {
+  const active = sortKey === k;
+  return (
+    <th className="p-2 font-medium">
+      <button
+        type="button"
+        onClick={() => onSort(k)}
+        className={cn(
+          "inline-flex items-center gap-1 hover:text-foreground",
+          active && "text-foreground",
+        )}
+        aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+      >
+        {label}
+        {active ? (
+          sortDir === "asc" ? (
+            <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </button>
+    </th>
   );
 }
 
