@@ -137,14 +137,51 @@ function TokenChip({
   );
 }
 
+const FOCUS_KEY = "pp.timeline.focusCorrelationId";
+
 export function MitigationImpactTimeline() {
 
   const runs = useScanHistory();
   const { tuningLog } = usePaper();
-  const [drawerId, setDrawerId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  /** URL is the source of truth so a refresh restores the focused batch. */
+  const search = useSearch({ strict: false }) as { audit?: string };
+  const urlId = search.audit ?? null;
+  const [drawerId, setDrawerId] = useState<string | null>(urlId);
+
+  // Restore from local UI state when the URL has no focus (e.g. plain reload).
+  useEffect(() => {
+    if (urlId) return;
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(FOCUS_KEY);
+    if (saved) {
+      setDrawerId(saved);
+      navigate({ to: ".", search: (p: Record<string, unknown>) => ({ ...p, audit: saved }), replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep local state in sync when the URL changes (back/forward, deep link).
+  useEffect(() => {
+    setDrawerId(urlId);
+  }, [urlId]);
+
+  const setFocus = (id: string | null) => {
+    setDrawerId(id);
+    if (typeof window !== "undefined") {
+      if (id) window.localStorage.setItem(FOCUS_KEY, id);
+      else window.localStorage.removeItem(FOCUS_KEY);
+    }
+    navigate({
+      to: ".",
+      search: (p: Record<string, unknown>) => ({ ...p, audit: id ?? undefined }),
+      replace: true,
+    });
+  };
+
   const openAudit = (id?: string) => {
     if (!id) return;
-    setDrawerId(id);
+    setFocus(id);
   };
 
   /**
