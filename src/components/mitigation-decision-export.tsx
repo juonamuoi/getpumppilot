@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileJson, FileSpreadsheet, FileText, Save, Upload, X } from "lucide-react";
+import { Copy, Download, FileJson, FileSpreadsheet, FileText, Pencil, Save, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -320,6 +320,8 @@ export function MitigationDecisionExport<F,>({
   const [restored, setRestored] = useState<string | null>(null);
   const hydrated = useRef(false);
   const presetFileRef = useRef<HTMLInputElement>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   // Restore the last-used export configuration after hydration.
   useEffect(() => {
@@ -385,6 +387,31 @@ export function MitigationDecisionExport<F,>({
     toast.success(`Applied preset "${p.name}"`, {
       description: p.filters && onApplyFilters ? "Fields, toggle and filter scope restored" : "Fields and toggle restored",
     });
+  };
+
+  const commitRename = (p: ExportPreset<F>) => {
+    const name = renameValue.trim();
+    setRenamingId(null);
+    if (!name || name === p.name) return;
+    if (presets.some((o) => o.id !== p.id && o.name.toLowerCase() === name.toLowerCase())) {
+      toast.error(`A preset named "${name}" already exists`);
+      return;
+    }
+    persistPresets(presets.map((o) => (o.id === p.id ? { ...o, name } : o)));
+    toast.success(`Renamed to "${name}"`);
+  };
+
+  const duplicatePreset = (p: ExportPreset<F>) => {
+    const base = `${p.name} copy`;
+    let name = base;
+    let n = 2;
+    while (presets.some((o) => o.name.toLowerCase() === name.toLowerCase())) name = `${base} ${n++}`;
+    const copy: ExportPreset<F> = { ...p, id: `${Date.now()}`, name, savedAt: Date.now() };
+    persistPresets([...presets, copy]);
+    setActivePreset(copy.id);
+    setRenamingId(copy.id);
+    setRenameValue(name);
+    toast.success(`Duplicated as "${name}"`, { description: "Rename it inline to finish." });
   };
 
   const deletePreset = (id: string) => {
