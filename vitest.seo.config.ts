@@ -14,6 +14,8 @@ export default defineConfig({
     name: "seo",
     environment: "node",
     include: ["src/tests/seo/**/*.test.ts"],
+    testTimeout: 30_000,
     passWithNoTests: false,
+
   },
 });

@@ -28,12 +28,12 @@
   <url><loc>https://www.getpumppilot.app/terms</loc><priority>0.3</priority></url>
   <url><loc>https://www.getpumppilot.app/privacy</loc><priority>0.3</priority></url>
   <url><loc>https://www.getpumppilot.app/refund</loc><priority>0.3</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/BTC</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/ETH</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/SOL</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/BNB</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/DEMOX</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/PILOT</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/NOVA</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/ORBIT</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/btc</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/eth</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/sol</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/bnb</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/demox</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/pilot</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/nova</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/orbit</loc><priority>0.6</priority></url>
 </urlset>
