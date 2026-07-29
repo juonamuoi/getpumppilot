@@ -43,6 +43,9 @@ export type TimelineFilters = {
   actions?: string[];
   /** Outcome statuses selected (empty = all). */
   outcomes?: string[];
+  /** Focused correlation ID scope, when exporting from a deep link. */
+  correlationId?: string;
+
 };
 
 const RISK_LABELS = ["safe", "medium", "high", "critical"];

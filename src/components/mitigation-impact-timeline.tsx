@@ -405,24 +405,30 @@ export function MitigationImpactTimeline() {
 
   const activeFilters = wallets.length + tokens.length + actions.length + outcomes.length;
 
-  // Exports exactly the filtered view (wallets, tokens, actions, outcomes, range).
-  const exportTimeline = (fmt: "csv" | "json") => {
+  // Exports the filtered view; when a correlation ID is focused (deep link /
+  // timeline marker drawer), exports default to that correlation scope.
+  const exportTimeline = (fmt: "csv" | "json", scoped = !!drawerId) => {
+    const focus = scoped ? drawerId : null;
+    const rp = focus ? riskPoints.filter((p) => p.correlationId === focus) : riskPoints;
+    const sp = focus ? signalPoints.filter((p) => p.correlationId === focus) : signalPoints;
     const filters = {
       range,
-      rangeLabel: RANGES.find((r) => r.key === range)!.label,
+      rangeLabel: focus
+        ? `${RANGES.find((r) => r.key === range)!.label} · correlation ${focus}`
+        : RANGES.find((r) => r.key === range)!.label,
       from: cutoff || null,
       to: Date.now(),
       wallets,
       tokens,
       actions,
       outcomes,
+      correlationId: focus ?? undefined,
     };
     const body =
-      fmt === "csv"
-        ? buildTimelineCsv(filters, riskPoints, signalPoints)
-        : buildTimelineJson(filters, riskPoints, signalPoints);
+      fmt === "csv" ? buildTimelineCsv(filters, rp, sp) : buildTimelineJson(filters, rp, sp);
     downloadTimelineExport(body, fmt);
   };
+
 
 
   return (
@@ -452,12 +458,29 @@ export function MitigationImpactTimeline() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("csv")}>
-                  Download CSV
+                  Download CSV{drawerId ? ` — ${drawerId}` : ""}
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-xs" onSelect={() => exportTimeline("json")}>
-                  Download JSON
+                  Download JSON{drawerId ? ` — ${drawerId}` : ""}
                 </DropdownMenuItem>
+                {drawerId && (
+                  <>
+                    <DropdownMenuItem
+                      className="text-xs"
+                      onSelect={() => exportTimeline("csv", false)}
+                    >
+                      Download CSV — all filtered
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-xs"
+                      onSelect={() => exportTimeline("json", false)}
+                    >
+                      Download JSON — all filtered
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
+
             </DropdownMenu>
             {activeFilters > 0 && (
               <Button
