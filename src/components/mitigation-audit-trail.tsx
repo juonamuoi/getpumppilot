@@ -91,6 +91,110 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
   );
 }
 
+/** Expandable per-entry summary of alerts fired, muted and assets affected. */
+function OutcomeBreakdown({ entry }: { entry: TuningLogEntry }) {
+  const [open, setOpen] = useState(false);
+  const o = entry.outcome;
+
+  const fired = o?.delivered ?? 0;
+  const matched = o?.matched ?? 0;
+  const channels = o?.channels ?? [];
+  const symbols = o?.symbols ?? [];
+  // Every matched asset that produced no delivery was suppressed by muted channels.
+  const muted = o ? Math.max(matched - fired, 0) : 0;
+  const nearMissAfter = entry.scopeNearMissAfter ?? entry.nearMissAfter;
+
+  const stats: Array<{ label: string; value: string | number }> = [
+    { label: "Alerts fired", value: fired },
+    { label: "Alerts muted", value: muted },
+    { label: "Assets affected", value: matched },
+    { label: "Channels used", value: channels.length },
+  ];
+
+  return (
+    <div className="mt-2 rounded-md border border-border/50 bg-muted/20">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 px-2 py-1.5 text-[11px] font-medium"
+      >
+        <ChevronRight className={cn("h-3 w-3 transition-transform", open && "rotate-90")} />
+        Outcome breakdown
+        <span className="text-muted-foreground">
+          {o ? `${fired} fired · ${muted} muted · ${matched} asset${matched === 1 ? "" : "s"}` : "pending"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-border/50 p-2">
+          {!o ? (
+            <p className="text-[11px] text-muted-foreground">
+              No scan has run against these rules yet, so there is nothing to break down.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                {stats.map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded border border-border/60 bg-background/40 px-2 py-1.5"
+                  >
+                    <div className="text-sm font-semibold tabular-nums">{s.value}</div>
+                    <div className="text-[10px] text-muted-foreground">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <dl className="mt-2 space-y-1 text-[11px]">
+                <div className="flex flex-wrap gap-1.5">
+                  <dt className="text-muted-foreground">Assets:</dt>
+                  <dd className="flex flex-wrap gap-1">
+                    {symbols.length === 0 ? (
+                      <span className="text-muted-foreground">none</span>
+                    ) : (
+                      symbols.map((s) => (
+                        <Badge key={s} variant="outline" className="text-[10px]">
+                          {s}
+                        </Badge>
+                      ))
+                    )}
+                  </dd>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <dt className="text-muted-foreground">Delivery channels:</dt>
+                  <dd className="flex flex-wrap gap-1">
+                    {channels.length === 0 ? (
+                      <span className="text-muted-foreground">all muted</span>
+                    ) : (
+                      channels.map((c) => (
+                        <Badge key={c} variant="secondary" className="text-[10px]">
+                          {c}
+                        </Badge>
+                      ))
+                    )}
+                  </dd>
+                </div>
+                {nearMissAfter != null && (
+                  <div className="flex gap-1.5">
+                    <dt className="text-muted-foreground">Still near-miss:</dt>
+                    <dd className="tabular-nums">{nearMissAfter}</dd>
+                  </div>
+                )}
+                <div className="flex gap-1.5">
+                  <dt className="text-muted-foreground">Recorded:</dt>
+                  <dd>{format(new Date(o.ts), "MMM d, HH:mm:ss")}</dd>
+                </div>
+              </dl>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 
 /** A mitigation is attributed to wallets scanned within this window of it. */
 const WALLET_LINK_MS = 60 * 60 * 1000;
