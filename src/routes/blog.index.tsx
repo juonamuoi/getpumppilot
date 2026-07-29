@@ -7,9 +7,11 @@ import {
   SITE_URL,
   ORG_ID,
   WEBSITE_ID,
+  SOCIAL_IMAGE,
   breadcrumbSchema,
   ldScript,
 } from "@/lib/structured-data";
+
 
 const CANONICAL = `${SITE_URL}/blog`;
 
@@ -44,9 +46,11 @@ export const Route = createFileRoute("/blog/")({
           description: p.description,
           datePublished: p.date,
           author: { "@id": ORG_ID },
+          image: SOCIAL_IMAGE,
           keywords: p.keywords.join(", "),
           url: `${CANONICAL}/${p.slug}`,
         })),
+
       }),
       ldScript(breadcrumbSchema([{ name: "Blog", path: "/blog" }])),
     ],

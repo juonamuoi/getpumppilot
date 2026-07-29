@@ -1,0 +1,23 @@
+name: Structured data (JSON-LD) consistency
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  jsonld:
+    name: Every route renders valid JSON-LD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: JSON-LD consistency suite
+        run: bun run test:seo

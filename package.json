@@ -18,7 +18,9 @@
     "lint:supabase:live": "node scripts/supabase-lint-check.mjs --live",
     "lint:supabase:authz": "node scripts/supabase-authz-check.mjs",
     "test:security": "vitest run --config vitest.security.config.ts",
+    "test:seo": "vitest run --config vitest.seo.config.ts",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
+
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
