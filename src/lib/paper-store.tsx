@@ -212,7 +212,10 @@ type State = {
 
 
   simulateScannerRun: () => number; // returns count of new deliveries
+  /** Append externally-generated deliveries (e.g. the realtime momentum engine). */
+  pushDeliveries: (d: AlertDelivery[]) => void;
   clearDeliveries: () => void;
+
   setRisk: (r: State["risk"]) => void;
   resetPaper: () => void;
   equity: number;
@@ -670,7 +673,11 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     expiredAuditCount: Math.max(0, tuningLog.length - applyRetention(tuningLog, retention).length),
 
     simulateScannerRun,
+    pushDeliveries: (d) => {
+      if (d.length > 0) setDeliveries((prev) => [...d, ...prev].slice(0, 500));
+    },
     clearDeliveries: () => setDeliveries([]),
+
     setRisk,
     resetPaper: () => {
       setCash(STARTING_CASH);

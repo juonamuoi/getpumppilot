@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { PlainSignalCard } from "@/components/plain-signal";
 import { PortfolioHealthCard } from "@/components/portfolio-health";
 import { LiveMarket } from "@/components/live-market";
+import { RealtimeMomentumAlerts } from "@/components/realtime-momentum-alerts";
 import { Term } from "@/components/glossary";
 import { useOnboarding } from "@/lib/onboarding-store";
 
@@ -192,6 +193,10 @@ function Dashboard() {
           </div>
           <LiveMarket />
         </div>
+
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Realtime alerts</h2>
+        <RealtimeMomentumAlerts />
+
 
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">AI coaching</h2>
         <div className="grid gap-6 lg:grid-cols-3">
