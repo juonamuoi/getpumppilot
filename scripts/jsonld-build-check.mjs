@@ -79,6 +79,7 @@ async function sitemapPaths() {
   }
 }
 
+const failures = [];
 let sources = []; // { label, html }
 
 const root = ROOTS.find((candidate) => candidate && existsSync(candidate));
