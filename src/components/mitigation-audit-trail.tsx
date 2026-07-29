@@ -26,6 +26,7 @@ import { MitigationBulkExport } from "@/components/mitigation-bulk-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
+import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
