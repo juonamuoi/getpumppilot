@@ -190,6 +190,9 @@ function AlertsPage() {
             <HistoryPanel />
           </TabsContent>
         </Tabs>
+
+        <FaqSection faqs={alertsFaqs} title="Alerts FAQ" />
+
       </div>
     </AppShell>
   );
