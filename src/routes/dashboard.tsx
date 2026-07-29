@@ -13,6 +13,7 @@ import { PlainSignalCard } from "@/components/plain-signal";
 import { PortfolioHealthCard } from "@/components/portfolio-health";
 import { LiveMarket } from "@/components/live-market";
 import { RealtimeMomentumAlerts } from "@/components/realtime-momentum-alerts";
+import { RiskGuidanceCard } from "@/components/risk-guidance-card";
 import { Term } from "@/components/glossary";
 import { useOnboarding } from "@/lib/onboarding-store";
 
@@ -161,6 +162,8 @@ function Dashboard() {
           />
           <StatCard label="Positions" value={String(positions.length)} sub="assets held" />
         </div>
+
+        <RiskGuidanceCard />
 
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Market pulse &amp; today's signals</h2>
         <Card className="border-border/60 bg-card/60">
