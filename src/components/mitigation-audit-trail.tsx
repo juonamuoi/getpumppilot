@@ -22,6 +22,7 @@ import { usePaper, type TuningLogEntry } from "@/lib/paper-store";
 import { useScanHistory } from "@/lib/wallet-session";
 
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
+import { MitigationBulkExport } from "@/components/mitigation-bulk-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
@@ -561,6 +562,11 @@ export function MitigationAuditTrail({
               log={exportEntries}
               filters={current}
               onApplyFilters={applyFilter}
+            />
+            <MitigationBulkExport
+              entries={exportEntries}
+              scope={exportFilters()}
+              walletsFor={(e) => walletsForEntry.get(e.id) ?? []}
             />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
               Quick CSV
