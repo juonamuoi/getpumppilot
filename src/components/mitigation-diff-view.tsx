@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -11,6 +11,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowRight, ArrowUpDown, ChevronDown, ChevronUp, Download, GitCompare } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { applyRuleValue, usePaper, type ScannerRules, type TuningLogEntry } from "@/lib/paper-store";
@@ -20,6 +27,9 @@ import { cn } from "@/lib/utils";
 
 type Asset = (typeof ASSETS)[number];
 type Status = "matched" | "near-miss" | "no-match";
+
+/** Sentinel: compare against this entry's own pre-change rule state. */
+const SELF_BEFORE = "__self_before__";
 
 /** Same 5 gates the scanner uses; 4/5 passing = near-miss. */
 function evaluate(rules: ScannerRules, a: Asset) {
@@ -176,24 +186,54 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
 
   const cid = entry.correlationId ?? entry.id;
 
-  const batch = useMemo(
-    () =>
-      tuningLog.filter(
-        (e) => (e.correlationId ?? e.id) === cid && e.kind !== "bounds" && e.rule !== "undo",
-      ),
-    [tuningLog, cid],
+  /** All correlation IDs present in the tuning log, newest first. */
+  const runs = useMemo(() => {
+    const map = new Map<string, { cid: string; ts: number; label: string }>();
+    for (const e of tuningLog) {
+      if (e.kind === "bounds" || e.rule === "undo") continue;
+      const c = e.correlationId ?? e.id;
+      const prev = map.get(c);
+      if (!prev || e.ts > prev.ts) {
+        map.set(c, { cid: c, ts: e.ts, label: e.mitigation ?? "Rule change" });
+      }
+    }
+    return [...map.values()].sort((a, b) => b.ts - a.ts);
+  }, [tuningLog]);
+
+  const [baseCid, setBaseCid] = useState<string>(SELF_BEFORE);
+  const [compareCid, setCompareCid] = useState<string>(cid);
+
+  const batchOf = useCallback(
+    (c: string) =>
+      tuningLog.filter((e) => (e.correlationId ?? e.id) === c && e.kind !== "bounds" && e.rule !== "undo"),
+    [tuningLog],
   );
 
-  const { before, after } = useMemo(() => {
-    const b: ScannerRules = { ...scannerRules, channels: { ...scannerRules.channels } };
-    const a: ScannerRules = { ...scannerRules, channels: { ...scannerRules.channels } };
-    for (const e of batch) {
-      if (!RULE_FIELD[e.rule]) continue;
-      applyRuleValue(b, e.rule, e.oldValue);
-      applyRuleValue(a, e.rule, e.newValue);
-    }
-    return { before: b, after: a };
-  }, [batch, scannerRules]);
+  const batch = useMemo(() => batchOf(cid), [batchOf, cid]);
+
+  /** Rule set produced by a run (old values for the "before" side of this entry). */
+  const rulesFor = useCallback(
+    (c: string, side: "old" | "new"): ScannerRules => {
+      const r: ScannerRules = { ...scannerRules, channels: { ...scannerRules.channels } };
+      for (const e of batchOf(c === SELF_BEFORE ? cid : c)) {
+        if (!RULE_FIELD[e.rule]) continue;
+        applyRuleValue(r, e.rule, side === "old" ? e.oldValue : e.newValue);
+      }
+      return r;
+    },
+    [batchOf, scannerRules, cid],
+  );
+
+  const comparingRuns = baseCid !== SELF_BEFORE;
+
+  const { before, after } = useMemo(
+    () => ({
+      before: rulesFor(baseCid, baseCid === SELF_BEFORE ? "old" : "new"),
+      after: rulesFor(compareCid, "new"),
+    }),
+    [rulesFor, baseCid, compareCid],
+  );
+
 
   const rows = useMemo(
     () =>
@@ -355,6 +395,58 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
             illustration only.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="grid gap-2 rounded-md border border-border/60 bg-card/40 p-2 sm:grid-cols-2">
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Baseline run</p>
+            <Select value={baseCid} onValueChange={setBaseCid}>
+              <SelectTrigger className="h-8 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SELF_BEFORE}>This entry — before change</SelectItem>
+                {runs.map((r) => (
+                  <SelectItem key={r.cid} value={r.cid}>
+                    {format(new Date(r.ts), "MMM d, HH:mm")} · {r.label} · {r.cid.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Compare run</p>
+            <Select value={compareCid} onValueChange={setCompareCid}>
+              <SelectTrigger className="h-8 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {runs.map((r) => (
+                  <SelectItem key={r.cid} value={r.cid}>
+                    {format(new Date(r.ts), "MMM d, HH:mm")} · {r.label} · {r.cid.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {comparingRuns && (
+            <p className="sm:col-span-2 text-[10px] text-muted-foreground">
+              Comparing the resulting rule state of two runs (correlation IDs {baseCid.slice(0, 8)} →{" "}
+              {compareCid.slice(0, 8)}).{" "}
+              <button
+                type="button"
+                className="underline underline-offset-2"
+                onClick={() => {
+                  setBaseCid(SELF_BEFORE);
+                  setCompareCid(cid);
+                }}
+              >
+                Reset to this entry
+              </button>
+            </p>
+          )}
+        </div>
+
+
 
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/40 p-2 text-[11px] text-muted-foreground">
           <Download className="h-3.5 w-3.5" />
