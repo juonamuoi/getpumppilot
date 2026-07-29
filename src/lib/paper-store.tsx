@@ -212,7 +212,10 @@ type State = {
 
 
   simulateScannerRun: () => number; // returns count of new deliveries
+  /** Append externally-generated deliveries (e.g. the realtime momentum engine). */
+  pushDeliveries: (d: AlertDelivery[]) => void;
   clearDeliveries: () => void;
+
   setRisk: (r: State["risk"]) => void;
   resetPaper: () => void;
   equity: number;
