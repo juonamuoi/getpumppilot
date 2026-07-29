@@ -389,6 +389,58 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
           </DialogDescription>
         </DialogHeader>
 
+        <div className="grid gap-2 rounded-md border border-border/60 bg-card/40 p-2 sm:grid-cols-2">
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Baseline run</p>
+            <Select value={baseCid} onValueChange={setBaseCid}>
+              <SelectTrigger className="h-8 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SELF_BEFORE}>This entry — before change</SelectItem>
+                {runs.map((r) => (
+                  <SelectItem key={r.cid} value={r.cid}>
+                    {format(new Date(r.ts), "MMM d, HH:mm")} · {r.label} · {r.cid.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Compare run</p>
+            <Select value={compareCid} onValueChange={setCompareCid}>
+              <SelectTrigger className="h-8 text-[11px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {runs.map((r) => (
+                  <SelectItem key={r.cid} value={r.cid}>
+                    {format(new Date(r.ts), "MMM d, HH:mm")} · {r.label} · {r.cid.slice(0, 8)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {comparingRuns && (
+            <p className="sm:col-span-2 text-[10px] text-muted-foreground">
+              Comparing the resulting rule state of two runs (correlation IDs {baseCid.slice(0, 8)} →{" "}
+              {compareCid.slice(0, 8)}).{" "}
+              <button
+                type="button"
+                className="underline underline-offset-2"
+                onClick={() => {
+                  setBaseCid(SELF_BEFORE);
+                  setCompareCid(cid);
+                }}
+              >
+                Reset to this entry
+              </button>
+            </p>
+          )}
+        </div>
+
+
+
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/40 p-2 text-[11px] text-muted-foreground">
           <Download className="h-3.5 w-3.5" />
           <span>
