@@ -86,9 +86,32 @@ import { ScheduledReportCard } from "@/components/scheduled-report-card";
 import { shortAddress } from "@/lib/wallet-scan";
 
 export const Route = createFileRoute("/security")({
-  /** `audit` keeps the focused mitigation correlation ID across refreshes. */
-  validateSearch: (search: Record<string, unknown>): { audit?: string } =>
-    typeof search.audit === "string" ? { audit: search.audit } : {},
+  /**
+   * `audit` keeps the focused mitigation correlation ID across refreshes.
+   * `tl*` params make the mitigation timeline view shareable: range, wallets,
+   * tokens, mitigation actions and outcome filters.
+   */
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    audit?: string;
+    tlrange?: string;
+    tlw?: string;
+    tlt?: string;
+    tla?: string;
+    tlo?: string;
+  } => {
+    const str = (v: unknown) => (typeof v === "string" && v.length > 0 ? v : undefined);
+    return {
+      ...(str(search.audit) ? { audit: str(search.audit)! } : {}),
+      ...(str(search.tlrange) ? { tlrange: str(search.tlrange)! } : {}),
+      ...(str(search.tlw) ? { tlw: str(search.tlw)! } : {}),
+      ...(str(search.tlt) ? { tlt: str(search.tlt)! } : {}),
+      ...(str(search.tla) ? { tla: str(search.tla)! } : {}),
+      ...(str(search.tlo) ? { tlo: str(search.tlo)! } : {}),
+    };
+  },
+
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/security" }],
     meta: [
