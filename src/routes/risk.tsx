@@ -47,16 +47,22 @@ function RiskPage() {
               Guardrails applied to every paper order. Adjust to match your comfort.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5">
-            <Lock className="h-3.5 w-3.5 text-amber-400" />
-            <span className="text-xs text-amber-200">Live execution locked</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <TourStartButton />
+            <div
+              data-tour="risk-live-lock"
+              className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5"
+            >
+              <Lock className="h-3.5 w-3.5 text-amber-400" />
+              <span className="text-xs text-amber-200">Live execution locked</span>
+            </div>
           </div>
         </div>
 
         <DisclaimerBanner />
 
         <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-          <Card className="border-border/60 bg-card/60">
+          <Card data-tour="risk-limits" className="border-border/60 bg-card/60">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
                 <ShieldCheck className="h-4 w-4" /> Limits
