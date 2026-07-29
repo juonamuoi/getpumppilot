@@ -391,6 +391,87 @@ export function MitigationDecisionExport<F,>({
     if (activePreset === id) setActivePreset(null);
   };
 
+  /* --------------- preset portability (JSON export/import) --------------- */
+
+  const exportPresets = () => {
+    if (presets.length === 0) {
+      toast.error("No presets to export yet");
+      return;
+    }
+    const payload = {
+      kind: "pumppilot.mitigation-export-presets",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      presets,
+    };
+    saveBlob(
+      new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+      `mitigation-export-presets-${new Date().toISOString().slice(0, 10)}.json`,
+    );
+    toast.success(`Exported ${presets.length} preset${presets.length === 1 ? "" : "s"}`, {
+      description: "Import this file in another environment to restore them.",
+    });
+  };
+
+  const importPresets = async (file: File) => {
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const list = Array.isArray(parsed)
+        ? parsed
+        : (parsed as { presets?: unknown }).presets;
+      if (!Array.isArray(list)) throw new Error("No presets array found in file");
+
+      const valid: ExportPreset<F>[] = [];
+      let skipped = 0;
+      for (const raw of list) {
+        const p = raw as Partial<ExportPreset<F>>;
+        const fields = Array.isArray(p.fields) ? p.fields.filter((k) => FIELDS.some((f) => f.key === k)) : [];
+        if (typeof p.name !== "string" || !p.name.trim() || fields.length === 0) {
+          skipped += 1;
+          continue;
+        }
+        valid.push({
+          id: typeof p.id === "string" ? p.id : `${Date.now()}-${valid.length}`,
+          name: p.name.trim(),
+          fields,
+          includePreviewOnly: p.includePreviewOnly !== false,
+          filters: p.filters,
+          savedAt: typeof p.savedAt === "number" ? p.savedAt : Date.now(),
+        });
+      }
+      if (valid.length === 0) {
+        toast.error("No valid presets in that file", {
+          description: skipped ? `${skipped} entr${skipped === 1 ? "y" : "ies"} were unreadable.` : undefined,
+        });
+        return;
+      }
+
+      // Merge by name: an imported preset replaces a local one with the same name.
+      const byName = new Map(presets.map((p) => [p.name.toLowerCase(), p]));
+      let replaced = 0;
+      for (const p of valid) {
+        const key = p.name.toLowerCase();
+        const existing = byName.get(key);
+        if (existing) replaced += 1;
+        byName.set(key, { ...p, id: existing?.id ?? p.id });
+      }
+      persistPresets([...byName.values()]);
+      toast.success(`Imported ${valid.length} preset${valid.length === 1 ? "" : "s"}`, {
+        description: [
+          replaced ? `${replaced} updated by name` : null,
+          skipped ? `${skipped} skipped` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ") || "Added to your saved presets.",
+      });
+    } catch (err) {
+      toast.error("Could not import presets", {
+        description: err instanceof Error ? err.message : "The file is not valid JSON.",
+      });
+    }
+  };
+
+
   const decisions = useMemo(() => {
     const all = buildDecisions(log);
     return includePreviewOnly ? all : all.filter((d) => !!d.applied);
