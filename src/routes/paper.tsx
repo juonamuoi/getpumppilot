@@ -90,16 +90,22 @@ function PaperPage() {
               Practice with simulated cash. No real orders are ever placed.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5">
-            <Lock className="h-3.5 w-3.5 text-amber-400" />
-            <span className="text-xs text-amber-200">Live execution</span>
-            <Switch checked={false} disabled />
+          <div className="flex flex-wrap items-center gap-2">
+            <TourStartButton />
+            <div
+              data-tour="paper-live-lock"
+              className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5"
+            >
+              <Lock className="h-3.5 w-3.5 text-amber-400" />
+              <span className="text-xs text-amber-200">Live execution</span>
+              <Switch checked={false} disabled />
+            </div>
           </div>
         </div>
 
         <DisclaimerBanner />
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div data-tour="paper-balances" className="grid gap-3 sm:grid-cols-3">
           <StatBlock label="Equity" value={fmtUsd(paper.equity)} />
           <StatBlock label="Cash" value={fmtUsd(paper.cash)} />
           <StatBlock label="Positions" value={String(paper.positions.length)} />
