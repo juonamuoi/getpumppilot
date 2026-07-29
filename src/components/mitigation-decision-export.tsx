@@ -32,7 +32,7 @@ export type MitigationDecisionRow = Record<string, string | number>;
 type FieldDef = {
   key: string;
   label: string;
-  group: "identity" | "decision" | "confirmation" | "outcome" | "why";
+  group: "identity" | "provenance" | "decision" | "confirmation" | "outcome" | "why";
   get: (d: Decision) => string | number;
 };
 
@@ -52,6 +52,23 @@ const FIELDS: FieldDef[] = [
   { key: "decision", label: "Decision", group: "identity", get: (d) => (d.primary.revertedAt ? "reverted" : d.applied ? "applied" : "preview-only") },
   { key: "mitigation", label: "Mitigation", group: "identity", get: (d) => d.primary.mitigation ?? "" },
   { key: "trigger", label: "Trigger", group: "identity", get: (d) => d.primary.trigger ?? "" },
+
+
+  /* ---- row-level provenance: makes every row traceable to its records ---- */
+  { key: "rowId", label: "Row ID", group: "provenance", get: (d) => `${d.primary.correlationId ?? d.primary.id}:${d.applied?.id ?? d.preview?.id ?? d.primary.id}` },
+  { key: "confirmationId", label: "Confirmation ID", group: "provenance", get: (d) => d.preview?.id ?? d.applied?.previewId ?? "" },
+  { key: "appliedEntryId", label: "Applied entry ID", group: "provenance", get: (d) => d.applied?.id ?? "" },
+  { key: "previewEntryId", label: "Preview entry ID", group: "provenance", get: (d) => d.preview?.id ?? "" },
+  { key: "replayOfId", label: "Replay of (correlation ID)", group: "provenance", get: (d) => d.primary.replayOf ?? "" },
+  { key: "sourceSystem", label: "Source", group: "provenance", get: (d) => d.primary.source ?? "manual-save" },
+  { key: "phase", label: "Phase", group: "provenance", get: (d) => d.primary.phase ?? "applied" },
+  { key: "alertType", label: "Alert type", group: "provenance", get: (d) => d.primary.outcome?.status ?? "not-run" },
+  { key: "alertOutcomeId", label: "Alert outcome ID", group: "provenance", get: (d) => (d.primary.outcome ? `${d.primary.outcome.correlationId}:${d.primary.outcome.ts}` : "") },
+  { key: "triggerTsId", label: "Trigger timestamp ID", group: "provenance", get: (d) => num(d.primary.ts) },
+  { key: "previewTsId", label: "Preview timestamp ID", group: "provenance", get: (d) => num(d.preview?.ts ?? d.applied?.previewedAt) },
+  { key: "appliedTsId", label: "Applied timestamp ID", group: "provenance", get: (d) => num(d.applied?.appliedAt ?? d.applied?.ts) },
+  { key: "outcomeTsId", label: "Outcome timestamp ID", group: "provenance", get: (d) => num(d.primary.outcome?.ts) },
+  { key: "revertTsId", label: "Revert timestamp ID", group: "provenance", get: (d) => num(d.primary.revertedAt) },
 
   { key: "rule", label: "Rule", group: "decision", get: (d) => d.primary.ruleLabel },
   { key: "kind", label: "Change type", group: "decision", get: (d) => d.primary.kind ?? "rule" },
@@ -98,6 +115,7 @@ const FIELDS: FieldDef[] = [
 
 const GROUP_LABEL: Record<FieldDef["group"], string> = {
   identity: "Decision identity",
+  provenance: "Provenance & traceability",
   decision: "Rule change",
   confirmation: "Confirmation summary",
   outcome: "Outcome & rollback",
@@ -155,6 +173,21 @@ const FIELD_DOC: Record<string, FieldDoc> = {
   outcomeAt: { type: "timestamp", source: "tuningLog.outcome.ts", description: "ISO time the outcome was recorded after the change took effect." },
   revertedAt: { type: "timestamp", source: "tuningLog.revertedAt", description: "ISO time the change was rolled back, if it was reverted." },
   revertReason: { type: "string", source: "tuningLog.revertReason", description: "Reason captured at rollback time (manual undo, risk bounds breach, etc.)." },
+
+  rowId: { type: "string", source: "derived (correlationId + entry id)", description: "Stable unique key for this export row: <correlationId>:<applied or preview entry id>." },
+  confirmationId: { type: "string", source: "tuningLog.previewId / preview entry id", description: "ID of the mitigation confirmation (preview) record this decision was reviewed against." },
+  appliedEntryId: { type: "string", source: "tuningLog.id (phase=applied)", description: "ID of the applied audit entry, empty when the decision was preview-only." },
+  previewEntryId: { type: "string", source: "tuningLog.id (phase=preview)", description: "ID of the preview audit entry, empty when no preview was recorded." },
+  replayOfId: { type: "string", source: "tuningLog.replayOf", description: "Correlation ID of the original mitigation this row is a replay of." },
+  sourceSystem: { type: "enum", source: "tuningLog.source", description: "manual-save | recommendation | auto | mitigation — what produced the change." },
+  phase: { type: "enum", source: "tuningLog.phase", description: "preview | applied — lifecycle phase of the underlying record." },
+  alertType: { type: "enum", source: "tuningLog.outcome.status", description: "alerts-fired | no-matches | channels-muted | not-run — the alert result type after the change." },
+  alertOutcomeId: { type: "string", source: "outcome.correlationId + outcome.ts", description: "Unique ID of the alert outcome record joined to this row." },
+  triggerTsId: { type: "number", source: "tuningLog.ts", description: "Epoch-ms timestamp ID of the triggering event (primary record creation)." },
+  previewTsId: { type: "number", source: "preview.ts / previewedAt", description: "Epoch-ms timestamp ID of the confirmation preview." },
+  appliedTsId: { type: "number", source: "appliedAt / applied.ts", description: "Epoch-ms timestamp ID of the apply action." },
+  outcomeTsId: { type: "number", source: "outcome.ts", description: "Epoch-ms timestamp ID of the recorded alert outcome." },
+  revertTsId: { type: "number", source: "tuningLog.revertedAt", description: "Epoch-ms timestamp ID of the rollback, if any." },
 
   why: { type: "string", source: "derived (explainOutcome)", description: "Full plain-English explanation of what changed, why, and what it did." },
   whyChange: { type: "string", source: "derived (rule + values)", description: "Plain-English sentence describing the threshold move." },
@@ -295,7 +328,7 @@ const PRESETS_KEY = "pumppilot_export_presets";
  *  v1 — original decision/confirmation/outcome columns
  *  v2 — added the "Why explanations" group + scope columns; renamed nothing
  */
-export const EXPORT_SCHEMA_VERSION = 2;
+export const EXPORT_SCHEMA_VERSION = 3;
 
 /** Minimum schema version a consumer must understand to read current files. */
 export const EXPORT_SCHEMA_MIN_COMPATIBLE = 1;
@@ -326,6 +359,7 @@ const FIELD_RENAMES: Record<number, Record<string, string>> = {
 /** Columns added in each version, auto-selected when a preset is migrated. */
 const FIELDS_ADDED_IN: Record<number, string[]> = {
   2: FIELDS.filter((f) => f.group === "why").map((f) => f.key),
+  3: FIELDS.filter((f) => f.group === "provenance").map((f) => f.key),
 };
 
 /** Brings one preset's field list up to EXPORT_SCHEMA_VERSION. */
@@ -780,7 +814,7 @@ export function MitigationDecisionExport<F,>({
   };
 
 
-  const groups: FieldDef["group"][] = ["identity", "decision", "confirmation", "outcome", "why"];
+  const groups: FieldDef["group"][] = ["identity", "provenance", "decision", "confirmation", "outcome", "why"];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
