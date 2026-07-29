@@ -34,6 +34,7 @@ import { Route as RiskRouteImport } from './routes/risk'
 import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SeoMonitorRouteImport } from './routes/seo-monitor'
 import { Route as SeoPreviewRouteImport } from './routes/seo-preview'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StorageAuditRouteImport } from './routes/storage-audit'
@@ -179,6 +180,11 @@ const SecurityRoute = SecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeoMonitorRoute = SeoMonitorRouteImport.update({
+  id: '/seo-monitor',
+  path: '/seo-monitor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeoPreviewRoute = SeoPreviewRouteImport.update({
   id: '/seo-preview',
   path: '/seo-preview',
@@ -307,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/seo-monitor': typeof SeoMonitorRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
   '/storage-audit': typeof StorageAuditRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByTo {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/seo-monitor': typeof SeoMonitorRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
   '/storage-audit': typeof StorageAuditRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/seo-monitor': typeof SeoMonitorRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
   '/storage-audit': typeof StorageAuditRoute
@@ -448,6 +457,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/seo-monitor'
     | '/seo-preview'
     | '/settings'
     | '/storage-audit'
@@ -494,6 +504,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/seo-monitor'
     | '/seo-preview'
     | '/settings'
     | '/storage-audit'
@@ -540,6 +551,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/seo-monitor'
     | '/seo-preview'
     | '/settings'
     | '/storage-audit'
@@ -587,6 +599,7 @@ export interface RootRouteChildren {
   RiskDisclosureRoute: typeof RiskDisclosureRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
+  SeoMonitorRoute: typeof SeoMonitorRoute
   SeoPreviewRoute: typeof SeoPreviewRoute
   SettingsRoute: typeof SettingsRoute
   StorageAuditRoute: typeof StorageAuditRoute
@@ -784,6 +797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seo-monitor': {
+      id: '/seo-monitor'
+      path: '/seo-monitor'
+      fullPath: '/seo-monitor'
+      preLoaderRoute: typeof SeoMonitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/seo-preview': {
       id: '/seo-preview'
       path: '/seo-preview'
@@ -957,6 +977,7 @@ const rootRouteChildren: RootRouteChildren = {
   RiskDisclosureRoute: RiskDisclosureRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
+  SeoMonitorRoute: SeoMonitorRoute,
   SeoPreviewRoute: SeoPreviewRoute,
   SettingsRoute: SettingsRoute,
   StorageAuditRoute: StorageAuditRoute,
