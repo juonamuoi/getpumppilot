@@ -20,6 +20,9 @@ import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
 import { Lock, RotateCcw } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { HowToSteps } from "@/components/how-to-steps";
+import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
+import { howToSchema, ldScript } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/paper")({
   head: () => ({
@@ -37,6 +40,18 @@ export const Route = createFileRoute("/paper")({
         property: "og:description",
         content: "Practice trading with simulated cash — no real assets moved.",
       },
+    ],
+    scripts: [
+      ldScript(
+        howToSchema({
+          name: PAPER_TRADING_FLOW.name,
+          description: PAPER_TRADING_FLOW.description,
+          path: PAPER_TRADING_FLOW.path,
+          totalTime: PAPER_TRADING_FLOW.totalTime,
+          tools: PAPER_TRADING_FLOW.tools,
+          steps: PAPER_TRADING_FLOW.steps,
+        }),
+      ),
     ],
   }),
   component: PaperPage,
@@ -236,6 +251,8 @@ function PaperPage() {
             )}
           </CardContent>
         </Card>
+      </div>
+        <HowToSteps flow={PAPER_TRADING_FLOW} />
       </div>
     </AppShell>
   );
