@@ -1,7 +1,8 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { Activity, ShieldAlert, Filter, X, ExternalLink, Download } from "lucide-react";
+import { toast } from "sonner";
+import { Activity, ShieldAlert, Filter, X, ExternalLink, Download, Link2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -511,6 +512,15 @@ export function MitigationImpactTimeline() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1 text-xs"
+              onClick={copyShareLink}
+              title="Copy a link that reopens this exact timeline view"
+            >
+              <Link2 className="h-3 w-3" /> Share view
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
