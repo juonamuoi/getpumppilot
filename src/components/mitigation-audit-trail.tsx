@@ -24,6 +24,7 @@ import { useScanHistory } from "@/lib/wallet-session";
 import { MitigationDecisionExport } from "@/components/mitigation-decision-export";
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
+import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { explainOutcome } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
 import { isImportedEntry } from "@/lib/mitigation-import";
@@ -860,6 +861,7 @@ export function MitigationAuditTrail({
                   )}
                   <div className="ml-auto flex items-center gap-2">
                     <MitigationDiffView entry={e} />
+                    <MitigationReplayDiff entry={e} />
                     <Button
 
                       size="sm"
