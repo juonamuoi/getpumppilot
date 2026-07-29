@@ -392,6 +392,7 @@ export function MitigationDecisionExport<F,>({
   const presetFileRef = useRef<HTMLInputElement>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [migratedNames, setMigratedNames] = useState<string[]>([]);
 
   // Restore the last-used export configuration after hydration.
   useEffect(() => {
@@ -402,6 +403,15 @@ export function MitigationDecisionExport<F,>({
       setIncludeSchema(last.includeSchema);
       setActivePreset(last.presetId);
       setRestored(last.presetName ?? "Last used export settings");
+    }
+    // Upgrade any presets saved against an older export schema.
+    const { presets: upgraded, migrated } = migratePresets(loadPresets() as ExportPreset<F>[]);
+    if (migrated.length > 0) {
+      setPresets(upgraded);
+      try {
+        window.localStorage.setItem(PRESETS_KEY, JSON.stringify(upgraded));
+      } catch {}
+      setMigratedNames(migrated);
     }
     hydrated.current = true;
   }, []);
@@ -440,6 +450,7 @@ export function MitigationDecisionExport<F,>({
       includePreviewOnly,
       filters,
       savedAt: Date.now(),
+      schemaVersion: EXPORT_SCHEMA_VERSION,
     };
     persistPresets(existing ? presets.map((p) => (p.id === existing.id ? preset : p)) : [...presets, preset]);
     setActivePreset(preset.id);
@@ -476,7 +487,13 @@ export function MitigationDecisionExport<F,>({
     let name = base;
     let n = 2;
     while (presets.some((o) => o.name.toLowerCase() === name.toLowerCase())) name = `${base} ${n++}`;
-    const copy: ExportPreset<F> = { ...p, id: `${Date.now()}`, name, savedAt: Date.now() };
+    const copy: ExportPreset<F> = {
+      ...p,
+      id: `${Date.now()}`,
+      name,
+      savedAt: Date.now(),
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+    };
     persistPresets([...presets, copy]);
     setActivePreset(copy.id);
     setRenamingId(copy.id);
@@ -499,6 +516,7 @@ export function MitigationDecisionExport<F,>({
     const payload = {
       kind: "pumppilot.mitigation-export-presets",
       version: 1,
+      schemaVersion: EXPORT_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       presets,
     };
@@ -535,6 +553,7 @@ export function MitigationDecisionExport<F,>({
           includePreviewOnly: p.includePreviewOnly !== false,
           filters: p.filters,
           savedAt: typeof p.savedAt === "number" ? p.savedAt : Date.now(),
+          schemaVersion: typeof p.schemaVersion === "number" ? p.schemaVersion : 1,
         });
       }
       if (valid.length === 0) {
@@ -543,6 +562,11 @@ export function MitigationDecisionExport<F,>({
         });
         return;
       }
+
+      const { presets: upgraded, migrated } = migratePresets(valid);
+      valid.length = 0;
+      valid.push(...upgraded);
+      if (migrated.length > 0) setMigratedNames(migrated);
 
       // Merge by name: an imported preset replaces a local one with the same name.
       const byName = new Map(presets.map((p) => [p.name.toLowerCase(), p]));
