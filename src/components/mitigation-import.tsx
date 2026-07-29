@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Upload, FileUp, Trash2, AlertTriangle, Download, CheckCircle2 } from "lucide-react";
+import { Upload, FileUp, Trash2, AlertTriangle, Download, CheckCircle2, XCircle, FileWarning } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,8 @@ import {
   parseMitigationExport,
   buildErrorReportCsv,
   buildErrorReportJson,
+  buildImportSummary,
+  buildImportSummaryText,
   planDedupe,
   applyMapping,
   suggestMapping,
@@ -93,6 +95,8 @@ export function MitigationImport({
     return { errors, warnings, clean: result.entries.length - result.warned };
   }, [result]);
 
+  const summary = useMemo(() => (result ? buildImportSummary(result) : null), [result]);
+
   const plan = useMemo(
     () => (result ? planDedupe(result.entries, existingEntries, strategy) : null),
     [result, existingEntries, strategy],
@@ -107,6 +111,16 @@ export function MitigationImport({
       download(`mitigation-import-errors-${stamp()}.json`, "application/json", buildErrorReportJson(result));
     }
     toast.success("Error report downloaded");
+  };
+
+  const downloadSummary = () => {
+    if (!result) return;
+    download(
+      `mitigation-import-summary-${stamp()}.txt`,
+      "text/plain;charset=utf-8",
+      buildImportSummaryText(result),
+    );
+    toast.success("Import summary downloaded");
   };
 
   const confirm = () => {
@@ -131,9 +145,21 @@ export function MitigationImport({
             ? `${plan.duplicates} duplicate(s) skipped.`
             : `${plan.duplicates} duplicate(s) kept as separate records.`
         : "No duplicates found.";
-    toast.success(`Imported ${plan.add.length} new record(s)`, {
-      description: `${dupNote}${result.warned > 0 ? ` ${result.warned} with warnings.` : ""}`,
-    });
+    const partial = summary?.status === "partial";
+    const note = partial
+      ? ` ${result.skipped} row(s) skipped, ${result.warned} with warnings — download the error report for details.`
+      : result.warned > 0
+        ? ` ${result.warned} with warnings.`
+        : "";
+    if (partial) {
+      toast.warning(`Partially imported ${plan.add.length} record(s)`, {
+        description: `${dupNote}${note}`,
+      });
+    } else {
+      toast.success(`Imported ${plan.add.length} new record(s)`, {
+        description: `${dupNote}${note}`,
+      });
+    }
     setResult(null);
     setRaw(null);
     setFileName("");
@@ -240,6 +266,112 @@ export function MitigationImport({
                   <li key={w}>• {w}</li>
                 ))}
               </ul>
+            )}
+
+            {summary && (
+              <div
+                className={`rounded-md border p-3 ${
+                  summary.status === "failed"
+                    ? "border-destructive/40 bg-destructive/10"
+                    : summary.status === "partial"
+                      ? "border-amber-500/40 bg-amber-500/5"
+                      : "border-emerald-500/40 bg-emerald-500/5"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex items-start gap-2">
+                    {summary.status === "failed" ? (
+                      <XCircle className="mt-0.5 h-4 w-4 text-destructive" />
+                    ) : summary.status === "partial" ? (
+                      <FileWarning className="mt-0.5 h-4 w-4 text-amber-500" />
+                    ) : (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500" />
+                    )}
+                    <div>
+                      <p className="text-xs font-semibold">{summary.headline}</p>
+                      <p className="text-[11px] text-muted-foreground">{summary.detail}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1.5 text-[11px]"
+                      onClick={downloadSummary}
+                    >
+                      <Download className="h-3 w-3" /> Summary
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1.5 text-[11px]"
+                      onClick={() => downloadReport("csv")}
+                    >
+                      <Download className="h-3 w-3" /> Report CSV
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1.5 text-[11px]"
+                      onClick={() => downloadReport("json")}
+                    >
+                      <Download className="h-3 w-3" /> JSON
+                    </Button>
+                  </div>
+                </div>
+
+                {summary.topCodes.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {summary.topCodes.map((c) => (
+                      <Badge
+                        key={c.code}
+                        variant={c.level === "error" ? "destructive" : "outline"}
+                        className="text-[9px]"
+                      >
+                        {c.code} × {c.count}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {summary.records.length > 0 && (
+                  <ScrollArea className="mt-2 max-h-44">
+                    <div className="space-y-1.5 pr-2">
+                      {summary.records.map((r) => (
+                        <div
+                          key={r.row}
+                          className="rounded-md border border-border/40 bg-background/40 p-2"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              Row {r.row}
+                              {r.line ? ` · line ${r.line}` : ""}
+                              {r.ref ? ` · ${r.ref}` : ""}
+                            </span>
+                            <Badge
+                              variant={r.imported ? "outline" : "destructive"}
+                              className="text-[9px] uppercase"
+                            >
+                              {r.imported ? "imported with warnings" : "skipped"}
+                            </Badge>
+                          </div>
+                          <ul className="mt-1 space-y-0.5">
+                            {[...r.errors, ...r.warnings].map((i, idx) => (
+                              <li
+                                key={`${i.code}-${idx}`}
+                                className={`text-[11px] ${i.level === "error" ? "text-destructive" : "text-muted-foreground"}`}
+                              >
+                                • {i.field ? `${i.field}: ` : ""}
+                                {i.message}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
             )}
 
             {counts && result.issues.length === 0 ? (
