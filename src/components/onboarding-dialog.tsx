@@ -27,7 +27,8 @@ export function OnboardingDialog() {
   const [goals, setGoals] = useState<string[]>(state.goals);
 
   useEffect(() => {
-    if (!state.completed) setOpen(true);
+    // Also closes the dialog once the stored state hydrates as completed.
+    setOpen(!state.completed);
   }, [state.completed]);
 
   function next() {
