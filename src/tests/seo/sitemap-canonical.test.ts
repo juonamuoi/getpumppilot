@@ -70,23 +70,25 @@ type RouteOptions = {
   loader?: (ctx: { params: Record<string, string> }) => unknown;
 };
 
-/** "/src/routes/blog.$slug.tsx" -> "/blog/pumppilot-vs-..." */
-function pathFor(id: string) {
+/** All param combinations a route should be validated with. */
+function paramSetsFor(id: string): Record<string, string>[] {
+  const keys = [...id.matchAll(/\$([a-zA-Z0-9_]*)/g)].map((m) => m[1] || "$");
+  let sets: Record<string, string>[] = [{}];
+  for (const key of keys) {
+    const values = DYNAMIC_VALUES[key] ?? [SAMPLE_PARAMS[key] ?? "sample"];
+    sets = sets.flatMap((base) => values.map((value) => ({ ...base, [key]: value })));
+  }
+  return sets;
+}
+
+/** "/src/routes/blog.$slug.tsx" + params -> "/blog/<slug>" */
+function pathFor(id: string, params: Record<string, string>) {
   let path = id.replace("/src/routes/", "").replace(/\.tsx$/, "");
   path = path.replace(/\.index$/, "").replace(/^index$/, "");
   path = path.split(".").join("/");
   path = "/" + path.replace(/^\/+/, "");
-  path = path.replace(/\$([a-zA-Z0-9_]*)/g, (_m, key: string) => SAMPLE_PARAMS[key || "$"] ?? "sample");
+  path = path.replace(/\$([a-zA-Z0-9_]*)/g, (_m, key: string) => params[key || "$"] ?? "sample");
   return path.length > 1 ? path.replace(/\/+$/, "") : "/";
-}
-
-function paramsFor(id: string) {
-  const params: Record<string, string> = {};
-  for (const match of id.matchAll(/\$([a-zA-Z0-9_]*)/g)) {
-    const key = match[1] || "$";
-    params[key] = SAMPLE_PARAMS[key] ?? "sample";
-  }
-  return params;
 }
 
 async function loaderDataFor(options: RouteOptions | undefined, params: Record<string, string>) {
@@ -105,23 +107,30 @@ const routeFiles = Object.keys(routeModules)
   .filter((p) => !SKIP.some((re) => re.test(p)))
   .sort();
 
-async function collectRouteCanonicals(): Promise<RouteCanonical[]> {
-  const out: RouteCanonical[] = [];
-  for (const file of routeFiles) {
-    const mod = (await routeModules[file]()) as { Route?: { options?: RouteOptions } };
-    const options = mod.Route?.options;
-    if (typeof options?.head !== "function") continue;
-    const params = paramsFor(file);
-    const loaderData = await loaderDataFor(options, params);
-    const head = options.head({ params, loaderData, match: {} }) ?? {};
-    const canonical = head.links?.find((l) => l.rel === "canonical")?.href;
-    const noindex = head.meta?.some((m) => m.name === "robots" && /noindex/i.test(m.content ?? ""));
-    out.push({ id: file, path: pathFor(file), canonical, noindex });
-  }
-  return out;
+let cached: Promise<RouteCanonical[]> | null = null;
+
+function collectRouteCanonicals(): Promise<RouteCanonical[]> {
+  cached ??= (async () => {
+    const out: RouteCanonical[] = [];
+    for (const file of routeFiles) {
+      const mod = (await routeModules[file]()) as { Route?: { options?: RouteOptions } };
+      const options = mod.Route?.options;
+      if (typeof options?.head !== "function") continue;
+      for (const params of paramSetsFor(file)) {
+        const loaderData = await loaderDataFor(options, params);
+        const head = options.head({ params, loaderData, match: {} }) ?? {};
+        const canonical = head.links?.find((l) => l.rel === "canonical")?.href;
+        const noindex = head.meta?.some((m) => m.name === "robots" && /noindex/i.test(m.content ?? ""));
+        out.push({ id: `${file} ${JSON.stringify(params)}`, path: pathFor(file, params), canonical, noindex });
+      }
+    }
+    return out;
+  })();
+  return cached;
 }
 
 const sitemapXml = readFileSync(resolve(process.cwd(), "public/sitemap.xml"), "utf8");
+
 
 describe("sitemap + canonical validation", () => {
   it("finds page routes and sitemap URLs to check", () => {
