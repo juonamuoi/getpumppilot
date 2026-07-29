@@ -6,7 +6,7 @@ import {
   SITE_URL as BASE,
   ORG_ID,
   WEBSITE_ID,
-  SOCIAL_IMAGE,
+
   SOCIAL_IMAGE_URL,
   breadcrumbSchema,
   ldScript,
