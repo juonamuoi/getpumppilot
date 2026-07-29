@@ -38,6 +38,9 @@ function statusOf(row: SeoRouteAudit) {
     (i) =>
       i.startsWith("HTTP") ||
       i.startsWith("Missing") ||
+      i.startsWith("Invalid twitter:card") ||
+      i.startsWith("og:image must") ||
+      i.startsWith("og:image is not") ||
       i.startsWith("Host mismatch") ||
       i.startsWith("Canonical points") ||
       i === "canonical and og:url differ" ||
@@ -45,6 +48,7 @@ function statusOf(row: SeoRouteAudit) {
   );
   return blocking ? ("fail" as const) : ("warn" as const);
 }
+
 
 function download(name: string, body: string, type: string) {
   const url = URL.createObjectURL(new Blob([body], { type }));
@@ -88,8 +92,10 @@ function SeoPreviewPage() {
       ok: all.filter((r) => statusOf(r) === "ok").length,
       warn: all.filter((r) => statusOf(r) === "warn").length,
       fail: all.filter((r) => statusOf(r) === "fail").length,
+      social: all.filter((r) => r.socialComplete).length,
     };
   }, [query.data]);
+
 
   const readyToPublish = counts.total > 0 && counts.fail === 0;
 
@@ -164,7 +170,11 @@ function SeoPreviewPage() {
                 <Badge className="bg-emerald-500/15 text-emerald-400">{counts.ok} clean</Badge>
                 <Badge className="bg-amber-500/15 text-amber-400">{counts.warn} warnings</Badge>
                 <Badge className="bg-destructive/15 text-destructive">{counts.fail} failing</Badge>
+                <Badge variant="outline">
+                  {counts.social}/{counts.total} social cards complete
+                </Badge>
               </div>
+
               <p className="text-xs text-muted-foreground">
                 Expected host{" "}
                 <code className="text-foreground">{query.data?.expectedOrigin ?? "—"}</code> ·
@@ -245,11 +255,21 @@ function SeoPreviewPage() {
                         <span className="text-foreground">Title:</span> {row.title}
                       </p>
                     )}
-                    <dl className="grid gap-1 text-xs sm:grid-cols-[7rem_1fr]">
+                    <dl className="grid gap-1 text-xs sm:grid-cols-[9rem_1fr]">
                       <dt className="text-muted-foreground">canonical</dt>
                       <dd className="break-all font-mono">{row.canonical ?? "—"}</dd>
                       <dt className="text-muted-foreground">og:url</dt>
                       <dd className="break-all font-mono">{row.ogUrl ?? "—"}</dd>
+                      <dt className="text-muted-foreground">og:title</dt>
+                      <dd className="break-all">{row.ogTitle ?? "—"}</dd>
+                      <dt className="text-muted-foreground">og:description</dt>
+                      <dd className="break-all">{row.ogDescription ?? "—"}</dd>
+                      <dt className="text-muted-foreground">og:image</dt>
+                      <dd className="break-all font-mono">{row.ogImage ?? "—"}</dd>
+                      <dt className="text-muted-foreground">twitter:card</dt>
+                      <dd className="font-mono">{row.twitterCard ?? "—"}</dd>
+                      <dt className="text-muted-foreground">twitter:site</dt>
+                      <dd className="font-mono">{row.twitterSite ?? "—"}</dd>
                       {row.robots && (
                         <>
                           <dt className="text-muted-foreground">robots</dt>
@@ -257,6 +277,7 @@ function SeoPreviewPage() {
                         </>
                       )}
                     </dl>
+
                     {row.issues.length > 0 && (
                       <ul className="list-inside list-disc text-xs text-amber-400">
                         {row.issues.map((issue) => (

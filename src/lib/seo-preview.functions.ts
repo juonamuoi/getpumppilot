@@ -7,12 +7,19 @@ export interface SeoRouteAudit {
   canonical: string | null;
   ogUrl: string | null;
   robots: string | null;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImage: string | null;
+  twitterCard: string | null;
+  twitterSite: string | null;
   /** Canonical + og:url agree with each other */
   selfConsistent: boolean;
   /** Both tags point at the expected production host */
   hostMatches: boolean;
   /** Canonical/og:url resolve to this exact route path */
   pathMatches: boolean;
+  /** All five social tags present and well-formed */
+  socialComplete: boolean;
   issues: string[];
   error?: string;
 }
@@ -25,10 +32,30 @@ export interface SeoPreviewResult {
 }
 
 const EXPECTED_ORIGIN = "https://www.getpumppilot.app";
+const VALID_TWITTER_CARDS = ["summary", "summary_large_image", "app", "player"];
 
 function pick(html: string, re: RegExp): string | null {
   const m = html.match(re);
   return m ? m[1].trim() : null;
+}
+
+function meta(html: string, key: string, attr: "property" | "name"): string | null {
+  const esc = key.replace(/[:]/g, "\\:");
+  return (
+    pick(
+      html,
+      new RegExp(`<meta[^>]+${attr}=["']${esc}["'][^>]*content=["']([^"']*)["']`, "i"),
+    ) ??
+    pick(
+      html,
+      new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*${attr}=["']${esc}["']`, "i"),
+    )
+  );
+}
+
+/** og:* and twitter:* are emitted with either attribute in the wild — accept both. */
+function socialMeta(html: string, key: string): string | null {
+  return meta(html, key, "property") ?? meta(html, key, "name");
 }
 
 function parseHead(html: string) {
@@ -37,13 +64,17 @@ function parseHead(html: string) {
     canonical:
       pick(html, /<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["']/i) ??
       pick(html, /<link[^>]+href=["']([^"']+)["'][^>]*rel=["']canonical["']/i),
-    ogUrl:
-      pick(html, /<meta[^>]+property=["']og:url["'][^>]*content=["']([^"']+)["']/i) ??
-      pick(html, /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:url["']/i),
+    ogUrl: socialMeta(html, "og:url"),
+    ogTitle: socialMeta(html, "og:title"),
+    ogDescription: socialMeta(html, "og:description"),
+    ogImage: socialMeta(html, "og:image"),
+    twitterCard: socialMeta(html, "twitter:card"),
+    twitterSite: socialMeta(html, "twitter:site"),
     robots: pick(html, /<meta[^>]+name=["']robots["'][^>]*content=["']([^"']+)["']/i),
     canonicalCount: (html.match(/rel=["']canonical["']/gi) ?? []).length,
   };
 }
+
 
 function normalisePath(p: string) {
   if (p === "/") return "/";
@@ -58,9 +89,15 @@ async function auditPath(origin: string, path: string): Promise<SeoRouteAudit> {
     canonical: null,
     ogUrl: null,
     robots: null,
+    ogTitle: null,
+    ogDescription: null,
+    ogImage: null,
+    twitterCard: null,
+    twitterSite: null,
     selfConsistent: false,
     hostMatches: false,
     pathMatches: false,
+    socialComplete: false,
     issues: [],
   };
 
@@ -100,6 +137,34 @@ async function auditPath(origin: string, path: string): Promise<SeoRouteAudit> {
     if (canonicalUrl && !pathMatches)
       issues.push(`Canonical points at ${canonicalUrl.pathname}`);
 
+    // --- social card validation -------------------------------------------
+    const socialIssues: string[] = [];
+    if (!head.ogTitle) socialIssues.push("Missing og:title");
+    else if (head.ogTitle.length > 95) socialIssues.push("og:title over 95 chars");
+
+    if (!head.ogDescription) socialIssues.push("Missing og:description");
+    else if (head.ogDescription.length > 200)
+      socialIssues.push("og:description over 200 chars");
+
+    const ogImageUrl = head.ogImage ? safeUrl(head.ogImage, EXPECTED_ORIGIN) : null;
+    if (!head.ogImage) socialIssues.push("Missing og:image");
+    else if (!ogImageUrl || !/^https?:$/.test(ogImageUrl.protocol))
+      socialIssues.push("og:image is not an absolute http(s) URL");
+    else if (!/^https:/.test(head.ogImage))
+      socialIssues.push("og:image must be an absolute https URL");
+
+    if (!head.twitterCard) socialIssues.push("Missing twitter:card");
+    else if (!VALID_TWITTER_CARDS.includes(head.twitterCard))
+      socialIssues.push(`Invalid twitter:card "${head.twitterCard}"`);
+    else if (head.ogImage && head.twitterCard === "summary")
+      socialIssues.push("twitter:card is summary despite an og:image (use summary_large_image)");
+
+    if (!head.twitterSite) socialIssues.push("Missing twitter:site");
+    else if (!/^@[A-Za-z0-9_]{1,15}$/.test(head.twitterSite))
+      socialIssues.push(`twitter:site "${head.twitterSite}" is not an @handle`);
+
+    issues.push(...socialIssues);
+
     return {
       ...base,
       status: res.status,
@@ -107,11 +172,18 @@ async function auditPath(origin: string, path: string): Promise<SeoRouteAudit> {
       canonical: head.canonical,
       ogUrl: head.ogUrl,
       robots: head.robots,
+      ogTitle: head.ogTitle,
+      ogDescription: head.ogDescription,
+      ogImage: head.ogImage,
+      twitterCard: head.twitterCard,
+      twitterSite: head.twitterSite,
       selfConsistent,
       hostMatches,
       pathMatches,
+      socialComplete: socialIssues.length === 0,
       issues,
     };
+
   } catch (err) {
     return {
       ...base,
