@@ -223,6 +223,42 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
   const rules = ruleRows(before, after);
   const changedRules = rules.filter((r) => r.changed);
 
+  /** Per-gate drill-down: definition, thresholds, and why each asset's gate flipped. */
+  const drilldown = useMemo(
+    () =>
+      RULE_DEFS.map((def) => {
+        const flips = rows
+          .map((r) => {
+            const passBefore = r.bEval.checks[def.gate];
+            const passAfter = r.aEval.checks[def.gate];
+            if (passBefore === passAfter) return null;
+            const v = def.value ? def.value(r.asset) : null;
+            return {
+              symbol: r.asset.symbol,
+              direction: passAfter ? ("pass" as const) : ("fail" as const),
+              reason:
+                v === null
+                  ? `${r.asset.category === "major" ? "Major" : "DEMO small-cap"} scope turned ${passAfter ? "on" : "off"}`
+                  : `value ${v}${def.unit ?? ""} now ${passAfter ? "satisfies" : "violates"} ${def.threshold(after)}`,
+              statusBefore: r.bEval.status,
+              statusAfter: r.aEval.status,
+              decisive: r.bEval.status !== r.aEval.status,
+            };
+          })
+          .filter((f): f is NonNullable<typeof f> => f !== null);
+        return {
+          ...def,
+          before: def.threshold(before),
+          after: def.threshold(after),
+          changed: def.threshold(before) !== def.threshold(after),
+          flips,
+          nowPass: flips.filter((f) => f.direction === "pass").length,
+          nowFail: flips.filter((f) => f.direction === "fail").length,
+        };
+      }),
+    [rows, before, after],
+  );
+
   const visible = useMemo(() => {
     const list = onlyChanged ? rows.filter((r) => r.changed) : [...rows];
     const dir = sortDir === "asc" ? 1 : -1;
