@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileJson, FileSpreadsheet, FileText, Save, Upload, X } from "lucide-react";
+import { Copy, Download, FileJson, FileSpreadsheet, FileText, Pencil, Save, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -320,6 +320,8 @@ export function MitigationDecisionExport<F,>({
   const [restored, setRestored] = useState<string | null>(null);
   const hydrated = useRef(false);
   const presetFileRef = useRef<HTMLInputElement>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   // Restore the last-used export configuration after hydration.
   useEffect(() => {
@@ -385,6 +387,31 @@ export function MitigationDecisionExport<F,>({
     toast.success(`Applied preset "${p.name}"`, {
       description: p.filters && onApplyFilters ? "Fields, toggle and filter scope restored" : "Fields and toggle restored",
     });
+  };
+
+  const commitRename = (p: ExportPreset<F>) => {
+    const name = renameValue.trim();
+    setRenamingId(null);
+    if (!name || name === p.name) return;
+    if (presets.some((o) => o.id !== p.id && o.name.toLowerCase() === name.toLowerCase())) {
+      toast.error(`A preset named "${name}" already exists`);
+      return;
+    }
+    persistPresets(presets.map((o) => (o.id === p.id ? { ...o, name } : o)));
+    toast.success(`Renamed to "${name}"`);
+  };
+
+  const duplicatePreset = (p: ExportPreset<F>) => {
+    const base = `${p.name} copy`;
+    let name = base;
+    let n = 2;
+    while (presets.some((o) => o.name.toLowerCase() === name.toLowerCase())) name = `${base} ${n++}`;
+    const copy: ExportPreset<F> = { ...p, id: `${Date.now()}`, name, savedAt: Date.now() };
+    persistPresets([...presets, copy]);
+    setActivePreset(copy.id);
+    setRenamingId(copy.id);
+    setRenameValue(name);
+    toast.success(`Duplicated as "${name}"`, { description: "Rename it inline to finish." });
   };
 
   const deletePreset = (id: string) => {
@@ -617,13 +644,55 @@ export function MitigationDecisionExport<F,>({
                     activePreset === p.id ? "border-primary/60 bg-primary/10" : "border-border/60 bg-muted/20"
                   }`}
                 >
-                  <button type="button" className="hover:underline" onClick={() => applyPreset(p)}>
-                    {p.name}
-                  </button>
-                  <span className="text-muted-foreground">({p.fields.length})</span>
+                  {renamingId === p.id ? (
+                    <Input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => commitRename(p)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitRename(p);
+                        }
+                        if (e.key === "Escape") setRenamingId(null);
+                      }}
+                      aria-label={`Rename preset ${p.name}`}
+                      className="h-5 w-40 px-1 py-0 text-[11px]"
+                    />
+                  ) : (
+                    <>
+                      <button type="button" className="hover:underline" onClick={() => applyPreset(p)}>
+                        {p.name}
+                      </button>
+                      <span className="text-muted-foreground">({p.fields.length})</span>
+                      <button
+                        type="button"
+                        aria-label={`Rename preset ${p.name}`}
+                        title="Rename"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setRenamingId(p.id);
+                          setRenameValue(p.name);
+                        }}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Duplicate preset ${p.name}`}
+                        title="Duplicate"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => duplicatePreset(p)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     aria-label={`Delete preset ${p.name}`}
+                    title="Delete"
                     className="text-muted-foreground hover:text-destructive"
                     onClick={() => deletePreset(p.id)}
                   >
@@ -633,6 +702,7 @@ export function MitigationDecisionExport<F,>({
               ))}
             </div>
           )}
+
           <div className="flex gap-2">
             <Input
               value={presetName}
