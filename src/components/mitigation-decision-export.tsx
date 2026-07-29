@@ -915,6 +915,9 @@ export function MitigationDecisionExport<F,>({
           >
             <FileText className="h-3.5 w-3.5" /> Schema only
           </Button>
+          <span className="text-[10px] text-muted-foreground">
+            v{EXPORT_SCHEMA_VERSION} · compatible with v{EXPORT_SCHEMA_MIN_COMPATIBLE}+ readers
+          </span>
 
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setSelected(FIELDS.map((f) => f.key))}>
