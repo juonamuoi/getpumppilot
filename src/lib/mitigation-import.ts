@@ -538,6 +538,7 @@ export function buildErrorReportCsv(result: ImportResult): string {
     ["rowsImported", result.entries.length],
     ["rowsSkipped", result.skipped],
     ["rowsWithWarnings", result.warned],
+    ["status", buildImportSummary(result).status],
   ].map((r) => r.map(csvCell).join(","));
 
   const fileNotes = result.warnings.map((w) => ["file", "", "warning", "file-note", "", w, "", ""]);
@@ -576,6 +577,7 @@ export function buildErrorReportJson(result: ImportResult): string {
         warnings: result.issues.filter((i) => i.level === "warning").length,
       },
       fileNotes: result.warnings,
+      records: buildImportSummary(result).records,
       issues: result.issues,
     },
     null,
@@ -583,6 +585,138 @@ export function buildErrorReportJson(result: ImportResult): string {
   );
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Import summary
+ *
+ * A file can parse "partially": some rows land in the audit trail while
+ * others are skipped or degraded. The summary rolls the per-record
+ * issues up into one verdict plus a per-record breakdown.
+ * ------------------------------------------------------------------ */
+
+export type ImportRecordReport = {
+  row: number;
+  line?: number;
+  ref?: string;
+  imported: boolean;
+  errors: ImportIssue[];
+  warnings: ImportIssue[];
+};
+
+export type ImportSummary = {
+  status: "clean" | "partial" | "failed";
+  headline: string;
+  detail: string;
+  total: number;
+  imported: number;
+  skipped: number;
+  warned: number;
+  errors: number;
+  warnings: number;
+  /** Rows that produced at least one warning or error, newest row order. */
+  records: ImportRecordReport[];
+  /** Issue codes ranked by how often they occurred. */
+  topCodes: { code: string; count: number; level: ImportIssueLevel }[];
+};
+
+/** Roll per-record issues up into a single import verdict. */
+export function buildImportSummary(result: ImportResult): ImportSummary {
+  const errors = result.issues.filter((i) => i.level === "error");
+  const warnings = result.issues.filter((i) => i.level === "warning");
+
+  const byRow = new Map<number, ImportRecordReport>();
+  for (const i of result.issues) {
+    let rec = byRow.get(i.row);
+    if (!rec) {
+      rec = { row: i.row, line: i.line, ref: i.ref, imported: true, errors: [], warnings: [] };
+      byRow.set(i.row, rec);
+    }
+    if (!rec.ref && i.ref) rec.ref = i.ref;
+    if (!rec.line && i.line) rec.line = i.line;
+    if (i.level === "error") {
+      rec.errors.push(i);
+      rec.imported = false;
+    } else rec.warnings.push(i);
+  }
+  const records = [...byRow.values()].sort((a, b) => a.row - b.row);
+
+  const codeMap = new Map<string, { code: string; count: number; level: ImportIssueLevel }>();
+  for (const i of result.issues) {
+    const hit = codeMap.get(i.code);
+    if (hit) hit.count++;
+    else codeMap.set(i.code, { code: i.code, count: 1, level: i.level });
+  }
+  const topCodes = [...codeMap.values()].sort((a, b) => b.count - a.count).slice(0, 6);
+
+  const imported = result.entries.length;
+  const status: ImportSummary["status"] =
+    imported === 0 ? "failed" : result.skipped > 0 || errors.length > 0 ? "partial" : "clean";
+
+  const headline =
+    status === "failed"
+      ? "No records could be imported"
+      : status === "partial"
+        ? `Partially imported — ${imported} of ${result.total} record(s)`
+        : `All ${imported} record(s) imported cleanly`;
+
+  const bits: string[] = [];
+  if (result.skipped > 0) bits.push(`${result.skipped} row(s) skipped`);
+  if (errors.length > 0) bits.push(`${errors.length} error(s)`);
+  if (warnings.length > 0) bits.push(`${warnings.length} warning(s)`);
+  if (result.warned > 0) bits.push(`${result.warned} imported row(s) degraded`);
+
+  return {
+    status,
+    headline,
+    detail: bits.length ? bits.join(" · ") : "No warnings or errors were raised.",
+    total: result.total,
+    imported,
+    skipped: result.skipped,
+    warned: result.warned,
+    errors: errors.length,
+    warnings: warnings.length,
+    records,
+    topCodes,
+  };
+}
+
+/** Plain-text summary suitable for pasting into a ticket or chat. */
+export function buildImportSummaryText(result: ImportResult): string {
+  const s = buildImportSummary(result);
+  const lines = [
+    `Mitigation import summary`,
+    `File: ${result.fileName ?? "(unnamed)"} (${result.format.toUpperCase()})`,
+    `Generated: ${new Date().toISOString()}`,
+    ``,
+    s.headline,
+    s.detail,
+    ``,
+    `Rows in file: ${s.total}`,
+    `Imported:     ${s.imported}`,
+    `Skipped:      ${s.skipped}`,
+    `With warnings:${s.warned}`,
+    ``,
+  ];
+  if (result.warnings.length) {
+    lines.push("File notes:", ...result.warnings.map((w) => `  - ${w}`), "");
+  }
+  if (s.records.length) {
+    lines.push("Per-record issues:");
+    for (const r of s.records) {
+      lines.push(
+        `  Row ${r.row}${r.line ? ` (line ${r.line})` : ""}${r.ref ? ` [${r.ref}]` : ""} — ${
+          r.imported ? "imported with warnings" : "skipped"
+        }`,
+      );
+      for (const i of [...r.errors, ...r.warnings]) {
+        lines.push(`      ${i.level.toUpperCase()} ${i.code}${i.field ? ` (${i.field})` : ""}: ${i.message}`);
+      }
+    }
+  } else {
+    lines.push("Per-record issues: none.");
+  }
+  return lines.join("\n");
+}
 
 /* ------------------------------------------------------------------ *
  * Deduplication
