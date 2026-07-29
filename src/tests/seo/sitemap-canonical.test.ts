@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { BLOG_POSTS } from "@/lib/blog-posts";
+import { ASSETS } from "@/lib/mock-data";
 import {
   CANONICAL_ORIGIN,
   checkRedirectShape,
@@ -11,6 +13,7 @@ import {
   validateSitemap,
   type RouteCanonical,
 } from "@/lib/sitemap-canonical-validate";
+
 
 /**
  * Sitemap + canonical guard (CI).
