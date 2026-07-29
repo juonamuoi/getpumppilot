@@ -701,7 +701,7 @@ export function MitigationDecisionExport<F,>({
               Saved export presets
             </p>
             <span className="text-[10px] text-muted-foreground">
-              Fields · preview-only toggle{filters ? " · filter scope" : ""}
+              Schema v{EXPORT_SCHEMA_VERSION} · fields · preview-only toggle{filters ? " · filter scope" : ""}
             </span>
           </div>
           {restored && (
@@ -722,6 +722,22 @@ export function MitigationDecisionExport<F,>({
                 }}
               >
                 Reset to defaults
+              </button>
+            </p>
+          )}
+          {migratedNames.length > 0 && (
+            <p className="flex flex-wrap items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-muted-foreground">
+              <Badge variant="outline" className="h-4 px-1 text-[9px] uppercase">
+                Migrated
+              </Badge>
+              {migratedNames.length} preset{migratedNames.length === 1 ? "" : "s"} upgraded to schema v
+              {EXPORT_SCHEMA_VERSION} ({migratedNames.join(", ")}) — new columns were added and removed ones dropped.
+              <button
+                type="button"
+                className="underline hover:text-foreground"
+                onClick={() => setMigratedNames([])}
+              >
+                Dismiss
               </button>
             </p>
           )}
@@ -760,6 +776,18 @@ export function MitigationDecisionExport<F,>({
                         {p.name}
                       </button>
                       <span className="text-muted-foreground">({p.fields.length})</span>
+                      <Badge
+                        variant="outline"
+                        title={
+                          p.migratedFrom
+                            ? `Migrated from schema v${p.migratedFrom} on ${new Date(p.migratedAt ?? p.savedAt).toLocaleString()}`
+                            : `Saved against schema v${p.schemaVersion ?? 1}`
+                        }
+                        className="h-4 px-1 text-[9px]"
+                      >
+                        v{p.schemaVersion ?? 1}
+                        {p.migratedFrom ? " ↑" : ""}
+                      </Badge>
                       <button
                         type="button"
                         aria-label={`Rename preset ${p.name}`}
