@@ -44,6 +44,7 @@ const SKIP = [
   /lp-report/,
   /ads-report/,
   /seo-preview/,
+  /seo-monitor/,
   /settings\./,
 ];
 

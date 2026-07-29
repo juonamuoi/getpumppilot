@@ -34,6 +34,7 @@ import { Route as RiskRouteImport } from './routes/risk'
 import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SeoMonitorRouteImport } from './routes/seo-monitor'
 import { Route as SeoPreviewRouteImport } from './routes/seo-preview'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StorageAuditRouteImport } from './routes/storage-audit'
@@ -50,6 +51,7 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicMomentumRouteImport } from './routes/api/public/momentum'
 import { Route as ApiPublicWaitlistRouteImport } from './routes/api/public/waitlist'
+import { Route as ApiPublicHooksSeoCrawlCheckRouteImport } from './routes/api/public/hooks/seo-crawl-check'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicWaitlistFollowupRouteImport } from './routes/api/public/waitlist/followup'
 
@@ -178,6 +180,11 @@ const SecurityRoute = SecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeoMonitorRoute = SeoMonitorRouteImport.update({
+  id: '/seo-monitor',
+  path: '/seo-monitor',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeoPreviewRoute = SeoPreviewRouteImport.update({
   id: '/seo-preview',
   path: '/seo-preview',
@@ -261,6 +268,12 @@ const ApiPublicWaitlistRoute = ApiPublicWaitlistRouteImport.update({
   path: '/api/public/waitlist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSeoCrawlCheckRoute =
+  ApiPublicHooksSeoCrawlCheckRouteImport.update({
+    id: '/api/public/hooks/seo-crawl-check',
+    path: '/api/public/hooks/seo-crawl-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -300,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/seo-monitor': typeof SeoMonitorRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
   '/storage-audit': typeof StorageAuditRoute
@@ -316,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
+  '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -345,6 +360,7 @@ export interface FileRoutesByTo {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/seo-monitor': typeof SeoMonitorRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
   '/storage-audit': typeof StorageAuditRoute
@@ -361,6 +377,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
+  '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -391,6 +408,7 @@ export interface FileRoutesById {
   '/risk-disclosure': typeof RiskDisclosureRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
+  '/seo-monitor': typeof SeoMonitorRoute
   '/seo-preview': typeof SeoPreviewRoute
   '/settings': typeof SettingsRoute
   '/storage-audit': typeof StorageAuditRoute
@@ -407,6 +425,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
   '/api/public/waitlist': typeof ApiPublicWaitlistRouteWithChildren
+  '/api/public/hooks/seo-crawl-check': typeof ApiPublicHooksSeoCrawlCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/api/public/waitlist/followup': typeof ApiPublicWaitlistFollowupRoute
 }
@@ -438,6 +457,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/seo-monitor'
     | '/seo-preview'
     | '/settings'
     | '/storage-audit'
@@ -454,6 +474,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
     | '/api/public/waitlist'
+    | '/api/public/hooks/seo-crawl-check'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   fileRoutesByTo: FileRoutesByTo
@@ -483,6 +504,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/seo-monitor'
     | '/seo-preview'
     | '/settings'
     | '/storage-audit'
@@ -499,6 +521,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
     | '/api/public/waitlist'
+    | '/api/public/hooks/seo-crawl-check'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   id:
@@ -528,6 +551,7 @@ export interface FileRouteTypes {
     | '/risk-disclosure'
     | '/scanner'
     | '/security'
+    | '/seo-monitor'
     | '/seo-preview'
     | '/settings'
     | '/storage-audit'
@@ -544,6 +568,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
     | '/api/public/waitlist'
+    | '/api/public/hooks/seo-crawl-check'
     | '/api/public/payments/webhook'
     | '/api/public/waitlist/followup'
   fileRoutesById: FileRoutesById
@@ -574,6 +599,7 @@ export interface RootRouteChildren {
   RiskDisclosureRoute: typeof RiskDisclosureRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
+  SeoMonitorRoute: typeof SeoMonitorRoute
   SeoPreviewRoute: typeof SeoPreviewRoute
   SettingsRoute: typeof SettingsRoute
   StorageAuditRoute: typeof StorageAuditRoute
@@ -590,6 +616,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMomentumRoute: typeof ApiPublicMomentumRoute
   ApiPublicWaitlistRoute: typeof ApiPublicWaitlistRouteWithChildren
+  ApiPublicHooksSeoCrawlCheckRoute: typeof ApiPublicHooksSeoCrawlCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -770,6 +797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seo-monitor': {
+      id: '/seo-monitor'
+      path: '/seo-monitor'
+      fullPath: '/seo-monitor'
+      preLoaderRoute: typeof SeoMonitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/seo-preview': {
       id: '/seo-preview'
       path: '/seo-preview'
@@ -882,6 +916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWaitlistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/seo-crawl-check': {
+      id: '/api/public/hooks/seo-crawl-check'
+      path: '/api/public/hooks/seo-crawl-check'
+      fullPath: '/api/public/hooks/seo-crawl-check'
+      preLoaderRoute: typeof ApiPublicHooksSeoCrawlCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -936,6 +977,7 @@ const rootRouteChildren: RootRouteChildren = {
   RiskDisclosureRoute: RiskDisclosureRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
+  SeoMonitorRoute: SeoMonitorRoute,
   SeoPreviewRoute: SeoPreviewRoute,
   SettingsRoute: SettingsRoute,
   StorageAuditRoute: StorageAuditRoute,
@@ -953,6 +995,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMomentumRoute: ApiPublicMomentumRoute,
   ApiPublicWaitlistRoute: ApiPublicWaitlistRouteWithChildren,
+  ApiPublicHooksSeoCrawlCheckRoute: ApiPublicHooksSeoCrawlCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
