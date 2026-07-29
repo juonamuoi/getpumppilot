@@ -19,6 +19,8 @@ import { SecurityProvider } from "@/lib/security-store";
 import { OnboardingProvider } from "@/lib/onboarding-store";
 import { AuthProvider } from "@/lib/auth-store";
 import { AppLockProvider, useAppLock } from "@/lib/app-lock";
+import { TourProvider } from "@/lib/tour-store";
+import { GuidedTour } from "@/components/guided-tour";
 import { AppLockScreen } from "@/components/app-lock-screen";
 
 function NotFoundComponent() {
