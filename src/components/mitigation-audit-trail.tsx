@@ -25,6 +25,7 @@ import { MitigationDecisionExport } from "@/components/mitigation-decision-expor
 import { MitigationRetentionSettings } from "@/components/mitigation-retention-settings";
 import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
+import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome } from "@/lib/mitigation-explain";
 import { MitigationImport } from "@/components/mitigation-import";
 import { isImportedEntry } from "@/lib/mitigation-import";
@@ -383,24 +384,6 @@ export function MitigationAuditTrail({
     return map;
   }, [log, runs]);
 
-
-  /** Re-run a recorded mitigation with identical parameters and stored preview context. */
-  const replay = (entry: TuningLogEntry) => {
-    if (!entry.correlationId) {
-      toast.error("This entry has no correlation ID to replay");
-      return;
-    }
-    const res = paper.replayMitigation(entry.correlationId);
-    if (!res) {
-      toast.error("Nothing replayable in this entry");
-      return;
-    }
-    toast.success(`Replayed "${res.label}"`, {
-      description: `${res.entries
-        .map((e) => `${e.ruleLabel} → ${e.newValue}${e.unit}`)
-        .join(" · ")} — ${res.outcome.matched} match(es), ${res.outcome.delivered} delivery(s) · ${res.correlationId}`,
-    });
-  };
 
   /** Live audit entries plus anything imported from a file, newest first. */
   const sourceLog = useMemo(
@@ -862,22 +845,7 @@ export function MitigationAuditTrail({
                   <div className="ml-auto flex items-center gap-2">
                     <MitigationDiffView entry={e} />
                     <MitigationReplayDiff entry={e} />
-                    <Button
-
-                      size="sm"
-                      variant="outline"
-                      className="h-6 px-2 text-[10px]"
-                      disabled={isImportedEntry(e)}
-                      onClick={() => replay(e)}
-                      title={
-                        isImportedEntry(e)
-                          ? "Imported records are review-only and cannot be replayed"
-                          : "Re-run this mitigation with the same parameters"
-                      }
-                    >
-                      <RotateCw className="mr-1 h-3 w-3" />
-                      Replay
-                    </Button>
+                    <MitigationReplayButton entry={e} imported={isImportedEntry(e)} />
                     <button
                       type="button"
                       className="font-mono text-[10px] text-muted-foreground underline-offset-2 hover:underline"
