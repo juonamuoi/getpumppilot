@@ -86,6 +86,10 @@ import { ScheduledReportCard } from "@/components/scheduled-report-card";
 import { shortAddress } from "@/lib/wallet-scan";
 
 export const Route = createFileRoute("/security")({
+  /** `audit` keeps the focused mitigation correlation ID across refreshes. */
+  validateSearch: (search: Record<string, unknown>) => ({
+    audit: typeof search.audit === "string" ? search.audit : undefined,
+  }),
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/security" }],
     meta: [
