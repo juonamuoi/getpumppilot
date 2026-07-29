@@ -85,12 +85,20 @@ export const siteGraph = {
 
 export type Crumb = { name: string; path: string };
 
-/** BreadcrumbList — helps Google render the breadcrumb trail in results. */
+/**
+ * BreadcrumbList — helps Google render the breadcrumb trail in results.
+ * Home is always position 1; the trail is self-identified with an `@id`
+ * anchored to the current (last) page so nodes stay unique per URL.
+ */
 export function breadcrumbSchema(crumbs: Crumb[]) {
+  const trail: Crumb[] = [{ name: "Home", path: "/" }, ...crumbs];
+  const current = trail[trail.length - 1];
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [{ name: "Home", path: "/" }, ...crumbs].map((c, i) => ({
+    "@id": `${absoluteUrl(current.path)}#breadcrumb`,
+    name: trail.map((c) => c.name).join(" › "),
+    itemListElement: trail.map((c, i) => ({
       "@type": "ListItem",
       position: i + 1,
       name: c.name,
@@ -98,6 +106,7 @@ export function breadcrumbSchema(crumbs: Crumb[]) {
     })),
   };
 }
+
 
 /** Generic WebPage node, used for informational and legal pages. */
 export function webPageSchema(opts: {
