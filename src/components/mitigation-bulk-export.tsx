@@ -15,6 +15,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
+import { explainFields } from "@/lib/mitigation-explain";
 
 /* ------------------------------------------------------------------ *
  * Bulk export — current filtered scope only
