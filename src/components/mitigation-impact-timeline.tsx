@@ -346,9 +346,9 @@ export function MitigationImpactTimeline() {
     return Number.isFinite(ms) ? Date.now() - ms : 0;
   }, [range]);
 
-  const riskPoints = useMemo<RiskPoint[]>(() => {
+  /** All-time points (no time filter) so comparison windows can look further back. */
+  const allRiskPoints = useMemo<RiskPoint[]>(() => {
     return runs
-      .filter((r) => r.scannedAt >= cutoff)
       .filter((r) => wallets.length === 0 || wallets.includes(r.address))
       .map((r) => {
         const threats =
@@ -365,9 +365,14 @@ export function MitigationImpactTimeline() {
         };
       })
       .sort((a, b) => a.ts - b.ts);
-  }, [runs, cutoff, wallets, tokens]);
+  }, [runs, wallets, tokens]);
 
-  const signalPoints = useMemo<SignalPoint[]>(() => {
+  const riskPoints = useMemo<RiskPoint[]>(
+    () => allRiskPoints.filter((p) => p.ts >= cutoff),
+    [allRiskPoints, cutoff],
+  );
+
+  const allSignalPoints = useMemo<SignalPoint[]>(() => {
     const applied = tuningLog.filter(
       (e): e is TuningLogEntry => e.source === "mitigation" && e.phase !== "preview",
     );
@@ -386,7 +391,6 @@ export function MitigationImpactTimeline() {
           : "single";
 
     return applied
-      .filter((e) => e.ts >= cutoff)
       .filter((e) => {
         if (tokens.length === 0) return true;
         const syms = e.outcome?.symbols ?? [];
@@ -424,7 +428,12 @@ export function MitigationImpactTimeline() {
       })
 
       .sort((a, b) => a.ts - b.ts);
-  }, [tuningLog, cutoff, tokens, actions, outcomes]);
+  }, [tuningLog, tokens, actions, outcomes]);
+
+  const signalPoints = useMemo<SignalPoint[]>(
+    () => allSignalPoints.filter((p) => p.ts >= cutoff),
+    [allSignalPoints, cutoff],
+  );
 
   /** DOM ids of every focusable marker, in chronological order. */
   const markerOrder = useMemo(
@@ -767,6 +776,9 @@ export function MitigationImpactTimeline() {
             <TimelineAggregateSummary
               riskPoints={riskPoints}
               signalPoints={signalPoints}
+              allRiskPoints={allRiskPoints}
+              allSignalPoints={allSignalPoints}
+              window={{ from: cutoff || null, to: Date.now() }}
               scope={{
                 rangeLabel: RANGES.find((r) => r.key === range)?.label,
                 from: cutoff || null,
