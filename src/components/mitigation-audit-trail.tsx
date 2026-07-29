@@ -562,6 +562,11 @@ export function MitigationAuditTrail({
               filters={current}
               onApplyFilters={applyFilter}
             />
+            <MitigationBulkExport
+              entries={exportEntries}
+              scope={exportFilters()}
+              walletsFor={(e) => walletsForEntry.get(e.id) ?? []}
+            />
             <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
               Quick CSV
             </Button>
