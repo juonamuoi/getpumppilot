@@ -1,3 +1,4 @@
+import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
 import { AppShell } from "@/components/app-shell";
@@ -22,7 +23,7 @@ const DASH_DESC =
   "Portfolio overview, top momentum signals and market pulse. Paper trading only — demo data.";
 const DASH_OG_DESC =
   "Explainable momentum, portfolio, and market pulse in one premium dark UI.";
-const DASH_IMAGE = "https://www.getpumppilot.app/og-cover.jpg";
+const DASH_IMAGE = SOCIAL_IMAGE_URL;
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({

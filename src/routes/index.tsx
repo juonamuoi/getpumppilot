@@ -247,7 +247,7 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:site_name", content: "PumpPilot AI" },
-      { property: "og:image", content: `${SITE_URL}/og-cover.jpg` },
+      { property: "og:image", content: SOCIAL_IMAGE_URL },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       {
@@ -258,7 +258,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: TITLE },
       { name: "twitter:description", content: DESCRIPTION },
-      { name: "twitter:image", content: `${SITE_URL}/og-cover.jpg` },
+      { name: "twitter:image", content: SOCIAL_IMAGE_URL },
       {
         name: "twitter:image:alt",
         content: "PumpPilot AI — explainable crypto momentum dashboard",
