@@ -90,7 +90,10 @@ if (root && !SERVER) {
   const info = await stat(root);
   const files = info.isDirectory() ? await walk(root) : [root];
   for (const file of files) {
-    sources.push({ label: path.relative(root, file), html: await readFile(file, "utf8") });
+    sources.push({
+      label: path.relative(root, file) || path.basename(file),
+      html: await readFile(file, "utf8"),
+    });
   }
 }
 
