@@ -14,6 +14,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ArrowRight, GitCompare } from "lucide-react";
 import { ASSETS } from "@/lib/mock-data";
 import { applyRuleValue, usePaper, type ScannerRules, type TuningLogEntry } from "@/lib/paper-store";
+import { toast } from "sonner";
+import { downloadDiff, type DiffExportPayload } from "@/lib/diff-export";
 import { cn } from "@/lib/utils";
 
 type Asset = (typeof ASSETS)[number];
