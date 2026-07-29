@@ -405,6 +405,119 @@ export function MitigationDiffView({ entry }: { entry: TuningLogEntry }) {
             </div>
           </section>
 
+          <section>
+            <h4 className="mb-2 text-xs font-medium text-muted-foreground">
+              Rule drill-down ({drilldown.filter((d) => d.changed).length} changed ·{" "}
+              {drilldown.reduce((n, d) => n + d.flips.length, 0)} gate flips)
+            </h4>
+            <div className="space-y-1">
+              {drilldown.map((d) => {
+                const isOpen = openGate === d.gate;
+                return (
+                  <div
+                    key={d.gate}
+                    className={cn(
+                      "rounded-md border text-xs",
+                      d.changed ? "border-primary/30 bg-primary/5" : "border-border/60 bg-card/30",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenGate(isOpen ? null : d.gate)}
+                      className="flex w-full items-center gap-2 px-2 py-1.5 text-left"
+                      aria-expanded={isOpen}
+                    >
+                      {isOpen ? (
+                        <ChevronUp className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="w-40 shrink-0 font-medium">{d.label}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground line-through">
+                        {d.before}
+                      </span>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                      <span
+                        className={cn(
+                          "font-mono text-[10px] font-medium",
+                          d.changed ? "text-primary" : "text-muted-foreground",
+                        )}
+                      >
+                        {d.after}
+                      </span>
+                      <span className="ml-auto flex gap-1">
+                        {d.nowPass > 0 && (
+                          <Badge variant="secondary" className="bg-emerald-500/15 text-[10px] text-emerald-400">
+                            +{d.nowPass} pass
+                          </Badge>
+                        )}
+                        {d.nowFail > 0 && (
+                          <Badge variant="secondary" className="bg-rose-500/15 text-[10px] text-rose-400">
+                            +{d.nowFail} fail
+                          </Badge>
+                        )}
+                        {d.flips.length === 0 && (
+                          <span className="text-[10px] text-muted-foreground">no outcome change</span>
+                        )}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="space-y-2 border-t border-border/50 px-2 py-2">
+                        <p className="text-[11px] text-muted-foreground">{d.definition}</p>
+                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                          <div className="rounded border border-border/60 p-1.5">
+                            <div className="text-muted-foreground">Previous threshold</div>
+                            <div className="font-mono text-foreground">{d.before}</div>
+                          </div>
+                          <div className="rounded border border-border/60 p-1.5">
+                            <div className="text-muted-foreground">New threshold</div>
+                            <div className="font-mono text-foreground">{d.after}</div>
+                          </div>
+                        </div>
+                        {d.flips.length === 0 ? (
+                          <p className="text-[10px] text-muted-foreground">
+                            {d.changed
+                              ? "Threshold moved, but no asset crossed this gate — every asset stayed on the same side."
+                              : "Threshold unchanged, so this gate's outcome is identical for every asset."}
+                          </p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {d.flips.map((f) => (
+                              <li
+                                key={f.symbol}
+                                className="flex flex-wrap items-center gap-1.5 rounded border border-border/50 px-1.5 py-1 text-[10px]"
+                              >
+                                <span className="w-14 font-medium">{f.symbol}</span>
+                                <Badge
+                                  variant="secondary"
+                                  className={cn(
+                                    "text-[9px]",
+                                    f.direction === "pass"
+                                      ? "bg-emerald-500/15 text-emerald-400"
+                                      : "bg-rose-500/15 text-rose-400",
+                                  )}
+                                >
+                                  gate {f.direction === "pass" ? "fail → pass" : "pass → fail"}
+                                </Badge>
+                                <span className="text-muted-foreground">{f.reason}</span>
+                                {f.decisive && (
+                                  <span className="ml-auto text-primary">
+                                    flipped asset: {STATUS_LABEL[f.statusBefore]} →{" "}
+                                    {STATUS_LABEL[f.statusAfter]}
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
           <section className="grid grid-cols-3 gap-2 text-center">
             <SummaryTile label="Gained matches" value={gained.length} tone="up" />
             <SummaryTile label="Lost matches" value={lost.length} tone="down" />
