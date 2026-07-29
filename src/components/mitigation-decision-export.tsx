@@ -394,6 +394,7 @@ type LastUsedExport = {
   fields: string[];
   includePreviewOnly: boolean;
   includeSchema: boolean;
+  includeJsonSchema?: boolean;
   savedAt: number;
 };
 
@@ -413,6 +414,7 @@ function loadLastUsed(): LastUsedExport | null {
       fields,
       includePreviewOnly: parsed.includePreviewOnly !== false,
       includeSchema: parsed.includeSchema !== false,
+      includeJsonSchema: parsed.includeJsonSchema === true,
       savedAt: parsed.savedAt ?? 0,
     };
   } catch {
@@ -463,6 +465,7 @@ export function MitigationDecisionExport<F,>({
       setSelected(last.fields);
       setIncludePreviewOnly(last.includePreviewOnly);
       setIncludeSchema(last.includeSchema);
+      setIncludeJsonSchema(last.includeJsonSchema === true);
       setActivePreset(last.presetId);
       setRestored(last.presetName ?? "Last used export settings");
     }
@@ -483,8 +486,8 @@ export function MitigationDecisionExport<F,>({
     if (!hydrated.current) return;
     if (selected.length === 0) return;
     const name = presets.find((p) => p.id === activePreset)?.name;
-    saveLastUsed({ presetId: activePreset, presetName: name, fields: selected, includePreviewOnly, includeSchema });
-  }, [selected, includePreviewOnly, includeSchema, activePreset, presets]);
+    saveLastUsed({ presetId: activePreset, presetName: name, fields: selected, includePreviewOnly, includeSchema, includeJsonSchema });
+  }, [selected, includePreviewOnly, includeSchema, includeJsonSchema, activePreset, presets]);
 
   const persistPresets = (next: ExportPreset<F>[]) => {
     setPresets(next);
@@ -988,6 +991,14 @@ export function MitigationDecisionExport<F,>({
           <label className="flex items-center gap-2">
             <Checkbox checked={includeSchema} onCheckedChange={(v) => setIncludeSchema(v === true)} />
             Include column schema file
+          </label>
+          <label className="flex items-center gap-2">
+            <Checkbox
+              checked={includeJsonSchema}
+              disabled={!includeSchema}
+              onCheckedChange={(v) => setIncludeJsonSchema(v === true)}
+            />
+            Include JSON Schema (Draft 2020-12)
           </label>
           <Button
             size="sm"
