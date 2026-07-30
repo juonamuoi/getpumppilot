@@ -30,7 +30,6 @@
     "check:jsonld": "bun scripts/jsonld-build-check.mjs",
     "check:jsonld:json": "bun scripts/jsonld-build-check.mjs --json",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
-
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
@@ -107,7 +106,7 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.2",
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "^2.7.7",
+    "@lovable.dev/vite-tanstack-config": "2.8.1",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
