@@ -66,8 +66,39 @@ function PaperPage() {
   const { spend } = useCredits();
   const [symbol, setSymbol] = useState("BTC");
   const [qty, setQty] = useState("");
+  const [sized, setSized] = useState<{
+    notional: number;
+    stop: number;
+    target: number;
+  } | null>(null);
 
   const asset = getAsset(symbol)!;
+
+  const applyRiskControls = () => {
+    const { maxPositionPct, stopLossPct, takeProfitPct } = paper.risk;
+    const existing = paper.positions.find((p) => p.symbol === symbol);
+    const existingValue = existing ? existing.qty * asset.price : 0;
+    const allowed = (maxPositionPct / 100) * paper.equity - existingValue;
+    const notional = Math.min(Math.max(allowed, 0), paper.cash);
+    if (notional <= 0) {
+      setSized(null);
+      return toast.error(
+        `No room under risk controls: ${symbol} already at or above ${maxPositionPct}% of equity (or no paper cash).`,
+      );
+    }
+    const n = notional / asset.price;
+    setQty(n.toFixed(6).replace(/0+$/, "").replace(/\.$/, ""));
+    setSized({
+      notional,
+      stop: asset.price * (1 - stopLossPct / 100),
+      target: asset.price * (1 + takeProfitPct / 100),
+    });
+    toast.success(
+      `Sized to ${fmtUsd(notional)} — within ${maxPositionPct}% max position. Stop ${stopLossPct}% / target ${takeProfitPct}% (simulated).`,
+    );
+  };
+
+
   const doTrade = async (side: "buy" | "sell") => {
     const n = parseFloat(qty);
     if (!n) return toast.error("Enter a quantity");
