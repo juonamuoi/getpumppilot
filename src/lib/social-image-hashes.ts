@@ -8,4 +8,12 @@ export const SOCIAL_IMAGE_HASHES: Record<string, string> = {
   "/blog/paper-trading-vs-live-trading.jpg": "29f7053489",
   "/blog/pumppilot-vs-autopilot-comparison.jpg": "63018e1fd7",
   "/blog/pumppilot-vs-tradingview-paper-trading.jpg": "7720dbf61c",
+  "/og/asset-bnb.jpg": "c7f129dff7",
+  "/og/asset-btc.jpg": "1ca567a98a",
+  "/og/asset-demox.jpg": "eec3591e9a",
+  "/og/asset-eth.jpg": "07442799c2",
+  "/og/asset-nova.jpg": "8729cca5a8",
+  "/og/asset-orbit.jpg": "3b182af930",
+  "/og/asset-pilot.jpg": "daa8d2c412",
+  "/og/asset-sol.jpg": "080158c9a5",
 };

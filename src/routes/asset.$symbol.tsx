@@ -19,6 +19,7 @@ import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
 import {
   absoluteUrl,
+  assetSocialImageUrl,
   breadcrumbSchema,
   faqSchema,
   ldScript,
@@ -31,34 +32,41 @@ export const Route = createFileRoute("/asset/$symbol")({
     const sym = params.symbol.toUpperCase();
     const asset = getAsset(params.symbol);
     const name = asset?.name ?? sym;
+    const slug = params.symbol.toLowerCase();
+    const url = absoluteUrl(`/asset/${slug}`);
+    const image = assetSocialImageUrl(slug);
     const description = `${sym} momentum, chart and paper trading. Demo data only.`;
+    const socialDescription = `Explainable momentum score, chart and paper trading for ${name} (${sym}) on PumpPilot AI. Demo data.`;
     return {
-      links: [{ rel: "canonical", href: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) }],
+      links: [{ rel: "canonical", href: url }],
       meta: withSocialMeta([
         { title: `${sym} — PumpPilot AI` },
         { name: "description", content: description },
-        { property: "og:title", content: `${sym} — PumpPilot AI` },
-        {
-          property: "og:description",
-          content: `Explainable momentum score, chart and paper trading for ${sym} on PumpPilot AI. Demo data.`,
-        },
-        { property: "og:url", content: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) },
+        { property: "og:title", content: `${name} (${sym}) momentum — PumpPilot AI` },
+        { property: "og:description", content: socialDescription },
+        { property: "og:url", content: url },
+        { property: "og:image", content: image },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: `${name} (${sym}) momentum card — PumpPilot AI` },
+        { name: "twitter:image", content: image },
+        { name: "twitter:image:alt", content: `${name} (${sym}) momentum card — PumpPilot AI` },
       ]),
       scripts: [
         ldScript(
           webPageSchema({
             name: `${name} (${sym}) momentum & paper trading`,
             description,
-            path: `/asset/${params.symbol.toLowerCase()}`,
+            path: `/asset/${slug}`,
           }),
         ),
         ldScript(
           breadcrumbSchema([
             { name: "Scanner", path: "/scanner" },
-            { name: sym, path: `/asset/${params.symbol.toLowerCase()}` },
+            { name: sym, path: `/asset/${slug}` },
           ]),
         ),
-        ldScript(faqSchema(assetFaqs(sym, name), `/asset/${sym.toLowerCase()}`)),
+        ldScript(faqSchema(assetFaqs(sym, name), `/asset/${slug}`)),
       ],
     };
   },

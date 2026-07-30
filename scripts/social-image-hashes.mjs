@@ -17,10 +17,11 @@ const OUT = path.join(ROOT, "src/lib/social-image-hashes.ts");
 /** Every image that can appear in og:image / twitter:image. */
 function collect() {
   const files = ["og-cover.jpg", "favicon.png"];
-  const blogDir = path.join(ROOT, "public/blog");
-  if (existsSync(blogDir)) {
-    for (const f of readdirSync(blogDir).sort()) {
-      if (/\.(jpg|jpeg|png|webp)$/i.test(f)) files.push(`blog/${f}`);
+  for (const dir of ["blog", "og"]) {
+    const abs = path.join(ROOT, "public", dir);
+    if (!existsSync(abs)) continue;
+    for (const f of readdirSync(abs).sort()) {
+      if (/\.(jpg|jpeg|png|webp)$/i.test(f)) files.push(`${dir}/${f}`);
     }
   }
   return files.filter((f) => existsSync(path.join(ROOT, "public", f)));

@@ -35,6 +35,16 @@ export const SOCIAL_IMAGE = {
   height: 640,
 } as const;
 
+/**
+ * Per-token social card (1200x630) for asset detail pages, content-hashed so
+ * regenerating a card busts the crawler's cached preview. Falls back to the
+ * site-wide cover when a token has no dedicated card yet.
+ */
+export const assetSocialImageUrl = (symbol: string) => {
+  const p = `/og/asset-${symbol.toLowerCase()}.jpg`;
+  return SOCIAL_IMAGE_HASHES[p] ? socialImageUrl(p) : SOCIAL_IMAGE_URL;
+};
+
 /** Stable @id values let crawlers link nodes across pages into one graph. */
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
