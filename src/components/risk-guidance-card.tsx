@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { usePaper } from "@/lib/paper-store";
 import { fmtUsd, getAsset } from "@/lib/mock-data";
-import { ShieldCheck, AlertTriangle, Check } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Check, FileDown, Loader2 } from "lucide-react";
 import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
+import { useRiskPresets } from "@/lib/risk-presets";
+import { downloadRiskSummaryPdf } from "@/lib/risk-summary-pdf";
 
 
 /**
@@ -13,7 +18,10 @@ import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
  * the configured max position size.
  */
 export function RiskGuidanceCard() {
-  const { equity, positions, risk } = usePaper();
+  const { equity, cash, positions, risk } = usePaper();
+  const { presets, activeId } = useRiskPresets();
+  const [exporting, setExporting] = useState(false);
+
 
   const maxPositionUsd = (equity * risk.maxPositionPct) / 100;
   const maxDailyLossUsd = (equity * risk.maxDailyLossPct) / 100;
