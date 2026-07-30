@@ -54,19 +54,27 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
 
   const copy = async () => {
     const f = explainFields(entry);
+    const val = (v: unknown) => {
+      const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
+      return s.length ? s : "—";
+    };
+    const tsDate = new Date(entry.ts);
+    const when = Number.isFinite(tsDate.getTime())
+      ? format(tsDate, "yyyy-MM-dd HH:mm:ss")
+      : "—";
+
     const text = [
-      `Why: ${explainOutcome(entry)}`,
+      `Why: ${val(f.why || explainOutcome(entry))}`,
       "",
-      `Correlation ID: ${entry.correlationId ?? "—"}`,
-      `Time: ${format(new Date(entry.ts), "yyyy-MM-dd HH:mm:ss")}`,
-      f.whyChange ? `Change: ${f.whyChange}` : null,
-      f.whyStrictness ? `Strictness: ${f.whyStrictness}` : null,
-      f.whyImpact ? `Impact: ${f.whyImpact}` : null,
-      f.whyOutcome ? `Outcome: ${f.whyOutcome}` : null,
-      f.whyFragility ? `Fragility: ${f.whyFragility}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n");
+      `Correlation ID: ${val(entry.correlationId)}`,
+      `Time: ${when}`,
+      `Change: ${val(f.whyChange)}`,
+      `Strictness: ${val(f.whyStrictness)}`,
+      `Impact: ${val(f.whyImpact)}`,
+      `Outcome: ${val(f.whyOutcome)}`,
+      `Fragility: ${val(f.whyFragility)}`,
+    ].join("\n");
+
 
     try {
       await navigator.clipboard.writeText(text);
