@@ -40,7 +40,7 @@ export const Route = createFileRoute("/asset/$symbol")({
         { property: "og:title", content: `${sym} — PumpPilot AI` },
         {
           property: "og:description",
-          content: "Explainable momentum and paper trading.",
+          content: `Explainable momentum score, chart and paper trading for ${sym} on PumpPilot AI. Demo data.`,
         },
         { property: "og:url", content: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) },
       ]),

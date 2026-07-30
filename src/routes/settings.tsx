@@ -36,6 +36,7 @@ import {
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: withSocialMeta([
+      { name: "robots", content: "noindex, nofollow" },
       { title: "Settings — Agent access & MCP audit trail | PumpPilot AI" },
       {
         name: "description",

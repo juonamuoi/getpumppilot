@@ -29,6 +29,7 @@ import { McpRateLimitStatusCard } from "@/components/mcp-rate-limit-status";
 export const Route = createFileRoute("/mcp-console")({
   head: () => ({
     meta: withSocialMeta([
+      { name: "robots", content: "noindex, nofollow" },
       { title: "MCP test console — run agent tool calls | PumpPilot AI" },
       {
         name: "description",

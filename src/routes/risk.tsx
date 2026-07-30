@@ -30,7 +30,8 @@ export const Route = createFileRoute("/risk")({
       { property: "og:title", content: "Risk Controls — PumpPilot AI" },
       {
         property: "og:description",
-        content: "Configure paper trading risk controls.",
+        content:
+          "Configure paper trading position limits, stop-loss, take-profit and daily loss caps.",
       },
     ]),
   }),
