@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  *  - auditing is best-effort and never throws into the user-facing operation.
  */
 
-const insert = vi.fn(async () => ({ error: null }));
+const insert = vi.fn(async (_row: Record<string, unknown>) => ({ error: null }));
 const rpc = vi.fn(async () => ({ error: null }));
 
 vi.mock("@/integrations/supabase/client.server", () => ({
@@ -30,7 +30,8 @@ const { runWithRequestId, sanitizeRequestId, traceId } = await import(
 const OWNER = "11111111-2222-3333-4444-555555555555";
 const OTHER = "99999999-8888-7777-6666-555555555555";
 
-const lastRow = () => insert.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+const lastRow = (): Record<string, unknown> =>
+  (insert.mock.calls.at(-1)?.[0] ?? {}) as Record<string, unknown>;
 
 /** Advance past the 60s alert-evaluation throttle inside the module. */
 const unthrottle = () => vi.setSystemTime(new Date(Date.now() + 120_000));
