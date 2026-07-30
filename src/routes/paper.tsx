@@ -20,7 +20,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
-import { Lock, RotateCcw } from "lucide-react";
+import { Lock, RotateCcw, ShieldCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { HowToSteps } from "@/components/how-to-steps";
 import { TourStartButton } from "@/components/guided-tour";
