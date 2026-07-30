@@ -238,6 +238,29 @@ const homeWebPageSchema = {
 };
 
 
+/**
+ * Site navigation hints for the homepage. Helps crawlers pick sitelinks and
+ * understand the main sections of the product.
+ */
+const homeNavSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "@id": nodeId("/", "navigation"),
+  name: "PumpPilot AI main sections",
+  itemListElement: [
+    { name: "Market scanner", path: "/scanner" },
+    { name: "Pricing & credits", path: "/pricing" },
+    { name: "Learn hub", path: "/learn" },
+    { name: "Blog", path: "/blog" },
+    { name: "Developers & MCP", path: "/developers" },
+  ].map((item, i) => ({
+    "@type": "SiteNavigationElement",
+    position: i + 1,
+    name: item.name,
+    url: canonicalUrl(item.path),
+  })),
+};
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: withSocialMeta([
@@ -275,6 +298,7 @@ export const Route = createFileRoute("/")({
       ldScript(homeWebPageSchema),
       ldScript(productSchema),
       ldScript(homeFaqSchema),
+      ldScript(homeNavSchema),
     ],
   }),
   component: LandingPage,
