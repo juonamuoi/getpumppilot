@@ -39,8 +39,20 @@ export async function uploadThreatReport(
   correlationId: string,
   pdfBase64: string,
   expiresSeconds: number = EXPIRES_SECONDS,
-): Promise<{ url: string | null; reason?: string; path?: string; expiresAt?: number }> {
+): Promise<{
+  url: string | null;
+  reason?: string;
+  path?: string;
+  expiresAt?: number;
+  /** Per-request trace id, also stamped on every storage-audit row below. */
+  requestId?: string;
+  /** Correlation id as stored in the audit trail (`scanId#requestId`). */
+  traceId?: string;
+}> {
   const { logStorageAccess, ownsPath } = await import("@/lib/storage-audit.server");
+  const { getRequestId, traceId } = await import("@/lib/request-context.server");
+  const requestId = getRequestId() ?? undefined;
+  const trace = traceId(correlationId) ?? undefined;
   const safeId = correlationId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "report";
   const path = `${userId}/${new Date().toISOString().slice(0, 10)}/${safeId}.pdf`;
 
