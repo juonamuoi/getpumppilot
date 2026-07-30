@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { usePaper } from "@/lib/paper-store";
 import { fmtUsd, getAsset } from "@/lib/mock-data";
-import { ShieldCheck, AlertTriangle, Check } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Check, FileDown, Loader2 } from "lucide-react";
 import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
+import { useRiskPresets } from "@/lib/risk-presets";
+import { downloadRiskSummaryPdf } from "@/lib/risk-summary-pdf";
 
 
 /**
@@ -13,7 +18,10 @@ import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
  * the configured max position size.
  */
 export function RiskGuidanceCard() {
-  const { equity, positions, risk } = usePaper();
+  const { equity, cash, positions, risk } = usePaper();
+  const { presets, activeId } = useRiskPresets();
+  const [exporting, setExporting] = useState(false);
+
 
   const maxPositionUsd = (equity * risk.maxPositionPct) / 100;
   const maxDailyLossUsd = (equity * risk.maxDailyLossPct) / 100;
@@ -29,12 +37,15 @@ export function RiskGuidanceCard() {
       const pct = equity > 0 ? (value / equity) * 100 : 0;
       return {
         symbol: p.symbol,
+        qty: p.qty,
+        price: a.price,
         value,
         pct,
         over: pct > risk.maxPositionPct,
         stopPrice: a.price * (1 - risk.stopLossPct / 100),
         targetPrice: a.price * (1 + risk.takeProfitPct / 100),
         atRisk: (value * risk.stopLossPct) / 100,
+        upside: (value * risk.takeProfitPct) / 100,
       };
     })
     .filter((r): r is NonNullable<typeof r> => r !== null)
@@ -43,6 +54,33 @@ export function RiskGuidanceCard() {
   const totalAtRisk = rows.reduce((s, r) => s + r.atRisk, 0);
   const breaches = rows.filter((r) => r.over).length;
   const dailyLossBreach = totalAtRisk > maxDailyLossUsd;
+
+  const presetName = presets.find((p) => p.id === activeId)?.name;
+
+  const exportPdf = async () => {
+    setExporting(true);
+    try {
+      const id = await downloadRiskSummaryPdf({
+        presetName,
+        equity,
+        cash,
+        limits: {
+          maxPositionPct: risk.maxPositionPct,
+          maxDailyLossPct: risk.maxDailyLossPct,
+          stopLossPct: risk.stopLossPct,
+          takeProfitPct: risk.takeProfitPct,
+        },
+        holdings: rows,
+      });
+      toast.success("Risk summary PDF downloaded", { description: `Report ID ${id}` });
+    } catch (e) {
+      toast.error("Could not generate the PDF", {
+        description: e instanceof Error ? e.message : "Unknown error",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <Card className="border-border/60 bg-card/60">
@@ -53,10 +91,27 @@ export function RiskGuidanceCard() {
             — sizing &amp; stop-loss guidance
           </span>
         </CardTitle>
-        <Link to="/risk" className="text-xs text-emerald-300 hover:underline">
-          Adjust →
-        </Link>
+        <div className="flex items-center gap-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1.5 text-xs"
+            onClick={exportPdf}
+            disabled={exporting}
+          >
+            {exporting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FileDown className="h-3.5 w-3.5" />
+            )}
+            Risk summary PDF
+          </Button>
+          <Link to="/risk" className="text-xs text-emerald-300 hover:underline">
+            Adjust →
+          </Link>
+        </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">Preset</span>
