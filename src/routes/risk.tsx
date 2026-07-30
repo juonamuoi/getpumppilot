@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -18,7 +19,7 @@ import { useState } from "react";
 export const Route = createFileRoute("/risk")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/risk" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/risk" },
       { title: "Risk Controls — PumpPilot AI" },
       {
@@ -29,9 +30,10 @@ export const Route = createFileRoute("/risk")({
       { property: "og:title", content: "Risk Controls — PumpPilot AI" },
       {
         property: "og:description",
-        content: "Configure paper trading risk controls.",
+        content:
+          "Configure paper trading position limits, stop-loss, take-profit and daily loss caps.",
       },
-    ],
+    ]),
   }),
   component: RiskPage,
 });

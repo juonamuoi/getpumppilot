@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -17,13 +18,13 @@ import { Sparkles, Send, Loader2, Bot } from "lucide-react";
 export const Route = createFileRoute("/copilot")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/copilot" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/copilot" },
       { title: "AI Copilot — PumpPilot AI" },
       { name: "description", content: "Chat with an AI investing coach about your portfolio, strategy and market signals. Educational only." },
       { property: "og:title", content: "PumpPilot AI Copilot" },
       { property: "og:description", content: "Ask your investing coach anything — plain English, cautious answers." },
-    ],
+    ]),
   }),
   component: GatedCopilotPage,
 });

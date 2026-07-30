@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
@@ -23,7 +24,7 @@ const J_IMAGE = SOCIAL_IMAGE_URL;
 export const Route = createFileRoute("/journal")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/journal" }],
-    meta: [
+    meta: withSocialMeta([
       { title: J_TITLE },
       { name: "description", content: J_DESC },
       { property: "og:title", content: J_TITLE },
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/journal")({
         name: "twitter:image:alt",
         content: "PumpPilot AI trade journal with equity curve and win-rate stats",
       },
-    ],
+    ]),
   }),
   component: GatedJournalPage,
 });

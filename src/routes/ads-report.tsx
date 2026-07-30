@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +25,7 @@ import { wilsonInterval } from "@/lib/ab-stats";
 
 export const Route = createFileRoute("/ads-report")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Ad Creative A/B Report — PumpPilot AI" },
       {
         name: "description",
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/ads-report")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: AdsReport,
 });

@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,13 +17,13 @@ export const Route = createFileRoute("/auth")({
 
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/auth" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/auth" },
       { title: "Sign in — PumpPilot AI" },
       { name: "description", content: "Sign in to publish strategies, follow top authors, and climb the PumpPilot leaderboard." },
       { property: "og:title", content: "Sign in — PumpPilot AI" },
       { property: "og:description", content: "Join the PumpPilot community — publish paper strategies and follow top authors." },
-    ],
+    ]),
   }),
   component: AuthPage,
 });

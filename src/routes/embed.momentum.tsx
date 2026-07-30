@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 // Embeddable widget — designed to be dropped in an <iframe> on any site.
 // Renders a compact top-momentum list with a "Powered by PumpPilot AI" backlink.
 import { createFileRoute } from "@tanstack/react-router";
@@ -8,10 +9,10 @@ type Search = { symbol?: string; limit?: number; theme?: "dark" | "light" };
 
 export const Route = createFileRoute("/embed/momentum")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "PumpPilot AI — Momentum Widget" },
       { name: "robots", content: "noindex" },
-    ],
+    ]),
   }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     symbol: typeof s.symbol === "string" ? s.symbol.toUpperCase() : undefined,

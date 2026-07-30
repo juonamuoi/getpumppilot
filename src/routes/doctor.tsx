@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -31,7 +32,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/doctor")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/doctor" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/doctor" },
       { title: "Portfolio Doctor — PumpPilot AI" },
       {
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/doctor")({
         property: "og:description",
         content: "Explainable AI diagnosis and rebalance ideas for your paper portfolio.",
       },
-    ],
+    ]),
   }),
   component: GatedDoctorPage,
 });

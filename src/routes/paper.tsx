@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { FaqSection } from "@/components/faq-section";
 import { paperFaqs } from "@/lib/page-faqs";
 import { createFileRoute } from "@tanstack/react-router";
@@ -32,7 +33,7 @@ import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 export const Route = createFileRoute("/paper")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/paper" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/paper" },
       { title: "Paper Trading — PumpPilot AI" },
       {
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/paper")({
         property: "og:description",
         content: "Practice trading with simulated cash — no real assets moved.",
       },
-    ],
+    ]),
     scripts: [
       ldScript(faqSchema(paperFaqs, "/paper")),
       ldScript(

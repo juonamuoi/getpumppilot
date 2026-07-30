@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
@@ -20,14 +21,15 @@ type SearchParams = { session_id?: string; step?: string };
 
 export const Route = createFileRoute("/go-live-test")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
+      { name: "robots", content: "noindex, nofollow" },
       { title: "Go-Live Payment Test — PumpPilot AI" },
       { name: "description", content: "Run a small live payment against your Stripe account and record the statement descriptor customers will see." },
       { property: "og:title", content: "PumpPilot AI Go-Live Test" },
       { property: "og:description", content: "Guided one-off live charge to verify checkout, receipts, and statement descriptor." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     session_id: typeof s.session_id === "string" ? s.session_id : undefined,

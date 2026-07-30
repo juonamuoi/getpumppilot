@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { canonicalUrl } from "@/lib/structured-data";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/lp/$variant")({
     const v = getVariant(params.variant) ?? LANDING_VARIANTS[0];
     const url = `${SITE_URL}/lp/${v.slug}`;
     return {
-      meta: [
+      meta: withSocialMeta([
         { title: v.metaTitle },
         { name: "description", content: v.metaDescription },
         { name: "robots", content: "noindex, follow" },
@@ -58,7 +59,7 @@ export const Route = createFileRoute("/lp/$variant")({
         { name: "twitter:title", content: v.metaTitle },
         { name: "twitter:description", content: v.metaDescription },
         { name: "twitter:image", content: `${SITE_URL}/favicon.png` },
-      ],
+      ]),
       links: [{ rel: "canonical", href: canonicalUrl("/") }],
     };
   },

@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -110,7 +111,7 @@ export const Route = createFileRoute("/alerts")({
 
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/alerts" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/alerts" },
       { title: "Alerts — PumpPilot AI" },
       {
@@ -123,7 +124,7 @@ export const Route = createFileRoute("/alerts")({
         property: "og:description",
         content: "Momentum scanner rules and delivery history.",
       },
-    ],
+    ]),
     scripts: [
       ldScript(
         webPageSchema({

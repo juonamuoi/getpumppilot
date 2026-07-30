@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -27,7 +28,8 @@ import { McpRateLimitStatusCard } from "@/components/mcp-rate-limit-status";
 
 export const Route = createFileRoute("/mcp-console")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
+      { name: "robots", content: "noindex, nofollow" },
       { title: "MCP test console — run agent tool calls | PumpPilot AI" },
       {
         name: "description",
@@ -42,7 +44,7 @@ export const Route = createFileRoute("/mcp-console")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: McpConsolePage,
 });

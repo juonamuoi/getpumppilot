@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 // Public "Developers & Embeds" page — the on-site pitch for anyone
 // who might link to us: bloggers, tool aggregators, blockchain explorers.
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -36,7 +37,7 @@ const API_SNIPPET = `curl "${BASE}/api/public/momentum?limit=5"
 
 export const Route = createFileRoute("/developers")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Developers, Widgets & API — PumpPilot AI" },
       {
         name: "description",
@@ -52,7 +53,7 @@ export const Route = createFileRoute("/developers")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${BASE}/developers` },
       { name: "twitter:card", content: "summary_large_image" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${BASE}/developers` }],
     scripts: [
       ldScript({

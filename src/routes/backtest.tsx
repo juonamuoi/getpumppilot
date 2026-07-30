@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -32,7 +33,7 @@ import { History } from "lucide-react";
 export const Route = createFileRoute("/backtest")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/backtest" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/backtest" },
       { title: "Backtest — PumpPilot AI" },
       {
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/backtest")({
         property: "og:description",
         content: "Simulated backtests with clear disclaimers.",
       },
-    ],
+    ]),
   }),
   component: GatedBacktestPage,
 });

@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { SITE_URL, breadcrumbSchema, legalPageSchema, ldScript } from "@/lib/str
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Terms of Service — PumpPilot AI" },
       {
         name: "description",
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/terms")({
       { property: "og:type", content: "article" },
       { property: "og:url", content: `${SITE_URL}/terms` },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${SITE_URL}/terms` }],
     scripts: [
       ldScript(

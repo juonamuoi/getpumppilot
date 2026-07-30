@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,7 +20,7 @@ const CANONICAL = `${SITE_URL}/blog`;
 
 export const Route = createFileRoute("/blog/")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "PumpPilot AI Blog — AI Investment & Crypto Trading Guides" },
       { name: "description", content: "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management from the PumpPilot AI team." },
       { name: "keywords", content: "ai investment blog, ai crypto trading, best ai investment app, paper trading, momentum signals" },
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/blog/")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
       { name: "twitter:card", content: "summary_large_image" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: CANONICAL }],
     scripts: [
       ldScript({

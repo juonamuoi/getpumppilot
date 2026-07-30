@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -34,7 +35,8 @@ import {
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
+      { name: "robots", content: "noindex, nofollow" },
       { title: "Settings — Agent access & MCP audit trail | PumpPilot AI" },
       {
         name: "description",
@@ -49,7 +51,7 @@ export const Route = createFileRoute("/settings")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: SettingsPage,
 });

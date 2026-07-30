@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { FaqSection } from "@/components/faq-section";
 import { learnFaqs } from "@/lib/page-faqs";
 import { createFileRoute } from "@tanstack/react-router";
@@ -18,7 +19,7 @@ import {
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Learn — PumpPilot AI" },
       { name: "description", content: "Micro-lessons and a glossary to help you understand momentum trading, risk, and how PumpPilot's signals work." },
       { property: "og:title", content: "PumpPilot AI Learn hub" },
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/learn")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE_URL}/learn` },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${SITE_URL}/learn` }],
     scripts: [
       ldScript(faqSchema(learnFaqs, "/learn")),

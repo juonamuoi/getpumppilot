@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +46,7 @@ import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/seo-monitor")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Crawl & Indexing Monitor — PumpPilot AI" },
       {
         name: "description",
@@ -61,7 +62,7 @@ export const Route = createFileRoute("/seo-monitor")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: SeoMonitorPage,
 });

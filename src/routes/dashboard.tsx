@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
@@ -32,7 +33,7 @@ const DASH_IMAGE = SOCIAL_IMAGE_URL;
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/dashboard" }],
-    meta: [
+    meta: withSocialMeta([
       { title: DASH_TITLE },
       { name: "description", content: DASH_DESC },
       { property: "og:title", content: "PumpPilot AI Dashboard" },
@@ -56,7 +57,7 @@ export const Route = createFileRoute("/dashboard")({
         name: "twitter:image:alt",
         content: "PumpPilot AI dashboard with momentum signals and portfolio overview",
       },
-    ],
+    ]),
   }),
   component: Dashboard,
 });

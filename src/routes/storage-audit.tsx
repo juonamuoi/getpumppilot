@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +21,7 @@ import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/storage-audit")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Storage Access Audit — PumpPilot AI" },
       {
         name: "description",
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/storage-audit")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: StorageAuditPage,
 });

@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -33,16 +34,16 @@ export const Route = createFileRoute("/asset/$symbol")({
     const description = `${sym} momentum, chart and paper trading. Demo data only.`;
     return {
       links: [{ rel: "canonical", href: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) }],
-      meta: [
+      meta: withSocialMeta([
         { title: `${sym} — PumpPilot AI` },
         { name: "description", content: description },
         { property: "og:title", content: `${sym} — PumpPilot AI` },
         {
           property: "og:description",
-          content: "Explainable momentum and paper trading.",
+          content: `Explainable momentum score, chart and paper trading for ${sym} on PumpPilot AI. Demo data.`,
         },
         { property: "og:url", content: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) },
-      ],
+      ]),
       scripts: [
         ldScript(
           webPageSchema({

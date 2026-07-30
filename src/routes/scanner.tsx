@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { faqSchema, ldScript } from "@/lib/structured-data";
 import { FaqSection } from "@/components/faq-section";
 import { scannerFaqs } from "@/lib/page-faqs";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/scanner")({
   head: () => ({
     scripts: [ldScript(faqSchema(scannerFaqs, "/scanner"))],
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/scanner" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/scanner" },
       { title: "Market Scanner — PumpPilot AI" },
       {
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/scanner")({
         content:
           "Sortable momentum breakdown for every scanned asset with plain-English reasons.",
       },
-    ],
+    ]),
   }),
   component: Scanner,
 });

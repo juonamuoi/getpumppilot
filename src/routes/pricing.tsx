@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { FaqSection } from "@/components/faq-section";
 import { pricingFaqs } from "@/lib/page-faqs";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
@@ -19,7 +20,7 @@ type SearchParams = { checkout?: string; session_id?: string; plan?: string };
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Credits & Pricing — PumpPilot AI" },
       {
         name: "description",
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/pricing")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE_URL}/pricing` },
       { name: "twitter:card", content: "summary_large_image" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${SITE_URL}/pricing` }],
     scripts: [
       ldScript(faqSchema(pricingFaqs, "/pricing")),
