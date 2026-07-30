@@ -241,7 +241,12 @@ function PaperPage() {
                 </div>
               </div>
               <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-muted-foreground">Preset</span>
+                  <RiskPresetSwitcher compact />
+                </div>
                 <div className="flex items-center justify-between gap-2">
+
                   <div className="text-[11px] text-muted-foreground">
                     Risk controls: max {paper.risk.maxPositionPct}% position · stop{" "}
                     {paper.risk.stopLossPct}% · target {paper.risk.takeProfitPct}%
