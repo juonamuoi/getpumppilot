@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { usePaper } from "@/lib/paper-store";
 import { fmtUsd, getAsset } from "@/lib/mock-data";
 import { ShieldCheck, AlertTriangle, Check } from "lucide-react";
+import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
+
 
 /**
  * Portfolio-level risk guidance: how big a new position may be, where the
@@ -56,7 +58,12 @@ export function RiskGuidanceCard() {
         </Link>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Preset</span>
+          <RiskPresetSwitcher compact />
+        </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+
           <Guide
             label="Max position size"
             value={fmtUsd(maxPositionUsd)}

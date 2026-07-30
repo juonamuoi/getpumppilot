@@ -21,6 +21,8 @@ import { CREDIT_COSTS } from "@/lib/credits";
 import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
 import { Lock, RotateCcw, ShieldCheck } from "lucide-react";
+import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
+
 import { Switch } from "@/components/ui/switch";
 import { HowToSteps } from "@/components/how-to-steps";
 import { TourStartButton } from "@/components/guided-tour";
@@ -241,7 +243,12 @@ function PaperPage() {
                 </div>
               </div>
               <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-[11px] text-muted-foreground">Preset</span>
+                  <RiskPresetSwitcher compact />
+                </div>
                 <div className="flex items-center justify-between gap-2">
+
                   <div className="text-[11px] text-muted-foreground">
                     Risk controls: max {paper.risk.maxPositionPct}% position · stop{" "}
                     {paper.risk.stopLossPct}% · target {paper.risk.takeProfitPct}%

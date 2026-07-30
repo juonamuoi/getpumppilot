@@ -3,6 +3,8 @@ import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
 import { DeviceSecurityCard } from "@/components/device-security-card";
 import { TourStartButton } from "@/components/guided-tour";
+import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
@@ -112,8 +114,10 @@ function RiskPage() {
               >
                 Save risk controls
               </Button>
+              <RiskPresetSwitcher />
             </CardContent>
           </Card>
+
 
           <Card className="border-amber-500/20 bg-amber-500/5">
             <CardHeader className="pb-2">
