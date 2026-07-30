@@ -77,27 +77,50 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
 
 
     try {
+      if (!navigator?.clipboard?.writeText) throw new Error("no clipboard");
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-      toast.success("Why explanation copied");
+      setStatus("copied");
+      setTimeout(() => setStatus("idle"), 2000);
+      toast.success("Why explanation copied", {
+        description: `Correlation ID ${val(entry.correlationId)} · ${when}`,
+      });
     } catch {
-      toast.error("Clipboard blocked by your browser");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+      toast.error("Couldn't copy Why explanation", {
+        description: "Clipboard access was blocked by your browser.",
+      });
     }
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="h-6 shrink-0 gap-1 px-2 text-[10px]"
-      onClick={copy}
-      aria-label="Copy why explanation"
-    >
-      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-      {copied ? "Copied" : "Copy"}
-    </Button>
+    <div className="flex shrink-0 items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 shrink-0 gap-1 px-2 text-[10px]"
+        onClick={copy}
+        aria-label="Copy why explanation"
+      >
+        {status === "copied" ? (
+          <Check className="h-3 w-3 text-emerald-500" />
+        ) : status === "error" ? (
+          <AlertCircle className="h-3 w-3 text-destructive" />
+        ) : (
+          <Copy className="h-3 w-3" />
+        )}
+        {status === "copied" ? "Copied" : status === "error" ? "Failed" : "Copy"}
+      </Button>
+      <span aria-live="polite" className="sr-only">
+        {status === "copied"
+          ? "Why explanation copied to clipboard"
+          : status === "error"
+            ? "Copying the Why explanation failed"
+            : ""}
+      </span>
+    </div>
   );
+
 }
 
 /** One-click copy of a single entry's correlation ID. */
