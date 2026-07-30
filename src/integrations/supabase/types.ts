@@ -597,6 +597,60 @@ export type Database = {
         }
         Relationships: []
       }
+      storage_audit_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          bucket: string
+          created_at: string
+          distinct_users: number
+          event_count: number
+          id: string
+          message: string
+          path_pattern: string
+          rule: string
+          sample: Json
+          severity: string
+          threshold: number
+          window_minutes: number
+          window_start: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          bucket: string
+          created_at?: string
+          distinct_users?: number
+          event_count?: number
+          id?: string
+          message: string
+          path_pattern?: string
+          rule: string
+          sample?: Json
+          severity?: string
+          threshold: number
+          window_minutes: number
+          window_start: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          bucket?: string
+          created_at?: string
+          distinct_users?: number
+          event_count?: number
+          id?: string
+          message?: string
+          path_pattern?: string
+          rule?: string
+          sample?: Json
+          severity?: string
+          threshold?: number
+          window_minutes?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       strategies: {
         Row: {
           author_id: string
@@ -847,6 +901,14 @@ export type Database = {
       ensure_credit_account: {
         Args: { _user_id: string; _welcome?: number }
         Returns: undefined
+      }
+      evaluate_storage_audit_alerts: {
+        Args: {
+          _deny_threshold?: number
+          _mismatch_threshold?: number
+          _window_minutes?: number
+        }
+        Returns: number
       }
       grant_credits: {
         Args: {
