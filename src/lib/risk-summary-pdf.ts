@@ -198,7 +198,7 @@ export async function buildRiskSummaryDoc(input: RiskSummaryInput, reportId?: st
   );
   text(
     breaches > 0
-      ? `WARNING: ${breaches} holding${breaches > 1 ? "s" : ""} exceed the ${L.maxPositionPct}% size limit - trim to about ${usd(maxPositionUsd)} each.`
+      ? `WARNING: ${breaches} holding${breaches > 1 ? "s" : ""} ${breaches > 1 ? "exceed" : "exceeds"} the ${L.maxPositionPct}% size limit - trim to about ${usd(maxPositionUsd)} each.`
       : "All holdings are inside the configured max position size.",
     {
       size: 9.5,
