@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getStorageAccessAudit } from "@/lib/storage-audit.functions";
+import { StorageAlertsPanel } from "@/components/storage-alerts-panel";
 import { useAuth } from "@/lib/auth-store";
 
 export const Route = createFileRoute("/storage-audit")({
@@ -164,6 +165,8 @@ function StorageAuditPage() {
           </Card>
         ))}
       </div>
+
+      <StorageAlertsPanel />
 
       <Card className="mt-6">
         <CardHeader className="gap-3">
