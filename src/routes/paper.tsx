@@ -209,6 +209,35 @@ function PaperPage() {
                   ≈ {qty ? fmtUsd((parseFloat(qty) || 0) * asset.price) : "$0.00"}
                 </div>
               </div>
+              <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-[11px] text-muted-foreground">
+                    Risk controls: max {paper.risk.maxPositionPct}% position · stop{" "}
+                    {paper.risk.stopLossPct}% · target {paper.risk.takeProfitPct}%
+                  </div>
+                  <Button size="sm" variant="secondary" onClick={applyRiskControls}>
+                    <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+                    Apply risk controls
+                  </Button>
+                </div>
+                {sized && (
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-[11px]">
+                    <div>
+                      <div className="text-muted-foreground">Sized notional</div>
+                      <div className="font-medium">{fmtUsd(sized.notional)}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Stop price</div>
+                      <div className="font-medium text-rose-400">{fmtUsd(sized.stop)}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Target price</div>
+                      <div className="font-medium text-emerald-400">{fmtUsd(sized.target)}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   onClick={() => doTrade("buy")}
