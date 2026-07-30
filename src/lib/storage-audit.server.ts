@@ -34,6 +34,9 @@ export function ownsPath(userId: string | null, objectPath: string): boolean {
   return !!userId && !!owner && owner === userId;
 }
 
+/** Throttle for on-write alert evaluation (at most once a minute per worker). */
+let lastEvaluatedAt = 0;
+
 /** Best-effort write; auditing must never break the user-facing operation. */
 export async function logStorageAccess(entry: StorageAuditEntry): Promise<void> {
   try {
@@ -48,7 +51,32 @@ export async function logStorageAccess(entry: StorageAuditEntry): Promise<void> 
       path_owner_id: pathOwner(entry.objectPath),
       correlation_id: entry.correlationId?.slice(0, 64) ?? null,
     });
+
+    const mismatch =
+      !!entry.userId && !!pathOwner(entry.objectPath) && !ownsPath(entry.userId, entry.objectPath);
+    if (entry.decision === "deny" || mismatch) await maybeRaiseAlerts();
   } catch (e) {
     console.error("[storage-audit] log failed", e instanceof Error ? e.message : e);
+  }
+}
+
+/**
+ * Runs the deny-spike / owner-mismatch detectors over the recent audit trail.
+ * Throttled and best-effort: alerting must never break a storage operation.
+ */
+async function maybeRaiseAlerts(): Promise<void> {
+  const now = Date.now();
+  if (now - lastEvaluatedAt < 60_000) return;
+  lastEvaluatedAt = now;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("evaluate_storage_audit_alerts", {
+      _window_minutes: 15,
+      _deny_threshold: 10,
+      _mismatch_threshold: 3,
+    });
+    if (error) console.error("[storage-audit] alert eval failed", error.message);
+  } catch (e) {
+    console.error("[storage-audit] alert eval failed", e instanceof Error ? e.message : e);
   }
 }

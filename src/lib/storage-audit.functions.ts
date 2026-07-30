@@ -67,3 +67,80 @@ export const getStorageAccessAudit = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return (rows ?? []) as StorageAuditRow[];
   });
+
+export type StorageAlertRow = {
+  id: string;
+  rule: "deny_spike" | "owner_mismatch";
+  severity: "info" | "warning" | "critical";
+  bucket: string;
+  path_pattern: string;
+  window_start: string;
+  window_minutes: number;
+  event_count: number;
+  distinct_users: number;
+  threshold: number;
+  message: string;
+  sample: { object_path?: string | null; reason?: string | null; caller?: string | null } | null;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+  created_at: string;
+};
+
+type AlertQuery = { hours?: number; includeAcknowledged?: boolean; evaluate?: boolean };
+
+/**
+ * Admin view of storage-security alerts (denial spikes, repeated owner
+ * mismatches). Optionally re-runs detection over the recent audit trail first.
+ */
+export const getStorageAlerts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: AlertQuery) => ({
+    hours: Math.min(Math.max(Number(input?.hours ?? 168), 1), 720),
+    includeAcknowledged: input?.includeAcknowledged === true,
+    evaluate: input?.evaluate !== false,
+  }))
+  .handler(async ({ data, context }): Promise<StorageAlertRow[]> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.evaluate) {
+      const { error } = await supabaseAdmin.rpc("evaluate_storage_audit_alerts", {
+        _window_minutes: 15,
+        _deny_threshold: 10,
+        _mismatch_threshold: 3,
+      });
+      if (error) console.error("[storage-alerts] evaluate failed", error.message);
+    }
+
+    let q = supabaseAdmin
+      .from("storage_audit_alerts")
+      .select("*")
+      .gte("created_at", new Date(Date.now() - data.hours * 3600_000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (!data.includeAcknowledged) q = q.is("acknowledged_at", null);
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as StorageAlertRow[];
+  });
+
+/** Admin acknowledges an alert; the audit rows themselves stay untouched. */
+export const acknowledgeStorageAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => ({ id: String(input?.id ?? "").slice(0, 64) }))
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await (context.supabase as unknown as {
+      from: (t: string) => {
+        update: (v: Record<string, unknown>) => {
+          eq: (c: string, v: string) => Promise<{ error: { message: string } | null }>;
+        };
+      };
+    })
+      .from("storage_audit_alerts")
+      .update({ acknowledged_at: new Date().toISOString(), acknowledged_by: context.userId })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
