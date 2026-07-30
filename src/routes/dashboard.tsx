@@ -17,6 +17,8 @@ import { LiveMarket } from "@/components/live-market";
 import { RealtimeMomentumAlerts } from "@/components/realtime-momentum-alerts";
 import { RiskGuidanceCard } from "@/components/risk-guidance-card";
 import { RiskWhatIfPanel } from "@/components/risk-whatif-panel";
+import { RiskHitsCard } from "@/components/risk-hits-card";
+
 import { Term } from "@/components/glossary";
 import { useOnboarding } from "@/lib/onboarding-store";
 
