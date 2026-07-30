@@ -15,7 +15,11 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "public", "og")
-FONT_DIRS = glob.glob("/nix/store/*dejavu-fonts*/share/fonts/truetype")
+FONT_DIRS = [
+    d
+    for d in glob.glob("/nix/store/*dejavu-fonts*/share/fonts/truetype")
+    if os.path.exists(os.path.join(d, "DejaVuSans-Bold.ttf"))
+]
 FONT_DIR = FONT_DIRS[0] if FONT_DIRS else "/usr/share/fonts/truetype/dejavu"
 
 BG = (26, 30, 38)
