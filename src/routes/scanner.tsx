@@ -172,7 +172,9 @@ function Scanner() {
         <DisclaimerBanner />
 
         {/* Summary stats */}
+        <h2 className="text-lg font-semibold">Market Overview</h2>
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
+
           {[
             { label: "Scanned", value: filtered.length.toString() },
             { label: "Avg score", value: avgScore.toString(), color: scoreColor(avgScore) },
@@ -190,7 +192,10 @@ function Scanner() {
           {risers} of {filtered.length} up on the day.
         </div>
 
+        <h2 className="text-lg font-semibold">Asset Scanner</h2>
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
           <div className="relative w-full sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
