@@ -1,5 +1,14 @@
 import { withSocialMeta } from "@/lib/social-meta";
-import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
+import {
+  SOCIAL_IMAGE_URL,
+  breadcrumbSchema,
+  canonicalUrl,
+  ldScript,
+  nodeId,
+  webPageSchema,
+  WEBSITE_ID,
+  ORG_ID,
+} from "@/lib/structured-data";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { AppShell } from "@/components/app-shell";
@@ -49,6 +58,39 @@ export const Route = createFileRoute("/journal")({
         content: "PumpPilot AI trade journal with equity curve and win-rate stats",
       },
     ]),
+    scripts: [
+      ldScript({
+        ...webPageSchema({
+          name: J_TITLE,
+          description: J_DESC,
+          path: "/journal",
+          type: "CollectionPage",
+        }),
+        primaryImageOfPage: { "@type": "ImageObject", url: J_IMAGE },
+        about: {
+          "@type": "Thing",
+          name: "Paper trading performance analytics",
+          description:
+            "Win rate, expectancy, profit factor, equity curve and per-asset attribution for simulated trades.",
+        },
+        mainEntity: {
+          "@type": "ItemList",
+          "@id": nodeId("/journal", "stats"),
+          name: "Trade journal metrics",
+          itemListElement: [
+            "Win rate",
+            "Expectancy",
+            "Profit factor",
+            "Equity curve",
+            "Per-asset attribution",
+          ].map((name, i) => ({ "@type": "ListItem", position: i + 1, name })),
+        },
+        isPartOf: { "@id": WEBSITE_ID },
+        publisher: { "@id": ORG_ID },
+        url: canonicalUrl("/journal"),
+      }),
+      ldScript(breadcrumbSchema([{ name: "Trade Journal", path: "/journal" }])),
+    ],
   }),
   component: GatedJournalPage,
 });

@@ -1,5 +1,14 @@
 import { withSocialMeta } from "@/lib/social-meta";
-import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
+import {
+  SOCIAL_IMAGE_URL,
+  breadcrumbSchema,
+  canonicalUrl,
+  ldScript,
+  nodeId,
+  webPageSchema,
+  WEBSITE_ID,
+  ORG_ID,
+} from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
 import { AppShell } from "@/components/app-shell";
@@ -58,6 +67,29 @@ export const Route = createFileRoute("/dashboard")({
         content: "PumpPilot AI dashboard with momentum signals and portfolio overview",
       },
     ]),
+    scripts: [
+      ldScript({
+        ...webPageSchema({
+          name: DASH_TITLE,
+          description: DASH_DESC,
+          path: "/dashboard",
+          type: "WebApplication",
+        }),
+        applicationCategory: "FinanceApplication",
+        operatingSystem: "Web, iOS, Android",
+        browserRequirements: "Requires JavaScript. Sign-in required.",
+        image: DASH_IMAGE,
+        featureList: [
+          "Portfolio overview with dollar-at-risk breakdown",
+          "Explainable momentum signals for tracked assets",
+          "Stop-loss and take-profit risk guidance",
+          "Paper trading only — live execution locked by default",
+        ],
+        isPartOf: { "@id": WEBSITE_ID },
+        publisher: { "@id": ORG_ID },
+      }),
+      ldScript(breadcrumbSchema([{ name: "Dashboard", path: "/dashboard" }])),
+    ],
   }),
   component: Dashboard,
 });
