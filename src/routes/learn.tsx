@@ -95,7 +95,10 @@ function LearnPage() {
           </p>
         </div>
 
+        <h2 className="text-lg font-semibold">Trading Lessons</h2>
+
         <div className="grid gap-4 md:grid-cols-2">
+
           {LESSONS.map((l) => {
             const Icon = l.icon;
             return (
@@ -113,9 +116,12 @@ function LearnPage() {
           })}
         </div>
 
+        <h2 className="text-lg font-semibold">Glossary</h2>
+
         <Card className="border-border/60 bg-card/60">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Glossary</CardTitle>
+            <CardTitle className="text-base">Key terms explained</CardTitle>
+
           </CardHeader>
           <CardContent>
             <Accordion type="multiple" className="w-full">
