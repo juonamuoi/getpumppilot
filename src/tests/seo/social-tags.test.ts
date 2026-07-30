@@ -87,13 +87,13 @@ function collectSocialTags(): Promise<SocialTagSet[]> {
       if (typeof options?.head !== "function") continue;
       for (const params of paramSetsFor(file)) {
         const loaderData = await loaderDataFor(options, params);
-        const headOut = options.head({ params, loaderData, match: {} }) ?? {};
+        const headOut: { meta?: HeadMeta[] } = options.head({ params, loaderData, match: {} }) ?? {};
         const tags: Record<string, string> = {};
         const seen = new Set<string>();
         const duplicates: string[] = [];
         let title: string | undefined;
         let noindex = false;
-        for (const entry of headOut.meta ?? []) {
+        for (const entry of headOut.meta ?? ([] as HeadMeta[])) {
           if (entry.title) title = entry.title;
           const key = (entry.property ?? entry.name ?? "").toLowerCase();
           if (!key) continue;
