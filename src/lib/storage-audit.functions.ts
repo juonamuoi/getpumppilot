@@ -80,7 +80,7 @@ export type StorageAlertRow = {
   distinct_users: number;
   threshold: number;
   message: string;
-  sample: Record<string, unknown> | null;
+  sample: { object_path?: string | null; reason?: string | null; caller?: string | null } | null;
   acknowledged_at: string | null;
   acknowledged_by: string | null;
   created_at: string;
