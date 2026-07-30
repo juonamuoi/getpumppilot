@@ -6,8 +6,8 @@ import {
   EXPLAIN_FIELD_KEYS,
   assertExplainFieldsComplete,
   explainFields,
-  type TuningLogEntry,
 } from "@/lib/mitigation-explain";
+import type { TuningLogEntry } from "@/lib/paper-store";
 
 /** Minimal entry shaped like a real tuning log row. */
 const entry = {
