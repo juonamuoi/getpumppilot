@@ -50,7 +50,8 @@ import {
 
 /** One-click copy of an entry's plain-English "Why" explanation. */
 function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+
 
   const copy = async () => {
     const f = explainFields(entry);
