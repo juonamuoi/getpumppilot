@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { usePaper } from "@/lib/paper-store";
 import { fmtUsd, getAsset } from "@/lib/mock-data";
 import { ShieldCheck, AlertTriangle, Check } from "lucide-react";
+import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
+
 
 /**
  * Portfolio-level risk guidance: how big a new position may be, where the
