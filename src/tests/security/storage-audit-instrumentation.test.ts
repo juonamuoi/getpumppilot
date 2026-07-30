@@ -135,8 +135,6 @@ describe("audit row writes", () => {
 
 describe("alert detection triggers", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-07-30T12:00:00Z"));
     insert.mockClear();
     rpc.mockClear();
     insert.mockImplementation(async () => ({ error: null }));
