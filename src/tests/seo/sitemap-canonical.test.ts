@@ -64,9 +64,7 @@ const DYNAMIC_VALUES: Record<string, string[]> = {
  */
 const NOT_IN_SITEMAP = new Set([
   "/lp/momentum-scanner",
-  "/dashboard",
   "/paper",
-  "/journal",
   "/alerts",
   "/backtest",
   "/strategy",

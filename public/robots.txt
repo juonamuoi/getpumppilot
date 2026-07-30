@@ -7,9 +7,7 @@ Disallow: /mcp-console
 Disallow: /mcp
 Disallow: /seo-preview
 Disallow: /seo-monitor
-Disallow: /dashboard
 Disallow: /paper
-Disallow: /journal
 
 
 
