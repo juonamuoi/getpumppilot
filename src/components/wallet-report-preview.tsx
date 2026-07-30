@@ -94,13 +94,13 @@ export function WalletReportPreviewDialog({
           description:
             res.reason === "no_account_email" || res.reason === "share_failed"
               ? "Sign in to generate a signed link for your report."
-              : res.reason,
+              : `${res.reason}${res.requestId ? ` · trace ${res.requestId}` : ""}`,
         });
         return;
       }
       setShare({ url: res.url, expiresAt: res.expiresAt ?? Date.now() });
       toast.success("Signed share link created", {
-        description: `Expires ${new Date(res.expiresAt ?? Date.now()).toLocaleString()} · correlation ID ${result.correlationId}`,
+        description: `Expires ${new Date(res.expiresAt ?? Date.now()).toLocaleString()} · trace ${res.traceId ?? result.correlationId}`,
       });
     } catch {
       toast.error("Could not create the share link", {

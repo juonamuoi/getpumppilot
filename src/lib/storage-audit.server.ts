@@ -17,6 +17,7 @@ export type StorageAuditEntry = {
   operation: StorageOperation;
   decision: StorageDecision;
   reason?: string;
+  /** Domain id (e.g. a wallet scan id). Combined with the per-request id. */
   correlationId?: string;
 };
 
@@ -41,6 +42,7 @@ let lastEvaluatedAt = 0;
 export async function logStorageAccess(entry: StorageAuditEntry): Promise<void> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { traceId } = await import("@/lib/request-context.server");
     await supabaseAdmin.from("storage_access_audit").insert({
       user_id: entry.userId,
       bucket: entry.bucket.slice(0, 64),
@@ -49,7 +51,7 @@ export async function logStorageAccess(entry: StorageAuditEntry): Promise<void> 
       decision: entry.decision,
       reason: entry.reason?.slice(0, 200) ?? null,
       path_owner_id: pathOwner(entry.objectPath),
-      correlation_id: entry.correlationId?.slice(0, 64) ?? null,
+      correlation_id: traceId(entry.correlationId),
     });
 
     const mismatch =
