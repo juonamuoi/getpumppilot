@@ -13,17 +13,18 @@ import { askCopilot } from "@/lib/copilot.functions";
 import { usePaper } from "@/lib/paper-store";
 import { getAsset, fmtUsd, fmtPct } from "@/lib/mock-data";
 import { Sparkles, Send, Loader2, Bot } from "lucide-react";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/copilot")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/copilot" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/copilot" },
       { title: "AI Copilot — PumpPilot AI" },
       { name: "description", content: "Chat with an AI investing coach about your portfolio, strategy and market signals. Educational only." },
       { property: "og:title", content: "PumpPilot AI Copilot" },
       { property: "og:description", content: "Ask your investing coach anything — plain English, cautious answers." },
-    ],
+    ]),
   }),
   component: GatedCopilotPage,
 });

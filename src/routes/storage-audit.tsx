@@ -17,10 +17,11 @@ import {
 import { getStorageAccessAudit } from "@/lib/storage-audit.functions";
 import { StorageAlertsPanel } from "@/components/storage-alerts-panel";
 import { useAuth } from "@/lib/auth-store";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/storage-audit")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Storage Access Audit — PumpPilot AI" },
       {
         name: "description",
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/storage-audit")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: StorageAuditPage,
 });

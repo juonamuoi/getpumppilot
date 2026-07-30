@@ -91,6 +91,7 @@ import { TuningAuditExport } from "@/components/tuning-audit-export";
 
 import { toast } from "sonner";
 import {
+import { withSocialMeta } from "@/lib/social-meta";
   RuleImpactPreview,
   type RuleChangeSnapshot,
 } from "@/components/rule-impact-preview";
@@ -110,7 +111,7 @@ export const Route = createFileRoute("/alerts")({
 
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/alerts" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/alerts" },
       { title: "Alerts — PumpPilot AI" },
       {
@@ -123,7 +124,7 @@ export const Route = createFileRoute("/alerts")({
         property: "og:description",
         content: "Momentum scanner rules and delivery history.",
       },
-    ],
+    ]),
     scripts: [
       ldScript(
         webPageSchema({

@@ -18,11 +18,12 @@ import { useAuth } from "@/lib/auth-store";
 import { HowToSteps } from "@/components/how-to-steps";
 import { STRATEGY_BUILDER_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/strategy")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/strategy" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/strategy" },
       { title: "Strategy Builder — PumpPilot AI" },
       {
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/strategy")({
         property: "og:description",
         content: "Compose momentum, volume and volatility rules into a paper strategy.",
       },
-    ],
+    ]),
     scripts: [
       ldScript(faqSchema(strategyFaqs, "/strategy")),
       ldScript(

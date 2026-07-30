@@ -27,11 +27,12 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/doctor")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/doctor" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/doctor" },
       { title: "Portfolio Doctor — PumpPilot AI" },
       {
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/doctor")({
         property: "og:description",
         content: "Explainable AI diagnosis and rebalance ideas for your paper portfolio.",
       },
-    ],
+    ]),
   }),
   component: GatedDoctorPage,
 });

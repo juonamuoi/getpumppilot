@@ -14,12 +14,13 @@ import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS, CREDIT_LABELS, CREDIT_PACKS, costPerDollar, packByPriceId } from "@/lib/credits";
 import { SITE_URL, ORG_ID, LOGO_URL, breadcrumbSchema, ldScript, faqSchema, nodeId, NODE } from "@/lib/structured-data";
 import { toast } from "sonner";
+import { withSocialMeta } from "@/lib/social-meta";
 
 type SearchParams = { checkout?: string; session_id?: string; plan?: string };
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Credits & Pricing — PumpPilot AI" },
       {
         name: "description",
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/pricing")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE_URL}/pricing` },
       { name: "twitter:card", content: "summary_large_image" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${SITE_URL}/pricing` }],
     scripts: [
       ldScript(faqSchema(pricingFaqs, "/pricing")),

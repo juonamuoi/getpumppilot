@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FlaskConical, Loader2 } from "lucide-react";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { next?: string } =>
@@ -16,13 +17,13 @@ export const Route = createFileRoute("/auth")({
 
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/auth" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/auth" },
       { title: "Sign in — PumpPilot AI" },
       { name: "description", content: "Sign in to publish strategies, follow top authors, and climb the PumpPilot leaderboard." },
       { property: "og:title", content: "Sign in — PumpPilot AI" },
       { property: "og:description", content: "Join the PumpPilot community — publish paper strategies and follow top authors." },
-    ],
+    ]),
   }),
   component: AuthPage,
 });

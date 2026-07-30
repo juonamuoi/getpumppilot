@@ -21,6 +21,7 @@ import { Gauge } from "lucide-react";
 
 import { toast } from "sonner";
 import {
+import { withSocialMeta } from "@/lib/social-meta";
   Bot,
   Loader2,
   RefreshCw,
@@ -34,7 +35,7 @@ import {
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Settings — Agent access & MCP audit trail | PumpPilot AI" },
       {
         name: "description",
@@ -49,7 +50,7 @@ export const Route = createFileRoute("/settings")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: SettingsPage,
 });

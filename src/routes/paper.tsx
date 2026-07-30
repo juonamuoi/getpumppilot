@@ -28,11 +28,12 @@ import { HowToSteps } from "@/components/how-to-steps";
 import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/paper")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/paper" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/paper" },
       { title: "Paper Trading — PumpPilot AI" },
       {
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/paper")({
         property: "og:description",
         content: "Practice trading with simulated cash — no real assets moved.",
       },
-    ],
+    ]),
     scripts: [
       ldScript(faqSchema(paperFaqs, "/paper")),
       ldScript(

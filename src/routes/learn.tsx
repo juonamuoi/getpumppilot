@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { GLOSSARY } from "@/components/glossary";
 import { BookOpen, GraduationCap, Lightbulb, ShieldCheck, TrendingUp } from "lucide-react";
 import {
+import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL,
   ORG_ID,
   breadcrumbSchema,
@@ -18,7 +19,7 @@ import {
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Learn — PumpPilot AI" },
       { name: "description", content: "Micro-lessons and a glossary to help you understand momentum trading, risk, and how PumpPilot's signals work." },
       { property: "og:title", content: "PumpPilot AI Learn hub" },
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/learn")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${SITE_URL}/learn` },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${SITE_URL}/learn` }],
     scripts: [
       ldScript(faqSchema(learnFaqs, "/learn")),

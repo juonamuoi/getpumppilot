@@ -3,15 +3,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd } from "@/lib/mock-data";
 import { scoreColor } from "@/components/momentum";
+import { withSocialMeta } from "@/lib/social-meta";
 
 type Search = { symbol?: string; limit?: number; theme?: "dark" | "light" };
 
 export const Route = createFileRoute("/embed/momentum")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "PumpPilot AI — Momentum Widget" },
       { name: "robots", content: "noindex" },
-    ],
+    ]),
   }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     symbol: typeof s.symbol === "string" ? s.symbol.toUpperCase() : undefined,

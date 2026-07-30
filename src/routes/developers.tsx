@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL as BASE,
   ORG_ID,
   LOGO_URL,
@@ -36,7 +37,7 @@ const API_SNIPPET = `curl "${BASE}/api/public/momentum?limit=5"
 
 export const Route = createFileRoute("/developers")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Developers, Widgets & API — PumpPilot AI" },
       {
         name: "description",
@@ -52,7 +53,7 @@ export const Route = createFileRoute("/developers")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: `${BASE}/developers` },
       { name: "twitter:card", content: "summary_large_image" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${BASE}/developers` }],
     scripts: [
       ldScript({

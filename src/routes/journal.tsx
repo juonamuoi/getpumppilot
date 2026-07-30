@@ -11,6 +11,7 @@ import { computeStats } from "@/lib/journal";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Award, ArrowDownRight, ArrowUpRight, LineChart, TrendingUp } from "lucide-react";
+import { withSocialMeta } from "@/lib/social-meta";
 
 const STARTING_CASH = 100_000;
 
@@ -23,7 +24,7 @@ const J_IMAGE = SOCIAL_IMAGE_URL;
 export const Route = createFileRoute("/journal")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/journal" }],
-    meta: [
+    meta: withSocialMeta([
       { title: J_TITLE },
       { name: "description", content: J_DESC },
       { property: "og:title", content: J_TITLE },
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/journal")({
         name: "twitter:image:alt",
         content: "PumpPilot AI trade journal with equity curve and win-rate stats",
       },
-    ],
+    ]),
   }),
   component: GatedJournalPage,
 });

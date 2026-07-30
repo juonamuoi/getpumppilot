@@ -20,11 +20,12 @@ import { useAuth } from "@/lib/auth-store";
 import { FunnelReport } from "@/components/funnel-report";
 import { SignificancePanel, type SignificanceRow } from "@/components/significance-panel";
 import { wilsonInterval } from "@/lib/ab-stats";
+import { withSocialMeta } from "@/lib/social-meta";
 
 
 export const Route = createFileRoute("/ads-report")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Ad Creative A/B Report — PumpPilot AI" },
       {
         name: "description",
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/ads-report")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: AdsReport,
 });

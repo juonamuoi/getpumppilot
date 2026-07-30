@@ -14,11 +14,12 @@ import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
 import { Lock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/risk")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/risk" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/risk" },
       { title: "Risk Controls — PumpPilot AI" },
       {
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/risk")({
         property: "og:description",
         content: "Configure paper trading risk controls.",
       },
-    ],
+    ]),
   }),
   component: RiskPage,
 });

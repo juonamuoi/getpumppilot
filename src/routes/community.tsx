@@ -24,11 +24,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/community" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/community" },
       { title: "Community Strategies — PumpPilot AI" },
       {
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/community")({
         property: "og:description",
         content: "Publish strategies, follow top authors, climb the PumpPilot leaderboard.",
       },
-    ],
+    ]),
   }),
   component: CommunityPage,
 });

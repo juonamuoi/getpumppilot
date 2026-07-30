@@ -84,6 +84,7 @@ import { WalletScanTimeline } from "@/components/wallet-scan-timeline";
 import { MitigationImpactTimeline } from "@/components/mitigation-impact-timeline";
 import { ScheduledReportCard } from "@/components/scheduled-report-card";
 import { shortAddress } from "@/lib/wallet-scan";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/security")({
   /**
@@ -114,7 +115,7 @@ export const Route = createFileRoute("/security")({
 
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/security" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/security" },
       { title: "Security Center — PumpPilot AI" },
       {
@@ -128,7 +129,7 @@ export const Route = createFileRoute("/security")({
         content:
           "Configure phishing protection, review blocked domains and reported scam attempts.",
       },
-    ],
+    ]),
   }),
   component: SecurityPage,
 });

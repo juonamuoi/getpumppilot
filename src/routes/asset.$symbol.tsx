@@ -17,6 +17,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
 import {
+import { withSocialMeta } from "@/lib/social-meta";
   absoluteUrl,
   breadcrumbSchema,
   faqSchema,
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/asset/$symbol")({
     const description = `${sym} momentum, chart and paper trading. Demo data only.`;
     return {
       links: [{ rel: "canonical", href: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) }],
-      meta: [
+      meta: withSocialMeta([
         { title: `${sym} — PumpPilot AI` },
         { name: "description", content: description },
         { property: "og:title", content: `${sym} — PumpPilot AI` },
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/asset/$symbol")({
           content: "Explainable momentum and paper trading.",
         },
         { property: "og:url", content: absoluteUrl(`/asset/${params.symbol.toLowerCase()}`) },
-      ],
+      ]),
       scripts: [
         ldScript(
           webPageSchema({

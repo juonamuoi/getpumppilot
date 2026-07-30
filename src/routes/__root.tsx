@@ -22,6 +22,7 @@ import { AppLockProvider, useAppLock } from "@/lib/app-lock";
 import { TourProvider } from "@/lib/tour-store";
 import { GuidedTour } from "@/components/guided-tour";
 import { AppLockScreen } from "@/components/app-lock-screen";
+import { withSocialMeta } from "@/lib/social-meta";
 
 function NotFoundComponent() {
   return (
@@ -85,7 +86,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       {
@@ -108,7 +109,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "PumpPilot AI" },
       { name: "twitter:card", content: "summary_large_image" },
-    ],
+    ]),
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },

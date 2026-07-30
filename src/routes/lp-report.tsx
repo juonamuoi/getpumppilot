@@ -16,10 +16,11 @@ import {
 import { getLpVariantReport } from "@/lib/lp-report.functions";
 import { LANDING_VARIANTS } from "@/lib/landing-variants";
 import { useAuth } from "@/lib/auth-store";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/lp-report")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Landing Variant Report — PumpPilot AI" },
       {
         name: "description",
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/lp-report")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: LpReport,
 });

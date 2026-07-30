@@ -34,6 +34,7 @@ import { ShareLinks } from "@/components/share-links";
 
 import { CREDIT_PACKS } from "@/lib/credits";
 import {
+import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL,
   ORG_ID,
   WEBSITE_ID,
@@ -239,7 +240,7 @@ const homeWebPageSchema = {
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: TITLE },
       { name: "description", content: DESCRIPTION },
       {
@@ -268,7 +269,7 @@ export const Route = createFileRoute("/")({
         name: "twitter:image:alt",
         content: "PumpPilot AI — explainable crypto momentum dashboard",
       },
-    ],
+    ]),
     links: [{ rel: "canonical", href: canonicalUrl("/") }],
     scripts: [
       ldScript(homeWebPageSchema),

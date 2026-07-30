@@ -28,11 +28,12 @@ import {
 } from "recharts";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { History } from "lucide-react";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/backtest")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/backtest" }],
-    meta: [
+    meta: withSocialMeta([
       { property: "og:url", content: "https://www.getpumppilot.app/backtest" },
       { title: "Backtest — PumpPilot AI" },
       {
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/backtest")({
         property: "og:description",
         content: "Simulated backtests with clear disclaimers.",
       },
-    ],
+    ]),
   }),
   component: GatedBacktestPage,
 });

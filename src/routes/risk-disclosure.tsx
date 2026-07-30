@@ -2,10 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SITE_URL, breadcrumbSchema, legalPageSchema, ldScript } from "@/lib/structured-data";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/risk-disclosure")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Risk Disclosure — PumpPilot AI" },
       {
         name: "description",
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/risk-disclosure")({
       { property: "og:type", content: "article" },
       { property: "og:url", content: `${SITE_URL}/risk-disclosure` },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
     links: [{ rel: "canonical", href: `${SITE_URL}/risk-disclosure` }],
     scripts: [
       ldScript(

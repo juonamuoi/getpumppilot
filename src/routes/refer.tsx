@@ -8,18 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Share2, Twitter, Mail, MessageCircle, Gift, Users, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
+import { withSocialMeta } from "@/lib/social-meta";
 
 const BASE = "https://www.getpumppilot.app";
 
 export const Route = createFileRoute("/refer")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Invite friends & earn — PumpPilot AI" },
       { name: "description", content: "Share PumpPilot AI with friends. You both get 1 month of Pro free when they sign up and stay for 7 days." },
       { property: "og:title", content: "Invite friends & earn — PumpPilot AI" },
       { property: "og:description", content: "You both get 1 month of Pro free when they sign up." },
       { property: "og:type", content: "website" },
-    ],
+    ], { url: `${BASE}/refer` }),
     links: [{ rel: "canonical", href: `${BASE}/refer` }],
   }),
   component: ReferPage,

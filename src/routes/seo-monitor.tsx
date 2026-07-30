@@ -42,10 +42,11 @@ import {
   type SeoAlertRow,
 } from "@/lib/seo-monitor.functions";
 import { useAuth } from "@/lib/auth-store";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/seo-monitor")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Crawl & Indexing Monitor — PumpPilot AI" },
       {
         name: "description",
@@ -61,7 +62,7 @@ export const Route = createFileRoute("/seo-monitor")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: SeoMonitorPage,
 });

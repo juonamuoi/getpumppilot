@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { auditSeoUrls, type SeoRouteAudit } from "@/lib/seo-preview.functions";
 import { useAuth } from "@/lib/auth-store";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/seo-preview")({
   head: () => ({
-    meta: [
+    meta: withSocialMeta([
       { title: "Pre-publish SEO preview — PumpPilot AI" },
       {
         name: "description",
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/seo-preview")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-    ],
+    ]),
   }),
   component: SeoPreviewPage,
 });

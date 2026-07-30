@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import {
+import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL as BASE,
   ORG_ID,
   WEBSITE_ID,
@@ -33,12 +34,12 @@ export const Route = createFileRoute("/blog/$slug")({
   head: ({ loaderData, params }) => {
     const post = loaderData?.post;
     const url = `${BASE}/blog/${params.slug}`;
-    if (!post) return { meta: [{ title: "Post not found" }] };
+    if (!post) return { meta: withSocialMeta([{ title: "Post not found" }]) };
     const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
     const imageAlt = post.imageAlt ?? post.title;
     const socialTitle = `${post.title} | PumpPilot AI`;
     return {
-      meta: [
+      meta: withSocialMeta([
         { title: `${post.title} — PumpPilot AI` },
         { name: "description", content: post.description },
         { name: "keywords", content: post.keywords.join(", ") },
@@ -63,7 +64,7 @@ export const Route = createFileRoute("/blog/$slug")({
         { name: "twitter:image:alt", content: imageAlt },
         { name: "twitter:title", content: socialTitle },
         { name: "twitter:description", content: post.description },
-      ],
+      ]),
       links: [{ rel: "canonical", href: url }],
       scripts: [
         ldScript(
