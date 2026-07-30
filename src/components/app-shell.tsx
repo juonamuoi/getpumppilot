@@ -32,6 +32,8 @@ import { AICopilot } from "./ai-copilot";
 import { CreditBadge, CreditMeter } from "./credit-badge";
 import { AccountButton } from "./account-button";
 import { SeoAlertNotifier } from "./seo-alert-notifier";
+import { PositionRiskNotifier } from "./position-risk-notifier";
+
 import { cn } from "@/lib/utils";
 
 const nav = [
