@@ -36,7 +36,14 @@ export function withSocialMeta(meta: MetaEntry[], options: SocialMetaOptions = {
   const out = [...meta];
   const title = get(out, "og:title") ?? out.find((m) => m.title)?.title;
   const description = get(out, "og:description") ?? get(out, "description");
-  const image = get(out, "og:image");
+  // Every share card needs an image; fall back to the content-hashed site cover.
+  const image = get(out, "og:image") ?? options.image ?? SOCIAL_IMAGE_URL;
+  if (!has(out, "og:image")) {
+    out.push({ property: "og:image", content: image });
+    out.push({ property: "og:image:width", content: "1200" });
+    out.push({ property: "og:image:height", content: "630" });
+  }
+
 
   if (!has(out, "og:title") && title) out.push({ property: "og:title", content: title });
   if (!has(out, "og:description") && description)
