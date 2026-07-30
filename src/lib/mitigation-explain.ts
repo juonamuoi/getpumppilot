@@ -140,3 +140,47 @@ export function explainFields(e: TuningLogEntry): ExplainFields {
   };
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Field-sync guard
+ *
+ * Every UI surface and CSV/JSON exporter that emits "Why" data must use
+ * these keys. The typing below breaks the build if a key is added to
+ * ExplainFields without being listed here (or vice versa), and
+ * assertExplainFieldsComplete() catches drift at runtime.
+ * ------------------------------------------------------------------ */
+
+export const EXPLAIN_FIELD_KEYS = [
+  "why",
+  "whyChange",
+  "whyStrictness",
+  "whyImpact",
+  "whyOutcome",
+  "whyFragility",
+] as const;
+
+export type ExplainFieldKey = (typeof EXPLAIN_FIELD_KEYS)[number];
+
+// Compile-time: the list and the type must describe exactly the same keys.
+type AssertSameKeys<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
+const _explainKeysAreExhaustive: AssertSameKeys<ExplainFieldKey, keyof ExplainFields> = true;
+void _explainKeysAreExhaustive;
+
+/**
+ * Runtime guard: verifies a produced explanation object carries exactly the
+ * documented keys with string values. Returns the list of problems (empty when
+ * in sync) so callers/tests can surface actionable drift.
+ */
+export function assertExplainFieldsComplete(fields: Record<string, unknown>): string[] {
+  const problems: string[] = [];
+  for (const key of EXPLAIN_FIELD_KEYS) {
+    if (!(key in fields)) problems.push(`missing field "${key}"`);
+    else if (typeof fields[key] !== "string") problems.push(`field "${key}" is not a string`);
+  }
+  for (const key of Object.keys(fields)) {
+    if (!(EXPLAIN_FIELD_KEYS as readonly string[]).includes(key)) {
+      problems.push(`unexpected field "${key}" not declared in ExplainFields`);
+    }
+  }
+  return problems;
+}
