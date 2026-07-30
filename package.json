@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "bun run gen:social-hashes && bun run test:security && vite build",
-    "build:dev": "bun run gen:social-hashes && bun run test:security && vite build --mode development",
+    "build": "bun run gen:social-hashes && bun run test:security && bun run test:seo:social && vite build",
+    "build:dev": "bun run gen:social-hashes && bun run test:security && bun run test:seo:social && vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -21,6 +21,9 @@
     "lint:supabase:authz": "node scripts/supabase-authz-check.mjs",
     "test:security": "vitest run --config vitest.security.config.ts",
     "test:seo": "vitest run --config vitest.seo.config.ts",
+    "test:seo:social": "vitest run --config vitest.seo.config.ts src/tests/seo/social-tags.test.ts",
+    "check:social-tags": "bun scripts/social-tags-build-check.mjs",
+    "check:social-tags:json": "bun scripts/social-tags-build-check.mjs --json",
     "check:jsonld": "bun scripts/jsonld-build-check.mjs",
     "check:jsonld:json": "bun scripts/jsonld-build-check.mjs --json",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
