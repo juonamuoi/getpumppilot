@@ -21,7 +21,10 @@ export default defineConfig({
         "src/lib/payments-validation.ts",
         "src/lib/stripe-customer.server.ts",
         "src/lib/mcp/audit.ts",
-
+        "src/lib/admin-guard.ts",
+        "src/lib/request-context.server.ts",
+        "src/lib/storage-audit.server.ts",
+        "src/lib/storage-audit-export.server.ts",
       ],
       all: true,
     },
