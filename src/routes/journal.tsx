@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
@@ -11,7 +12,6 @@ import { computeStats } from "@/lib/journal";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Award, ArrowDownRight, ArrowUpRight, LineChart, TrendingUp } from "lucide-react";
-import { withSocialMeta } from "@/lib/social-meta";
 
 const STARTING_CASH = 100_000;
 

@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { FaqSection } from "@/components/faq-section";
 import { strategyFaqs } from "@/lib/page-faqs";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -18,7 +19,6 @@ import { useAuth } from "@/lib/auth-store";
 import { HowToSteps } from "@/components/how-to-steps";
 import { STRATEGY_BUILDER_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/strategy")({
   head: () => ({

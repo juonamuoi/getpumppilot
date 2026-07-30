@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -91,7 +92,6 @@ import { TuningAuditExport } from "@/components/tuning-audit-export";
 
 import { toast } from "sonner";
 import {
-import { withSocialMeta } from "@/lib/social-meta";
   RuleImpactPreview,
   type RuleChangeSnapshot,
 } from "@/components/rule-impact-preview";

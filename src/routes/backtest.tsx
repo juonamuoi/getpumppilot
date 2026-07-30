@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -28,7 +29,6 @@ import {
 } from "recharts";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { History } from "lucide-react";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/backtest")({
   head: () => ({

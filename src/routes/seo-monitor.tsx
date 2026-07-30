@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,7 +43,6 @@ import {
   type SeoAlertRow,
 } from "@/lib/seo-monitor.functions";
 import { useAuth } from "@/lib/auth-store";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/seo-monitor")({
   head: () => ({

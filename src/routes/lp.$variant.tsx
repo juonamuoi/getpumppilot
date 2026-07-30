@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { canonicalUrl } from "@/lib/structured-data";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -28,7 +29,6 @@ import { trackCtaClick } from "@/lib/funnel";
 import { readUtmSourceMedium, tailorCopy, type TailoredCopy } from "@/lib/utm-copy";
 import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 import {
-import { withSocialMeta } from "@/lib/social-meta";
   COMPLIANCE_FOOTER,
   getVariant,
   LANDING_VARIANTS,

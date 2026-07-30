@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { faqSchema, ldScript } from "@/lib/structured-data";
 import { FaqSection } from "@/components/faq-section";
 import { scannerFaqs } from "@/lib/page-faqs";
@@ -22,7 +23,6 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/scanner")({
   head: () => ({

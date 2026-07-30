@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -13,7 +14,6 @@ import { askCopilot } from "@/lib/copilot.functions";
 import { usePaper } from "@/lib/paper-store";
 import { getAsset, fmtUsd, fmtPct } from "@/lib/mock-data";
 import { Sparkles, Send, Loader2, Bot } from "lucide-react";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/copilot")({
   head: () => ({

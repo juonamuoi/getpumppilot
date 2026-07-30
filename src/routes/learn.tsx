@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { FaqSection } from "@/components/faq-section";
 import { learnFaqs } from "@/lib/page-faqs";
 import { createFileRoute } from "@tanstack/react-router";
@@ -7,7 +8,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { GLOSSARY } from "@/components/glossary";
 import { BookOpen, GraduationCap, Lightbulb, ShieldCheck, TrendingUp } from "lucide-react";
 import {
-import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL,
   ORG_ID,
   breadcrumbSchema,

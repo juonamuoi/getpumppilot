@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -84,7 +85,6 @@ import { WalletScanTimeline } from "@/components/wallet-scan-timeline";
 import { MitigationImpactTimeline } from "@/components/mitigation-impact-timeline";
 import { ScheduledReportCard } from "@/components/scheduled-report-card";
 import { shortAddress } from "@/lib/wallet-scan";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/security")({
   /**

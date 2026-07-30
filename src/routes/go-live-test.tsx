@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
@@ -15,7 +16,6 @@ import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { useAuth } from "@/lib/auth-store";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createGoLiveTestCheckout, getGoLiveTestSession } from "@/utils/payments.functions";
-import { withSocialMeta } from "@/lib/social-meta";
 
 type SearchParams = { session_id?: string; step?: string };
 

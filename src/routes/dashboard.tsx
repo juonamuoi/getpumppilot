@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
@@ -21,7 +22,6 @@ import { RiskHitsCard } from "@/components/risk-hits-card";
 
 import { Term } from "@/components/glossary";
 import { useOnboarding } from "@/lib/onboarding-store";
-import { withSocialMeta } from "@/lib/social-meta";
 
 const DASH_TITLE = "Dashboard — PumpPilot AI";
 const DASH_DESC =

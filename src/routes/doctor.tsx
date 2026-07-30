@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -27,7 +28,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/doctor")({
   head: () => ({

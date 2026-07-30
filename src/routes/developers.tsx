@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 // Public "Developers & Embeds" page — the on-site pitch for anyone
 // who might link to us: bloggers, tool aggregators, blockchain explorers.
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -8,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL as BASE,
   ORG_ID,
   LOGO_URL,

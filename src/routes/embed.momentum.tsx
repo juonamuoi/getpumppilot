@@ -1,9 +1,9 @@
+import { withSocialMeta } from "@/lib/social-meta";
 // Embeddable widget — designed to be dropped in an <iframe> on any site.
 // Renders a compact top-momentum list with a "Powered by PumpPilot AI" backlink.
 import { createFileRoute } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd } from "@/lib/mock-data";
 import { scoreColor } from "@/components/momentum";
-import { withSocialMeta } from "@/lib/social-meta";
 
 type Search = { symbol?: string; limit?: number; theme?: "dark" | "light" };
 

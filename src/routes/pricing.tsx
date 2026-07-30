@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { FaqSection } from "@/components/faq-section";
 import { pricingFaqs } from "@/lib/page-faqs";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
@@ -14,7 +15,6 @@ import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS, CREDIT_LABELS, CREDIT_PACKS, costPerDollar, packByPriceId } from "@/lib/credits";
 import { SITE_URL, ORG_ID, LOGO_URL, breadcrumbSchema, ldScript, faqSchema, nodeId, NODE } from "@/lib/structured-data";
 import { toast } from "sonner";
-import { withSocialMeta } from "@/lib/social-meta";
 
 type SearchParams = { checkout?: string; session_id?: string; plan?: string };
 

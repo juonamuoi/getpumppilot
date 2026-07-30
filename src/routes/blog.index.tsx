@@ -1,10 +1,10 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, BookOpen } from "lucide-react";
 import {
-import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL,
   ORG_ID,
   WEBSITE_ID,

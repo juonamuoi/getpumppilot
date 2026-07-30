@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { FaqSection } from "@/components/faq-section";
 import { paperFaqs } from "@/lib/page-faqs";
 import { createFileRoute } from "@tanstack/react-router";
@@ -28,7 +29,6 @@ import { HowToSteps } from "@/components/how-to-steps";
 import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/paper")({
   head: () => ({

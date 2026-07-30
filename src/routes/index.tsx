@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import {
@@ -34,7 +35,6 @@ import { ShareLinks } from "@/components/share-links";
 
 import { CREDIT_PACKS } from "@/lib/credits";
 import {
-import { withSocialMeta } from "@/lib/social-meta";
   SITE_URL,
   ORG_ID,
   WEBSITE_ID,

@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { auditSeoUrls, type SeoRouteAudit } from "@/lib/seo-preview.functions";
 import { useAuth } from "@/lib/auth-store";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/seo-preview")({
   head: () => ({

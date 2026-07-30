@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +21,6 @@ import { useAuth } from "@/lib/auth-store";
 import { FunnelReport } from "@/components/funnel-report";
 import { SignificancePanel, type SignificanceRow } from "@/components/significance-panel";
 import { wilsonInterval } from "@/lib/ab-stats";
-import { withSocialMeta } from "@/lib/social-meta";
 
 
 export const Route = createFileRoute("/ads-report")({

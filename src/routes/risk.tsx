@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -14,7 +15,6 @@ import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
 import { Lock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/risk")({
   head: () => ({

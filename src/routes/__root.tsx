@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -22,7 +23,6 @@ import { AppLockProvider, useAppLock } from "@/lib/app-lock";
 import { TourProvider } from "@/lib/tour-store";
 import { GuidedTour } from "@/components/guided-tour";
 import { AppLockScreen } from "@/components/app-lock-screen";
-import { withSocialMeta } from "@/lib/social-meta";
 
 function NotFoundComponent() {
   return (

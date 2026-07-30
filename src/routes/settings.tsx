@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -21,7 +22,6 @@ import { Gauge } from "lucide-react";
 
 import { toast } from "sonner";
 import {
-import { withSocialMeta } from "@/lib/social-meta";
   Bot,
   Loader2,
   RefreshCw,

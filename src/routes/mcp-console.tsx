@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -24,7 +25,6 @@ import {
   type ConsoleThrottleView,
 } from "@/components/mcp-quota";
 import { McpRateLimitStatusCard } from "@/components/mcp-rate-limit-status";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/mcp-console")({
   head: () => ({

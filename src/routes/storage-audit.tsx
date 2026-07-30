@@ -1,3 +1,4 @@
+import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +18,6 @@ import {
 import { getStorageAccessAudit } from "@/lib/storage-audit.functions";
 import { StorageAlertsPanel } from "@/components/storage-alerts-panel";
 import { useAuth } from "@/lib/auth-store";
-import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/storage-audit")({
   head: () => ({
