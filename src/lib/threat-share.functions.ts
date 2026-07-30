@@ -20,6 +20,10 @@ export type ShareLinkResult = {
   url?: string;
   expiresAt?: number;
   correlationId?: string;
+  /** Per-request trace id; matches `x-request-id` and the audit trail entry. */
+  requestId?: string;
+  /** Correlation id exactly as stored in the storage-audit trail. */
+  traceId?: string;
   reason?: string;
 };
 
@@ -49,11 +53,20 @@ export const createThreatReportShareLink = createServerFn({ method: "POST" })
       data.pdfBase64,
       seconds,
     );
-    if (!up.url) return { ok: false, reason: up.reason ?? "share_failed" };
+    if (!up.url) {
+      return {
+        ok: false,
+        reason: up.reason ?? "share_failed",
+        requestId: up.requestId,
+        traceId: up.traceId,
+      };
+    }
     return {
       ok: true,
       url: up.url,
       expiresAt: up.expiresAt,
       correlationId: data.correlationId,
+      requestId: up.requestId,
+      traceId: up.traceId,
     };
   });

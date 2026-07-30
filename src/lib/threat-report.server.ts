@@ -56,7 +56,7 @@ export async function uploadThreatReport(
       reason: "path_owner_mismatch",
       correlationId,
     });
-    return { url: null, reason: "forbidden_path" };
+    return { url: null, reason: "forbidden_path", requestId, traceId: trace };
   }
 
   try {
@@ -71,7 +71,7 @@ export async function uploadThreatReport(
         reason: "empty_pdf",
         correlationId,
       });
-      return { url: null, reason: "empty_pdf" };
+      return { url: null, reason: "empty_pdf", requestId, traceId: trace };
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -89,8 +89,8 @@ export async function uploadThreatReport(
       correlationId,
     });
     if (up.error) {
-      console.error("[threat-report] upload failed", up.error.message);
-      return { url: null, reason: "upload_failed" };
+      console.error("[threat-report] upload failed", requestId, up.error.message);
+      return { url: null, reason: "upload_failed", requestId, traceId: trace };
     }
 
     const signed = await supabaseAdmin.storage
@@ -108,12 +108,14 @@ export async function uploadThreatReport(
         : `signed_ttl_${expiresSeconds}s`,
       correlationId,
     });
-    if (signFailed) return { url: null, reason: "sign_failed" };
+    if (signFailed) return { url: null, reason: "sign_failed", requestId, traceId: trace };
 
     return {
       url: signed.data!.signedUrl,
       path,
       expiresAt: Date.now() + expiresSeconds * 1000,
+      requestId,
+      traceId: trace,
     };
   } catch (e) {
     await logStorageAccess({
@@ -125,8 +127,12 @@ export async function uploadThreatReport(
       reason: `unexpected: ${e instanceof Error ? e.message : "error"}`,
       correlationId,
     });
-    console.error("[threat-report] unexpected failure", e instanceof Error ? e.message : e);
-    return { url: null, reason: "report_failed" };
+    console.error(
+      "[threat-report] unexpected failure",
+      requestId,
+      e instanceof Error ? e.message : e,
+    );
+    return { url: null, reason: "report_failed", requestId, traceId: trace };
   }
 }
 
