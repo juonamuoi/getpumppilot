@@ -20,7 +20,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
-import { Lock, RotateCcw } from "lucide-react";
+import { Lock, RotateCcw, ShieldCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { HowToSteps } from "@/components/how-to-steps";
 import { TourStartButton } from "@/components/guided-tour";
@@ -66,8 +66,39 @@ function PaperPage() {
   const { spend } = useCredits();
   const [symbol, setSymbol] = useState("BTC");
   const [qty, setQty] = useState("");
+  const [sized, setSized] = useState<{
+    notional: number;
+    stop: number;
+    target: number;
+  } | null>(null);
 
   const asset = getAsset(symbol)!;
+
+  const applyRiskControls = () => {
+    const { maxPositionPct, stopLossPct, takeProfitPct } = paper.risk;
+    const existing = paper.positions.find((p) => p.symbol === symbol);
+    const existingValue = existing ? existing.qty * asset.price : 0;
+    const allowed = (maxPositionPct / 100) * paper.equity - existingValue;
+    const notional = Math.min(Math.max(allowed, 0), paper.cash);
+    if (notional <= 0) {
+      setSized(null);
+      return toast.error(
+        `No room under risk controls: ${symbol} already at or above ${maxPositionPct}% of equity (or no paper cash).`,
+      );
+    }
+    const n = notional / asset.price;
+    setQty(n.toFixed(6).replace(/0+$/, "").replace(/\.$/, ""));
+    setSized({
+      notional,
+      stop: asset.price * (1 - stopLossPct / 100),
+      target: asset.price * (1 + takeProfitPct / 100),
+    });
+    toast.success(
+      `Sized to ${fmtUsd(notional)} — within ${maxPositionPct}% max position. Stop ${stopLossPct}% / target ${takeProfitPct}% (simulated).`,
+    );
+  };
+
+
   const doTrade = async (side: "buy" | "sell") => {
     const n = parseFloat(qty);
     if (!n) return toast.error("Enter a quantity");
@@ -209,6 +240,35 @@ function PaperPage() {
                   ≈ {qty ? fmtUsd((parseFloat(qty) || 0) * asset.price) : "$0.00"}
                 </div>
               </div>
+              <div className="rounded-lg border border-border/60 bg-background/40 p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-[11px] text-muted-foreground">
+                    Risk controls: max {paper.risk.maxPositionPct}% position · stop{" "}
+                    {paper.risk.stopLossPct}% · target {paper.risk.takeProfitPct}%
+                  </div>
+                  <Button size="sm" variant="secondary" onClick={applyRiskControls}>
+                    <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+                    Apply risk controls
+                  </Button>
+                </div>
+                {sized && (
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-[11px]">
+                    <div>
+                      <div className="text-muted-foreground">Sized notional</div>
+                      <div className="font-medium">{fmtUsd(sized.notional)}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Stop price</div>
+                      <div className="font-medium text-rose-400">{fmtUsd(sized.stop)}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Target price</div>
+                      <div className="font-medium text-emerald-400">{fmtUsd(sized.target)}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   onClick={() => doTrade("buy")}
