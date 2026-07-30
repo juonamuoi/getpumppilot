@@ -1,3 +1,5 @@
+import { SOCIAL_IMAGE_URL } from "@/lib/structured-data";
+
 /**
  * Social sharing meta helper.
  *
@@ -24,6 +26,8 @@ export interface SocialMetaOptions {
   card?: string;
   /** Absolute https URL for og:url when the route doesn't declare one. */
   url?: string;
+  /** Absolute https URL for og:image when the route doesn't declare one. */
+  image?: string;
 }
 
 const get = (meta: MetaEntry[], key: string) =>
