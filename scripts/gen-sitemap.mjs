@@ -106,6 +106,28 @@ async function blogEntries() {
 }
 
 /**
+ * Paginated journal listing pages (`/blog?page=2`, …).
+ *
+ * Each page of the series self-canonicalises and carries its own posts, so
+ * every page belongs in the sitemap — otherwise posts that only appear on
+ * page 2+ depend entirely on crawl depth. Page size is read from
+ * src/lib/pagination.ts so the two can never disagree.
+ */
+async function blogPageEntries(postCount) {
+  const src = await readFile(resolve(ROOT, "src/lib/pagination.ts"), "utf8");
+  const pageSize = Number(src.match(/PAGE_SIZE\s*=\s*(\d+)/)?.[1] ?? 0);
+  if (!pageSize) {
+    console.error("sitemap: could not read PAGE_SIZE from src/lib/pagination.ts");
+    process.exit(1);
+  }
+  const totalPages = Math.max(1, Math.ceil(postCount / pageSize));
+  const pages = [];
+  for (let p = 2; p <= totalPages; p += 1) pages.push({ path: `/blog?page=${p}` });
+  return pages;
+}
+
+
+/**
  * Every demo token rendered by /asset/$symbol. Parsed from the ASSETS array
  * in src/lib/mock-data.ts (the same source getAsset() reads), so adding a
  * token to the app automatically adds its detail URL here. Paths are
