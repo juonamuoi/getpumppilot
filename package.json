@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "bun run gen:asset-og && bun run gen:social-hashes && bun run gen:sitemap && bun run test:security && bun run test:seo:social && vite build",
+    "build": "bun run gen:asset-og && bun run gen:social-hashes && bun run gen:sitemap && bun run test:security && bun run test:seo:social && vite build && bun run ping:indexing",
     "build:dev": "bun run gen:asset-og && bun run gen:social-hashes && bun run gen:sitemap && bun run test:security && bun run test:seo:social && vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -48,6 +48,9 @@
     "check:og-images": "bun scripts/og-image-check.mjs",
     "check:og-images:json": "bun scripts/og-image-check.mjs --json",
     "check:og-images:remote": "bun scripts/og-image-check.mjs --remote",
+    "ping:indexing": "node scripts/ping-indexing.mjs",
+    "ping:indexing:all": "node scripts/ping-indexing.mjs --all",
+    "ping:indexing:dry": "node scripts/ping-indexing.mjs --dry-run",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
   },
   "dependencies": {
