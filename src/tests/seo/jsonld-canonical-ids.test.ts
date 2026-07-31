@@ -98,12 +98,19 @@ describe("JSON-LD canonical + @id scheme", () => {
       for (const n of nodes) {
         const id = n["@id"] as string | undefined;
         expect(id, `${path}: top-level ${String(n["@type"])} node has no @id`).toBeTruthy();
-        expect(
-          id!.startsWith(`${canonical}#`),
-          `${path}: @id "${id}" is not scoped to canonical "${canonical}"`,
-        ).toBe(true);
+        // The site-wide Organization / WebSite nodes are intentionally global:
+        // every page repeats them with the SAME @id so crawlers merge them
+        // into one entity instead of seeing a per-page duplicate.
+        const siteWide = id === `${SITE_URL}/#organization` || id === `${SITE_URL}/#website`;
+        if (!siteWide) {
+          expect(
+            id!.startsWith(`${canonical}#`),
+            `${path}: @id "${id}" is not scoped to canonical "${canonical}"`,
+          ).toBe(true);
+        }
         expect(seen.has(id!), `${path}: duplicate @id "${id}" on one page`).toBe(false);
         seen.add(id!);
+
 
         const url = n.url as string | undefined;
         if (typeof url === "string") {
