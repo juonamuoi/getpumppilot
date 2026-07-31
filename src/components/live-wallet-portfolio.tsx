@@ -533,7 +533,20 @@ export function LiveWalletPortfolio() {
                         )}
                       </div>
 
+                      {r.sparkline.length > 1 && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <PriceSparkline
+                            points={r.sparkline}
+                            up={(r.change24h ?? 0) >= 0}
+                            className={r.stale || r.failed ? "opacity-40" : ""}
+                            title={`${r.symbol} — last 24h price movement (${r.sparkline.length} hourly points)`}
+                          />
+                          <span className="text-[10px] text-muted-foreground">24h</span>
+                        </div>
+                      )}
+
                     </div>
+
                     <div className="text-right">
                       <div
                         className={`font-mono text-sm font-semibold ${
