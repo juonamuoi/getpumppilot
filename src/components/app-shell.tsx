@@ -20,6 +20,8 @@ import {
   Gift,
   Settings as SettingsIcon,
   TerminalSquare,
+  Rss,
+
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
