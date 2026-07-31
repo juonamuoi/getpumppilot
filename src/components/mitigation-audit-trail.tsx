@@ -56,6 +56,8 @@ import {
   type OutcomeFilter,
   type RangeFilter,
   type SavedAuditFilter,
+  RANGE_CHIPS,
+  RANGE_CHIP_LABEL,
 } from "@/lib/audit-filters";
 
 
