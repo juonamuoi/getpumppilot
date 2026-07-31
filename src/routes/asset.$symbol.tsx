@@ -21,6 +21,12 @@ import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
 import { requestTrade } from "@/lib/trade-gate";
 import {
+  SPARK_WINDOW_OPTIONS,
+  sliceSparkline,
+  type SparkWindowValue,
+} from "@/lib/sparkline-window";
+
+import {
   absoluteUrl,
   assetDemoDataNodes,
   assetSocialImageUrl,
