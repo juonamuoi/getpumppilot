@@ -48,7 +48,11 @@ export const Route = createFileRoute("/blog/")({
   },
   // The page number must reach head(), so it travels through the loader.
   loaderDeps: ({ search }) => ({ page: search.page ?? 1 }),
-  loader: ({ deps }): { paged: Paged<BlogPost> } => ({ paged: paginate<BlogPost>(BLOG_POSTS, deps.page) }),
+  // `deps` is optional-guarded so head()-invoking SEO tests can call the
+  // loader without a router context and still get page 1.
+  loader: ({ deps }: { deps?: { page?: number } }): { paged: Paged<BlogPost> } => ({
+    paged: paginate<BlogPost>(BLOG_POSTS, deps?.page ?? 1),
+  }),
   head: ({ loaderData }) => {
     const paged: Paged<BlogPost> = loaderData?.paged ?? paginate<BlogPost>(BLOG_POSTS, 1);
     const suffix = paginationTitleSuffix(paged);
