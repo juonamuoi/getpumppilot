@@ -42,6 +42,7 @@ import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
 import { PriceSparkline, SparklineStats } from "@/components/price-sparkline";
 import { HoldingSparklineDrawer } from "@/components/holding-sparkline-drawer";
+import { SparklineCompare } from "@/components/sparkline-compare";
 import {
   SPARK_WINDOW_OPTIONS,
   sliceSparkline,
@@ -142,6 +143,17 @@ export function LiveWalletPortfolio() {
   const { value: sparkWindow, setValue: setSparkWindow, config: sparkConfig } =
     useSparkWindow();
 
+  // Compare mode: pick up to two holdings and overlay their sparklines.
+  const [compareMode, setCompareMode] = useState(false);
+  const [comparePicks, setComparePicks] = useState<string[]>([]);
+  const toggleCompare = (symbol: string) =>
+    setComparePicks((prev) =>
+      prev.includes(symbol)
+        ? prev.filter((s) => s !== symbol)
+        : [...prev, symbol].slice(-2),
+    );
+
+
   const feedStale = isStale(priceUpdatedAt, staleMs, now);
 
   const rows = (data?.balances ?? []).map((b) => {
@@ -169,6 +181,13 @@ export function LiveWalletPortfolio() {
       counted: price != null && !stale,
     };
   });
+
+  const comparable = rows.filter((r) => r.sparkline.length > 1);
+  const comparePair = comparePicks
+    .map((s) => comparable.find((r) => r.symbol === s))
+    .filter((r): r is (typeof comparable)[number] => Boolean(r));
+
+
 
   const spamCount = rows.filter((r) => isSpamLikely(r, spamLists)).length;
   const visibleRows = applyHoldingControls(rows, {
@@ -556,6 +575,55 @@ export function LiveWalletPortfolio() {
               </span>
             </div>
 
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <Button
+                  size="sm"
+                  variant={compareMode ? "secondary" : "outline"}
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => {
+                    setCompareMode((v) => !v);
+                    if (compareMode) setComparePicks([]);
+                  }}
+                  aria-pressed={compareMode}
+                  disabled={comparable.length < 2}
+                >
+                  {compareMode ? "Exit compare" : "Compare momentum"}
+                </Button>
+                {comparable.length < 2 ? (
+                  <span>· need at least two holdings with price history</span>
+                ) : compareMode ? (
+                  <span>
+                    · pick two holdings below ({comparePicks.length}/2 selected) — overlays
+                    their {sparkWindow} sparklines normalized to % change
+                  </span>
+                ) : (
+                  <span>· overlay two sparklines side-by-side</span>
+                )}
+                {compareMode && comparePicks.length > 0 && (
+                  <button
+                    type="button"
+                    className="underline hover:text-foreground"
+                    onClick={() => setComparePicks([])}
+                  >
+                    Clear selection
+                  </button>
+                )}
+              </div>
+
+              {compareMode && comparePair.length === 2 && (
+                <SparklineCompare
+                  a={{ symbol: comparePair[0].symbol, points: comparePair[0].sparkline }}
+                  b={{ symbol: comparePair[1].symbol, points: comparePair[1].sparkline }}
+                  window={sparkWindow}
+                  intervalMs={sparkConfig.intervalMs}
+                  endTs={priceUpdatedAt || undefined}
+                />
+              )}
+            </div>
+
+
+
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-border/60 bg-card/60 p-3">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -805,8 +873,26 @@ export function LiveWalletPortfolio() {
                         )}
                       </div>
 
+                      {compareMode && r.sparkline.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleCompare(r.symbol)}
+                          aria-pressed={comparePicks.includes(r.symbol)}
+                          className={`mt-1 rounded-md border px-2 py-0.5 text-[10px] uppercase tracking-wide transition-colors ${
+                            comparePicks.includes(r.symbol)
+                              ? "border-primary/50 bg-primary/20 text-foreground"
+                              : "border-border/60 text-muted-foreground hover:bg-muted/40"
+                          }`}
+                        >
+                          {comparePicks.includes(r.symbol)
+                            ? "Selected for compare"
+                            : "Compare"}
+                        </button>
+                      )}
+
                       {r.sparkline.length > 1 && (
                         <div className="mt-1">
+
                         <HoldingSparklineDrawer
                           symbol={r.symbol}
                           name={r.name}
