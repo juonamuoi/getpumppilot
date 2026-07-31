@@ -295,10 +295,16 @@ export const Route = createFileRoute("/")({
     ]),
     links: [{ rel: "canonical", href: canonicalUrl("/") }],
     scripts: [
-      ldScript(homeWebPageSchema),
-      ldScript(productSchema),
-      ldScript(homeFaqSchema),
-      ldScript(homeNavSchema),
+      // One graph: site-wide Organization + WebSite (SearchAction) merged with
+      // the homepage's own WebPage, SoftwareApplication, FAQ and nav nodes.
+      ldScript(
+        pageEntityGraph([
+          homeWebPageSchema,
+          productSchema,
+          homeFaqSchema,
+          homeNavSchema,
+        ]),
+      ),
     ],
   }),
   component: LandingPage,
