@@ -19,10 +19,12 @@ import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
 import {
   absoluteUrl,
+  assetDemoDataNodes,
   assetSocialImageUrl,
   breadcrumbSchema,
   faqSchema,
   ldScript,
+  pageEntityGraph,
   webPageSchema,
 } from "@/lib/structured-data";
 
