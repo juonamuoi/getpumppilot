@@ -134,8 +134,9 @@ for (const e of entries) {
   seen.add(e.path);
   const loc = `${BASE_URL}${e.path === "/" ? "/" : e.path}`;
   urls.push(
-    `  <url><loc>${loc}</loc>${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ""}<priority>${priorityFor(e.path)}</priority></url>`,
+    `  <url><loc>${loc}</loc>${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ""}${e.changefreq ? `<changefreq>${e.changefreq}</changefreq>` : ""}<priority>${priorityFor(e.path)}</priority></url>`,
   );
+
 }
 
 const xml =
