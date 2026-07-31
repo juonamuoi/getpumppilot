@@ -26,6 +26,10 @@ jobs:
       - name: robots.txt validation
         run: bun run check:robots
 
+      - name: schema.org vocabulary snapshot up to date
+        run: bun run check:schema-vocab
+        continue-on-error: true
+
       - name: JSON-LD + sitemap/canonical suite
         run: bun run test:seo
 
@@ -47,6 +51,12 @@ jobs:
 
       - name: Validate rendered JSON-LD in build output
         run: bun run check:jsonld
+
+      # Strict schema.org vocabulary gate: every @type must be a real
+      # schema.org type and every property must exist and be valid on its
+      # type. Warnings fail the build (no --no-strict).
+      - name: schema.org vocabulary validation (strict)
+        run: bun run check:schema-org --server http://localhost:8080
 
       - name: Upload structured-data report
         if: always()

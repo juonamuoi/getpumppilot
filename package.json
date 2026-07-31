@@ -30,6 +30,11 @@
     "check:social-tags": "bun scripts/social-tags-build-check.mjs",
     "check:social-tags:json": "bun scripts/social-tags-build-check.mjs --json",
     "check:jsonld": "bun scripts/jsonld-build-check.mjs",
+    "gen:schema-vocab": "node scripts/gen-schema-vocabulary.mjs",
+    "check:schema-vocab": "node scripts/gen-schema-vocabulary.mjs --check",
+    "check:schema-org": "bun scripts/schema-org-check.mjs",
+    "check:schema-org:json": "bun scripts/schema-org-check.mjs --json",
+    "test:seo:schema-org": "vitest run --config vitest.seo.config.ts src/tests/seo/schema-org-vocabulary.test.ts",
     "check:jsonld:json": "bun scripts/jsonld-build-check.mjs --json",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
   },
