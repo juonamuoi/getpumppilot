@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import { FaqSection } from "@/components/faq-section";
 import { paperFaqs } from "@/lib/page-faqs";
 import { createFileRoute } from "@tanstack/react-router";
@@ -34,6 +35,8 @@ export const Route = createFileRoute("/paper")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/paper" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/paper"),
       { property: "og:url", content: "https://www.getpumppilot.app/paper" },
       { title: "Paper Trading — PumpPilot AI" },
       {

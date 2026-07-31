@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/risk")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/risk" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/risk"),
       { property: "og:url", content: "https://www.getpumppilot.app/risk" },
       { title: "Risk Controls — PumpPilot AI" },
       {

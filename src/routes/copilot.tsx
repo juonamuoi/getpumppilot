@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -19,6 +20,8 @@ export const Route = createFileRoute("/copilot")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/copilot" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/copilot"),
       { property: "og:url", content: "https://www.getpumppilot.app/copilot" },
       { title: "AI Copilot — PumpPilot AI" },
       { name: "description", content: "Chat with an AI investing coach about your portfolio, strategy and market signals. Educational only." },

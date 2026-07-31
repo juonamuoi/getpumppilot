@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import {
   SOCIAL_IMAGE_URL,
   breadcrumbSchema,
@@ -44,6 +45,8 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/dashboard" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/dashboard"),
       { title: DASH_TITLE },
       { name: "description", content: DASH_DESC },
       { property: "og:title", content: "PumpPilot AI Dashboard" },
