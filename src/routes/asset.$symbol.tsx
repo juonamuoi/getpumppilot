@@ -21,6 +21,12 @@ import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
 import { requestTrade } from "@/lib/trade-gate";
 import {
+  SPARK_WINDOW_OPTIONS,
+  sliceSparkline,
+  type SparkWindowValue,
+} from "@/lib/sparkline-window";
+
+import {
   absoluteUrl,
   assetDemoDataNodes,
   assetSocialImageUrl,
@@ -33,7 +39,16 @@ import {
 
 
 export const Route = createFileRoute("/asset/$symbol")({
+  validateSearch: (search: Record<string, unknown>) => {
+    const w = search.w;
+    return {
+      w: SPARK_WINDOW_OPTIONS.some((o) => o.value === w)
+        ? (w as SparkWindowValue)
+        : undefined,
+    };
+  },
   head: ({ params }) => {
+
     const sym = params.symbol.toUpperCase();
     const asset = getAsset(params.symbol);
     const name = asset?.name ?? sym;
@@ -82,10 +97,13 @@ export const Route = createFileRoute("/asset/$symbol")({
 
 function AssetPage() {
   const { symbol } = Route.useParams();
+  const { w } = Route.useSearch();
   const asset = useLiveAsset(symbol);
   const navigate = useNavigate();
   const paper = usePaper();
   const [qty, setQty] = useState("");
+  const horizon: SparkWindowValue = w ?? "24h";
+
 
   // Activation milestone: the visitor reached their first asset chart.
   useEffect(() => {
@@ -105,7 +123,7 @@ function AssetPage() {
     );
   }
 
-  const chartData = asset.sparkline.map((v, i) => ({ i, v }));
+  const chartData = sliceSparkline(asset.sparkline, horizon).map((v, i) => ({ i, v }));
   const positive = asset.change24h >= 0;
 
   const doTrade = (side: "buy" | "sell") => {
@@ -168,11 +186,31 @@ function AssetPage() {
 
         <div className="grid gap-5 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
-            <CardHeader className="pb-2">
+            <CardHeader className="flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-base">
-                Price {asset.isLive ? "· live" : "(demo)"}
+                Price · {horizon} {asset.isLive ? "· live" : "(demo)"}
               </CardTitle>
+              <div className="flex overflow-hidden rounded-md border border-border/60 text-xs">
+                {SPARK_WINDOW_OPTIONS.map((o) => (
+                  <Link
+                    key={o.value}
+                    to="/asset/$symbol"
+                    params={{ symbol }}
+                    search={{ w: o.value }}
+                    replace
+                    aria-current={horizon === o.value ? "true" : undefined}
+                    className={`px-2.5 py-1 transition-colors ${
+                      horizon === o.value
+                        ? "bg-primary/20 text-foreground"
+                        : "text-muted-foreground hover:bg-muted/40"
+                    }`}
+                  >
+                    {o.label}
+                  </Link>
+                ))}
+              </div>
             </CardHeader>
+
             <CardContent className="h-72 pl-0">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
