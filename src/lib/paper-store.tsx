@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ASSETS, getAsset } from "./mock-data";
+import { livePriceOf } from "./live-price-registry";
+
+/** Live price when the feed covers the symbol, else the simulated demo price. */
+function markPrice(symbol: string, fallback: number): number {
+  return livePriceOf(symbol) ?? fallback;
+}
 
 export type Position = {
   symbol: string;
