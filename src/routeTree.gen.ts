@@ -50,6 +50,7 @@ import { Route as EmbedMomentumRouteImport } from './routes/embed.momentum'
 import { Route as FeaturesIndexRouteImport } from './routes/features.index'
 import { Route as FeaturesDashboardRouteImport } from './routes/features.dashboard'
 import { Route as FeaturesJournalRouteImport } from './routes/features.journal'
+import { Route as JournalRssDotxmlRouteImport } from './routes/journal.rss[.]xml'
 import { Route as LpVariantRouteImport } from './routes/lp.$variant'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -268,6 +269,11 @@ const FeaturesJournalRoute = FeaturesJournalRouteImport.update({
   path: '/features/journal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JournalRssDotxmlRoute = JournalRssDotxmlRouteImport.update({
+  id: '/rss.xml',
+  path: '/rss.xml',
+  getParentRoute: () => JournalRoute,
+} as any)
 const LpVariantRoute = LpVariantRouteImport.update({
   id: '/lp/$variant',
   path: '/lp/$variant',
@@ -336,7 +342,7 @@ export interface FileRoutesByFullPath {
   '/developers': typeof DevelopersRoute
   '/doctor': typeof DoctorRoute
   '/go-live-test': typeof GoLiveTestRoute
-  '/journal': typeof JournalRoute
+  '/journal': typeof JournalRouteWithChildren
   '/learn': typeof LearnRoute
   '/login': typeof LoginRoute
   '/lp-report': typeof LpReportRoute
@@ -364,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/embed/momentum': typeof EmbedMomentumRoute
   '/features/dashboard': typeof FeaturesDashboardRoute
   '/features/journal': typeof FeaturesJournalRoute
+  '/journal/rss.xml': typeof JournalRssDotxmlRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
   '/features/': typeof FeaturesIndexRoute
@@ -389,7 +396,7 @@ export interface FileRoutesByTo {
   '/developers': typeof DevelopersRoute
   '/doctor': typeof DoctorRoute
   '/go-live-test': typeof GoLiveTestRoute
-  '/journal': typeof JournalRoute
+  '/journal': typeof JournalRouteWithChildren
   '/learn': typeof LearnRoute
   '/login': typeof LoginRoute
   '/lp-report': typeof LpReportRoute
@@ -417,6 +424,7 @@ export interface FileRoutesByTo {
   '/embed/momentum': typeof EmbedMomentumRoute
   '/features/dashboard': typeof FeaturesDashboardRoute
   '/features/journal': typeof FeaturesJournalRoute
+  '/journal/rss.xml': typeof JournalRssDotxmlRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog': typeof BlogIndexRoute
   '/features': typeof FeaturesIndexRoute
@@ -443,7 +451,7 @@ export interface FileRoutesById {
   '/developers': typeof DevelopersRoute
   '/doctor': typeof DoctorRoute
   '/go-live-test': typeof GoLiveTestRoute
-  '/journal': typeof JournalRoute
+  '/journal': typeof JournalRouteWithChildren
   '/learn': typeof LearnRoute
   '/login': typeof LoginRoute
   '/lp-report': typeof LpReportRoute
@@ -471,6 +479,7 @@ export interface FileRoutesById {
   '/embed/momentum': typeof EmbedMomentumRoute
   '/features/dashboard': typeof FeaturesDashboardRoute
   '/features/journal': typeof FeaturesJournalRoute
+  '/journal/rss.xml': typeof JournalRssDotxmlRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
   '/features/': typeof FeaturesIndexRoute
@@ -526,6 +535,7 @@ export interface FileRouteTypes {
     | '/embed/momentum'
     | '/features/dashboard'
     | '/features/journal'
+    | '/journal/rss.xml'
     | '/lp/$variant'
     | '/blog/'
     | '/features/'
@@ -579,6 +589,7 @@ export interface FileRouteTypes {
     | '/embed/momentum'
     | '/features/dashboard'
     | '/features/journal'
+    | '/journal/rss.xml'
     | '/lp/$variant'
     | '/blog'
     | '/features'
@@ -632,6 +643,7 @@ export interface FileRouteTypes {
     | '/embed/momentum'
     | '/features/dashboard'
     | '/features/journal'
+    | '/journal/rss.xml'
     | '/lp/$variant'
     | '/blog/'
     | '/features/'
@@ -658,7 +670,7 @@ export interface RootRouteChildren {
   DevelopersRoute: typeof DevelopersRoute
   DoctorRoute: typeof DoctorRoute
   GoLiveTestRoute: typeof GoLiveTestRoute
-  JournalRoute: typeof JournalRoute
+  JournalRoute: typeof JournalRouteWithChildren
   LearnRoute: typeof LearnRoute
   LoginRoute: typeof LoginRoute
   LpReportRoute: typeof LpReportRoute
@@ -988,6 +1000,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesJournalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/journal/rss.xml': {
+      id: '/journal/rss.xml'
+      path: '/rss.xml'
+      fullPath: '/journal/rss.xml'
+      preLoaderRoute: typeof JournalRssDotxmlRouteImport
+      parentRoute: typeof JournalRoute
+    }
     '/lp/$variant': {
       id: '/lp/$variant'
       path: '/lp/$variant'
@@ -1061,6 +1080,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface JournalRouteChildren {
+  JournalRssDotxmlRoute: typeof JournalRssDotxmlRoute
+}
+
+const JournalRouteChildren: JournalRouteChildren = {
+  JournalRssDotxmlRoute: JournalRssDotxmlRoute,
+}
+
+const JournalRouteWithChildren =
+  JournalRoute._addFileChildren(JournalRouteChildren)
+
 interface ApiPublicWaitlistRouteChildren {
   ApiPublicWaitlistFollowupRoute: typeof ApiPublicWaitlistFollowupRoute
 }
@@ -1084,7 +1114,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevelopersRoute: DevelopersRoute,
   DoctorRoute: DoctorRoute,
   GoLiveTestRoute: GoLiveTestRoute,
-  JournalRoute: JournalRoute,
+  JournalRoute: JournalRouteWithChildren,
   LearnRoute: LearnRoute,
   LoginRoute: LoginRoute,
   LpReportRoute: LpReportRoute,
