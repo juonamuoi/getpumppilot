@@ -79,8 +79,36 @@ export const SHARE_TARGETS: Record<StaticSharePath, ShareTarget> = {
   },
 };
 
-export const isShareablePath = (p: string): p is ShareablePath =>
-  Object.prototype.hasOwnProperty.call(SHARE_TARGETS, p);
+/**
+ * Token detail share target, derived from the same ASSETS data the page
+ * renders so the copy always matches the token and the canonical always
+ * matches the route's `<link rel="canonical">`.
+ */
+export function assetShareTarget(symbol: string): ShareTarget | null {
+  const asset = getAsset(symbol);
+  if (!asset) return null;
+  const slug = asset.symbol.toLowerCase();
+  return {
+    path: `/asset/${slug}`,
+    canonical: `${SITE_URL}/asset/${slug}`,
+    label: `${asset.symbol} token page`,
+    title: `${asset.name} (${asset.symbol}) momentum — PumpPilot AI`,
+    summary: `Explainable momentum score, chart and paper trading for ${asset.name} (${asset.symbol}) on PumpPilot AI. Demo data — not financial advice.`,
+    campaign: `share_asset_${slug}`,
+  };
+}
+
+/** Resolve any shareable path (static surface or token detail page). */
+export function getShareTarget(path: string): ShareTarget | null {
+  if (Object.prototype.hasOwnProperty.call(SHARE_TARGETS, path)) {
+    return SHARE_TARGETS[path as StaticSharePath];
+  }
+  const match = /^\/asset\/([A-Za-z0-9]+)$/.exec(path);
+  return match ? assetShareTarget(match[1]) : null;
+}
+
+export const isShareablePath = (p: string): p is ShareablePath => getShareTarget(p) !== null;
+
 
 /** Parameters we are willing to append. Anything else is dropped. */
 export type UtmParams = {
