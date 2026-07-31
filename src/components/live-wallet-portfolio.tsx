@@ -29,7 +29,12 @@ import {
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { LIVE_SYMBOLS, useLivePriceMap, useLivePrices } from "@/lib/market-data";
-import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
+import { useInjectedAccount, useWalletBalances, forceRescan } from "@/lib/wallet-balances";
+import {
+  useSyncInterval,
+  SYNC_INTERVAL_OPTIONS,
+  type SyncIntervalValue,
+} from "@/lib/sync-interval";
 import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 import { LivePaperAllocationCompare } from "@/components/live-paper-allocation-compare";
@@ -79,8 +84,9 @@ function freshness(ts: number | undefined): string {
 
 export function LiveWalletPortfolio() {
   const { address, available, connect } = useInjectedAccount();
+  const { value: syncValue, setValue: setSyncValue, ms: syncMs } = useSyncInterval();
   const { data, isFetching, isError, error, refetch, dataUpdatedAt } =
-    useWalletBalances(address);
+    useWalletBalances(address, syncMs);
   const prices = useLivePriceMap();
   const {
     dataUpdatedAt: priceUpdatedAt,
@@ -88,7 +94,7 @@ export function LiveWalletPortfolio() {
     isError: pricesError,
     error: priceError,
     refetch: refetchPrices,
-  } = useLivePrices();
+  } = useLivePrices(syncMs);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<HoldingFilter>("all");
@@ -97,6 +103,28 @@ export function LiveWalletPortfolio() {
   const [pricedFirst, setPricedFirst] = useState(true);
   const [staleMs, setStaleMs] = useStaleThresholdMs();
   const { lists: spamLists } = useSpamLists();
+  const [rescanning, setRescanning] = useState(false);
+
+  const syncing = rescanning || isFetching || pricesFetching;
+  // Last successful sync = the older of the two feeds, so it never overstates.
+  const lastSyncAt =
+    dataUpdatedAt && priceUpdatedAt
+      ? Math.min(dataUpdatedAt, priceUpdatedAt)
+      : dataUpdatedAt || priceUpdatedAt || 0;
+
+  /** Manual full sync: drop the cached log scan, re-detect ERC-20s, re-price. */
+  const onRefreshAll = async () => {
+    setRescanning(true);
+    try {
+      await forceRescan(address);
+      await Promise.all([refetch(), refetchPrices()]);
+      toast.success("Wallet re-scanned and prices refreshed");
+    } catch {
+      toast.error("Refresh failed — check your wallet connection");
+    } finally {
+      setRescanning(false);
+    }
+  };
 
   // Re-evaluate freshness on a timer so the warning appears without a refetch.
   const [now, setNow] = useState(() => Date.now());
@@ -217,32 +245,45 @@ export function LiveWalletPortfolio() {
         </CardTitle>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <DataSourcesDialog />
+          <Select
+            value={syncValue}
+            onValueChange={(v) => setSyncValue(v as SyncIntervalValue)}
+          >
+            <SelectTrigger className="h-7 w-[168px] text-xs" title="Auto-refresh interval">
+              <Clock className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
+              <SelectValue placeholder="Auto-refresh" />
+            </SelectTrigger>
+            <SelectContent>
+              {SYNC_INTERVAL_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-xs">
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex flex-col items-end">
             <Button
               variant="outline"
               size="sm"
               className="h-7 gap-1 border-emerald-500/30 text-xs"
-              onClick={() => void refetchPrices()}
-              disabled={pricesFetching}
-              title={
-                priceUpdatedAt
-                  ? `Prices fetched ${new Date(priceUpdatedAt).toLocaleString()}`
-                  : "Prices not fetched yet"
-              }
+              onClick={() => void onRefreshAll()}
+              disabled={syncing}
+              title="Re-detect ERC-20 tokens and re-price every holding"
             >
-              {pricesFetching ? (
+              {syncing ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <RefreshCw className="h-3.5 w-3.5" />
               )}
-              {pricesFetching ? "Refreshing prices…" : "Refresh prices"}
+              {syncing ? "Refreshing…" : "Refresh"}
             </Button>
             <span className="mt-0.5 text-[10px] text-muted-foreground">
-              {pricesFetching
-                ? "fetching CoinGecko…"
-                : priceUpdatedAt
-                  ? `prices ${freshness(priceUpdatedAt)} · ${new Date(priceUpdatedAt).toLocaleTimeString()}`
-                  : "prices not fetched yet"}
+              {syncing
+                ? "syncing tokens + prices…"
+                : lastSyncAt
+                  ? `last sync ${freshness(lastSyncAt)} · ${new Date(lastSyncAt).toLocaleTimeString()}`
+                  : "not synced yet"}
+              {syncMs > 0 ? " · auto" : " · manual"}
             </span>
           </div>
           {address && (
@@ -252,6 +293,7 @@ export function LiveWalletPortfolio() {
               className="h-7 gap-1 text-xs"
               onClick={() => void refetch()}
               disabled={isFetching}
+              title="Re-read balances only (uses the cached token scan)"
             >
               {isFetching ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -262,6 +304,7 @@ export function LiveWalletPortfolio() {
             </Button>
           )}
         </div>
+
 
       </CardHeader>
 

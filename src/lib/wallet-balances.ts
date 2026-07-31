@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   loadLogScanCache,
+  clearLogScanCache,
   saveLogScanCache,
   mergeActivity,
   type CachedActivity,
@@ -484,13 +485,30 @@ export function useInjectedAccount() {
 }
 
 /** Live, read-only balances for the connected account. */
-export function useWalletBalances(address: string | null) {
+export function useWalletBalances(address: string | null, refetchIntervalMs?: number) {
   return useQuery({
     queryKey: ["wallet-balances", address],
     queryFn: () => readBalances(address as string),
     enabled: Boolean(address),
-    refetchInterval: 60_000,
+    refetchInterval:
+      refetchIntervalMs === undefined ? 60_000 : refetchIntervalMs > 0 ? refetchIntervalMs : false,
     staleTime: 30_000,
     retry: 1,
   });
+}
+
+/**
+ * Forces a full ERC-20 re-detection by dropping the cached log scan for the
+ * connected account, then re-running the read-only balance read.
+ */
+export async function forceRescan(address: string | null): Promise<void> {
+  if (!address) return;
+  const provider = getInjectedProvider();
+  if (!provider) return;
+  try {
+    const chainId = Number(hexToNumber(await provider.request({ method: "eth_chainId" })));
+    clearLogScanCache(chainId, address);
+  } catch {
+    // Cache clearing is best-effort; the refetch still runs.
+  }
 }
