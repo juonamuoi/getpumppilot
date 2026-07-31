@@ -1,6 +1,8 @@
 // Explains, in plain English, why a wallet holding is (or is not) priced.
 import { LIVE_SYMBOLS } from "@/lib/market-data";
-import { isSpamLikely, type HoldingLike } from "@/lib/holding-filters";
+import { type HoldingLike } from "@/lib/holding-filters";
+import { evaluateSpam, type SpamInput } from "@/lib/spam-signals";
+import type { SpamListState } from "@/lib/spam-lists";
 
 export type PriceStatusCode =
   | "live"
@@ -23,7 +25,10 @@ export type PriceDiagnosis = {
   tone: "ok" | "warn" | "error";
 };
 
-export function diagnoseHolding(h: HoldingLike & { livePriced?: boolean; usdPeg?: number }): PriceDiagnosis {
+export function diagnoseHolding(
+  h: HoldingLike & { livePriced?: boolean; usdPeg?: number },
+  lists?: SpamListState,
+): PriceDiagnosis {
   const covered = (LIVE_SYMBOLS as readonly string[]).includes(h.symbol);
 
   if (h.failed) {
@@ -82,7 +87,7 @@ export function diagnoseHolding(h: HoldingLike & { livePriced?: boolean; usdPeg?
     };
   }
 
-  if (isSpamLikely(h)) {
+  if (evaluateSpam(h as SpamInput, lists).spam) {
     return {
       code: "spam-likely",
       label: "no live price · spam-likely",

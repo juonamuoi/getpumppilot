@@ -22,6 +22,9 @@ import {
   type PriceDiagnosis,
 } from "@/lib/holding-diagnosis";
 import type { HoldingLike } from "@/lib/holding-filters";
+import { SpamSignalsPanel } from "@/components/spam-signals-panel";
+import { useSpamLists } from "@/lib/spam-lists";
+import type { SpamInput } from "@/lib/spam-signals";
 
 type Row = HoldingLike & {
   livePriced?: boolean;
@@ -55,7 +58,8 @@ export function HoldingInfoDrawer({
   chainName?: string;
   priceUpdatedAt?: number;
 }) {
-  const d = diagnoseHolding(holding);
+  const { lists } = useSpamLists();
+  const d = diagnoseHolding(holding, lists);
   const bb = balanceBreakdown(holding.amount, holding.decimals);
   const explorer = explorerLink(chainId, holding.address);
   const Icon = d.tone === "ok" ? ShieldCheck : d.tone === "warn" ? AlertTriangle : ShieldAlert;
@@ -191,6 +195,8 @@ export function HoldingInfoDrawer({
               mono
             />
           </div>
+
+          <SpamSignalsPanel holding={holding as SpamInput} />
 
           <DrawerFooter className="flex-row flex-wrap gap-2 px-0">
             {holding.address && (

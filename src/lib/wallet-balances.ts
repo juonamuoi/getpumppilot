@@ -70,6 +70,18 @@ const TOKENS_BY_CHAIN: Record<
   ],
 };
 
+/** Recent Transfer-log activity for an auto-detected contract. */
+export type TokenActivity = {
+  /** Transfers involving this wallet in the scanned window. */
+  transfers: number;
+  incoming: number;
+  outgoing: number;
+  firstBlock: number;
+  lastBlock: number;
+  /** Blocks covered by the log scan. */
+  scannedBlocks: number;
+};
+
 export type WalletBalance = {
   symbol: string;
   name: string;
@@ -84,6 +96,8 @@ export type WalletBalance = {
   discovered?: boolean;
   /** Token decimals, used for the balance breakdown in the info drawer. */
   decimals?: number;
+  /** Recent on-chain transfer activity observed during auto-detection. */
+  activity?: TokenActivity;
 };
 
 export type WalletBalances = {
@@ -166,11 +180,11 @@ async function call(
   return provider.request({ method: "eth_call", params: [{ to, data }, "latest"] });
 }
 
-/** Contract addresses this account has sent or received ERC-20 transfers with. */
+/** Contract addresses this account transferred with, plus per-token activity. */
 async function discoverTokenContracts(
   provider: Eip1193,
   address: string,
-): Promise<string[]> {
+): Promise<Map<string, TokenActivity>> {
   const latest = Number(hexToNumber(await provider.request({ method: "eth_blockNumber" })));
   const from = Math.max(0, latest - SCAN_BLOCKS);
   const fromBlock = `0x${from.toString(16)}`;
@@ -181,18 +195,37 @@ async function discoverTokenContracts(
     { topics: [TRANSFER_TOPIC, topic] }, // outgoing
   ];
 
-  const found = new Set<string>();
+  const found = new Map<string, TokenActivity>();
   let ok = false;
 
-  for (const q of queries) {
+  for (const [i, q] of queries.entries()) {
+    const direction = i === 0 ? "incoming" : "outgoing";
     try {
       const logs = (await provider.request({
         method: "eth_getLogs",
         params: [{ fromBlock, toBlock: "latest", ...q }],
-      })) as { address?: string }[];
+      })) as { address?: string; blockNumber?: string }[];
       ok = true;
       for (const l of logs ?? []) {
-        if (l?.address) found.add(l.address.toLowerCase());
+        if (!l?.address) continue;
+        const key = l.address.toLowerCase();
+        const block = Number(hexToNumber(l.blockNumber)) || latest;
+        const prev =
+          found.get(key) ??
+          ({
+            transfers: 0,
+            incoming: 0,
+            outgoing: 0,
+            firstBlock: block,
+            lastBlock: block,
+            scannedBlocks: latest - from,
+          } satisfies TokenActivity);
+        prev.transfers += 1;
+        if (direction === "incoming") prev.incoming += 1;
+        else prev.outgoing += 1;
+        prev.firstBlock = Math.min(prev.firstBlock, block);
+        prev.lastBlock = Math.max(prev.lastBlock, block);
+        found.set(key, prev);
       }
     } catch {
       // RPC may cap log ranges or disable eth_getLogs entirely.
@@ -200,7 +233,7 @@ async function discoverTokenContracts(
   }
 
   if (!ok) throw new Error("log scan unavailable");
-  return [...found];
+  return found;
 }
 
 /** Reads symbol/decimals/balanceOf for a discovered contract. */
@@ -208,6 +241,7 @@ async function readDiscoveredToken(
   provider: Eip1193,
   contract: string,
   address: string,
+  activity?: TokenActivity,
 ): Promise<WalletBalance | null> {
   const rawBal = hexToNumber(
     await call(provider, contract, `0x70a08231${pad32(address).slice(2)}`),
@@ -233,6 +267,7 @@ async function readDiscoveredToken(
     address: contract,
     discovered: true,
     decimals: dec,
+    activity,
   };
 }
 
@@ -281,12 +316,13 @@ async function readBalances(address: string): Promise<WalletBalances> {
   // Auto-detect any other ERC-20 the wallet has touched recently.
   let discoveryFailed = false;
   try {
-    const contracts = (await discoverTokenContracts(provider, address))
+    const activity = await discoverTokenContracts(provider, address);
+    const contracts = [...activity.keys()]
       .filter((c) => !seen.has(c))
       .slice(0, MAX_DISCOVERED);
 
     const results = await Promise.allSettled(
-      contracts.map((c) => readDiscoveredToken(provider, c, address)),
+      contracts.map((c) => readDiscoveredToken(provider, c, address, activity.get(c))),
     );
     for (const r of results) {
       if (r.status === "fulfilled" && r.value) balances.push(r.value);
