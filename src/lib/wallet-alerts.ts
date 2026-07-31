@@ -1,8 +1,7 @@
 // Price-change and threshold alerts for live wallet holdings.
 // Monitoring only — this module never places, signs or simulates an order.
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
-import { toast } from "sonner";
-import { recordDelivery } from "@/lib/notify-log";
+import { dispatchAlert } from "@/lib/wallet-alert-channels";
 import type { LivePrice } from "@/lib/market-data";
 
 export type WalletAlertKind =
@@ -221,15 +220,11 @@ export function evaluateWalletAlerts(
     persist();
     emit();
     for (const e of fired) {
-      toast.warning("Wallet price alert", {
-        description: `${e.message} · alert only, trading disabled`,
-      });
-      recordDelivery({
-        channel: "push",
-        status: "sent",
-        title: `Wallet alert — ${e.symbol}`,
-        detail: e.message,
+      void dispatchAlert({
         correlationId: e.id,
+        symbol: e.symbol,
+        message: e.message,
+        ts: e.ts,
       });
     }
   }

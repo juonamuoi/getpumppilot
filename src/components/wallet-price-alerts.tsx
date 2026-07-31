@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BellRing, Plus, Trash2, ShieldOff } from "lucide-react";
+import { BellRing, Plus, Trash2, ShieldOff, Mail, Smartphone, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
@@ -30,6 +30,16 @@ import {
   useWalletAlertWatcher,
   type WalletAlertKind,
 } from "@/lib/wallet-alerts";
+import {
+  CHANNEL_HINTS,
+  CHANNEL_LABELS,
+  dispatchAlert,
+  requestPushPermissionForAlerts,
+  setChannel,
+  useAlertChannels,
+  type AlertChannelPrefs,
+} from "@/lib/wallet-alert-channels";
+import { reasonLabel, useDeliveryLog } from "@/lib/notify-log";
 
 const KINDS: WalletAlertKind[] = ["price_above", "price_below", "change_up", "change_down"];
 
@@ -53,6 +63,43 @@ export function WalletPriceAlerts() {
   const [kind, setKind] = useState<WalletAlertKind>("price_above");
   const [value, setValue] = useState("");
   const [cooldown, setCooldown] = useState("30");
+  const [testing, setTesting] = useState(false);
+  const channels = useAlertChannels();
+  const deliveries = useDeliveryLog().filter((d) => d.title.toLowerCase().includes("price alert"));
+
+  const onToggleChannel = async (key: keyof AlertChannelPrefs, next: boolean) => {
+    if (key === "push" && next) {
+      const perm = await requestPushPermissionForAlerts();
+      if (perm !== "granted") {
+        toast.error(
+          perm === "unsupported"
+            ? "Push notifications are not supported on this device"
+            : "Notification permission was not granted",
+        );
+        return;
+      }
+    }
+    setChannel(key, next);
+    toast.success(`${CHANNEL_LABELS[key]} ${next ? "enabled" : "disabled"} for price alerts`);
+  };
+
+  const onTest = async () => {
+    setTesting(true);
+    const results = await dispatchAlert({
+      correlationId: `test-${Date.now().toString(36)}`,
+      symbol: activeSymbolForTest(symbols, symbol),
+      message: `Test alert — delivery check only, no market condition met`,
+      ts: Date.now(),
+      address: address ?? undefined,
+      test: true,
+    });
+    setTesting(false);
+    const sent = results.filter((r) => r.ok).map((r) => r.channel);
+    toast[sent.length ? "success" : "error"](
+      sent.length ? `Test alert sent via ${sent.join(", ")}` : "No channel accepted the test alert",
+      { description: "Check the delivery log below for per-channel details." },
+    );
+  };
 
   const activeSymbol = symbols.includes(symbol) ? symbol : (symbols[0] ?? "BTC");
   const live = prices[activeSymbol];
@@ -96,6 +143,47 @@ export function WalletPriceAlerts() {
             Alerts watch live market data for your holdings and notify you only. They never place,
             sign or route an order — execution stays disabled and paper trading remains the only
             simulated fill path.
+          </p>
+        </div>
+
+
+        <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Delivery channels
+            </p>
+            <Button size="sm" variant="outline" onClick={onTest} disabled={testing}>
+              <Send className="mr-1 h-3.5 w-3.5" /> {testing ? "Sending…" : "Send test alert"}
+            </Button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {(["in_app", "push", "email"] as (keyof AlertChannelPrefs)[]).map((key) => {
+              const Icon = key === "email" ? Mail : key === "push" ? Smartphone : MessageSquare;
+              return (
+                <div
+                  key={key}
+                  className="flex items-start justify-between gap-2 rounded-md border border-border/50 bg-background/40 px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1.5 text-sm font-medium">
+                      <Icon className="h-3.5 w-3.5 text-sky-400" /> {CHANNEL_LABELS[key]}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+                      {CHANNEL_HINTS[key]}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={channels[key]}
+                    onCheckedChange={(v) => void onToggleChannel(key, v)}
+                    aria-label={`Toggle ${CHANNEL_LABELS[key]} for price alerts`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Every attempt is saved to the delivery log below, including skips — so you always know
+            where an alert went.
           </p>
         </div>
 
@@ -233,7 +321,54 @@ export function WalletPriceAlerts() {
             </div>
           )}
         </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Delivery log ({deliveries.length})
+          </p>
+          {deliveries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No deliveries recorded yet — send a test alert to verify your channels.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {deliveries.slice(0, 10).map((d) => (
+                <div
+                  key={d.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 px-3 py-1.5 text-xs"
+                >
+                  <span className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase"
+                    >
+                      {d.channel === "in_app" ? "in-app" : d.channel}
+                    </Badge>
+                    <span className="text-muted-foreground">{d.title}</span>
+                  </span>
+                  <span
+                    className={
+                      d.status === "sent"
+                        ? "text-emerald-400"
+                        : d.status === "failed"
+                          ? "text-rose-400"
+                          : "text-muted-foreground"
+                    }
+                  >
+                    {d.status}
+                    {d.reason ? ` · ${reasonLabel(d.reason)}` : ""} ·{" "}
+                    {new Date(d.ts).toLocaleTimeString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
+}
+
+function activeSymbolForTest(symbols: string[], symbol: string) {
+  return symbols.includes(symbol) ? symbol : (symbols[0] ?? "BTC");
 }
