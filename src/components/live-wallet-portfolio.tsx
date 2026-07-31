@@ -86,6 +86,11 @@ export function LiveWalletPortfolio() {
     refetch: refetchPrices,
   } = useLivePrices();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<HoldingFilter>("all");
+  const [sort, setSort] = useState<HoldingSort>("value-desc");
+  const [hideSpam, setHideSpam] = useState(true);
+  const [pricedFirst, setPricedFirst] = useState(true);
   const [staleMs, setStaleMs] = useStaleThresholdMs();
 
   // Re-evaluate freshness on a timer so the warning appears without a refetch.
