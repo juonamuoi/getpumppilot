@@ -1,0 +1,146 @@
+// Search / filter / sort helpers for the live wallet holdings list.
+
+export type HoldingLike = {
+  symbol: string;
+  name: string;
+  kind: "native" | "erc20" | string;
+  address?: string;
+  discovered?: boolean;
+  amount: number;
+  price: number | null;
+  value: number | null;
+  change24h: number | null;
+  priced: boolean;
+  failed: boolean;
+  stale: boolean;
+};
+
+const SPAM_WORDS = [
+  "http",
+  "www.",
+  ".com",
+  ".io",
+  ".xyz",
+  ".org",
+  ".net",
+  "visit",
+  "claim",
+  "reward",
+  "airdrop",
+  "voucher",
+  "giveaway",
+  "bonus",
+  "free",
+  "$ ",
+];
+
+/**
+ * Heuristic only — never authoritative. Flags auto-detected, unpriced tokens
+ * whose symbol/name looks like a drainer lure (URLs, "claim rewards", emoji,
+ * absurd symbol length). Pre-configured and priced tokens are never flagged.
+ */
+export function isSpamLikely(h: HoldingLike): boolean {
+  if (!h.discovered || h.kind !== "erc20") return false;
+  if (h.priced || h.price != null) return false;
+  const text = `${h.symbol} ${h.name}`.toLowerCase();
+  if (SPAM_WORDS.some((w) => text.includes(w))) return true;
+  if (h.symbol.length > 12) return true;
+  // Non-ASCII / emoji in ticker is a strong lure signal.
+  if (/[^\x20-\x7E]/.test(h.symbol)) return true;
+  return false;
+}
+
+export type HoldingFilter = "all" | "priced" | "unpriced" | "detected" | "issues";
+export type HoldingSort =
+  | "value-desc"
+  | "value-asc"
+  | "change-desc"
+  | "change-asc"
+  | "amount-desc"
+  | "symbol-asc";
+
+export const FILTER_LABELS: Record<HoldingFilter, string> = {
+  all: "All",
+  priced: "Priced",
+  unpriced: "Unpriced",
+  detected: "Auto-detected",
+  issues: "Stale / failed",
+};
+
+export const SORT_LABELS: Record<HoldingSort, string> = {
+  "value-desc": "Value (high → low)",
+  "value-asc": "Value (low → high)",
+  "change-desc": "24h change (high → low)",
+  "change-asc": "24h change (low → high)",
+  "amount-desc": "Amount (high → low)",
+  "symbol-asc": "Symbol (A → Z)",
+};
+
+function matchesFilter(h: HoldingLike, f: HoldingFilter): boolean {
+  switch (f) {
+    case "priced":
+      return h.price != null && !h.failed;
+    case "unpriced":
+      return h.price == null;
+    case "detected":
+      return Boolean(h.discovered);
+    case "issues":
+      return h.failed || h.stale;
+    default:
+      return true;
+  }
+}
+
+function matchesQuery(h: HoldingLike, q: string): boolean {
+  if (!q) return true;
+  const needle = q.trim().toLowerCase();
+  return (
+    h.symbol.toLowerCase().includes(needle) ||
+    h.name.toLowerCase().includes(needle) ||
+    (h.address ?? "").toLowerCase().includes(needle)
+  );
+}
+
+export function applyHoldingControls<T extends HoldingLike>(
+  rows: T[],
+  opts: {
+    query: string;
+    filter: HoldingFilter;
+    sort: HoldingSort;
+    hideSpam: boolean;
+    pricedFirst: boolean;
+  },
+): T[] {
+  const out = rows.filter(
+    (r) =>
+      matchesQuery(r, opts.query) &&
+      matchesFilter(r, opts.filter) &&
+      (!opts.hideSpam || !isSpamLikely(r)),
+  );
+
+  const cmp = (a: T, b: T): number => {
+    switch (opts.sort) {
+      case "value-asc":
+        return (a.value ?? 0) - (b.value ?? 0);
+      case "change-desc":
+        return (b.change24h ?? -Infinity) - (a.change24h ?? -Infinity);
+      case "change-asc":
+        return (a.change24h ?? Infinity) - (b.change24h ?? Infinity);
+      case "amount-desc":
+        return b.amount - a.amount;
+      case "symbol-asc":
+        return a.symbol.localeCompare(b.symbol);
+      default:
+        return (b.value ?? 0) - (a.value ?? 0);
+    }
+  };
+
+  return out.sort((a, b) => {
+    if (opts.pricedFirst) {
+      const ap = a.price != null && !a.failed ? 0 : 1;
+      const bp = b.price != null && !b.failed ? 0 : 1;
+      if (ap !== bp) return ap - bp;
+    }
+    return cmp(a, b);
+  });
+}

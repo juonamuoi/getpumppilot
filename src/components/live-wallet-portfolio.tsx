@@ -3,7 +3,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock, Download } from "lucide-react";
+import {
+  Wallet,
+  RefreshCw,
+  Loader2,
+  ShieldCheck,
+  Clock,
+  Download,
+  Search,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  FILTER_LABELS,
+  SORT_LABELS,
+  applyHoldingControls,
+  isSpamLikely,
+  type HoldingFilter,
+  type HoldingSort,
+} from "@/lib/holding-filters";
 import {
   downloadCsv,
   holdingsCsvFilename,
@@ -69,6 +86,11 @@ export function LiveWalletPortfolio() {
     refetch: refetchPrices,
   } = useLivePrices();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<HoldingFilter>("all");
+  const [sort, setSort] = useState<HoldingSort>("value-desc");
+  const [hideSpam, setHideSpam] = useState(true);
+  const [pricedFirst, setPricedFirst] = useState(true);
   const [staleMs, setStaleMs] = useStaleThresholdMs();
 
   // Re-evaluate freshness on a timer so the warning appears without a refetch.
@@ -104,6 +126,15 @@ export function LiveWalletPortfolio() {
       // Excluded from totals while stale, failed or unpriced.
       counted: price != null && !stale,
     };
+  });
+
+  const spamCount = rows.filter((r) => isSpamLikely(r)).length;
+  const visibleRows = applyHoldingControls(rows, {
+    query,
+    filter,
+    sort,
+    hideSpam,
+    pricedFirst,
   });
 
   const total = rows.reduce((s, r) => s + (r.counted ? (r.value ?? 0) : 0), 0);
@@ -496,11 +527,88 @@ export function LiveWalletPortfolio() {
               </p>
             )}
 
+            {rows.length > 0 && (
+              <div className="space-y-2 rounded-xl border border-border/60 bg-card/60 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative min-w-[180px] flex-1">
+                    <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search symbol, name or contract…"
+                      className="h-8 pl-7 text-xs"
+                    />
+                  </div>
+                  <Select
+                    value={sort}
+                    onValueChange={(v) => setSort(v as HoldingSort)}
+                  >
+                    <SelectTrigger className="h-8 w-[190px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(SORT_LABELS) as HoldingSort[]).map((k) => (
+                        <SelectItem key={k} value={k} className="text-xs">
+                          {SORT_LABELS[k]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(Object.keys(FILTER_LABELS) as HoldingFilter[]).map((f) => (
+                    <Button
+                      key={f}
+                      size="sm"
+                      variant={filter === f ? "secondary" : "ghost"}
+                      className="h-6 px-2 text-[11px]"
+                      onClick={() => setFilter(f)}
+                    >
+                      {FILTER_LABELS[f]}
+                    </Button>
+                  ))}
+                  <span className="mx-1 h-4 w-px bg-border/60" />
+                  <Button
+                    size="sm"
+                    variant={hideSpam ? "secondary" : "ghost"}
+                    className="h-6 gap-1 px-2 text-[11px]"
+                    onClick={() => setHideSpam((v) => !v)}
+                    title="Hide auto-detected, unpriced tokens whose name looks like a drainer lure"
+                  >
+                    <ShieldCheck className="h-3 w-3" />
+                    Hide spam-likely{spamCount > 0 ? ` (${spamCount})` : ""}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={pricedFirst ? "secondary" : "ghost"}
+                    className="h-6 px-2 text-[11px]"
+                    onClick={() => setPricedFirst((v) => !v)}
+                    title="Sort holdings with a live price above unpriced ones"
+                  >
+                    Priced first
+                  </Button>
+                </div>
+
+                <div className="text-[10px] text-muted-foreground">
+                  Showing {visibleRows.length} of {rows.length} holdings
+                  {hideSpam && spamCount > 0 ? ` · ${spamCount} spam-likely hidden` : ""}
+                  . Spam detection is a heuristic — never approve or interact with unknown
+                  tokens.
+                </div>
+              </div>
+            )}
+
+            {rows.length > 0 && visibleRows.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No holdings match these filters.
+              </p>
+            )}
+
             <div className="space-y-2">
-              {rows
-                .slice()
-                .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+              {visibleRows
                 .map((r) => (
+
                   <div
                     key={`${r.symbol}-${r.kind}-${r.address ?? "native"}`}
                     className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2 ${
