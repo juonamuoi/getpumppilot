@@ -818,7 +818,7 @@ export function MitigationAuditTrail({
             <Input
               value={q}
               onChange={(ev) => setQ(ev.target.value)}
-              placeholder="Quick search: mitigation, rule, symbol or correlation ID"
+              placeholder="Search symbol, timestamp (2026-07-31) or correlation ID"
               className="h-8 pr-7 text-xs"
             />
             {q ? (
