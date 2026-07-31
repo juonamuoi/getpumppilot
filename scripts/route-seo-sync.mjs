@@ -108,6 +108,8 @@ for (const { file, id } of files) {
   if (!/createFileRoute\(/.test(src)) continue;
   // Server-only file routes (sitemap.xml, feeds, …) have no share surface.
   if (/server:\s*\{/.test(src) && !/component:/.test(src)) continue;
+  // Pure redirect aliases (e.g. /login -> /auth) never render a share surface.
+  if (/throw redirect\(/.test(src) && !/component:/.test(src)) continue;
   if (/\bhead:\s*\(/.test(src)) continue;
 
   const path = idToPath(id).replace(/\/$/, "") || "/";
