@@ -349,9 +349,14 @@ function PumpPage() {
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Activity</CardTitle>
-              <CardDescription>Your last 50 PUMP movements.</CardDescription>
+            <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+              <div>
+                <CardTitle className="text-base">Activity</CardTitle>
+                <CardDescription>Your last 50 PUMP movements.</CardDescription>
+              </div>
+              <Button asChild size="sm" variant="secondary">
+                <Link to="/pump-history">Transfer history & receipts</Link>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-1">
               {(summary?.ledger ?? []).map((l) => (

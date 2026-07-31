@@ -1133,6 +1133,10 @@ export type Database = {
         Args: { _amount: number; _memo?: string; _to_tag: string }
         Returns: Json
       }
+      pump_transfer_history: {
+        Args: { _limit?: number; _offset?: number }
+        Returns: Json
+      }
       resolve_referral_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
