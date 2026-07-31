@@ -15,6 +15,16 @@ import { BLOG_POSTS } from "@/lib/blog-posts";
 
 const BASE_URL = (process.env.SEO_E2E_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
 
+/**
+ * The only difference tolerated between `headline` and <title> is the site
+ * brand suffix the title tag appends. Google matches the headline against the
+ * article's own title, so the suffix is expected — anything else is drift.
+ */
+const BRAND_SUFFIX = " — PumpPilot AI";
+
+const stripBrand = (title: string) =>
+  title.endsWith(BRAND_SUFFIX) ? title.slice(0, -BRAND_SUFFIX.length) : title;
+
 const ARTICLE_TYPES = new Set([
   "Article",
   "BlogPosting",
@@ -160,9 +170,13 @@ describe("journal Article JSON-LD matches the rendered HTML", () => {
         expect(headline, "headline present").toBeTruthy();
         expect(title, "<title> present").toBeTruthy();
         expect(
+          title.endsWith(BRAND_SUFFIX),
+          `<title> on ${path} must end with the brand suffix "${BRAND_SUFFIX}"`,
+        ).toBe(true);
+        expect(
           headline,
-          `JSON-LD headline "${headline}" must match <title> "${title}"`,
-        ).toBe(title);
+          `JSON-LD headline "${headline}" must match <title> "${title}" (minus the brand suffix)`,
+        ).toBe(stripBrand(title));
       });
 
       it("description equals <meta name=\"description\">", () => {
