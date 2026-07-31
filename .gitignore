@@ -33,3 +33,6 @@ dist-ssr
 
 coverage/
 test-artifacts/
+
+# Post-build indexing ping state (per-environment, not source of truth)
+.indexing-state.json
