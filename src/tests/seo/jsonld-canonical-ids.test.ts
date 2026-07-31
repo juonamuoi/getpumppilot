@@ -101,7 +101,12 @@ describe("JSON-LD canonical + @id scheme", () => {
         // The site-wide Organization / WebSite nodes are intentionally global:
         // every page repeats them with the SAME @id so crawlers merge them
         // into one entity instead of seeing a per-page duplicate.
-        const siteWide = id === `${SITE_URL}/#organization` || id === `${SITE_URL}/#website`;
+        // Author desks are site-wide entities too: the same `#author-*` @id
+        // repeats on every post so crawlers merge one author, not one per page.
+        const siteWide =
+          id === `${SITE_URL}/#organization` ||
+          id === `${SITE_URL}/#website` ||
+          /^https:\/\/[^/]+\/#author-[a-z0-9-]+$/.test(id ?? "");
         if (!siteWide) {
           expect(
             id!.startsWith(`${canonical}#`),
