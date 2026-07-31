@@ -1,8 +1,11 @@
 // Mobile tap-to-expand drawer: enlarges a holding's sparkline and shows the
 // exact timestamp/price of every point in the selected window.
 import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowUpRight } from "lucide-react";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
@@ -11,6 +14,7 @@ import {
 } from "@/components/ui/drawer";
 import { PriceSparkline, SparklineStats, fmtPrice } from "@/components/price-sparkline";
 import { SPARK_WINDOW_OPTIONS, type SparkWindowValue } from "@/lib/sparkline-window";
+
 
 type Props = {
   symbol: string;
