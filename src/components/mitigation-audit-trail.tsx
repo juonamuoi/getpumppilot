@@ -1076,6 +1076,53 @@ export function MitigationAuditTrail({
 
       </CardHeader>
       <CardContent>
+        {whyErrors && whyErrors.problems.length > 0 && (
+          <div
+            role="alert"
+            aria-label="Why validation errors"
+            className="mb-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3"
+          >
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-destructive">
+                  {whyErrors.source === "copy" ? "Copy blocked" : "Export blocked"} —{" "}
+                  {whyErrors.problems.length} entr
+                  {whyErrors.problems.length === 1 ? "y" : "ies"} failed Why validation
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {whyErrors.problems.slice(0, 10).map((p) => (
+                    <li key={p.id} className="text-[11px] leading-relaxed">
+                      <span className="font-mono text-foreground">
+                        {p.correlationId ?? p.id}
+                      </span>
+                      <ul className="ml-3 list-disc space-y-0.5 text-muted-foreground">
+                        {p.issues.map((iss, idx) => (
+                          <li key={idx}>{iss}</li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+                {whyErrors.problems.length > 10 && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    +{whyErrors.problems.length - 10} more…
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5"
+                aria-label="Dismiss Why validation errors"
+                onClick={() => setWhyErrors(null)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div
           aria-label="Filtered audit summary"
           className="mb-3 grid grid-cols-2 gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-6"
