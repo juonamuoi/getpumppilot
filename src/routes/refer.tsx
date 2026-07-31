@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { breadcrumbSchema, ldScript, webPageSchema } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-store";
@@ -20,8 +21,20 @@ export const Route = createFileRoute("/refer")({
       { property: "og:title", content: "Invite friends & earn — PumpPilot AI" },
       { property: "og:description", content: "You both get 1 month of Pro free when they sign up." },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: `${BASE}/refer` },
     ], { url: `${BASE}/refer` }),
     links: [{ rel: "canonical", href: `${BASE}/refer` }],
+    scripts: [
+      ldScript(
+        webPageSchema({
+          name: "Invite friends & earn — PumpPilot AI",
+          description:
+            "Share PumpPilot AI with friends. You both get 1 month of Pro free when they sign up and stay for 7 days.",
+          path: "/refer",
+        }),
+      ),
+      ldScript(breadcrumbSchema([{ name: "Invite friends & earn", path: "/refer" }])),
+    ],
   }),
   component: ReferPage,
 });

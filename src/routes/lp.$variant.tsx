@@ -60,7 +60,8 @@ export const Route = createFileRoute("/lp/$variant")({
         { name: "twitter:description", content: v.metaDescription },
         { name: "twitter:image", content: `${SITE_URL}/favicon.png` },
       ]),
-      links: [{ rel: "canonical", href: canonicalUrl("/") }],
+      // Self-referencing canonical: each variant is its own URL.
+      links: [{ rel: "canonical", href: canonicalUrl(`/lp/${v.slug}`) }],
     };
   },
   component: AdLandingVariant,
