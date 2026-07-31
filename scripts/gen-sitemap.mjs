@@ -20,8 +20,19 @@ const SITEMAP = resolve(ROOT, "public/sitemap.xml");
 const ROUTES_DIR = resolve(ROOT, "src/routes");
 const BASE_URL = "https://www.getpumppilot.app";
 
-/** Routes that must never be advertised to crawlers. */
+/**
+ * Routes that must never be advertised to crawlers.
+ * Wallet-gated app surfaces come from src/lib/indexing-policy.ts so the
+ * sitemap and the per-route `noindex` meta can never drift apart.
+ */
+const policySrc = await readFile(resolve(ROOT, "src/lib/indexing-policy.ts"), "utf8");
+const policyPaths = (name) => {
+  const block = policySrc.split(`export const ${name}`)[1]?.split("] as const")[0] ?? "";
+  return [...block.matchAll(/"(\/[^"]*)"/g)].map((m) => m[1]);
+};
 const EXCLUDE = new Set([
+  ...policyPaths("WALLET_GATED_ROUTES"),
+  ...policyPaths("INTERNAL_ROUTES"),
   "/doctor",
   "/login", // duplicate of /auth
 ]);
