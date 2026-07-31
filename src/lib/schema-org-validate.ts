@@ -61,6 +61,12 @@ const JSONLD_KEYWORDS = new Set([
   "@json",
 ]);
 
+/**
+ * Google-documented extensions that are not part of the schema.org core
+ * vocabulary but are required by their rich-result specs.
+ */
+const GOOGLE_EXTENSIONS = new Set(["query-input"]);
+
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -152,7 +158,7 @@ function walk(
   const knownTypes = types.filter(isSchemaOrgType);
 
   for (const key of Object.keys(node)) {
-    if (JSONLD_KEYWORDS.has(key)) continue;
+    if (JSONLD_KEYWORDS.has(key) || GOOGLE_EXTENSIONS.has(key)) continue;
 
     if (!isSchemaOrgProperty(key)) {
       issues.push({
