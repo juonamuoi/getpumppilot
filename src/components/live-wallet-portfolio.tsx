@@ -40,32 +40,54 @@ export function LiveWalletPortfolio() {
   const { data, isFetching, isError, error, refetch, dataUpdatedAt } =
     useWalletBalances(address);
   const prices = useLivePriceMap();
-  const { dataUpdatedAt: priceUpdatedAt, isFetching: pricesFetching } = useLivePrices();
+  const {
+    dataUpdatedAt: priceUpdatedAt,
+    isFetching: pricesFetching,
+    refetch: refetchPrices,
+  } = useLivePrices();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [staleMs, setStaleMs] = useStaleThresholdMs();
+
+  // Re-evaluate freshness on a timer so the warning appears without a refetch.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 15_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const feedStale = isStale(priceUpdatedAt, staleMs, now);
 
   const rows = (data?.balances ?? []).map((b) => {
     const live = prices[b.symbol];
     const price = b.usdPeg ?? live?.price ?? null;
+    const livePriced = !b.usdPeg && Boolean(live);
+    // USD-peg holdings never go stale; live-feed holdings do.
+    const stale = livePriced && feedStale;
     return {
       ...b,
       price,
       value: price != null ? price * b.amount : null,
       change24h: b.usdPeg ? 0 : (live?.change24h ?? null),
       priced: price != null,
-      livePriced: !b.usdPeg && Boolean(live),
+      livePriced,
+      stale,
+      // Excluded from totals while stale or unpriced.
+      counted: price != null && !stale,
     };
   });
 
-  const total = rows.reduce((s, r) => s + (r.value ?? 0), 0);
+  const total = rows.reduce((s, r) => s + (r.counted ? (r.value ?? 0) : 0), 0);
   const dayChange = rows.reduce(
     (s, r) =>
-      r.value != null && r.change24h != null
+      r.counted && r.value != null && r.change24h != null
         ? s + r.value - r.value / (1 + r.change24h / 100)
         : s,
     0,
   );
   const dayPct = total - dayChange > 0 ? (dayChange / (total - dayChange)) * 100 : 0;
   const unpriced = rows.filter((r) => !r.priced).length;
+  const staleRows = rows.filter((r) => r.stale);
+  const staleValue = staleRows.reduce((s, r) => s + (r.value ?? 0), 0);
 
   const onConnect = async () => {
     try {
