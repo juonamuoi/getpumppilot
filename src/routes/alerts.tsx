@@ -5049,7 +5049,12 @@ function ReplayPanel() {
                 }
               />
 
-              <MitigationAuditTrail log={tuningLog} focusCorrelationId={auditFocus} />
+              <MitigationAuditTrail
+                log={tuningLog}
+                focusCorrelationId={auditFocus}
+                shareState={auditShareState}
+              />
+
 
               <TuningHistoryPanel
 
