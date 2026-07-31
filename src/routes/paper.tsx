@@ -117,11 +117,12 @@ function PaperPage() {
       onConfirm: async () => {
         const charge = await spend("bot_execution", { description: `${side.toUpperCase()} ${symbol}`, metadata: { symbol, side } });
         if (!charge.ok) {
-          return toast.error(
+          toast.error(
             charge.reason === "insufficient_credits"
               ? `Out of credits — execution stopped. Each order costs ${CREDIT_COSTS.bot_execution} credit. Recharge to resume.`
               : "Could not charge credits. Try again.",
           );
+          return;
         }
         const r = paper.trade(symbol, side, n);
         r.ok ? toast.success(r.msg) : toast.error(r.msg);
