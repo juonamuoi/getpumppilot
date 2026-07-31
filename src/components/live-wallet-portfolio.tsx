@@ -36,6 +36,7 @@ import { LivePaperAllocationCompare } from "@/components/live-paper-allocation-c
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
 import { PriceSparkline } from "@/components/price-sparkline";
+import { HoldingInfoDrawer } from "@/components/holding-info-drawer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -662,6 +663,12 @@ export function LiveWalletPortfolio() {
                             auto-detected
                           </Badge>
                         )}
+                        <HoldingInfoDrawer
+                          holding={r}
+                          chainId={data?.chainId}
+                          chainName={data?.chainName}
+                          priceUpdatedAt={priceUpdatedAt}
+                        />
                       </div>
 
 
