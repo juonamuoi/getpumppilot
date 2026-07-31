@@ -138,6 +138,24 @@ export function HoldingSparklineDrawer({
             </div>
           </div>
 
+          <DrawerClose asChild>
+            <Link
+              to="/asset/$symbol"
+              params={{ symbol: symbol.toLowerCase() }}
+              search={{ w: win }}
+              className="flex items-center justify-between gap-2 rounded-xl border border-border/60 bg-card/60 px-3 py-3 text-sm transition-colors active:bg-muted/40"
+            >
+              <span>
+                Open {symbol} detail page
+                <span className="block text-[11px] text-muted-foreground">
+                  Full chart on the same {win} horizon
+                </span>
+              </span>
+              <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          </DrawerClose>
+
+
           {sourceNote && (
             <p className="text-[11px] text-muted-foreground">{sourceNote}</p>
           )}
