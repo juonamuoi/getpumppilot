@@ -186,11 +186,31 @@ function AssetPage() {
 
         <div className="grid gap-5 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
-            <CardHeader className="pb-2">
+            <CardHeader className="flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-base">
-                Price {asset.isLive ? "· live" : "(demo)"}
+                Price · {horizon} {asset.isLive ? "· live" : "(demo)"}
               </CardTitle>
+              <div className="flex overflow-hidden rounded-md border border-border/60 text-xs">
+                {SPARK_WINDOW_OPTIONS.map((o) => (
+                  <Link
+                    key={o.value}
+                    to="/asset/$symbol"
+                    params={{ symbol }}
+                    search={{ w: o.value }}
+                    replace
+                    aria-current={horizon === o.value ? "true" : undefined}
+                    className={`px-2.5 py-1 transition-colors ${
+                      horizon === o.value
+                        ? "bg-primary/20 text-foreground"
+                        : "text-muted-foreground hover:bg-muted/40"
+                    }`}
+                  >
+                    {o.label}
+                  </Link>
+                ))}
+              </div>
             </CardHeader>
+
             <CardContent className="h-72 pl-0">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
