@@ -1073,7 +1073,16 @@ export function MitigationAuditTrail({
                   </div>
                 </div>
 
-                <OutcomeBreakdown entry={e} />
+                <OutcomeBreakdown
+                  entry={e}
+                  open={expanded.includes(e.id)}
+                  onToggle={() =>
+                    setExpanded((prev) =>
+                      prev.includes(e.id) ? prev.filter((id) => id !== e.id) : [...prev, e.id],
+                    )
+                  }
+                />
+
 
 
 
