@@ -91,11 +91,14 @@ export type NodeKind = (typeof NODE)[keyof typeof NODE] | (string & {});
 export const nodeId = (path: string, node: NodeKind) => `${canonicalUrl(path)}#${node}`;
 
 
+/** The canonical homepage URL every site-wide node points at. */
+export const HOME_URL = canonicalUrl("/");
+
 export const organizationSchema = {
   "@type": "Organization",
   "@id": ORG_ID,
   name: SITE_NAME,
-  url: SITE_URL,
+  url: HOME_URL,
   slogan: SITE_TAGLINE,
   description:
     "PumpPilot AI builds explainable crypto momentum tooling: a market scanner, paper trading sandbox, AI coaching and strict risk controls.",
@@ -111,7 +114,7 @@ export const websiteSchema = {
   "@type": "WebSite",
   "@id": WEBSITE_ID,
   name: SITE_NAME,
-  url: SITE_URL,
+  url: HOME_URL,
   description:
     "Explainable AI crypto momentum scanner, paper trading, backtesting and risk controls.",
   inLanguage: "en",
