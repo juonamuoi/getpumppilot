@@ -85,8 +85,11 @@ const asArray = <T,>(v: T | T[] | undefined): T[] =>
 const localName = (value: string): string =>
   value.replace(/^https?:\/\/schema\.org\//, "").replace(/^schema:/, "");
 
+const supertypesOf = (name: string): string[] | undefined =>
+  TYPES[name] ?? PENDING_TYPES[name];
+
 export const isSchemaOrgType = (name: string): boolean =>
-  Object.prototype.hasOwnProperty.call(TYPES, localName(name));
+  supertypesOf(localName(name)) !== undefined;
 
 export const isSchemaOrgProperty = (name: string): boolean =>
   Object.prototype.hasOwnProperty.call(PROPERTIES, name);
@@ -100,9 +103,10 @@ export function typeAncestors(name: string): string[] {
   const queue = [localName(name)];
   while (queue.length) {
     const current = queue.shift()!;
-    if (seen.has(current) || !TYPES[current]) continue;
+    const parents = supertypesOf(current);
+    if (seen.has(current) || !parents) continue;
     seen.add(current);
-    queue.push(...TYPES[current]);
+    queue.push(...parents);
   }
   return [...seen];
 }
