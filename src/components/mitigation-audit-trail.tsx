@@ -1317,6 +1317,65 @@ export function MitigationAuditTrail({
           ))}
         </div>
 
+        {/* Ranked impact per symbol across the current filter. */}
+        <div
+          aria-label="Top impacted symbols"
+          className="mb-3 rounded-lg border border-border/60 bg-muted/20 p-3"
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Top impacted symbols
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              ranked by matches in current filter
+            </span>
+          </div>
+          {symbolImpact.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              No assets were touched by the entries in this filter.
+            </p>
+          ) : (
+            <ol className="space-y-1">
+              {symbolImpact.map((r, idx) => {
+                const active = tokens.includes(r.symbol);
+                const width = Math.max(4, Math.round((r.matches / symbolImpact[0].matches) * 100));
+                return (
+                  <li key={r.symbol}>
+                    <button
+                      type="button"
+                      aria-pressed={active}
+                      title={`Filter entries to ${r.symbol}`}
+                      onClick={() => toggleIn(setTokens)(r.symbol)}
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-[11px] hover:bg-muted/50",
+                        active && "bg-primary/10 ring-1 ring-primary/40",
+                      )}
+                    >
+                      <span className="w-4 tabular-nums text-muted-foreground">{idx + 1}</span>
+                      <span className="w-16 font-mono font-medium">{r.symbol}</span>
+                      <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                        <span
+                          className="absolute inset-y-0 left-0 rounded-full bg-primary/70"
+                          style={{ width: `${width}%` }}
+                        />
+                      </span>
+                      <span className="w-24 text-right tabular-nums text-muted-foreground">
+                        {r.matches} match{r.matches === 1 ? "" : "es"}
+                      </span>
+                      <span className="w-20 text-right tabular-nums text-muted-foreground">
+                        {r.fireRate}% fired
+                      </span>
+                      <span className="w-20 text-right tabular-nums text-muted-foreground">
+                        {r.muteRate}% muted
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+
         {/* Correlation ID drill-down: one click filters + expands the whole batch. */}
         <div
           aria-label="Correlation ID drill-down"
