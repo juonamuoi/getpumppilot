@@ -132,15 +132,16 @@ const Flag: React.FC = () => {
         left: "50%",
         top: 1050,
         transform: `translateX(-50%) scale(${s * pulse})`,
-        padding: "22px 44px",
+        padding: "20px 40px",
         borderRadius: 999,
         background: `${C.mint}1F`,
         border: `2px solid ${C.mint}`,
         fontFamily: body,
         fontWeight: 600,
-        fontSize: 42,
+        fontSize: 34,
         color: C.mint,
         letterSpacing: 1,
+        whiteSpace: "nowrap",
         boxShadow: `0 0 60px ${C.mint}55`,
       }}
     >

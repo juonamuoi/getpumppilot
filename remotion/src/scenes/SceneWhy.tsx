@@ -88,7 +88,7 @@ export const SceneWhy: React.FC = () => {
         Paper trade it first. Go live only when you're ready.
       </div>
 
-      <Robot delay={10} size={470} x={-300} y={640} glow={C.mint} bob={14} flipped />
+      <Robot delay={10} size={400} x={-300} y={560} glow={C.mint} bob={14} flipped />
     </AbsoluteFill>
   );
 };
