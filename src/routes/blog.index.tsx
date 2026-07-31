@@ -117,7 +117,9 @@ export const Route = createFileRoute("/blog/")({
 
 
 function BlogIndex() {
-  const { paged } = Route.useLoaderData();
+  // Explicit annotation: the loader's return type is inferred through the
+  // route's own generics, which erases the item type at the use site.
+  const { paged } = Route.useLoaderData() as { paged: Paged<BlogPost> };
 
   return (
     <div className="min-h-screen bg-background">
