@@ -42,20 +42,75 @@ const ROOTS = DIR ? [DIR] : ["dist", ".output/public", ".output"];
 /** Fix hints keyed by issue code — what to change and where. */
 const HINTS = {
   jsonld_parse_error:
-    "Google drops the whole block when JSON.parse fails. Emit it with JSON.stringify() in the route's head() scripts array — never hand-built string concatenation.",
-  missing_required:
-    "Add the property in src/lib/structured-data.ts for this node type; Google marks the item invalid without it.",
-  missing_recommended:
-    "Optional for validity but Google uses it to rank rich-result eligibility — add it if the data exists.",
-  invalid_url:
-    "Use an absolute https URL built from canonicalUrl() — relative paths and http are rejected.",
-  invalid_date:
-    "Use an ISO-8601 timestamp (e.g. new Date(...).toISOString()).",
-  too_long: "Shorten the value; Google truncates or rejects over-long fields.",
-  broken_reference:
-    "The @id referenced here has no matching node in the page @graph — emit the target node or drop the reference.",
-  image_ratio:
-    "Supply at least one 1200x630 (1.91:1) image; smaller assets lose the image treatment.",
+    "Google drops the entire block when JSON.parse fails. Emit it with JSON.stringify() from the route's head() scripts array — never hand-built string concatenation.",
+  route_unavailable:
+    "The route did not return 200, so crawlers see no structured data. Fix the route or remove it from public/sitemap.xml.",
+  // Article / BlogPosting
+  article_headline_missing: "Set `headline` on the BlogPosting node in src/lib/structured-data.ts.",
+  article_headline_too_long: "Trim the headline to 110 characters or fewer.",
+  article_image_missing: "Add an absolute https `image` (1200x630 recommended) to the article node.",
+  article_image_not_https: "Rebuild the image URL with canonicalUrl() so it is absolute https.",
+  article_author_missing: "Add `author` (Person or Organization) to the article node.",
+  article_author_name_missing: "Give the author node a `name`.",
+  article_author_type_invalid: "`author` must be @type Person or Organization.",
+  article_publisher_missing: "Reference the site Organization node as `publisher`.",
+  article_publisher_name_missing: "The publisher node needs a `name`.",
+  article_publisher_logo_missing: "Add an ImageObject `logo` to the publisher Organization.",
+  article_date_published_invalid: "Use an ISO-8601 `datePublished` (new Date(...).toISOString()).",
+  article_date_modified_missing: "Add `dateModified`; Google uses it for freshness.",
+  article_date_modified_invalid: "Use an ISO-8601 `dateModified`.",
+  article_main_entity_missing: "Point `mainEntityOfPage` at this page's canonical URL.",
+  article_main_entity_invalid: "`mainEntityOfPage` must resolve to the page's canonical URL.",
+  // Breadcrumbs
+  breadcrumb_too_short: "A BreadcrumbList needs at least two ListItems.",
+  breadcrumb_position: "ListItem `position` values must start at 1 and increment by 1.",
+  breadcrumb_item_type: "Each entry must be @type ListItem.",
+  breadcrumb_name_missing: "Give every ListItem a `name`.",
+  breadcrumb_item_missing: "Give every ListItem an `item` URL (last item may omit it).",
+  breadcrumb_item_not_https: "Breadcrumb `item` URLs must be absolute https.",
+  // FAQ
+  faq_empty: "FAQPage needs at least one Question in `mainEntity`.",
+  faq_question_type: "Each mainEntity entry must be @type Question.",
+  faq_question_name: "Each Question needs a `name` (the question text).",
+  faq_answer_missing: "Each Question needs an `acceptedAnswer`.",
+  faq_answer_type: "`acceptedAnswer` must be @type Answer.",
+  faq_answer_text: "`acceptedAnswer.text` must be non-empty answer copy.",
+  faq_answer_unsafe_html: "Answer text may only contain Google's allowed inline HTML.",
+  // HowTo
+  howto_name_missing: "Add a `name` to the HowTo node.",
+  howto_too_few_steps: "A HowTo needs at least two HowToStep entries.",
+  howto_step_type: "Each step must be @type HowToStep.",
+  howto_step_name: "Give every HowToStep a `name`.",
+  howto_step_text: "Give every HowToStep a `text` instruction.",
+  // Organization / WebSite
+  org_name_missing: "Add `name` to the Organization node.",
+  org_url_invalid: "Organization `url` must be the absolute https homepage.",
+  org_logo_missing: "Add an ImageObject `logo` to the Organization.",
+  org_logo_not_https: "The Organization logo URL must be absolute https.",
+  org_same_as_missing:
+    "Optional: list verified social/profile URLs in `sameAs` to strengthen knowledge-panel signals.",
+  org_same_as_not_https: "Every `sameAs` entry must be an absolute https URL.",
+  website_name_missing: "Add `name` to the WebSite node.",
+  search_action_target_invalid:
+    "SearchAction `target` must be an absolute https URL template containing {search_term_string}.",
+  search_action_query_input_missing: "Add `query-input` to the SearchAction.",
+  search_action_query_input_format:
+    "Use the exact form `required name=search_term_string`.",
+  search_action_query_input_mismatch:
+    "The query-input name must match the placeholder used in `target`.",
+  // Product / offers / ratings
+  product_name_missing: "Add `name` to the Product node.",
+  product_image_missing: "Add at least one absolute https `image` to the Product.",
+  offers_missing: "Add an `offers` node with price and priceCurrency.",
+  offer_price_missing: "Add `price` to the Offer.",
+  offer_price_format: "`price` must be a plain number string (no currency symbols).",
+  offer_currency_invalid: "`priceCurrency` must be a 3-letter ISO 4217 code.",
+  rating_value_invalid: "`ratingValue` must be numeric and inside the rating scale.",
+  rating_count_invalid: "`ratingCount`/`reviewCount` must be a positive integer.",
+  // SoftwareApplication
+  app_name_missing: "Add `name` to the SoftwareApplication node.",
+  app_category_missing: "Add `applicationCategory`.",
+  app_os_missing: "Add `operatingSystem`.",
 };
 const hintFor = (code) =>
   HINTS[code] ?? "Review this node against Google's rich-result requirements for its @type.";
