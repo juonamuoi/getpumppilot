@@ -4,7 +4,7 @@ import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   SITE_URL,
   ORG_ID,
@@ -17,56 +17,102 @@ import {
   NODE,
   SOCIAL_IMAGE,
   SOCIAL_IMAGE_URL,
-  canonicalLinks,
+  canonicalUrl,
 } from "@/lib/structured-data";
+import {
+  paginate,
+  paginationLinks,
+  paginationTitleSuffix,
+  collectionPageSchema,
+  paginationChainSchema,
+  pagePath,
+} from "@/lib/pagination";
 
 
 const CANONICAL = `${SITE_URL}/blog`;
+const BASE_PATH = "/blog";
+const BASE_TITLE = "PumpPilot AI Blog — AI Investment & Crypto Trading Guides";
+const BASE_DESCRIPTION =
+  "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management from the PumpPilot AI team.";
+
+type BlogSearch = { page?: number };
 
 export const Route = createFileRoute("/blog/")({
-  head: () => ({
-    meta: withSocialMeta([
-      { title: "PumpPilot AI Blog — AI Investment & Crypto Trading Guides" },
-      { name: "description", content: "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management from the PumpPilot AI team." },
-      { name: "keywords", content: "ai investment blog, ai crypto trading, best ai investment app, paper trading, momentum signals" },
-      { property: "og:title", content: "PumpPilot AI Blog — AI Investment & Crypto Trading Guides" },
-      { property: "og:description", content: "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management." },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: CANONICAL },
-      // The index's own card image is the site cover — kept identical to the
-      // Blog node's `image` below so JSON-LD and the Twitter card never drift.
-      { property: "og:image", content: SOCIAL_IMAGE_URL },
-      { property: "og:image:width", content: String(SOCIAL_IMAGE.width) },
-      { property: "og:image:height", content: String(SOCIAL_IMAGE.height) },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: SOCIAL_IMAGE_URL },
-    ]),
-    links: canonicalLinks("/blog"),
-    scripts: [
-      ldScript({
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "Blog",
-            "@id": nodeId("/blog", NODE.blog),
-            name: "PumpPilot AI Blog",
-            url: CANONICAL,
-            description: "AI investment and crypto trading guides.",
-            inLanguage: "en",
-            image: SOCIAL_IMAGE,
-            isPartOf: { "@id": WEBSITE_ID },
-            publisher: { "@id": ORG_ID },
-            blogPost: BLOG_POSTS.map((p) => blogPostingSchema(p)),
-          },
-          // Author entities referenced by every BlogPosting above.
-          ...authorNodesFor(BLOG_POSTS),
-        ],
-      }),
-      ldScript(breadcrumbSchema([{ name: "Blog", path: "/blog" }])),
-    ],
-  }),
+  validateSearch: (s: Record<string, unknown>): BlogSearch => {
+    const n = Number(s.page);
+    return Number.isFinite(n) && n > 1 ? { page: Math.trunc(n) } : {};
+  },
+  // The page number must reach head(), so it travels through the loader.
+  loaderDeps: ({ search }) => ({ page: search.page ?? 1 }),
+  loader: ({ deps }) => ({ paged: paginate(BLOG_POSTS, deps.page) }),
+  head: ({ loaderData }) => {
+    const paged = loaderData?.paged ?? paginate(BLOG_POSTS, 1);
+    const suffix = paginationTitleSuffix(paged);
+    const title = BASE_TITLE + suffix;
+    const description = BASE_DESCRIPTION + (suffix ? ` Page ${paged.page} of ${paged.totalPages}.` : "");
+    const selfUrl = canonicalUrl(pagePath(BASE_PATH, paged.page));
+    const postUrls = paged.items.map((p) => canonicalUrl(`/blog/${p.slug}`));
+
+    return {
+      meta: withSocialMeta([
+        { title },
+        { name: "description", content: description },
+        { name: "keywords", content: "ai investment blog, ai crypto trading, best ai investment app, paper trading, momentum signals" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: selfUrl },
+        // The index's own card image is the site cover — kept identical to the
+        // Blog node's `image` below so JSON-LD and the Twitter card never drift.
+        { property: "og:image", content: SOCIAL_IMAGE_URL },
+        { property: "og:image:width", content: String(SOCIAL_IMAGE.width) },
+        { property: "og:image:height", content: String(SOCIAL_IMAGE.height) },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:image", content: SOCIAL_IMAGE_URL },
+      ]),
+      // Self-canonical per page plus the rel=prev/next chain.
+      links: paginationLinks(BASE_PATH, paged),
+      scripts: [
+        ldScript({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Blog",
+              "@id": nodeId("/blog", NODE.blog),
+              name: "PumpPilot AI Blog",
+              url: CANONICAL,
+              description: "AI investment and crypto trading guides.",
+              inLanguage: "en",
+              image: SOCIAL_IMAGE,
+              isPartOf: { "@id": WEBSITE_ID },
+              publisher: { "@id": ORG_ID },
+              // Only the posts actually rendered on this page.
+              blogPost: paged.items.map((p) => blogPostingSchema(p)),
+            },
+            // The paginated view itself, listing this page's entries.
+            collectionPageSchema({
+              basePath: BASE_PATH,
+              paged,
+              id: `${selfUrl}#${NODE.webpage}`,
+              name: "PumpPilot AI Blog",
+              description: "AI investment and crypto trading guides.",
+              itemUrls: postUrls,
+              isPartOf: WEBSITE_ID,
+              publisher: ORG_ID,
+            }),
+            // prev/next chain in JSON-LD, mirroring the <link> tags.
+            paginationChainSchema(BASE_PATH, paged, "PumpPilot AI Blog"),
+            // Author entities referenced by every BlogPosting above.
+            ...authorNodesFor(paged.items),
+          ],
+        }),
+        ldScript(breadcrumbSchema([{ name: "Blog", path: "/blog" }])),
+      ],
+    };
+  },
   component: BlogIndex,
 });
+
 
 
 function BlogIndex() {
