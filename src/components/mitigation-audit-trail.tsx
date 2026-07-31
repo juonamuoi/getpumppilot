@@ -710,10 +710,18 @@ export function MitigationAuditTrail({
 
 
   const download = (kind: "csv" | "json") => {
+    whyProblems.length = 0;
     const data = rows();
     const filters = exportFilters();
     if (data.length === 0) {
       toast.error("Nothing to export — no mitigation entries match the current filters");
+      return;
+    }
+    if (whyProblems.length > 0) {
+      toast.error(
+        `Export blocked — ${whyProblems.length} entr${whyProblems.length === 1 ? "y has" : "ies have"} malformed Why data`,
+        { description: whyProblems.slice(0, 3).join(" · ") },
+      );
       return;
     }
     let blob: Blob;
