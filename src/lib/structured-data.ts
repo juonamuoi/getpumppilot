@@ -201,6 +201,11 @@ export function authorSchema(key?: string) {
       ? { worksFor: { "@id": ORG_ID } }
       : { parentOrganization: { "@id": ORG_ID } }),
     ...(a.type === "Person" ? { affiliation: { "@id": ORG_ID } } : {}),
+    // Google's logo rich result requires `logo` on every Organization node,
+    // including editorial desks, so reuse the site mark.
+    ...(a.type === "Organization"
+      ? { logo: { "@type": "ImageObject", url: LOGO_URL, caption: a.name } }
+      : {}),
     publishingPrinciples: `${SITE_URL}/risk-disclosure`,
   };
 }

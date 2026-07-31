@@ -37,7 +37,11 @@ describe("auth-aware indexing policy", () => {
   });
 
   it("keeps gated routes out of the sitemap but crawlable in robots.txt", async () => {
-    const sitemap = await readFile("public/sitemap.xml", "utf8");
+    const sitemap = [
+      await readFile("public/sitemap-pages.xml", "utf8"),
+      await readFile("public/sitemap-blog.xml", "utf8"),
+      await readFile("public/sitemap-assets.xml", "utf8"),
+    ].join("\n");
     const robots = await readFile("public/robots.txt", "utf8");
     for (const path of WALLET_GATED_ROUTES) {
       expect(sitemap).not.toContain(`<loc>https://www.getpumppilot.app${path}</loc>`);

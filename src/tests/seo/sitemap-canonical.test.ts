@@ -144,7 +144,11 @@ function collectRouteCanonicals(): Promise<RouteCanonical[]> {
   return cached;
 }
 
-const sitemapXml = readFileSync(resolve(process.cwd(), "public/sitemap.xml"), "utf8");
+// @ts-expect-error -- plain-JS helper shared with the sitemap build scripts
+import { readSitemapUrlsXmlSync } from "../../../scripts/sitemap-parts.mjs";
+
+// public/sitemap.xml is a <sitemapindex>; the URLs live in its child urlsets.
+const sitemapXml: string = readSitemapUrlsXmlSync(process.cwd());
 
 
 describe("sitemap + canonical validation", () => {

@@ -20,6 +20,7 @@
 import { readdir, readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { readSitemapUrlsXml } from "./sitemap-parts.mjs";
 
 import {
   checkRichResults,
@@ -44,7 +45,7 @@ const HINTS = {
   jsonld_parse_error:
     "Google drops the entire block when JSON.parse fails. Emit it with JSON.stringify() from the route's head() scripts array — never hand-built string concatenation.",
   route_unavailable:
-    "The route did not return 200, so crawlers see no structured data. Fix the route or remove it from public/sitemap.xml.",
+    "The route did not return 200, so crawlers see no structured data. Fix the route or remove it from the sitemap.",
   // Article / BlogPosting
   article_headline_missing: "Set `headline` on the BlogPosting node in src/lib/structured-data.ts.",
   article_headline_too_long: "Trim the headline to 110 characters or fewer.",
@@ -134,7 +135,7 @@ async function walk(dir, out = []) {
 
 async function sitemapPaths() {
   try {
-    const xml = await readFile("public/sitemap.xml", "utf8");
+    const xml = await readSitemapUrlsXml();
     const paths = [...xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/g)].map((m) => {
       try {
         return new URL(m[1]).pathname;

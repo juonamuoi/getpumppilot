@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 /**
- * Generate public/sitemap.xml from the actual route files + dynamic content.
+ * Generate the split sitemap set from the actual route files + dynamic content.
+ *
+ *   public/sitemap.xml         <sitemapindex> pointing at the three below
+ *   public/sitemap-pages.xml   marketing / app / legal routes
+ *   public/sitemap-blog.xml    /blog + every journal post
+ *   public/sitemap-assets.xml  every demo token detail page
  *
  * Sources of truth:
  *  - src/routes/**.tsx  -> static, indexable page routes
@@ -14,9 +19,9 @@
  */
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { resolve, join } from "node:path";
+import { SITEMAP_PARTS, SITEMAP_INDEX_FILE } from "./sitemap-parts.mjs";
 
 const ROOT = process.cwd();
-const SITEMAP = resolve(ROOT, "public/sitemap.xml");
 const ROUTES_DIR = resolve(ROOT, "src/routes");
 const BASE_URL = "https://www.getpumppilot.app";
 
@@ -120,40 +125,105 @@ async function assetEntries() {
   }));
 }
 
+/**
+ * Section split. Each family gets its own <urlset> file; the index lists them
+ * all. `lastmod` stays authoritative: a URL only carries one when the content
+ * itself has a page-specific timestamp (journal `updated ?? date`), and a
+ * section's index `lastmod` is the newest `lastmod` among its own URLs —
+ * never build time, never "today".
+ */
+const sections = {
+  pages: (await staticRoutes())
+    .filter((path) => !path.startsWith("/blog") && !path.startsWith("/asset/"))
+    .map((path) => ({ path })),
+  blog: [
+    ...(await staticRoutes()).filter((p) => p === "/blog").map((path) => ({ path })),
+    ...(await blogEntries()),
+  ],
+  assets: await assetEntries(),
+};
 
-const entries = [
-  ...(await staticRoutes()).map((path) => ({ path })),
-  ...(await blogEntries()),
-  ...(await assetEntries()),
-];
-
-const seen = new Set();
-const urls = [];
-for (const e of entries) {
-  if (seen.has(e.path)) continue;
-  seen.add(e.path);
-  const loc = `${BASE_URL}${e.path === "/" ? "/" : e.path}`;
-  urls.push(
-    `  <url><loc>${loc}</loc>${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ""}${e.changefreq ? `<changefreq>${e.changefreq}</changefreq>` : ""}<priority>${priorityFor(e.path)}</priority></url>`,
-  );
-
+// The /blog index has no timestamp of its own; the freshest post it lists is
+// the authoritative "last changed" signal for that page.
+const newestBlogLastmod = sections.blog
+  .map((e) => e.lastmod)
+  .filter(Boolean)
+  .sort()
+  .pop();
+for (const e of sections.blog) {
+  if (e.path === "/blog" && newestBlogLastmod) e.lastmod = newestBlogLastmod;
 }
 
-const xml =
-  [
-    `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
-    ...urls,
-    `</urlset>`,
-  ].join("\n") + "\n";
+function urlsetXml(entries, seen) {
+  const urls = [];
+  for (const e of entries) {
+    if (seen.has(e.path)) continue;
+    seen.add(e.path);
+    const loc = `${BASE_URL}${e.path === "/" ? "/" : e.path}`;
+    urls.push(
+      `  <url><loc>${loc}</loc>${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ""}${e.changefreq ? `<changefreq>${e.changefreq}</changefreq>` : ""}<priority>${priorityFor(e.path)}</priority></url>`,
+    );
+  }
+  const xml =
+    [
+      `<?xml version="1.0" encoding="UTF-8"?>`,
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+      ...urls,
+      `</urlset>`,
+    ].join("\n") + "\n";
+  const lastmod = entries
+    .map((e) => e.lastmod)
+    .filter(Boolean)
+    .sort()
+    .pop();
+  return { xml, count: urls.length, lastmod };
+}
 
-const current = await readFile(SITEMAP, "utf8").catch(() => "");
-if (current === xml) {
-  console.log(`sitemap: up to date (${urls.length} urls)`);
+const seen = new Set();
+const files = [];
+let total = 0;
+const indexRows = [];
+for (const { id, file } of SITEMAP_PARTS) {
+  const { xml, count, lastmod } = urlsetXml(sections[id] ?? [], seen);
+  if (count === 0) {
+    console.error(`sitemap: section "${id}" produced no URLs`);
+    process.exit(1);
+  }
+  total += count;
+  files.push({ file, xml, count });
+  indexRows.push(
+    `  <sitemap><loc>${BASE_URL}/${file}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}</sitemap>`,
+  );
+}
+
+files.push({
+  file: SITEMAP_INDEX_FILE,
+  count: files.length,
+  xml:
+    [
+      `<?xml version="1.0" encoding="UTF-8"?>`,
+      `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+      ...indexRows,
+      `</sitemapindex>`,
+    ].join("\n") + "\n",
+});
+
+let stale = [];
+for (const { file, xml } of files) {
+  const path = resolve(ROOT, "public", file);
+  const current = await readFile(path, "utf8").catch(() => "");
+  if (current === xml) continue;
+  stale.push(file);
+  if (!process.argv.includes("--check")) await writeFile(path, xml);
+}
+
+if (stale.length === 0) {
+  console.log(`sitemap: up to date (${total} urls across ${SITEMAP_PARTS.length} sitemaps)`);
 } else if (process.argv.includes("--check")) {
-  console.error("sitemap: out of date — run `node scripts/gen-sitemap.mjs`");
+  console.error(`sitemap: out of date (${stale.join(", ")}) — run \`node scripts/gen-sitemap.mjs\``);
   process.exit(1);
 } else {
-  await writeFile(SITEMAP, xml);
-  console.log(`sitemap: wrote ${urls.length} urls to public/sitemap.xml`);
+  console.log(
+    `sitemap: wrote ${total} urls to ${SITEMAP_PARTS.map((p) => p.file).join(", ")} + ${SITEMAP_INDEX_FILE}`,
+  );
 }

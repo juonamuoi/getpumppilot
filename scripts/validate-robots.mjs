@@ -4,18 +4,22 @@
  *  - parseable, has a `User-agent: *` group
  *  - does not block the whole site
  *  - references the sitemap at the canonical origin
- *  - no rule blocks a URL advertised in public/sitemap.xml
+ *  - the sitemap index and every child sitemap it lists are reachable
+ *  - no rule blocks a URL advertised in any of the sitemap files
  *
  * Exit code 1 on any error. Run: node scripts/validate-robots.mjs
  */
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { SITEMAP_PARTS, readSitemapUrlsXml, parseLocs } from "./sitemap-parts.mjs";
 
 const ROOT = process.cwd();
 const BASE_URL = "https://www.getpumppilot.app";
 
 const robotsRaw = await readFile(resolve(ROOT, "public/robots.txt"), "utf8");
-const sitemapRaw = await readFile(resolve(ROOT, "public/sitemap.xml"), "utf8");
+const sitemapIndexRaw = await readFile(resolve(ROOT, "public/sitemap.xml"), "utf8");
+// URLs live in the child <urlset> files the index points at.
+const sitemapRaw = await readSitemapUrlsXml(ROOT);
 
 const errors = [];
 const warnings = [];
@@ -64,7 +68,8 @@ if (sitemapDirectives.length === 0) errors.push("missing Sitemap: directive");
 for (const s of sitemapDirectives) {
   if (!/^https?:\/\//.test(s)) errors.push(`Sitemap must be an absolute URL: ${s}`);
   else if (!s.startsWith(BASE_URL)) errors.push(`Sitemap origin must be ${BASE_URL}: ${s}`);
-  else if (!s.endsWith("/sitemap.xml")) errors.push(`Sitemap should point at /sitemap.xml: ${s}`);
+  else if (!/\/sitemap(-[a-z]+)?\.xml$/.test(s))
+    errors.push(`Sitemap should point at the sitemap index or a child sitemap: ${s}`);
 }
 
 /** Google-style longest-match rule evaluation for one group. */
@@ -94,8 +99,21 @@ function isBlocked(group, path) {
   return best?.type === "disallow";
 }
 
-const locs = [...sitemapRaw.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-if (locs.length === 0) errors.push("sitemap.xml contains no <loc> entries");
+// The index must advertise exactly the child sitemaps we generate, and each
+// of those files must exist and be crawlable itself.
+const indexLocs = parseLocs(sitemapIndexRaw);
+for (const { file } of SITEMAP_PARTS) {
+  const expected = `${BASE_URL}/${file}`;
+  if (!indexLocs.includes(expected)) errors.push(`sitemap index is missing ${file}`);
+  const exists = await readFile(resolve(ROOT, "public", file), "utf8").catch(() => "");
+  if (!exists) errors.push(`sitemap index references a missing file: ${file}`);
+}
+for (const loc of indexLocs) {
+  if (!loc.startsWith(BASE_URL)) errors.push(`sitemap index entry is off-origin: ${loc}`);
+}
+
+const locs = parseLocs(sitemapRaw);
+if (locs.length === 0) errors.push("no <loc> entries found in the child sitemaps");
 
 for (const loc of locs) {
   if (!loc.startsWith(BASE_URL)) {
@@ -118,5 +136,5 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-  `robots: OK — ${groups.length} group(s), ${sitemapDirectives.length} sitemap ref(s), ${locs.length} sitemap URLs all crawlable`,
+  `robots: OK — ${groups.length} group(s), ${sitemapDirectives.length} sitemap ref(s), ${indexLocs.length} child sitemap(s), ${locs.length} sitemap URLs all crawlable`,
 );
