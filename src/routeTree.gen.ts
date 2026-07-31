@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdsReportRouteImport } from './routes/ads-report'
 import { Route as AlertsRouteImport } from './routes/alerts'
+import { Route as AtomDotxmlRouteImport } from './routes/atom[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as CommunityRouteImport } from './routes/community'
@@ -75,6 +76,11 @@ const AdsReportRoute = AdsReportRouteImport.update({
 const AlertsRoute = AlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AtomDotxmlRoute = AtomDotxmlRouteImport.update({
+  id: '/atom.xml',
+  path: '/atom.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -334,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
@@ -388,6 +395,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
@@ -443,6 +451,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
@@ -499,6 +508,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/atom.xml'
     | '/auth'
     | '/backtest'
     | '/community'
@@ -553,6 +563,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/atom.xml'
     | '/auth'
     | '/backtest'
     | '/community'
@@ -607,6 +618,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/atom.xml'
     | '/auth'
     | '/backtest'
     | '/community'
@@ -662,6 +674,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdsReportRoute: typeof AdsReportRoute
   AlertsRoute: typeof AlertsRoute
+  AtomDotxmlRoute: typeof AtomDotxmlRoute
   AuthRoute: typeof AuthRoute
   BacktestRoute: typeof BacktestRoute
   CommunityRoute: typeof CommunityRoute
@@ -733,6 +746,13 @@ declare module '@tanstack/react-router' {
       path: '/alerts'
       fullPath: '/alerts'
       preLoaderRoute: typeof AlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/atom.xml': {
+      id: '/atom.xml'
+      path: '/atom.xml'
+      fullPath: '/atom.xml'
+      preLoaderRoute: typeof AtomDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1096,6 +1116,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdsReportRoute: AdsReportRoute,
   AlertsRoute: AlertsRoute,
+  AtomDotxmlRoute: AtomDotxmlRoute,
   AuthRoute: AuthRoute,
   BacktestRoute: BacktestRoute,
   CommunityRoute: CommunityRoute,
