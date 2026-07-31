@@ -247,6 +247,14 @@ export function WalletPriceAlerts() {
           </div>
         </div>
 
+        {isMoveKind(kind) && (
+          <p className="text-xs text-muted-foreground">
+            Measured against a rolling baseline captured at the last check. A drop rule tracks the
+            recent peak, a rise rule tracks the recent trough, and the baseline resets each time the
+            alert fires. Informational only — no trades are placed.
+          </p>
+        )}
+
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" onClick={onAdd}>
             <Plus className="mr-1 h-4 w-4" /> Add alert
