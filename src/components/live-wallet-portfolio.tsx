@@ -182,6 +182,13 @@ export function LiveWalletPortfolio() {
               </div>
             </div>
 
+            <WalletAllocationChart
+              items={rows
+                .filter((r) => r.value != null && r.value > 0)
+                .map((r) => ({ symbol: r.symbol, value: r.value as number }))}
+            />
+
+
             {isFetching && rows.length === 0 && (
               <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" /> Reading on-chain balances…
