@@ -12,6 +12,7 @@
     "twitterTitle": "PumpPilot AI — AI Crypto Momentum & Paper Trading",
     "twitterDescription": "Explainable AI for crypto: momentum scanner, paper trading, AI coaching and strict risk controls. Start free with demo data — no seed phrases required.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/",
     "canonical": "https://www.getpumppilot.app/"
   },
   {
@@ -27,6 +28,7 @@
     "twitterTitle": "PumpPilot AI Credits — pay as you trade",
     "twitterDescription": "Top up credits, run AI momentum predictions, stop paying when you stop trading.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/pricing",
     "canonical": "https://www.getpumppilot.app/pricing"
   },
   {
@@ -42,6 +44,7 @@
     "twitterTitle": "PumpPilot AI Blog — AI Investment & Crypto Trading Guides",
     "twitterDescription": "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/blog",
     "canonical": "https://www.getpumppilot.app/blog"
   },
   {
@@ -57,6 +60,7 @@
     "twitterTitle": "Best AI Investment App in 2026: An Honest Comparison | PumpPilot AI",
     "twitterDescription": "How to choose the best AI investment app in 2026. We compare explainability, safety, paper trading, and live execution across the top AI trading platforms.",
     "twitterImage": "https://www.getpumppilot.app/blog/best-ai-investment-app-2026.jpg?v=8d23459872",
+    "twitterUrl": "https://www.getpumppilot.app/blog/best-ai-investment-app-2026",
     "canonical": "https://www.getpumppilot.app/blog/best-ai-investment-app-2026"
   },
   {
@@ -72,6 +76,7 @@
     "twitterTitle": "PumpPilot AI vs Autopilot App: Explainable Momentum vs Copy Trading | PumpPilot AI",
     "twitterDescription": "A side-by-side comparison of PumpPilot AI and copy-trading autopilot apps: explainable momentum scores and paper trading first, versus mirroring someone else's trades.",
     "twitterImage": "https://www.getpumppilot.app/blog/pumppilot-vs-autopilot-comparison.jpg?v=63018e1fd7",
+    "twitterUrl": "https://www.getpumppilot.app/blog/pumppilot-vs-autopilot-comparison",
     "canonical": "https://www.getpumppilot.app/blog/pumppilot-vs-autopilot-comparison"
   },
   {
@@ -87,6 +92,7 @@
     "twitterTitle": "PumpPilot AI vs TradingView Paper Trading: Charts vs the 'Why' | PumpPilot AI",
     "twitterDescription": "TradingView gives you the charts; PumpPilot AI gives you the reasoning. A head-to-head on crypto paper trading, explainable AI momentum signals and risk coaching.",
     "twitterImage": "https://www.getpumppilot.app/blog/pumppilot-vs-tradingview-paper-trading.jpg?v=7720dbf61c",
+    "twitterUrl": "https://www.getpumppilot.app/blog/pumppilot-vs-tradingview-paper-trading",
     "canonical": "https://www.getpumppilot.app/blog/pumppilot-vs-tradingview-paper-trading"
   },
   {
@@ -102,6 +108,7 @@
     "twitterTitle": "Bitcoin (BTC) momentum — PumpPilot AI",
     "twitterDescription": "Explainable momentum score, chart and paper trading for Bitcoin (BTC) on PumpPilot AI. Demo data.",
     "twitterImage": "https://www.getpumppilot.app/og/asset-btc.jpg?v=1ca567a98a",
+    "twitterUrl": "https://www.getpumppilot.app/asset/btc",
     "canonical": "https://www.getpumppilot.app/asset/btc"
   },
   {
@@ -117,6 +124,7 @@
     "twitterTitle": "Ethereum (ETH) momentum — PumpPilot AI",
     "twitterDescription": "Explainable momentum score, chart and paper trading for Ethereum (ETH) on PumpPilot AI. Demo data.",
     "twitterImage": "https://www.getpumppilot.app/og/asset-eth.jpg?v=07442799c2",
+    "twitterUrl": "https://www.getpumppilot.app/asset/eth",
     "canonical": "https://www.getpumppilot.app/asset/eth"
   },
   {
@@ -132,6 +140,7 @@
     "twitterTitle": "Market Scanner — PumpPilot AI",
     "twitterDescription": "Sortable momentum breakdown for every scanned asset with plain-English reasons.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/scanner",
     "canonical": "https://www.getpumppilot.app/scanner"
   },
   {
@@ -147,6 +156,7 @@
     "twitterTitle": "Alerts — PumpPilot AI",
     "twitterDescription": "Momentum scanner rules and delivery history.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/alerts",
     "canonical": "https://www.getpumppilot.app/alerts"
   },
   {
@@ -162,6 +172,7 @@
     "twitterTitle": "PumpPilot AI Learn hub",
     "twitterDescription": "Short, plain-English lessons on momentum, risk and reading signals.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/learn",
     "canonical": "https://www.getpumppilot.app/learn"
   },
   {
@@ -177,6 +188,7 @@
     "twitterTitle": "PumpPilot AI — Widgets & Public API",
     "twitterDescription": "Free momentum widget, badge, and JSON API. Add live-looking crypto momentum data to any page in seconds.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/developers",
     "canonical": "https://www.getpumppilot.app/developers"
   },
   {
@@ -192,6 +204,7 @@
     "twitterTitle": "Community Strategies — PumpPilot AI",
     "twitterDescription": "Publish strategies, follow top authors, climb the PumpPilot leaderboard.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/community",
     "canonical": "https://www.getpumppilot.app/community"
   },
   {
@@ -207,6 +220,7 @@
     "twitterTitle": "Invite friends & earn — PumpPilot AI",
     "twitterDescription": "You both get 1 month of Pro free when they sign up.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/refer",
     "canonical": "https://www.getpumppilot.app/refer"
   },
   {
@@ -222,6 +236,7 @@
     "twitterTitle": "Sign in — PumpPilot AI",
     "twitterDescription": "Join the PumpPilot community — publish paper strategies and follow top authors.",
     "twitterImage": "https://www.getpumppilot.app/og-cover.jpg?v=a65fbd837f",
+    "twitterUrl": "https://www.getpumppilot.app/auth",
     "canonical": "https://www.getpumppilot.app/auth"
   }
 ]

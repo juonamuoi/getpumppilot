@@ -152,6 +152,7 @@ describe("OpenGraph + Twitter Card validation", () => {
         "twitter:title": "PumpPilot AI pricing and credit packs",
         "twitter:description":
           "Pay as you go with credits — no subscription. Compare credit packs for the momentum scanner.",
+        "twitter:url": `${CANONICAL_ORIGIN}/pricing`,
       },
     } satisfies SocialTagSet;
 
@@ -162,6 +163,12 @@ describe("OpenGraph + Twitter Card validation", () => {
     expect(
       checkSocialTags({ ...base, tags: { ...base.tags, "og:url": "/pricing" } })[0].code,
     ).toBe("og_url_relative");
+    expect(
+      checkSocialTags({
+        ...base,
+        tags: { ...base.tags, "twitter:url": `${CANONICAL_ORIGIN}/other` },
+      }).map((i) => i.code),
+    ).toContain("twitter_url_mismatch");
     expect(
       checkSocialTags({ ...base, tags: { ...base.tags, "twitter:card": "big" } })[0].code,
     ).toBe("bad_twitter_card");

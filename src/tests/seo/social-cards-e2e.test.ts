@@ -60,6 +60,7 @@ export interface SocialCard {
   twitterTitle: string;
   twitterDescription: string;
   twitterImage: string;
+  twitterUrl: string;
   canonical: string;
 }
 
@@ -83,6 +84,7 @@ function cardFrom(path: string, html: string): SocialCard {
     twitterTitle: t["twitter:title"] ?? "",
     twitterDescription: t["twitter:description"] ?? "",
     twitterImage: t["twitter:image"] ?? "",
+    twitterUrl: t["twitter:url"] ?? "",
     canonical,
   };
 }
@@ -175,6 +177,7 @@ describe("social preview cards (e2e)", () => {
       expect(card.ogDescription, `${path} og:description`).not.toBe("");
       expect(card.ogImage, `${path} og:image`).toMatch(/^https:\/\//);
       expect(card.twitterImage, `${path} twitter:image`).toBe(card.ogImage);
+      expect(card.twitterUrl, `${path} twitter:url`).toBe(card.ogUrl);
       expect(card.canonical, `${path} canonical`).toBe(card.ogUrl);
     }
   });
@@ -196,6 +199,7 @@ describe("social preview cards (e2e)", () => {
           "twitter:title": card.twitterTitle,
           "twitter:description": card.twitterDescription,
           "twitter:image": card.twitterImage,
+          "twitter:url": card.twitterUrl,
         },
       });
     });
