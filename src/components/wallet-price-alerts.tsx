@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BellRing, Plus, Trash2, ShieldOff, Mail, Smartphone, MessageSquare, Send, BellOff } from "lucide-react";
+import { BellRing, Plus, Trash2, ShieldOff, Mail, Smartphone, MessageSquare, Send, BellOff, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
@@ -47,6 +47,8 @@ import {
   type AlertChannelPrefs,
 } from "@/lib/wallet-alert-channels";
 import { reasonLabel, useDeliveryLog } from "@/lib/notify-log";
+import { deliveriesToCsv, notifyLogFilename } from "@/lib/notify-log-export";
+import { downloadCsv } from "@/lib/wallet-export";
 
 const KINDS: WalletAlertKind[] = [
   "price_above",
@@ -389,9 +391,22 @@ export function WalletPriceAlerts() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Delivery log ({deliveries.length})
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Delivery log ({deliveries.length})
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={deliveries.length === 0}
+              onClick={() => {
+                downloadCsv(notifyLogFilename(), deliveriesToCsv(deliveries));
+                toast.success(`Exported ${deliveries.length} delivery entries as CSV`);
+              }}
+            >
+              <Download className="mr-1 h-4 w-4" /> Export CSV
+            </Button>
+          </div>
           {deliveries.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No deliveries recorded yet — send a test alert to verify your channels.
