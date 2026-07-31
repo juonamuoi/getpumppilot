@@ -296,6 +296,46 @@ export function LiveWalletPortfolio() {
               </p>
             )}
 
+            {(failedRows.length > 0 || pricesError) && (
+              <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
+                  <span className="text-sm font-semibold text-rose-200">
+                    Price fetch failed
+                    {failedRows.length > 0
+                      ? ` — ${failedRows.length} holding${failedRows.length > 1 ? "s" : ""} excluded from totals`
+                      : ""}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs text-rose-200/90">
+                  {failedRows.length > 0
+                    ? `${failedRows.map((r) => r.symbol).join(", ")} could not be priced`
+                    : "The live price feed is unavailable"}
+                  {pricesError
+                    ? ` — ${(priceError as Error)?.message ?? "the CoinGecko feed is unreachable"}`
+                    : " — the feed returned no quote"}
+                  . Affected holdings stay out of wallet value, 24h change, allocation and
+                  history until the next successful refresh.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 h-7 gap-1 border-rose-500/50 text-xs text-rose-200"
+                  onClick={() => void refetchPrices()}
+                  disabled={pricesFetching}
+                >
+                  {pricesFetching ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  Retry price fetch
+                </Button>
+              </div>
+            )}
+
+
+
             {staleRows.length > 0 && (
               <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3">
                 <div className="flex flex-wrap items-center gap-2">
