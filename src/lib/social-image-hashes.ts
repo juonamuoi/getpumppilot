@@ -5,6 +5,7 @@ export const SOCIAL_IMAGE_HASHES: Record<string, string> = {
   "/favicon.png": "819f188115",
   "/blog/ai-crypto-trading-explained.jpg": "c4eea3c9f7",
   "/blog/best-ai-investment-app-2026.jpg": "8d23459872",
+  "/blog/how-to-backtest-crypto-momentum.jpg": "234ebf36b5",
   "/blog/paper-trading-vs-live-trading.jpg": "29f7053489",
   "/blog/pumppilot-vs-autopilot-comparison.jpg": "63018e1fd7",
   "/blog/pumppilot-vs-tradingview-paper-trading.jpg": "7720dbf61c",
