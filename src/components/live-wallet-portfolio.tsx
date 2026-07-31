@@ -12,6 +12,7 @@ import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
+import { PriceSparkline } from "@/components/price-sparkline";
 import {
   AlertDialog,
   AlertDialogAction,
