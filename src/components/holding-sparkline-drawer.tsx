@@ -72,6 +72,56 @@ export function HoldingSparklineDrawer({
       ? ((points[last] - points[0]) / points[0]) * 100
       : 0;
 
+  // --- Swipe + snap carousel over the individual price points ---------------
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  // Reset to the newest point whenever the window/series changes.
+  useEffect(() => {
+    setActive(0);
+    trackRef.current?.scrollTo({ left: 0, behavior: "auto" });
+  }, [win, points.length]);
+
+  // Track which snapped card is centred while the user swipes.
+  const onScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const center = el.scrollLeft + el.clientWidth / 2;
+    let best = 0;
+    let bestDist = Infinity;
+    Array.from(el.children).forEach((child, i) => {
+      const node = child as HTMLElement;
+      const c = node.offsetLeft + node.offsetWidth / 2;
+      const d = Math.abs(c - center);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    });
+    setActive((prev) => (prev === best ? prev : best));
+  }, []);
+
+  const snapTo = useCallback((i: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const clamped = Math.max(0, Math.min(i, el.children.length - 1));
+    const node = el.children[clamped] as HTMLElement | undefined;
+    if (!node) return;
+    el.scrollTo({
+      left: node.offsetLeft - (el.clientWidth - node.offsetWidth) / 2,
+      behavior: "smooth",
+    });
+    setActive(clamped);
+  }, []);
+
+  const activePoint = series[active];
+  const prevPoint = series[active + 1]; // series is newest-first
+  const stepPct =
+    activePoint && prevPoint && prevPoint.price !== 0
+      ? ((activePoint.price - prevPoint.price) / prevPoint.price) * 100
+      : null;
+
+
   return (
     <Drawer>
       <DrawerTrigger asChild>
