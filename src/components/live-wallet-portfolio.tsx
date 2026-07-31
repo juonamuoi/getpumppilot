@@ -284,11 +284,21 @@ export function LiveWalletPortfolio() {
             </div>
 
             {unpriced > 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                {unpriced} holding{unpriced > 1 ? "s" : ""} has no live price feed and is
-                excluded from the totals.
+              <p className="text-[11px] text-amber-300/90">
+                {unpriced} holding{unpriced > 1 ? "s" : ""} has no live price feed — shown for
+                visibility only and excluded from wallet value, 24h change and allocation.
+                Auto-detected tokens can be spam airdrops; verify the contract before trusting
+                the name.
               </p>
             )}
+
+            {data?.discoveryFailed && (
+              <p className="text-[11px] text-muted-foreground">
+                Auto-detection of extra ERC-20s couldn't run on this network (your wallet's RPC
+                blocked the log scan). Tracked tokens are still shown.
+              </p>
+            )}
+
           </>
         )}
 
