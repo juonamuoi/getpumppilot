@@ -26,6 +26,11 @@ jobs:
       - name: robots.txt validation
         run: bun run check:robots
 
+      - name: Asset OG cards match token metadata
+        run: bun run check:asset-og
+
+
+
       - name: schema.org vocabulary snapshot up to date
         run: bun run check:schema-vocab
         continue-on-error: true
