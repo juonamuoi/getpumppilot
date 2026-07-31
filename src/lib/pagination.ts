@@ -18,7 +18,7 @@
 import { canonicalUrl, hreflangLinks } from "./structured-data";
 
 /** Entries per listing page. */
-export const PAGE_SIZE = 6;
+export const PAGE_SIZE = 4;
 
 export type Paged<T> = {
   page: number;
