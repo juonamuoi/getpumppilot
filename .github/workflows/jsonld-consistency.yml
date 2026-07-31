@@ -60,6 +60,12 @@ jobs:
       - name: Rich-results parse + eligibility gate
         run: bun run check:rich-results -- --server http://localhost:8080 --out test-artifacts/rich-results.json
 
+      # Fetches every og:image / twitter:image URL declared by the asset and
+      # token detail pages and fails on non-200 responses or any redirect
+      # other than a same-origin http -> https upgrade.
+      - name: OG/Twitter image reachability (asset pages)
+        run: bun run check:og-images -- --server http://localhost:8080 --out test-artifacts/og-images.json
+
       - name: Validate rendered JSON-LD in build output
         run: bun run check:jsonld
 
