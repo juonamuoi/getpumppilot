@@ -8,9 +8,11 @@
 import type { TuningLogEntry } from "@/lib/paper-store";
 
 export type OutcomeFilter = "all" | "alerts-fired" | "no-matches" | "channels-muted" | "pending";
-export type RangeFilter = "all" | "24h" | "7d" | "30d" | "90d";
+export type RangeFilter = "all" | "1h" | "6h" | "24h" | "7d" | "30d" | "90d";
 
 export const RANGE_MS: Record<Exclude<RangeFilter, "all">, number> = {
+  "1h": 3_600_000,
+  "6h": 6 * 3_600_000,
   "24h": 86_400_000,
   "7d": 7 * 86_400_000,
   "30d": 30 * 86_400_000,
@@ -19,11 +21,27 @@ export const RANGE_MS: Record<Exclude<RangeFilter, "all">, number> = {
 
 export const RANGE_LABEL: Record<RangeFilter, string> = {
   all: "All time",
+  "1h": "Last hour",
+  "6h": "Last 6 hours",
   "24h": "Last 24 hours",
   "7d": "Last 7 days",
   "30d": "Last 30 days",
   "90d": "Last 90 days",
 };
+
+/** Compact labels for the one-tap time-range chips. */
+export const RANGE_CHIP_LABEL: Record<RangeFilter, string> = {
+  all: "All",
+  "1h": "1h",
+  "6h": "6h",
+  "24h": "24h",
+  "7d": "7d",
+  "30d": "30d",
+  "90d": "90d",
+};
+
+/** Order of the quick chips shown above the audit trail filters. */
+export const RANGE_CHIPS: RangeFilter[] = ["1h", "6h", "24h", "7d", "30d", "90d", "all"];
 
 /** Everything that defines an export scope, so it can be named and re-used. */
 export type AuditFilterState = {
