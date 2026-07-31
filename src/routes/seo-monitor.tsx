@@ -43,6 +43,7 @@ import {
   type SeoAlertRow,
 } from "@/lib/seo-monitor.functions";
 import { useAuth } from "@/lib/auth-store";
+import { SeoHealthPanel } from "@/components/seo-health-panel";
 
 export const Route = createFileRoute("/seo-monitor")({
   head: () => ({
