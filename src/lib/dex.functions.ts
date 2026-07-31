@@ -87,3 +87,11 @@ export const getSwapQuote = createServerFn({ method: "POST" })
       return { ok: false, error: "Could not reach the routing service. Try again." };
     }
   });
+
+/** Reports whether server-side DEX routing is configured (no secrets exposed). */
+export const getDexRoutingStatus = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ configured: boolean; provider: string }> => ({
+    configured: Boolean(process.env["ZEROX_API_KEY"]),
+    provider: "0x Swap API v2",
+  }),
+);
