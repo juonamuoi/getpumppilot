@@ -12,6 +12,18 @@ import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 function freshness(ts: number | undefined): string {
   if (!ts) return "not yet fetched";
