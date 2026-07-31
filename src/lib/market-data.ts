@@ -8,6 +8,10 @@ export type LivePrice = {
   price: number;
   change24h: number; // percent
   sparkline: number[]; // last ~24h
+  volume24h: number;
+  marketCap: number;
+  high24h: number;
+  low24h: number;
 };
 
 // Symbols we pull live. DEMO tokens stay mock (they're fictional).
@@ -16,6 +20,12 @@ const LIVE_MAP: Record<string, string> = {
   ETH: "ethereum",
   SOL: "solana",
   BNB: "binancecoin",
+  XRP: "ripple",
+  DOGE: "dogecoin",
+  ADA: "cardano",
+  AVAX: "avalanche-2",
+  LINK: "chainlink",
+  TON: "the-open-network",
 };
 
 const IDS = Object.values(LIVE_MAP).join(",");
@@ -26,6 +36,10 @@ type CGItem = {
   symbol: string;
   current_price: number;
   price_change_percentage_24h: number | null;
+  total_volume: number | null;
+  market_cap: number | null;
+  high_24h: number | null;
+  low_24h: number | null;
   sparkline_in_7d?: { price?: number[] };
 };
 
@@ -53,6 +67,10 @@ async function fetchLive(): Promise<LivePrice[]> {
         price: d.current_price,
         change24h: d.price_change_percentage_24h ?? 0,
         sparkline: spark,
+        volume24h: d.total_volume ?? 0,
+        marketCap: d.market_cap ?? 0,
+        high24h: d.high_24h ?? d.current_price,
+        low24h: d.low_24h ?? d.current_price,
       } satisfies LivePrice;
     });
 }
