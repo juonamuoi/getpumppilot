@@ -28,6 +28,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { requestTrade } from "@/lib/trade-gate";
 
 export const Route = createFileRoute("/doctor")({
   head: () => ({
