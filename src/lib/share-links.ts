@@ -231,12 +231,23 @@ export type SharePreviewCheck = {
  * could stop being safe (canonical drifting off-page, or og:url carrying UTM).
  */
 export function checkSharePreview(path: ShareablePath, shareUrl: string): SharePreviewCheck {
-  const target = SHARE_TARGETS[path];
+  const target = getShareTarget(path);
   const notes: string[] = [];
   let ok = true;
 
+  if (!target) {
+    return {
+      ok: false,
+      canonical: "",
+      ogUrl: "",
+      tracked: false,
+      notes: ["This route is not shareable, so no tracked link is generated."],
+    };
+  }
+
   const canonical = target.canonical;
   const ogUrl = target.canonical;
+
 
   if (canonical.includes("utm_")) {
     ok = false;
