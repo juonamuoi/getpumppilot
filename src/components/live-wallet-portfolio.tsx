@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
-import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
+import { LIVE_SYMBOLS, useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
@@ -57,6 +57,8 @@ export function LiveWalletPortfolio() {
   const {
     dataUpdatedAt: priceUpdatedAt,
     isFetching: pricesFetching,
+    isError: pricesError,
+    error: priceError,
     refetch: refetchPrices,
   } = useLivePrices();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -75,6 +77,10 @@ export function LiveWalletPortfolio() {
     const live = prices[b.symbol];
     const price = b.usdPeg ?? live?.price ?? null;
     const livePriced = !b.usdPeg && Boolean(live);
+    // Tracked by the live feed but no price came back -> the fetch failed
+    // or the provider omitted it. Distinct from assets with no feed at all.
+    const failed =
+      !b.usdPeg && !live && (LIVE_SYMBOLS as readonly string[]).includes(b.symbol);
     // USD-peg holdings never go stale; live-feed holdings do.
     const stale = livePriced && feedStale;
     return {
@@ -84,8 +90,9 @@ export function LiveWalletPortfolio() {
       change24h: b.usdPeg ? 0 : (live?.change24h ?? null),
       priced: price != null,
       livePriced,
+      failed,
       stale,
-      // Excluded from totals while stale or unpriced.
+      // Excluded from totals while stale, failed or unpriced.
       counted: price != null && !stale,
     };
   });
@@ -99,9 +106,11 @@ export function LiveWalletPortfolio() {
     0,
   );
   const dayPct = total - dayChange > 0 ? (dayChange / (total - dayChange)) * 100 : 0;
-  const unpriced = rows.filter((r) => !r.priced).length;
+  const unpriced = rows.filter((r) => !r.priced && !r.failed).length;
+  const failedRows = rows.filter((r) => r.failed);
   const staleRows = rows.filter((r) => r.stale);
   const staleValue = staleRows.reduce((s, r) => s + (r.value ?? 0), 0);
+
 
   const onConnect = async () => {
     try {
@@ -287,6 +296,46 @@ export function LiveWalletPortfolio() {
               </p>
             )}
 
+            {(failedRows.length > 0 || pricesError) && (
+              <div className="rounded-xl border border-rose-500/50 bg-rose-500/10 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
+                  <span className="text-sm font-semibold text-rose-200">
+                    Price fetch failed
+                    {failedRows.length > 0
+                      ? ` — ${failedRows.length} holding${failedRows.length > 1 ? "s" : ""} excluded from totals`
+                      : ""}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs text-rose-200/90">
+                  {failedRows.length > 0
+                    ? `${failedRows.map((r) => r.symbol).join(", ")} could not be priced`
+                    : "The live price feed is unavailable"}
+                  {pricesError
+                    ? ` — ${(priceError as Error)?.message ?? "the CoinGecko feed is unreachable"}`
+                    : " — the feed returned no quote"}
+                  . Affected holdings stay out of wallet value, 24h change, allocation and
+                  history until the next successful refresh.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 h-7 gap-1 border-rose-500/50 text-xs text-rose-200"
+                  onClick={() => void refetchPrices()}
+                  disabled={pricesFetching}
+                >
+                  {pricesFetching ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  Retry price fetch
+                </Button>
+              </div>
+            )}
+
+
+
             {staleRows.length > 0 && (
               <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -398,9 +447,11 @@ export function LiveWalletPortfolio() {
                   <div
                     key={`${r.symbol}-${r.kind}-${r.address ?? "native"}`}
                     className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2 ${
-                      r.stale
-                        ? "border-amber-500/50 bg-amber-500/[0.07]"
-                        : "border-border/60 bg-muted/20"
+                      r.failed
+                        ? "border-rose-500/50 bg-rose-500/[0.07]"
+                        : r.stale
+                          ? "border-amber-500/50 bg-amber-500/[0.07]"
+                          : "border-border/60 bg-muted/20"
                     }`}
                   >
                     <div className="min-w-0">
@@ -409,21 +460,32 @@ export function LiveWalletPortfolio() {
                         <Badge
                           variant="outline"
                           className={`text-[9px] uppercase ${
-                            r.stale
-                              ? "border-amber-500/50 text-amber-300"
-                              : r.livePriced
-                                ? "border-emerald-500/30 text-emerald-300"
-                                : r.usdPeg
-                                  ? "border-border/60 text-muted-foreground"
-                                  : "border-amber-500/40 text-amber-300"
+                            r.failed
+                              ? "border-rose-500/50 text-rose-300"
+                              : r.stale
+                                ? "border-amber-500/50 text-amber-300"
+                                : r.livePriced
+                                  ? "border-emerald-500/30 text-emerald-300"
+                                  : r.usdPeg
+                                    ? "border-border/60 text-muted-foreground"
+                                    : "border-amber-500/40 text-amber-300"
                           }`}
+                          title={
+                            r.failed
+                              ? ((priceError as Error)?.message ??
+                                "Price fetch failed — excluded from totals")
+                              : undefined
+                          }
                         >
-                          {r.stale
-                            ? "stale price · excluded"
-                            : r.livePriced
-                              ? "live price"
-                              : r.usdPeg
-                                ? "USD peg"
+                          {r.failed
+                            ? "price unavailable · excluded"
+                            : r.stale
+                              ? "stale price · excluded"
+                              : r.livePriced
+                                ? "live price"
+                                : r.usdPeg
+                                  ? "USD peg"
+
                                 : "no live price"}
                         </Badge>
                         {r.discovered && (
@@ -459,6 +521,11 @@ export function LiveWalletPortfolio() {
                           </span>
                         ) : r.usdPeg ? (
                           <span>Source: stablecoin USD peg (fixed $1.00) · no feed needed</span>
+                        ) : r.failed ? (
+                          <span className="text-rose-300">
+                            Source: CoinGecko · last fetch failed
+                            {pricesFetching ? " · retrying…" : " · retry to restore pricing"}
+                          </span>
                         ) : (
                           <span>Source: none · no live feed for this asset</span>
                         )}
@@ -468,14 +535,24 @@ export function LiveWalletPortfolio() {
                     <div className="text-right">
                       <div
                         className={`font-mono text-sm font-semibold ${
-                          r.stale ? "text-muted-foreground line-through" : ""
+                          r.stale || r.failed ? "text-muted-foreground line-through" : ""
                         }`}
-                        title={r.stale ? "Last known value — excluded from totals" : undefined}
+                        title={
+                          r.failed
+                            ? "Price unavailable — excluded from totals"
+                            : r.stale
+                              ? "Last known value — excluded from totals"
+                              : undefined
+                        }
                       >
                         {r.value != null ? fmtUsd(r.value) : "—"}
                       </div>
+                      {r.failed && (
+                        <div className="text-[10px] uppercase text-rose-300">not counted</div>
+                      )}
                       {r.stale && (
                         <div className="text-[10px] uppercase text-amber-300">not counted</div>
+
                       )}
                       {r.change24h != null && !r.usdPeg && (
                         <div
