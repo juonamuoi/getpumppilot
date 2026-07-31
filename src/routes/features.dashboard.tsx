@@ -30,6 +30,7 @@ import {
   nodeId,
   pageEntityGraph,
   webPageSchema,
+  canonicalLinks,
 } from "@/lib/structured-data";
 
 const PATH = "/features/dashboard";

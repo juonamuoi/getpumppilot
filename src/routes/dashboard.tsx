@@ -10,6 +10,7 @@ import {
   webPageSchema,
   WEBSITE_ID,
   ORG_ID,
+  canonicalLinks,
 } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";

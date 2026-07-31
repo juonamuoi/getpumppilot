@@ -17,6 +17,7 @@ import {
   NODE,
   SOCIAL_IMAGE,
   SOCIAL_IMAGE_URL,
+  canonicalLinks,
 } from "@/lib/structured-data";
 
 

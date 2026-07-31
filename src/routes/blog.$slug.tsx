@@ -17,6 +17,7 @@ import {
   blogPostPageSchema,
   pageEntityGraph,
   ldScript,
+  canonicalLinks,
 } from "@/lib/structured-data";
 
 /** Rough word count from the block body — powers Article `wordCount`. */

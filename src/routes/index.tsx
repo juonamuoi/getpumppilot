@@ -46,6 +46,7 @@ import {
   nodeId,
   pageEntityGraph,
   NODE,
+  canonicalLinks,
 } from "@/lib/structured-data";
 const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =

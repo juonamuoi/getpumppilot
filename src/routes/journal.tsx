@@ -10,6 +10,7 @@ import {
   webPageSchema,
   WEBSITE_ID,
   ORG_ID,
+  canonicalLinks,
 } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
