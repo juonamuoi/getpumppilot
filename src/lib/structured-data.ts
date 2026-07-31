@@ -228,12 +228,18 @@ export type BlogPostMeta = {
   imageAlt?: string;
   readMinutes?: number;
   wordCount?: number;
+  /** Key into AUTHORS; falls back to the editorial team. */
+  author?: string;
 };
 
 /**
  * BlogPosting node for a single post. Shared by the blog index (embedded in
  * the `Blog` node) and each post route so headline, description, author,
  * publisher and publish/update dates are always identical for the same URL.
+ *
+ * `author` is a reference to a stable author `@id`; the matching
+ * Person/Organization node must be emitted in the same `@graph` (use
+ * `authorNodesFor`). `publisher` always resolves to the site Organization.
  */
 export function blogPostingSchema(
   post: BlogPostMeta,
@@ -241,6 +247,7 @@ export function blogPostingSchema(
 ) {
   const url = canonicalUrl(`/blog/${post.slug}`);
   const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
+  const authorKey = resolveAuthorKey(post.author);
   const node: Record<string, unknown> = {
     ...(opts.standalone ? { "@context": "https://schema.org" } : {}),
     "@type": "BlogPosting",
@@ -250,13 +257,14 @@ export function blogPostingSchema(
     description: post.description,
     datePublished: post.date,
     dateModified: post.updated ?? post.date,
-    author: {
-      "@type": "Organization",
-      "@id": ORG_ID,
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
-    publisher: { "@id": ORG_ID },
+    // Standalone emission has no surrounding graph to resolve the @id, so
+    // inline the full author node there and reference it otherwise.
+    author: opts.standalone ? authorSchema(authorKey) : { "@id": authorId(authorKey) },
+    creator: { "@id": authorId(authorKey) },
+    publisher: publisherRef,
+    copyrightHolder: publisherRef,
+    sourceOrganization: publisherRef,
+
     image: {
       "@type": "ImageObject",
       url: imageUrl,
