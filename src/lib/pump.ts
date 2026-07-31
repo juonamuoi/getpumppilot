@@ -57,6 +57,7 @@ export type PumpSummary = {
   lifetime_sent: number;
   lifetime_received: number;
   payout_address: string | null;
+  payout_address_updated_at: string | null;
   quests: PumpQuest[];
   ledger: PumpLedgerEntry[];
 };
@@ -92,7 +93,14 @@ export async function sendPump(toTag: string, amount: number, memo?: string) {
 export async function setPumpPayoutAddress(address: string) {
   const { data, error } = await rpc("pump_set_payout_address", { _address: address });
   if (error) throw new Error(error.message);
-  return data as { ok: boolean; reason?: string; payout_address?: string | null };
+  return data as {
+    ok: boolean;
+    reason?: string;
+    payout_address?: string | null;
+    previous_address?: string | null;
+    changed?: boolean;
+    payout_address_updated_at?: string | null;
+  };
 }
 
 /** One leg of the double-entry record for a peer transfer. */
