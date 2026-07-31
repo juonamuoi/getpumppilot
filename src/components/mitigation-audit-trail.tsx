@@ -597,8 +597,11 @@ export function MitigationAuditTrail({
     : entries.filter((e) => e.phase !== "preview");
 
   const rows = () =>
-    exportEntries.map((e) => ({
+    exportEntries.map((e) => {
+      const why = explainFields(e);
+      return {
       correlationId: e.correlationId ?? "",
+
       timestamp: new Date(e.ts).toISOString(),
       phase: e.phase ?? "applied",
       mitigation: e.mitigation ?? "",
