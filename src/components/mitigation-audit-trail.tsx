@@ -549,6 +549,9 @@ export function MitigationAuditTrail({
   /** Records loaded from a previously exported file — review only, never applied. */
   const [importedEntries, setImportedEntries] = useState<TuningLogEntry[]>([]);
   const focusRef = useRef<HTMLDivElement | null>(null);
+  /** Correlation ID the user drilled into from the summary panel or an entry. */
+  const [drillCid, setDrillCid] = useState<string | null>(null);
+
 
 
 
