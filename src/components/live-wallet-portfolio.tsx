@@ -6,15 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Wallet, RefreshCw, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
-import { useLivePriceMap } from "@/lib/market-data";
+import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
+
+function freshness(ts: number | undefined): string {
+  if (!ts) return "not yet fetched";
+  const secs = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (secs < 10) return "just now";
+  if (secs < 60) return `${secs}s ago`;
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  return `${Math.round(mins / 60)}h ago`;
+}
 
 export function LiveWalletPortfolio() {
   const { address, available, connect } = useInjectedAccount();
   const { data, isFetching, isError, error, refetch, dataUpdatedAt } =
     useWalletBalances(address);
   const prices = useLivePriceMap();
+  const { dataUpdatedAt: priceUpdatedAt, isFetching: pricesFetching } = useLivePrices();
+
 
   const rows = (data?.balances ?? []).map((b) => {
     const live = prices[b.symbol];
