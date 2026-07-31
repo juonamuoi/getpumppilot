@@ -140,3 +140,41 @@ export const strategyFaqs: Faq[] = [
     a: "Not necessarily. Backtests run on clearly labelled demo data and cannot capture slippage, fees or regime changes. Results are educational and are not financial advice.",
   },
 ];
+
+export const dashboardTourFaqs: Faq[] = [
+  {
+    q: "What does the PumpPilot AI dashboard show?",
+    a: "One screen with your portfolio value and dollar-at-risk, the strongest momentum signals of the session, a live market pulse, and plain-English guidance on stop-loss and take-profit levels for every open paper position.",
+  },
+  {
+    q: "Do I need to connect a wallet to see the dashboard?",
+    a: "No. This overview page is fully public, and the in-app dashboard runs on clearly labelled demo data in paper trading mode. Connecting a wallet is read-only and only adds phishing and drainer approval scanning — PumpPilot AI never asks for a seed phrase or private key.",
+  },
+  {
+    q: "Are the momentum scores explainable?",
+    a: "Yes. Every score breaks down into the factors behind it — trend strength, volume expansion and volatility — with a written 'why' line, so you can see which input moved the number instead of trusting a black box.",
+  },
+  {
+    q: "Can the dashboard place real trades?",
+    a: "No. Live execution is a disabled adapter behind a locked master switch. Everything on the dashboard is simulated, educational, and is not financial advice.",
+  },
+];
+
+export const journalTourFaqs: Faq[] = [
+  {
+    q: "What is the PumpPilot AI trade journal?",
+    a: "An automatic performance log for your paper trades. Every simulated fill is recorded and turned into win rate, expectancy, profit factor, average win versus average loss, an equity curve and per-asset attribution.",
+  },
+  {
+    q: "What is expectancy and why does it matter?",
+    a: "Expectancy is the average dollar result you can expect per trade: (win rate x average win) minus (loss rate x average loss). A positive expectancy means the strategy makes money over many trades even when individual trades lose.",
+  },
+  {
+    q: "Do I have to log trades manually?",
+    a: "No. Paper trades are journalled automatically the moment they fill, including entry, exit, size, the rule that triggered them and the resulting risk change.",
+  },
+  {
+    q: "Does good paper performance predict real returns?",
+    a: "No. Simulated fills ignore slippage, fees and liquidity limits, so journal statistics are an educational estimate of process quality — never a guarantee of real returns.",
+  },
+];
