@@ -94,7 +94,38 @@ async function staticRoutes() {
 
 async function blogEntries() {
   const src = await readFile(resolve(ROOT, "src/lib/blog-posts.ts"), "utf8");
-  /**
+  const entries = [];
+  for (const block of src.split(/\n\s*\{\s*\n/)) {
+    const slug = block.match(/slug:\s*"([^"]+)"/)?.[1];
+    if (!slug) continue;
+    const date = block.match(/\n\s*date:\s*"(\d{4}-\d{2}-\d{2})"/)?.[1];
+    const updated = block.match(/\n\s*updated:\s*"(\d{4}-\d{2}-\d{2})"/)?.[1];
+    entries.push({ path: `/blog/${slug}`, lastmod: updated ?? date });
+  }
+  return entries;
+}
+
+/**
+ * Every demo token rendered by /asset/$symbol. Parsed from the ASSETS array
+ * in src/lib/mock-data.ts (the same source getAsset() reads), so adding a
+ * token to the app automatically adds its detail URL here. Paths are
+ * lowercased to match the canonical URL emitted by the route.
+ */
+async function assetEntries() {
+  const src = await readFile(resolve(ROOT, "src/lib/mock-data.ts"), "utf8");
+  const block = src.split("export const ASSETS")[1]?.split("\nexport ")[0] ?? "";
+  const symbols = [...block.matchAll(/\n\s*symbol:\s*"([A-Za-z0-9]+)"/g)].map((m) => m[1]);
+  if (symbols.length === 0) {
+    console.error("sitemap: no demo tokens parsed from src/lib/mock-data.ts ASSETS");
+    process.exit(1);
+  }
+  return [...new Set(symbols.map((s) => s.toLowerCase()))].map((s) => ({
+    path: `/asset/${s}`,
+    changefreq: "weekly",
+  }));
+}
+
+/**
  * Section split. Each family gets its own <urlset> file; the index lists them
  * all. `lastmod` stays authoritative: a URL only carries one when the content
  * itself has a page-specific timestamp (journal `updated ?? date`), and a

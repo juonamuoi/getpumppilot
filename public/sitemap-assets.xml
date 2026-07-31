@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.getpumppilot.app/asset/btc</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/eth</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/sol</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/bnb</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/demox</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/pilot</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/nova</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/orbit</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+</urlset>

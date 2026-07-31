@@ -1,32 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.getpumppilot.app/</loc><priority>1.0</priority></url>
-  <url><loc>https://www.getpumppilot.app/auth</loc><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/blog</loc><priority>0.9</priority></url>
-  <url><loc>https://www.getpumppilot.app/community</loc><priority>0.7</priority></url>
-  <url><loc>https://www.getpumppilot.app/developers</loc><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/features</loc><priority>0.7</priority></url>
-  <url><loc>https://www.getpumppilot.app/features/dashboard</loc><priority>0.7</priority></url>
-  <url><loc>https://www.getpumppilot.app/features/journal</loc><priority>0.7</priority></url>
-  <url><loc>https://www.getpumppilot.app/learn</loc><priority>0.7</priority></url>
-  <url><loc>https://www.getpumppilot.app/pricing</loc><priority>0.9</priority></url>
-  <url><loc>https://www.getpumppilot.app/privacy</loc><priority>0.3</priority></url>
-  <url><loc>https://www.getpumppilot.app/refer</loc><priority>0.7</priority></url>
-  <url><loc>https://www.getpumppilot.app/refund</loc><priority>0.3</priority></url>
-  <url><loc>https://www.getpumppilot.app/risk-disclosure</loc><priority>0.5</priority></url>
-  <url><loc>https://www.getpumppilot.app/scanner</loc><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/terms</loc><priority>0.3</priority></url>
-  <url><loc>https://www.getpumppilot.app/blog/best-ai-investment-app-2026</loc><lastmod>2026-07-15</lastmod><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/blog/ai-crypto-trading-explained</loc><lastmod>2026-07-08</lastmod><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/blog/paper-trading-vs-live-trading</loc><lastmod>2026-06-28</lastmod><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/blog/pumppilot-vs-autopilot-comparison</loc><lastmod>2026-07-28</lastmod><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/blog/pumppilot-vs-tradingview-paper-trading</loc><lastmod>2026-07-28</lastmod><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/btc</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/eth</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/sol</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/bnb</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/demox</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/pilot</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/nova</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/orbit</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
-</urlset>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap><loc>https://www.getpumppilot.app/sitemap-pages.xml</loc></sitemap>
+  <sitemap><loc>https://www.getpumppilot.app/sitemap-blog.xml</loc><lastmod>2026-07-28</lastmod></sitemap>
+  <sitemap><loc>https://www.getpumppilot.app/sitemap-assets.xml</loc></sitemap>
+</sitemapindex>
