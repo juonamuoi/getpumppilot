@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import type { TuningLogEntry } from "@/lib/paper-store";
 
 /**
@@ -183,4 +185,63 @@ export function assertExplainFieldsComplete(fields: Record<string, unknown>): st
     }
   }
   return problems;
+}
+
+/* ------------------------------------------------------------------ *
+ * Zod runtime validation
+ *
+ * Catches malformed Why data (missing, non-string, blank or placeholder
+ * values) BEFORE it reaches a clipboard copy or a CSV/JSON export.
+ * ------------------------------------------------------------------ */
+
+const nonEmpty = (label: string) =>
+  z
+    .string({ message: `${label} must be a string` })
+    .trim()
+    .min(1, `${label} is empty`)
+    .refine((s) => !/^(undefined|null|NaN)$/i.test(s), `${label} contains a placeholder value`)
+    .refine((s) => !/\b(undefined|NaN)\b/.test(s), `${label} contains "undefined"/"NaN"`);
+
+/** Fields that may legitimately be blank (no impact recorded, no fragility). */
+const optionalText = (label: string) =>
+  z
+    .string({ message: `${label} must be a string` })
+    .refine((s) => !/\b(undefined|NaN)\b/.test(s), `${label} contains "undefined"/"NaN"`);
+
+export const ExplainFieldsSchema = z
+  .object({
+    why: nonEmpty("why"),
+    whyChange: nonEmpty("whyChange"),
+    whyStrictness: z.enum(["loosened", "tightened", "unchanged"], {
+      message: "whyStrictness must be loosened, tightened or unchanged",
+    }),
+    whyImpact: optionalText("whyImpact"),
+    whyOutcome: nonEmpty("whyOutcome"),
+    whyFragility: optionalText("whyFragility"),
+  })
+  .strict();
+
+export type ValidatedExplainFields = z.infer<typeof ExplainFieldsSchema>;
+
+export type ExplainValidation = {
+  ok: boolean;
+  /** Always usable: validated fields, or the raw output when invalid. */
+  fields: ExplainFields;
+  /** Human-readable problems, e.g. `whyOutcome: whyOutcome is empty`. */
+  issues: string[];
+};
+
+/** Validates an already-built explanation object. */
+export function validateExplainFields(fields: unknown): ExplainValidation {
+  const parsed = ExplainFieldsSchema.safeParse(fields);
+  if (parsed.success) return { ok: true, fields: parsed.data, issues: [] };
+  const issues = parsed.error.issues.map(
+    (i) => `${i.path.join(".") || "(root)"}: ${i.message}`,
+  );
+  return { ok: false, fields: fields as ExplainFields, issues };
+}
+
+/** Builds and validates an entry's Why explanation in one step. */
+export function safeExplainFields(e: TuningLogEntry): ExplainValidation {
+  return validateExplainFields(explainFields(e));
 }

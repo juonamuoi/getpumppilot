@@ -189,7 +189,7 @@ export function RealtimeMomentumAlerts() {
               Recent triggers
             </div>
             <Button asChild variant="ghost" size="sm" className="h-6 text-[11px]">
-              <Link to="/alerts" search={{ tab: "rules", audit: undefined }}>Manage rules</Link>
+              <Link to="/alerts" search={{ tab: "rules", audit: undefined, af: undefined }}>Manage rules</Link>
             </Button>
           </div>
           {fired.length === 0 ? (

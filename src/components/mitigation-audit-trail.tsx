@@ -37,7 +37,7 @@ import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
-import { explainOutcome, explainFields } from "@/lib/mitigation-explain";
+import { explainOutcome, safeExplainFields } from "@/lib/mitigation-explain";
 import { buildAuditShareUrl, type AuditShareState } from "@/lib/audit-share-link";
 
 import { MitigationImport } from "@/components/mitigation-import";
@@ -65,7 +65,15 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
 
 
   const copy = async () => {
-    const f = explainFields(entry);
+    const { fields: f, ok, issues } = safeExplainFields(entry);
+    if (!ok) {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+      toast.error("Why explanation looks malformed — nothing copied", {
+        description: issues.slice(0, 3).join(" · "),
+      });
+      return;
+    }
     const val = (v: unknown) => {
       const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
       return s.length ? s : "—";
@@ -638,9 +646,15 @@ export function MitigationAuditTrail({
     ? entries
     : entries.filter((e) => e.phase !== "preview");
 
+  /** Collects Zod validation problems found while building the last export. */
+  const whyProblems: string[] = [];
+
   const rows = () =>
     exportEntries.map((e) => {
-      const why = explainFields(e);
+      const { fields: why, ok, issues } = safeExplainFields(e);
+      if (!ok) {
+        whyProblems.push(`${e.correlationId ?? e.id}: ${issues.join("; ")}`);
+      }
       return {
       correlationId: e.correlationId ?? "",
 
@@ -696,10 +710,18 @@ export function MitigationAuditTrail({
 
 
   const download = (kind: "csv" | "json") => {
+    whyProblems.length = 0;
     const data = rows();
     const filters = exportFilters();
     if (data.length === 0) {
       toast.error("Nothing to export — no mitigation entries match the current filters");
+      return;
+    }
+    if (whyProblems.length > 0) {
+      toast.error(
+        `Export blocked — ${whyProblems.length} entr${whyProblems.length === 1 ? "y has" : "ies have"} malformed Why data`,
+        { description: whyProblems.slice(0, 3).join(" · ") },
+      );
       return;
     }
     let blob: Blob;
