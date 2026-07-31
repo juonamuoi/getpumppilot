@@ -86,6 +86,29 @@ export function LiveWalletPortfolio() {
       </CardHeader>
 
       <CardContent className="space-y-3">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/[0.06] p-3">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-300">
+            <ShieldCheck className="h-3.5 w-3.5" /> Read-only. No trades can be placed.
+          </div>
+          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+            <li>
+              <span className="font-medium text-foreground">Read-only connection.</span> PumpPilot
+              only reads balances. It never requests a seed phrase, never asks you to sign
+              transactions, and cannot move funds.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Prices are indicators, not
+              guarantees.</span> Momentum scores and signals are probabilistic estimates from
+              delayed public market data — they are not price predictions or financial advice.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Trading is disabled.</span> Every order
+              in this app is simulated paper trading. No signal here executes against your real
+              wallet.
+            </li>
+          </ul>
+        </div>
+
         {!address && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
