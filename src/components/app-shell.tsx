@@ -59,6 +59,13 @@ const nav = [
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
+/** Comparison guides surfaced in-app so crawlers and users reach them from every page. */
+const guideSlugs = [
+  "pumppilot-vs-autopilot-comparison",
+  "pumppilot-vs-tradingview-paper-trading",
+] as const;
+
+
 
 function Brand() {
   return (
