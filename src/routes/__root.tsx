@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { ldScript, siteGraph } from "@/lib/structured-data";
+import { ATOM_PATH, FEED_TITLE, RSS_PATH } from "@/lib/feed";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
