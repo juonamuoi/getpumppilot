@@ -10,6 +10,7 @@ import { LIVE_SYMBOLS, useLivePriceMap, useLivePrices } from "@/lib/market-data"
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
+import { LivePaperAllocationCompare } from "@/components/live-paper-allocation-compare";
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
 import { PriceSparkline } from "@/components/price-sparkline";
@@ -423,6 +424,12 @@ export function LiveWalletPortfolio() {
 
             <WalletAllocationChart
               items={rows
+                .filter((r) => r.counted && r.value != null && r.value > 0)
+                .map((r) => ({ symbol: r.symbol, value: r.value as number }))}
+            />
+
+            <LivePaperAllocationCompare
+              liveItems={rows
                 .filter((r) => r.counted && r.value != null && r.value > 0)
                 .map((r) => ({ symbol: r.symbol, value: r.value as number }))}
             />
