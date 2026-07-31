@@ -41,6 +41,11 @@ import { LivePaperAllocationCompare } from "@/components/live-paper-allocation-c
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
 import { PriceSparkline, SparklineStats } from "@/components/price-sparkline";
+import {
+  SPARK_WINDOW_OPTIONS,
+  sliceSparkline,
+  useSparkWindow,
+} from "@/lib/sparkline-window";
 import { HoldingInfoDrawer } from "@/components/holding-info-drawer";
 import { SpamListManager } from "@/components/spam-list-manager";
 import { useSpamLists } from "@/lib/spam-lists";
@@ -133,6 +138,9 @@ export function LiveWalletPortfolio() {
     return () => window.clearInterval(id);
   }, []);
 
+  const { value: sparkWindow, setValue: setSparkWindow, config: sparkConfig } =
+    useSparkWindow();
+
   const feedStale = isStale(priceUpdatedAt, staleMs, now);
 
   const rows = (data?.balances ?? []).map((b) => {
@@ -150,7 +158,7 @@ export function LiveWalletPortfolio() {
       price,
       value: price != null ? price * b.amount : null,
       change24h: b.usdPeg ? 0 : (live?.change24h ?? null),
-      sparkline: live?.sparkline ?? [],
+      sparkline: sliceSparkline(live?.sparkline7d ?? live?.sparkline ?? [], sparkWindow),
       priced: price != null,
       livePriced,
 
@@ -521,6 +529,32 @@ export function LiveWalletPortfolio() {
               <span>· stale holdings are excluded from totals until refreshed</span>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <span>Sparkline window</span>
+              <div className="flex overflow-hidden rounded-md border border-border/60">
+                {SPARK_WINDOW_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setSparkWindow(o.value)}
+                    aria-pressed={sparkWindow === o.value}
+                    title={`Show the last ${o.label} of hourly closes`}
+                    className={`px-2.5 py-1 text-[11px] transition-colors ${
+                      sparkWindow === o.value
+                        ? "bg-primary/20 text-foreground"
+                        : "text-muted-foreground hover:bg-muted/40"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <span>
+                · hourly closes from the price feed
+                {sparkWindow === "1h" ? " — 1h shows only the two most recent hourly points" : ""}
+              </span>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-border/60 bg-card/60 p-3">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -778,10 +812,13 @@ export function LiveWalletPortfolio() {
                             className={r.stale || r.failed ? "opacity-40" : ""}
                             symbol={r.symbol}
                             endTs={priceUpdatedAt || undefined}
-                            title={`${r.symbol} — last 24h price movement (${r.sparkline.length} hourly points)`}
+                            intervalMs={sparkConfig.intervalMs}
+                            title={`${r.symbol} — last ${sparkWindow} price movement (${r.sparkline.length} hourly points)`}
                           />
 
-                          <span className="text-[10px] text-muted-foreground">24h</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {sparkWindow}
+                          </span>
                           <SparklineStats
                             points={r.sparkline}
                             className={r.stale || r.failed ? "opacity-60" : ""}

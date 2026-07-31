@@ -8,6 +8,7 @@ export type LivePrice = {
   price: number;
   change24h: number; // percent
   sparkline: number[]; // last ~24h
+  sparkline7d: number[]; // full hourly 7d series (windowing source)
   volume24h: number;
   marketCap: number;
   high24h: number;
@@ -67,6 +68,7 @@ async function fetchLive(): Promise<LivePrice[]> {
         price: d.current_price,
         change24h: d.price_change_percentage_24h ?? 0,
         sparkline: spark,
+        sparkline7d: full,
         volume24h: d.total_volume ?? 0,
         marketCap: d.market_cap ?? 0,
         high24h: d.high_24h ?? d.current_price,
