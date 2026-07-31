@@ -187,6 +187,13 @@ export function blogPostingSchema(
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     isPartOf: { "@id": nodeId("/blog", NODE.blog) },
+    ...(opts.breadcrumb
+      ? {
+          breadcrumb: {
+            "@id": nodeId(`/blog/${post.slug}`, NODE.breadcrumb),
+          },
+        }
+      : {}),
     url,
     inLanguage: "en",
   };
