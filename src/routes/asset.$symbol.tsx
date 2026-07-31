@@ -150,7 +150,10 @@ function AssetPage() {
           </div>
         </div>
 
+        <AssetShareButtons symbol={asset.symbol} />
+
         <DisclaimerBanner />
+
 
         <div className="grid gap-5 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
