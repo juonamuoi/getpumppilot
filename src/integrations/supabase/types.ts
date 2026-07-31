@@ -368,6 +368,137 @@ export type Database = {
         }
         Relationships: []
       }
+      pump_balances: {
+        Row: {
+          balance: number
+          created_at: string
+          lifetime_earned: number
+          lifetime_received: number
+          lifetime_sent: number
+          payout_address: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          lifetime_earned?: number
+          lifetime_received?: number
+          lifetime_sent?: number
+          payout_address?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          lifetime_earned?: number
+          lifetime_received?: number
+          lifetime_sent?: number
+          payout_address?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pump_ledger: {
+        Row: {
+          balance_after: number
+          counterparty_id: string | null
+          created_at: string
+          delta: number
+          external_ref: string | null
+          id: string
+          kind: string
+          memo: string | null
+          quest_key: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          counterparty_id?: string | null
+          created_at?: string
+          delta: number
+          external_ref?: string | null
+          id?: string
+          kind: string
+          memo?: string | null
+          quest_key?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          counterparty_id?: string | null
+          created_at?: string
+          delta?: number
+          external_ref?: string | null
+          id?: string
+          kind?: string
+          memo?: string | null
+          quest_key?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pump_quest_claims: {
+        Row: {
+          awarded: number
+          created_at: string
+          quest_key: string
+          user_id: string
+        }
+        Insert: {
+          awarded: number
+          created_at?: string
+          quest_key: string
+          user_id: string
+        }
+        Update: {
+          awarded?: number
+          created_at?: string
+          quest_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pump_quest_claims_quest_key_fkey"
+            columns: ["quest_key"]
+            isOneToOne: false
+            referencedRelation: "pump_quests"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      pump_quests: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          key: string
+          reward: number
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description: string
+          key: string
+          reward: number
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          key?: string
+          reward?: number
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
@@ -991,6 +1122,17 @@ export type Database = {
       }
       my_referral_reward_months: { Args: never; Returns: number }
       process_referral_rewards: { Args: never; Returns: number }
+      pump_claim_quest: { Args: { _quest_key: string }; Returns: Json }
+      pump_ensure_account: {
+        Args: { _signup_bonus?: number; _user_id: string }
+        Returns: undefined
+      }
+      pump_my_summary: { Args: never; Returns: Json }
+      pump_set_payout_address: { Args: { _address: string }; Returns: Json }
+      pump_transfer: {
+        Args: { _amount: number; _memo?: string; _to_tag: string }
+        Returns: Json
+      }
       resolve_referral_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {

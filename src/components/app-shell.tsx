@@ -21,6 +21,7 @@ import {
   Settings as SettingsIcon,
   TerminalSquare,
   Rss,
+  Coins,
 
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -56,6 +57,7 @@ const nav = [
   { to: "/security", label: "Security", icon: ShieldAlert },
   { to: "/learn", label: "Learn", icon: BookOpen },
   { to: "/refer", label: "Invite & earn", icon: Gift },
+  { to: "/pump", label: "PUMP token", icon: Coins },
   { to: "/pricing", label: "Credits & Pricing", icon: Zap },
   { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
