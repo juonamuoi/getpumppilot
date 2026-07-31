@@ -1473,6 +1473,19 @@ export function MitigationAuditTrail({
                     <MitigationDiffView entry={e} />
                     <MitigationReplayDiff entry={e} />
                     <MitigationReplayButton entry={e} imported={isImportedEntry(e)} />
+                    {e.correlationId && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 gap-1 px-2 text-[10px]"
+                        title={`Show all rows sharing ${e.correlationId}`}
+                        onClick={() => drillIntoCid(e.correlationId!)}
+                      >
+                        <Filter className="h-3 w-3" />
+                        View batch
+                      </Button>
+                    )}
                     <CopyCorrelationIdButton id={e.correlationId} />
 
                   </div>
