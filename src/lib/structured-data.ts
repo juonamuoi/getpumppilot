@@ -91,6 +91,34 @@ export type NodeKind = (typeof NODE)[keyof typeof NODE] | (string & {});
 export const nodeId = (path: string, node: NodeKind) => `${canonicalUrl(path)}#${node}`;
 
 
+/** The single language this site publishes in (BCP-47). */
+export const SITE_LOCALE = "en";
+
+/**
+ * Self-referencing hreflang set for a route.
+ *
+ * The site ships one English edition, so each page declares itself as the
+ * `en` alternate and as `x-default` (the fallback crawlers serve to any other
+ * locale). This is the recommended single-language annotation: it removes
+ * duplicate-content ambiguity between the apex/www and locale-guessed URLs
+ * without inventing translated URLs that do not exist.
+ *
+ * Always emitted alongside — and pointing at the same URL as — the route's
+ * `<link rel="canonical">`, so the two signals can never disagree.
+ */
+export function hreflangLinks(path: string) {
+  const href = canonicalUrl(path);
+  return [
+    { rel: "alternate", hrefLang: SITE_LOCALE, href },
+    { rel: "alternate", hrefLang: "x-default", href },
+  ] as const;
+}
+
+/** Canonical + hreflang for a route, in the order crawlers expect. */
+export function canonicalLinks(path: string) {
+  return [{ rel: "canonical", href: canonicalUrl(path) }, ...hreflangLinks(path)];
+}
+
 /** The canonical homepage URL every site-wide node points at. */
 export const HOME_URL = canonicalUrl("/");
 
