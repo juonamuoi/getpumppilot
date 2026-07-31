@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { PlainSignalCard } from "@/components/plain-signal";
 import { PortfolioHealthCard } from "@/components/portfolio-health";
 import { LiveWalletPortfolio } from "@/components/live-wallet-portfolio";
+import { WalletPriceAlerts } from "@/components/wallet-price-alerts";
 import { LiveMarket } from "@/components/live-market";
 import { RealtimeMomentumAlerts } from "@/components/realtime-momentum-alerts";
 import { RiskGuidanceCard } from "@/components/risk-guidance-card";
