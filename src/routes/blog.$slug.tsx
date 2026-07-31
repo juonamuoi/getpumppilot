@@ -13,6 +13,7 @@ import {
   socialImageUrl,
   breadcrumbSchema,
   blogPostingSchema,
+  pageEntityGraph,
   ldScript,
 } from "@/lib/structured-data";
 
