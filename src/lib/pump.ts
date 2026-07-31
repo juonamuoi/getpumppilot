@@ -188,7 +188,9 @@ export function pumpErrorMessage(reason?: string) {
     case "self_transfer":
       return "You can't send PUMP to yourself.";
     case "insufficient_balance":
-      return "Not enough PUMP for that transfer.";
+      return "Not enough PUMP for that.";
+    case "unknown_perk":
+      return "That perk is no longer available.";
     case "invalid_amount":
       return "Enter a whole amount between 1 and 1,000,000.";
     case "daily_limit":
