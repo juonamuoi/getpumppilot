@@ -159,7 +159,7 @@ export function AuditEntryDrawer({
         {correlationId && (
           <div className="mt-4 border-t border-border/60 pt-3">
             <Button asChild variant="outline" size="sm" className="gap-1">
-              <Link to="/alerts" search={{ tab: "replay", audit: correlationId }}>
+              <Link to="/alerts" search={{ tab: "replay", audit: correlationId, af: undefined }}>
                 Open in full audit trail
                 <ExternalLink className="h-3 w-3" />
               </Link>
