@@ -124,6 +124,23 @@ export function HoldingSparklineDrawer({
       ? ((activePoint.price - prevPoint.price) / prevPoint.price) * 100
       : null;
 
+  const onExportSeries = () => {
+    if (points.length === 0) return;
+    const meta = {
+      symbol,
+      name,
+      window: win,
+      intervalMs,
+      source: sourceNote ?? "CoinGecko hourly closes",
+    };
+    // series is newest-first; CSV is written oldest-first.
+    const csv = seriesToCsv(
+      [...series].reverse().map((p) => ({ ts: p.ts, price: p.price })),
+      meta,
+    );
+    downloadCsv(seriesCsvFilename(meta), csv);
+  };
+
 
   return (
     <Drawer>
