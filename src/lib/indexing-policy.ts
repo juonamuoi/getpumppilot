@@ -36,6 +36,7 @@ export const WALLET_GATED_ROUTES = [
   "/backtest",
   "/strategy",
   "/security",
+  "/pump-history",
 ] as const;
 
 /** Internal tooling: noindex + robots.txt Disallow. */
