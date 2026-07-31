@@ -245,3 +245,60 @@ export function validateExplainFields(fields: unknown): ExplainValidation {
 export function safeExplainFields(e: TuningLogEntry): ExplainValidation {
   return validateExplainFields(explainFields(e));
 }
+
+/* ------------------------------------------------------------------ *
+ * Sanitized export
+ *
+ * Keeps every field that passes validation and replaces only the
+ * malformed ones with a clear, greppable marker so a copy/export is
+ * never silently wrong and never blocked outright.
+ * ------------------------------------------------------------------ */
+
+export const INVALID_FIELD_MARKER = "[invalid]";
+
+export type SanitizedExplain = {
+  /** All ExplainFields keys; malformed ones replaced with the marker. */
+  fields: Record<ExplainFieldKey, string>;
+  /** Keys that were replaced. */
+  invalidKeys: ExplainFieldKey[];
+  /** Human-readable validation problems (empty when clean). */
+  issues: string[];
+  /** True when nothing had to be replaced. */
+  ok: boolean;
+};
+
+/**
+ * Field-by-field sanitize: validates each key on its own so one bad value
+ * doesn't poison the rest of the explanation.
+ */
+export function sanitizeExplainFields(fields: unknown): SanitizedExplain {
+  const raw = (fields ?? {}) as Record<string, unknown>;
+  const shape = ExplainFieldsSchema.shape;
+  const out = {} as Record<ExplainFieldKey, string>;
+  const invalidKeys: ExplainFieldKey[] = [];
+  const issues: string[] = [];
+
+  for (const key of EXPLAIN_FIELD_KEYS) {
+    const parsed = shape[key].safeParse(raw[key]);
+    if (parsed.success) {
+      out[key] = String(parsed.data);
+    } else {
+      out[key] = INVALID_FIELD_MARKER;
+      invalidKeys.push(key);
+      parsed.error.issues.forEach((i) => issues.push(`${key}: ${i.message}`));
+    }
+  }
+  for (const key of Object.keys(raw)) {
+    if (!(EXPLAIN_FIELD_KEYS as readonly string[]).includes(key)) {
+      issues.push(`(root): unexpected field "${key}" dropped from sanitized export`);
+    }
+  }
+
+  return { fields: out, invalidKeys, issues, ok: invalidKeys.length === 0 };
+}
+
+/** Builds and sanitizes an entry's Why explanation in one step. */
+export function sanitizedExplainFields(e: TuningLogEntry): SanitizedExplain {
+  return sanitizeExplainFields(explainFields(e));
+}
+

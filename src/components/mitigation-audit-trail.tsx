@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, AlertTriangle, Braces, Download, Link2 } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, AlertTriangle, Braces, Download, Link2, ShieldCheck } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +37,12 @@ import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
-import { explainOutcome, safeExplainFields } from "@/lib/mitigation-explain";
+import {
+  explainOutcome,
+  safeExplainFields,
+  sanitizedExplainFields,
+  INVALID_FIELD_MARKER,
+} from "@/lib/mitigation-explain";
 import { buildAuditShareUrl, type AuditShareState } from "@/lib/audit-share-link";
 
 import { AuditTrendCharts } from "@/components/audit-trend-charts";
@@ -77,22 +82,25 @@ function CopyWhyButton({
   onValidationClear?: () => void;
 }) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+  const isClean = safeExplainFields(entry).ok;
 
 
-  const copy = async () => {
-    const { fields: f, ok, issues } = safeExplainFields(entry);
-    if (!ok) {
+  const copy = async (sanitized = false) => {
+    const { fields: raw, ok, issues } = safeExplainFields(entry);
+    if (!ok && !sanitized) {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
       onValidationError?.([
         { id: entry.id, correlationId: entry.correlationId, issues },
       ]);
       toast.error("Why explanation looks malformed — nothing copied", {
-        description: issues.slice(0, 3).join(" · "),
+        description: `${issues.slice(0, 3).join(" · ")} — use “Copy sanitized” to keep the valid fields.`,
       });
       return;
     }
-    onValidationClear?.();
+    const sane = sanitizedExplainFields(entry);
+    const f = sanitized ? sane.fields : raw;
+    if (ok) onValidationClear?.();
     const val = (v: unknown) => {
       const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
       return s.length ? s : "—";
@@ -103,7 +111,13 @@ function CopyWhyButton({
       : "—";
 
     const text = [
-      `Why: ${val(f.why || explainOutcome(entry))}`,
+      ...(sanitized && sane.invalidKeys.length
+        ? [
+            `Note: sanitized copy — malformed fields shown as ${INVALID_FIELD_MARKER} (${sane.invalidKeys.join(", ")})`,
+            "",
+          ]
+        : []),
+      `Why: ${val(sanitized ? f.why : f.why || explainOutcome(entry))}`,
       "",
       `Correlation ID: ${val(entry.correlationId)}`,
       `Time: ${when}`,
@@ -120,8 +134,10 @@ function CopyWhyButton({
       await navigator.clipboard.writeText(text);
       setStatus("copied");
       setTimeout(() => setStatus("idle"), 2000);
-      toast.success("Why explanation copied", {
-        description: `Correlation ID ${val(entry.correlationId)} · ${when}`,
+      toast.success(sanitized ? "Sanitized Why explanation copied" : "Why explanation copied", {
+        description: `Correlation ID ${val(entry.correlationId)} · ${when}${
+          sanitized && sane.invalidKeys.length ? ` · ${sane.invalidKeys.length} field(s) marked ${INVALID_FIELD_MARKER}` : ""
+        }`,
       });
     } catch {
       setStatus("error");
@@ -138,7 +154,7 @@ function CopyWhyButton({
         variant="ghost"
         size="sm"
         className="h-6 shrink-0 gap-1 px-2 text-[10px]"
-        onClick={copy}
+        onClick={() => copy(false)}
         aria-label="Copy why explanation"
       >
         {status === "copied" ? (
@@ -150,6 +166,19 @@ function CopyWhyButton({
         )}
         {status === "copied" ? "Copied" : status === "error" ? "Failed" : "Copy"}
       </Button>
+      {!isClean && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 shrink-0 gap-1 px-2 text-[10px] text-amber-500 hover:text-amber-400"
+          onClick={() => copy(true)}
+          aria-label="Copy sanitized why explanation with invalid fields marked"
+          title={`Copies valid fields only; malformed ones become ${INVALID_FIELD_MARKER}`}
+        >
+          <ShieldCheck className="h-3 w-3" />
+          Copy sanitized
+        </Button>
+      )}
       <span aria-live="polite" className="sr-only">
         {status === "copied"
           ? "Why explanation copied to clipboard"
@@ -180,7 +209,8 @@ function CopyEntryJsonButton({ entry }: { entry: TuningLogEntry }) {
       timestamp: Number.isFinite(entry.ts) ? new Date(entry.ts).toISOString() : null,
       entry,
       why,
-      whyValidation: { ok, issues },
+      whySanitized: sanitizedExplainFields(entry).fields,
+      whyValidation: { ok, issues, invalidMarker: INVALID_FIELD_MARKER },
     };
 
     try {

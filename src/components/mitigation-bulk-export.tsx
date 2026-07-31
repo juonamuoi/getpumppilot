@@ -15,7 +15,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
-import { explainFields } from "@/lib/mitigation-explain";
+import { explainFields, sanitizedExplainFields } from "@/lib/mitigation-explain";
 
 /* ------------------------------------------------------------------ *
  * Bulk export — current filtered scope only
@@ -38,7 +38,17 @@ export type BulkExportScope = {
   includePreviews: boolean;
 };
 
-type Ctx = { entry: TuningLogEntry; scope: BulkExportScope; wallets: string[] };
+type Ctx = {
+  entry: TuningLogEntry;
+  scope: BulkExportScope;
+  wallets: string[];
+  /** When true, malformed Why fields are replaced with "[invalid]". */
+  sanitize?: boolean;
+};
+
+/** Why value for a context — sanitized (marker for malformed) or raw. */
+const why = (c: Ctx, key: "why" | "whyChange" | "whyStrictness" | "whyImpact" | "whyOutcome" | "whyFragility") =>
+  c.sanitize ? sanitizedExplainFields(c.entry).fields[key] : explainFields(c.entry)[key];
 
 type Col = {
   key: string;
@@ -90,12 +100,18 @@ const COLUMNS: Col[] = [
   { key: "outcomeChannels", label: "Outcome channels", group: "outcome", get: (c) => c.entry.outcome?.channels.join("|") ?? "" },
   { key: "outcomeAt", label: "Outcome recorded at", group: "outcome", get: (c) => iso(c.entry.outcome?.ts) },
 
-  { key: "why", label: "Why (plain English)", group: "why", get: (c) => explainFields(c.entry).why },
-  { key: "whyChange", label: "Why — rule change", group: "why", get: (c) => explainFields(c.entry).whyChange },
-  { key: "whyStrictness", label: "Why — strictness", group: "why", get: (c) => explainFields(c.entry).whyStrictness },
-  { key: "whyImpact", label: "Why — expected impact", group: "why", get: (c) => explainFields(c.entry).whyImpact },
-  { key: "whyOutcome", label: "Why — outcome", group: "why", get: (c) => explainFields(c.entry).whyOutcome },
-  { key: "whyFragility", label: "Why — fragility", group: "why", get: (c) => explainFields(c.entry).whyFragility },
+  { key: "why", label: "Why (plain English)", group: "why", get: (c) => why(c, "why") },
+  { key: "whyChange", label: "Why — rule change", group: "why", get: (c) => why(c, "whyChange") },
+  { key: "whyStrictness", label: "Why — strictness", group: "why", get: (c) => why(c, "whyStrictness") },
+  { key: "whyImpact", label: "Why — expected impact", group: "why", get: (c) => why(c, "whyImpact") },
+  { key: "whyOutcome", label: "Why — outcome", group: "why", get: (c) => why(c, "whyOutcome") },
+  { key: "whyFragility", label: "Why — fragility", group: "why", get: (c) => why(c, "whyFragility") },
+  {
+    key: "whyInvalidFields",
+    label: "Why — invalid fields",
+    group: "why",
+    get: (c) => sanitizedExplainFields(c.entry).invalidKeys.join("|"),
+  },
 ];
 
 const GROUP_LABEL: Record<Col["group"], string> = {
@@ -138,13 +154,19 @@ export function MitigationBulkExport({
 }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(DEFAULT_COLUMNS);
+  const [sanitize, setSanitize] = useState(true);
 
   const ctxs = useMemo<Ctx[]>(
-    () => entries.map((entry) => ({ entry, scope, wallets: walletsFor?.(entry) ?? [] })),
-    [entries, scope, walletsFor],
+    () => entries.map((entry) => ({ entry, scope, wallets: walletsFor?.(entry) ?? [], sanitize })),
+    [entries, scope, walletsFor, sanitize],
   );
 
   const cols = COLUMNS.filter((c) => selected.includes(c.key));
+
+  const invalidCount = useMemo(
+    () => entries.filter((e) => !sanitizedExplainFields(e).ok).length,
+    [entries],
+  );
 
   const toggle = (key: string) =>
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -181,6 +203,11 @@ export function MitigationBulkExport({
           window: { from: scope.from, to: scope.to, label: scope.timeRange },
           correlationIds: [...new Set(entries.map((e) => e.correlationId).filter(Boolean))],
         },
+        sanitized: sanitize,
+        sanitizedMarker: sanitize ? "[invalid]" : null,
+        invalidWhyRecords: sanitize
+          ? entries.filter((e) => !sanitizedExplainFields(e).ok).length
+          : undefined,
         columns: cols.map((c) => ({ key: c.key, label: c.label, group: c.group })),
         records: data,
       };
@@ -209,7 +236,11 @@ export function MitigationBulkExport({
       `Exported ${data.length} filtered record${data.length === 1 ? "" : "s"} as ${kinds
         .map((k) => k.toUpperCase())
         .join(" + ")}`,
-      { description: `${cols.length} columns · ${scope.timeRange}` },
+      {
+        description: `${cols.length} columns · ${scope.timeRange}${
+          sanitize ? ` · sanitized (${invalidCount} record${invalidCount === 1 ? "" : "s"} with [invalid] markers)` : ""
+        }`,
+      },
     );
     setOpen(false);
   };
@@ -266,6 +297,24 @@ export function MitigationBulkExport({
             Window: {scope.from ?? "beginning of log"} → {scope.to}
           </p>
         </div>
+
+        <label className="flex items-start gap-2 rounded-md border border-border/60 bg-muted/10 p-3 text-xs">
+          <Checkbox
+            checked={sanitize}
+            onCheckedChange={(v) => setSanitize(v === true)}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="font-medium">Sanitized export</span>
+            <span className="block text-[10px] text-muted-foreground">
+              Export only valid Why fields and replace malformed ones with{" "}
+              <code className="rounded bg-muted px-1">[invalid]</code>
+              {invalidCount > 0
+                ? ` — ${invalidCount} record${invalidCount === 1 ? "" : "s"} in scope need it.`
+                : " — all records in scope are currently clean."}
+            </span>
+          </span>
+        </label>
 
         <ScrollArea className="max-h-[42vh] pr-3">
           <div className="space-y-4">
