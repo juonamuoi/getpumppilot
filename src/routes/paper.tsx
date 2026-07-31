@@ -35,6 +35,7 @@ import { requestTrade } from "@/lib/trade-gate";
 import { useLiveTrading } from "@/lib/live-trading";
 import { TradeModeSwitch } from "@/components/trade-mode-switch";
 import { LiveSwapPanel } from "@/components/live-swap-panel";
+import { LiveStatusIndicator } from "@/components/live-status-indicator";
 
 
 export const Route = createFileRoute("/paper")({
@@ -173,6 +174,8 @@ function PaperPage() {
         </div>
 
         <DisclaimerBanner />
+
+        <LiveStatusIndicator />
 
         <TradeModeSwitch />
         <LiveSwapPanel />
