@@ -340,12 +340,18 @@ function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <a href="#features">Features</a>
             </Button>
             <Button variant="ghost" size="sm" asChild>
+              <Link to="/scanner">Scanner</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
               <Link to="/pricing">Pricing</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+              <a href="#guides">Guides</a>
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/blog">Blog</Link>
@@ -354,6 +360,7 @@ function LandingPage() {
               <Link to={launchHref}>{launchLabel}</Link>
             </Button>
           </div>
+
         </div>
       </header>
 
