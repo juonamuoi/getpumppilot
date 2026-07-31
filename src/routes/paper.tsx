@@ -32,6 +32,10 @@ import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 import { requestTrade } from "@/lib/trade-gate";
+import { useLiveTrading } from "@/lib/live-trading";
+import { TradeModeSwitch } from "@/components/trade-mode-switch";
+import { LiveSwapPanel } from "@/components/live-swap-panel";
+
 
 export const Route = createFileRoute("/paper")({
   head: () => ({
@@ -71,6 +75,8 @@ export const Route = createFileRoute("/paper")({
 
 function PaperPage() {
   const paper = usePaper();
+  const liveMode = useLiveTrading().mode === "live";
+
   const { spend } = useCredits();
   const [symbol, setSymbol] = useState("BTC");
   const [qty, setQty] = useState("");
