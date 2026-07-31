@@ -1215,7 +1215,15 @@ export function MitigationAuditTrail({
                       <span className="font-medium text-foreground">Why: </span>
                       {explainOutcome(e)}
                     </p>
-                    <CopyWhyButton entry={e} />
+                    <CopyWhyButton
+                      entry={e}
+                      onValidationError={(problems) =>
+                        setWhyErrors({ source: "copy", problems })
+                      }
+                      onValidationClear={() =>
+                        setWhyErrors((prev) => (prev?.source === "copy" ? null : prev))
+                      }
+                    />
                   </div>
                 </div>
 
