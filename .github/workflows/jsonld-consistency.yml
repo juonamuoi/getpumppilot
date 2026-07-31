@@ -74,6 +74,9 @@ jobs:
       - name: hreflang self-reference parity
         run: bun run test:seo:hreflang
 
+      - name: Journal pagination (rel prev/next + JSON-LD chain)
+        run: bun run test:seo:pagination
+
 
 
 

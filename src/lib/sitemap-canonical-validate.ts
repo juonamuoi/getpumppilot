@@ -45,11 +45,26 @@ export function parseSitemapLocs(xml: string): string[] {
 export function toPathname(value: string): string | null {
   try {
     const url = value.startsWith("/") ? new URL(value, CANONICAL_ORIGIN) : new URL(value);
-    const path = url.pathname;
-    return path.length > 1 ? path.replace(/\/+$/, "") : "/";
+    const path = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, "") : "/";
+    // Pagination is part of a page's identity: /blog and /blog?page=2 are two
+    // distinct indexable URLs, so they must not collapse into one another.
+    return isPaginationQuery(url) ? `${path}?page=${url.searchParams.get("page")}` : path;
   } catch {
     return null;
   }
+}
+
+/**
+ * Paginated listing pages are the one legitimate query string in the sitemap:
+ * `/blog?page=2` self-canonicalises, serves 200, and holds posts that appear
+ * on no other URL. Only a lone integer `page` >= 2 qualifies — any other
+ * parameter (tracking, filters, session) still redirects or duplicates.
+ */
+export function isPaginationQuery(url: URL): boolean {
+  const params = [...url.searchParams.keys()];
+  if (params.length !== 1 || params[0] !== "page") return false;
+  const page = Number(url.searchParams.get("page"));
+  return Number.isInteger(page) && page >= 2;
 }
 
 /** Detect URL shapes that force a redirect before the canonical page is served. */
@@ -86,11 +101,12 @@ export function checkRedirectShape(rawUrl: string): UrlIssue[] {
       message: "Uppercase path segment does not match the lowercase canonical.",
     });
   }
-  if (url.search || url.hash) {
+  if (url.hash || (url.search && !isPaginationQuery(url))) {
     issues.push({
       code: "redirect_query_or_hash",
       url: rawUrl,
-      message: "Query string or hash fragment must not appear in the sitemap.",
+      message:
+        "Query string or hash fragment must not appear in the sitemap (only ?page=N pagination is allowed).",
     });
   }
   return issues;
