@@ -119,6 +119,20 @@ export function canonicalLinkFor(path: string) {
   return [{ rel: "canonical", href: canonicalFor(path) }];
 }
 
+/**
+ * Public, crawlable marketing counterpart for a wallet-gated screen.
+ * The gated route keeps its own (noindex) self-canonical; this mapping is what
+ * search engines and unauthenticated visitors get pointed at instead.
+ */
+export const PUBLIC_ALTERNATIVES: Record<string, string> = {
+  "/dashboard": "/features/dashboard",
+  "/journal": "/features/journal",
+};
+
+export function publicAlternativeFor(path: string): string | null {
+  return PUBLIC_ALTERNATIVES[normalizePath(path)] ?? null;
+}
+
 /** Paths that robots.txt must Disallow (internal only — gated stays crawlable). */
 export function robotsDisallowPaths(): string[] {
   return [...INTERNAL_ROUTES];
