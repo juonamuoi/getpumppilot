@@ -3,9 +3,10 @@
 // surface (dashboard, scanner, asset pages) shows real prices for majors.
 // Fictional DEMO small-caps stay simulated and clearly labelled.
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ASSETS, type Asset } from "@/lib/mock-data";
 import { useLivePrices, type LivePrice } from "@/lib/market-data";
+import { setLivePrices } from "@/lib/live-price-registry";
 
 export type LiveAsset = Asset & { isLive: boolean };
 
@@ -65,6 +66,13 @@ export function useLiveAssets() {
   }, [data]);
 
   const assets = useMemo(() => ASSETS.map((a) => overlay(a, map[a.symbol])), [map]);
+
+  // Publish prices so the paper store marks positions at the same values.
+  useEffect(() => {
+    const next: Record<string, number> = {};
+    for (const [symbol, p] of Object.entries(map)) next[symbol] = p.price;
+    setLivePrices(next);
+  }, [map]);
 
   return {
     assets,

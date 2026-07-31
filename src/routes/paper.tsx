@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
+import { useLiveAssets } from "@/lib/live-assets";
 import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { usePaper } from "@/lib/paper-store";
@@ -79,7 +80,11 @@ function PaperPage() {
     target: number;
   } | null>(null);
 
-  const asset = getAsset(symbol)!;
+  // Live-overlaid universe so /paper marks positions exactly like /dashboard.
+  const { assets: liveAssets } = useLiveAssets();
+  const priced = (sym: string) =>
+    liveAssets.find((a) => a.symbol === sym) ?? getAsset(sym)!;
+  const asset = priced(symbol);
 
   const applyRiskControls = () => {
     const { maxPositionPct, stopLossPct, takeProfitPct } = paper.risk;
@@ -188,7 +193,7 @@ function PaperPage() {
               ) : (
                 <div className="divide-y divide-border/60">
                   {paper.positions.map((p) => {
-                    const a = getAsset(p.symbol)!;
+                    const a = priced(p.symbol);
                     const value = a.price * p.qty;
                     const pnl = (a.price - p.avgCost) * p.qty;
                     const pnlPct = ((a.price - p.avgCost) / p.avgCost) * 100;
@@ -237,7 +242,7 @@ function PaperPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ASSETS.map((a) => (
+                    {(liveAssets.length ? liveAssets : ASSETS).map((a) => (
                       <SelectItem key={a.symbol} value={a.symbol}>
                         {a.symbol} — {fmtUsd(a.price)}
                       </SelectItem>

@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ASSETS, getAsset } from "./mock-data";
+import { livePriceOf } from "./live-price-registry";
+
+/** Live price when the feed covers the symbol, else the simulated demo price. */
+function markPrice(symbol: string, fallback: number): number {
+  return livePriceOf(symbol) ?? fallback;
+}
 
 export type Position = {
   symbol: string;
@@ -399,7 +405,7 @@ export function PaperProvider({ children }: { children: ReactNode }) {
   const equity = useMemo(() => {
     const posValue = positions.reduce((s, p) => {
       const a = getAsset(p.symbol);
-      return s + (a ? a.price * p.qty : 0);
+      return s + (a ? markPrice(p.symbol, a.price) * p.qty : 0);
     }, 0);
     return cash + posValue;
   }, [cash, positions]);
@@ -408,7 +414,9 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     const a = getAsset(symbol);
     if (!a) return { ok: false, msg: "Unknown symbol" };
     if (qty <= 0) return { ok: false, msg: "Quantity must be positive" };
-    const notional = a.price * qty;
+    // Fill at the same live-overlaid mark every screen displays.
+    const price = markPrice(symbol, a.price);
+    const notional = price * qty;
 
     if (side === "buy") {
       if (notional > cash) return { ok: false, msg: "Insufficient paper cash" };
@@ -420,10 +428,10 @@ export function PaperProvider({ children }: { children: ReactNode }) {
         const ex = prev.find((p) => p.symbol === symbol);
         if (ex) {
           const totalQty = ex.qty + qty;
-          const avgCost = (ex.avgCost * ex.qty + a.price * qty) / totalQty;
+          const avgCost = (ex.avgCost * ex.qty + price * qty) / totalQty;
           return prev.map((p) => (p.symbol === symbol ? { ...p, qty: totalQty, avgCost } : p));
         }
-        return [...prev, { symbol, qty, avgCost: a.price }];
+        return [...prev, { symbol, qty, avgCost: price }];
       });
     } else {
       const ex = positions.find((p) => p.symbol === symbol);
@@ -437,10 +445,10 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     }
 
     setTrades((t) => [
-      { id: Math.random().toString(36).slice(2), ts: Date.now(), symbol, side, qty, price: a.price },
+      { id: Math.random().toString(36).slice(2), ts: Date.now(), symbol, side, qty, price },
       ...t,
     ]);
-    return { ok: true, msg: `Paper ${side.toUpperCase()} ${qty} ${symbol} @ ${a.price}` };
+    return { ok: true, msg: `Paper ${side.toUpperCase()} ${qty} ${symbol} @ ${price}` };
   };
 
   const simulateScannerRun = () => {
