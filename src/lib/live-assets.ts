@@ -3,9 +3,10 @@
 // surface (dashboard, scanner, asset pages) shows real prices for majors.
 // Fictional DEMO small-caps stay simulated and clearly labelled.
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ASSETS, type Asset } from "@/lib/mock-data";
 import { useLivePrices, type LivePrice } from "@/lib/market-data";
+import { setLivePrices } from "@/lib/live-price-registry";
 
 export type LiveAsset = Asset & { isLive: boolean };
 
