@@ -43,6 +43,7 @@
     "check:rich-results:json": "bun scripts/rich-results-check.mjs --json",
     "test:seo:journal-dates": "vitest run --config vitest.seo.config.ts src/tests/seo/journal-article-dates.test.ts",
     "test:seo:journal-images": "vitest run --config vitest.seo.config.ts src/tests/seo/journal-twitter-image-parity.test.ts",
+    "test:seo:hreflang": "vitest run --config vitest.seo.config.ts src/tests/seo/hreflang.test.ts",
     "test:seo:journal-parity": "vitest run --config vitest.seo.config.ts src/tests/seo/journal-article-parity.test.ts",
     "check:og-images": "bun scripts/og-image-check.mjs",
     "check:og-images:json": "bun scripts/og-image-check.mjs --json",

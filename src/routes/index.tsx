@@ -46,6 +46,7 @@ import {
   nodeId,
   pageEntityGraph,
   NODE,
+  canonicalLinks,
 } from "@/lib/structured-data";
 const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =
@@ -294,7 +295,7 @@ export const Route = createFileRoute("/")({
         content: "PumpPilot AI — explainable crypto momentum dashboard",
       },
     ]),
-    links: [{ rel: "canonical", href: canonicalUrl("/") }],
+    links: canonicalLinks("/"),
     scripts: [
       // One graph: site-wide Organization + WebSite (SearchAction) merged with
       // the homepage's own WebPage, SoftwareApplication, FAQ and nav nodes.

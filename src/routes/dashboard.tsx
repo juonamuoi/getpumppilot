@@ -10,6 +10,7 @@ import {
   webPageSchema,
   WEBSITE_ID,
   ORG_ID,
+  canonicalLinks,
 } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
@@ -43,7 +44,7 @@ const DASH_IMAGE = SOCIAL_IMAGE_URL;
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
-    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/dashboard" }],
+    links: canonicalLinks("/dashboard"),
     meta: withSocialMeta([
       // Wallet-gated app surface: crawlable, but never indexed.
       ...robotsMetaFor("/dashboard"),

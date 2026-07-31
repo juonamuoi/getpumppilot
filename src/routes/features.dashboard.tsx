@@ -30,6 +30,7 @@ import {
   nodeId,
   pageEntityGraph,
   webPageSchema,
+  canonicalLinks,
 } from "@/lib/structured-data";
 
 const PATH = "/features/dashboard";
@@ -42,7 +43,7 @@ const IMAGE_ALT = "PumpPilot AI dashboard with momentum signals and portfolio ov
 
 export const Route = createFileRoute("/features/dashboard")({
   head: () => ({
-    links: [{ rel: "canonical", href: `${SITE_URL}${PATH}` }],
+    links: canonicalLinks(PATH),
     meta: withSocialMeta([
       { title: TITLE },
       { name: "description", content: DESC },

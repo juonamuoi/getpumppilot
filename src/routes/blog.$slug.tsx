@@ -17,6 +17,7 @@ import {
   blogPostPageSchema,
   pageEntityGraph,
   ldScript,
+  canonicalLinks,
 } from "@/lib/structured-data";
 
 /** Rough word count from the block body — powers Article `wordCount`. */
@@ -68,7 +69,7 @@ export const Route = createFileRoute("/blog/$slug")({
         { name: "twitter:title", content: socialTitle },
         { name: "twitter:description", content: post.description },
       ]),
-      links: [{ rel: "canonical", href: url }],
+      links: canonicalLinks(`/blog/${post.slug}`),
       scripts: [
         ldScript(
           pageEntityGraph([
