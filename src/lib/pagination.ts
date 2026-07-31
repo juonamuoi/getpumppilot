@@ -120,7 +120,45 @@ export function collectionPageSchema(opts: {
   };
   if (opts.isPartOf) node.isPartOf = { "@id": opts.isPartOf };
   if (opts.publisher) node.publisher = { "@id": opts.publisher };
-  if (paged.hasPrev) node.previousItem = { "@id": pageUrl(basePath, paged.page - 1) };
-  if (paged.hasNext) node.nextItem = { "@id": pageUrl(basePath, paged.page + 1) };
   return node;
 }
+
+/** `@id` of the ListItem standing for one page of the series. */
+export const pageItemId = (basePath: string, page: number) =>
+  `${pageUrl(basePath, page)}#page-${page}`;
+
+/**
+ * The pagination chain itself, as an `ItemList` of pages.
+ *
+ * schema.org models "previous/next" with `previousItem`/`nextItem`, which are
+ * ListItem properties — not WebPage ones — so the chain lives here rather than
+ * on the CollectionPage. Each page is one ListItem whose `url` is that page's
+ * canonical, mirroring the `<link rel="prev|next">` tags exactly.
+ */
+export function paginationChainSchema(
+  basePath: string,
+  paged: Pick<Paged<unknown>, "page" | "totalPages">,
+  name: string,
+) {
+  return {
+    "@type": "ItemList",
+    "@id": `${pageUrl(basePath, paged.page)}#pagination`,
+    name: `${name} — pages`,
+    numberOfItems: paged.totalPages,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    itemListElement: Array.from({ length: paged.totalPages }, (_, i) => {
+      const page = i + 1;
+      const item: Record<string, unknown> = {
+        "@type": "ListItem",
+        "@id": pageItemId(basePath, page),
+        position: page,
+        name: page === 1 ? name : `${name} — Page ${page}`,
+        url: pageUrl(basePath, page),
+      };
+      if (page > 1) item.previousItem = { "@id": pageItemId(basePath, page - 1) };
+      if (page < paged.totalPages) item.nextItem = { "@id": pageItemId(basePath, page + 1) };
+      return item;
+    }),
+  };
+}
+
