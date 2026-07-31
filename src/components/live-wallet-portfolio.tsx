@@ -575,6 +575,55 @@ export function LiveWalletPortfolio() {
               </span>
             </div>
 
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <Button
+                  size="sm"
+                  variant={compareMode ? "secondary" : "outline"}
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => {
+                    setCompareMode((v) => !v);
+                    if (compareMode) setComparePicks([]);
+                  }}
+                  aria-pressed={compareMode}
+                  disabled={comparable.length < 2}
+                >
+                  {compareMode ? "Exit compare" : "Compare momentum"}
+                </Button>
+                {comparable.length < 2 ? (
+                  <span>· need at least two holdings with price history</span>
+                ) : compareMode ? (
+                  <span>
+                    · pick two holdings below ({comparePicks.length}/2 selected) — overlays
+                    their {sparkWindow} sparklines normalized to % change
+                  </span>
+                ) : (
+                  <span>· overlay two sparklines side-by-side</span>
+                )}
+                {compareMode && comparePicks.length > 0 && (
+                  <button
+                    type="button"
+                    className="underline hover:text-foreground"
+                    onClick={() => setComparePicks([])}
+                  >
+                    Clear selection
+                  </button>
+                )}
+              </div>
+
+              {compareMode && comparePair.length === 2 && (
+                <SparklineCompare
+                  a={{ symbol: comparePair[0].symbol, points: comparePair[0].sparkline }}
+                  b={{ symbol: comparePair[1].symbol, points: comparePair[1].sparkline }}
+                  window={sparkWindow}
+                  intervalMs={sparkConfig.intervalMs}
+                  endTs={priceUpdatedAt || undefined}
+                />
+              )}
+            </div>
+
+
+
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-border/60 bg-card/60 p-3">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
