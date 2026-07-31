@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   loadLogScanCache,
+  clearLogScanCache,
   saveLogScanCache,
   mergeActivity,
   type CachedActivity,
