@@ -13,6 +13,7 @@ import {
   socialImageUrl,
   breadcrumbSchema,
   blogPostingSchema,
+  authorNodesFor,
   blogPostPageSchema,
   pageEntityGraph,
   ldScript,
@@ -73,6 +74,8 @@ export const Route = createFileRoute("/blog/$slug")({
           pageEntityGraph([
             blogPostPageSchema(post),
             blogPostingSchema({ ...post, wordCount: countWords(post.body) }),
+            // Author entity the BlogPosting's author/creator @id points at.
+            ...authorNodesFor([post]),
             breadcrumbSchema([
               { name: "Blog", path: "/blog" },
               { name: post.title, path: `/blog/${params.slug}` },

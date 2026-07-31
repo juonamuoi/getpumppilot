@@ -11,6 +11,7 @@ import {
   WEBSITE_ID,
   breadcrumbSchema,
   blogPostingSchema,
+  authorNodesFor,
   ldScript,
   nodeId,
   NODE,
@@ -35,16 +36,21 @@ export const Route = createFileRoute("/blog/")({
     scripts: [
       ldScript({
         "@context": "https://schema.org",
-        "@type": "Blog",
-        "@id": nodeId("/blog", NODE.blog),
-        name: "PumpPilot AI Blog",
-        url: CANONICAL,
-        description: "AI investment and crypto trading guides.",
-        inLanguage: "en",
-        isPartOf: { "@id": WEBSITE_ID },
-        publisher: { "@id": ORG_ID },
-        blogPost: BLOG_POSTS.map((p) => blogPostingSchema(p)),
-
+        "@graph": [
+          {
+            "@type": "Blog",
+            "@id": nodeId("/blog", NODE.blog),
+            name: "PumpPilot AI Blog",
+            url: CANONICAL,
+            description: "AI investment and crypto trading guides.",
+            inLanguage: "en",
+            isPartOf: { "@id": WEBSITE_ID },
+            publisher: { "@id": ORG_ID },
+            blogPost: BLOG_POSTS.map((p) => blogPostingSchema(p)),
+          },
+          // Author entities referenced by every BlogPosting above.
+          ...authorNodesFor(BLOG_POSTS),
+        ],
       }),
       ldScript(breadcrumbSchema([{ name: "Blog", path: "/blog" }])),
     ],

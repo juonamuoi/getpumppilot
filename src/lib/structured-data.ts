@@ -135,6 +135,85 @@ export const siteGraph = {
   "@graph": [organizationSchema, websiteSchema],
 };
 
+/* ------------------------------------------------------------------ *
+ * Editorial authors
+ *
+ * Every BlogPosting references an author by stable `@id` instead of
+ * inlining a bare name, and the matching Person/Organization node is
+ * emitted in the same `@graph`. That lets crawlers attribute each post to
+ * a real entity (and merge the same author across posts) while the
+ * publisher stays the site Organization.
+ * ------------------------------------------------------------------ */
+
+export type AuthorKey = "editorial" | "research-desk" | "risk-desk";
+
+export const authorId = (key: string) => `${SITE_URL}/#author-${key}`;
+
+type AuthorDef = {
+  type: "Person" | "Organization";
+  name: string;
+  jobTitle?: string;
+  description: string;
+  url: string;
+};
+
+export const AUTHORS: Record<AuthorKey, AuthorDef> = {
+  editorial: {
+    type: "Organization",
+    name: `${SITE_NAME} Editorial Team`,
+    description:
+      "The PumpPilot AI editorial team writes explainable guides on crypto momentum, paper trading and risk management.",
+    url: `${SITE_URL}/blog`,
+  },
+  "research-desk": {
+    type: "Organization",
+    name: `${SITE_NAME} Research Desk`,
+    description:
+      "Signal research and momentum-model analysis published by the PumpPilot AI research desk.",
+    url: `${SITE_URL}/blog`,
+  },
+  "risk-desk": {
+    type: "Organization",
+    name: `${SITE_NAME} Risk Desk`,
+    description:
+      "Risk-control, security and safe-trading guidance from the PumpPilot AI risk desk.",
+    url: `${SITE_URL}/blog`,
+  },
+};
+
+export const DEFAULT_AUTHOR: AuthorKey = "editorial";
+
+const resolveAuthorKey = (key?: string): AuthorKey =>
+  key && key in AUTHORS ? (key as AuthorKey) : DEFAULT_AUTHOR;
+
+/** Full author node for the `@graph`; always affiliated with the publisher. */
+export function authorSchema(key?: string) {
+  const k = resolveAuthorKey(key);
+  const a = AUTHORS[k];
+  return {
+    "@type": a.type,
+    "@id": authorId(k),
+    name: a.name,
+    description: a.description,
+    url: a.url,
+    ...(a.jobTitle ? { jobTitle: a.jobTitle } : {}),
+    ...(a.type === "Person"
+      ? { worksFor: { "@id": ORG_ID } }
+      : { parentOrganization: { "@id": ORG_ID } }),
+    ...(a.type === "Person" ? { affiliation: { "@id": ORG_ID } } : {}),
+    publishingPrinciples: `${SITE_URL}/risk-disclosure`,
+  };
+}
+
+/** Publisher node reference used by every editorial node. */
+export const publisherRef = { "@id": ORG_ID } as const;
+
+/** Deduplicated author nodes for a set of posts (blog index / post pages). */
+export function authorNodesFor(posts: { author?: string }[]) {
+  const keys = Array.from(new Set(posts.map((p) => resolveAuthorKey(p.author))));
+  return keys.map((k) => authorSchema(k));
+}
+
 export type BlogPostMeta = {
   slug: string;
   title: string;
@@ -149,12 +228,18 @@ export type BlogPostMeta = {
   imageAlt?: string;
   readMinutes?: number;
   wordCount?: number;
+  /** Key into AUTHORS; falls back to the editorial team. */
+  author?: string;
 };
 
 /**
  * BlogPosting node for a single post. Shared by the blog index (embedded in
  * the `Blog` node) and each post route so headline, description, author,
  * publisher and publish/update dates are always identical for the same URL.
+ *
+ * `author` is a reference to a stable author `@id`; the matching
+ * Person/Organization node must be emitted in the same `@graph` (use
+ * `authorNodesFor`). `publisher` always resolves to the site Organization.
  */
 export function blogPostingSchema(
   post: BlogPostMeta,
@@ -162,6 +247,7 @@ export function blogPostingSchema(
 ) {
   const url = canonicalUrl(`/blog/${post.slug}`);
   const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
+  const authorKey = resolveAuthorKey(post.author);
   const node: Record<string, unknown> = {
     ...(opts.standalone ? { "@context": "https://schema.org" } : {}),
     "@type": "BlogPosting",
@@ -171,13 +257,14 @@ export function blogPostingSchema(
     description: post.description,
     datePublished: post.date,
     dateModified: post.updated ?? post.date,
-    author: {
-      "@type": "Organization",
-      "@id": ORG_ID,
-      name: SITE_NAME,
-      url: SITE_URL,
-    },
-    publisher: { "@id": ORG_ID },
+    // Standalone emission has no surrounding graph to resolve the @id, so
+    // inline the full author node there and reference it otherwise.
+    author: opts.standalone ? authorSchema(authorKey) : { "@id": authorId(authorKey) },
+    creator: { "@id": authorId(authorKey) },
+    publisher: publisherRef,
+    copyrightHolder: publisherRef,
+    sourceOrganization: publisherRef,
+
     image: {
       "@type": "ImageObject",
       url: imageUrl,
