@@ -193,3 +193,40 @@ export function pumpErrorMessage(reason?: string) {
 }
 
 export const formatPump = (n: number) => `${Math.round(n).toLocaleString()} PUMP`;
+
+/* ------------------------------------------------------------------ */
+/* Referral PUMP rewards                                               */
+/* ------------------------------------------------------------------ */
+
+export type PumpReferralRow = {
+  id: string;
+  created_at: string;
+  status: "awarded" | "pending";
+  awarded_at: string | null;
+  activation_key: string | null;
+  pump: number;
+};
+
+export type PumpReferralStatus = {
+  ok: boolean;
+  reason?: string;
+  tag: string | null;
+  activation_key: string;
+  activation_title: string | null;
+  referrer_award: number;
+  referred_award: number;
+  invited: number;
+  activated: number;
+  pending: number;
+  pump_earned: number;
+  my_bonus_awarded: boolean;
+  i_was_referred: boolean;
+  referrals: PumpReferralRow[];
+};
+
+/** Referral bonus progress for the signed-in member. */
+export async function fetchPumpReferralStatus(): Promise<PumpReferralStatus> {
+  const { data, error } = await rpc("pump_referral_status");
+  if (error) throw new Error(error.message);
+  return data as PumpReferralStatus;
+}
