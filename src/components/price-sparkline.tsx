@@ -17,7 +17,7 @@ type Props = {
   symbol?: string;
 };
 
-function fmtPrice(v: number) {
+export function fmtPrice(v: number) {
   const digits = v >= 1000 ? 2 : v >= 1 ? 4 : 6;
   return `$${v.toLocaleString(undefined, { maximumFractionDigits: digits })}`;
 }
@@ -129,6 +129,38 @@ export function PriceSparkline({
           </span>
         </span>
       )}
+    </span>
+  );
+}
+
+/** Compact min / max / last stats for a sparkline series. */
+export function SparklineStats({
+  points,
+  className,
+}: {
+  points: number[];
+  className?: string;
+}) {
+  if (!points || points.length < 2) return null;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const last = points[points.length - 1];
+  const range = min > 0 ? ((max - min) / min) * 100 : 0;
+  return (
+    <span
+      className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-muted-foreground ${className ?? ""}`}
+      title={`24h low ${fmtPrice(min)} · 24h high ${fmtPrice(max)} · last ${fmtPrice(last)} · range ${range.toFixed(2)}%`}
+    >
+      <span>
+        L <span className="text-foreground/80">{fmtPrice(min)}</span>
+      </span>
+      <span>
+        H <span className="text-foreground/80">{fmtPrice(max)}</span>
+      </span>
+      <span>
+        Last <span className="text-foreground/80">{fmtPrice(last)}</span>
+      </span>
+      <span className="text-muted-foreground/70">±{range.toFixed(1)}%</span>
     </span>
   );
 }
