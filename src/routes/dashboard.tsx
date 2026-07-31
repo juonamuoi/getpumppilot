@@ -13,7 +13,7 @@ import {
   canonicalLinks,
 } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
+import { fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
 import { useLiveAssets } from "@/lib/live-assets";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner, DemoBadge } from "@/components/disclaimer";

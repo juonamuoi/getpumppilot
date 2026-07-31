@@ -6,7 +6,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner, DemoBadge } from "@/components/disclaimer";
-import { ASSETS, fmtPct, fmtUsd, type Asset } from "@/lib/mock-data";
+import { fmtPct, fmtUsd, type Asset } from "@/lib/mock-data";
 import { useLiveAssets } from "@/lib/live-assets";
 import { Card, CardContent } from "@/components/ui/card";
 import { MomentumBadge, scoreColor } from "@/components/momentum";
