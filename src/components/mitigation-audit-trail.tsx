@@ -1270,6 +1270,49 @@ export function MitigationAuditTrail({
           ))}
         </div>
 
+        {/* Correlation ID drill-down: one click filters + expands the whole batch. */}
+        <div
+          aria-label="Correlation ID drill-down"
+          className="mb-3 flex flex-wrap items-center gap-1.5 rounded-lg border border-border/60 bg-muted/20 p-2"
+        >
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Correlation IDs
+          </span>
+          {cidCounts.length === 0 ? (
+            <span className="text-[11px] text-muted-foreground">None in current filter.</span>
+          ) : (
+            cidCounts.map(({ cid, count }) => (
+              <Button
+                key={cid}
+                type="button"
+                size="sm"
+                variant={drillCid === cid ? "default" : "outline"}
+                aria-pressed={drillCid === cid}
+                title={`Show and expand all ${count} row${count === 1 ? "" : "s"} for ${cid}`}
+                className="h-6 gap-1 px-2 font-mono text-[10px]"
+                onClick={() => drillIntoCid(cid)}
+              >
+                {cid}
+                <span className="tabular-nums opacity-70">{count}</span>
+              </Button>
+            ))
+          )}
+          {drillCid && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="ml-auto h-6 gap-1 px-2 text-[10px]"
+              onClick={clearDrill}
+            >
+              <X className="h-3 w-3" />
+              Clear drill-down
+            </Button>
+          )}
+        </div>
+
+
+
         {/* Shape of the same filtered set the tiles above summarise. */}
         <AuditTrendCharts entries={entries} range={range} />
 
