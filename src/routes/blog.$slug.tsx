@@ -53,7 +53,7 @@ export const Route = createFileRoute("/blog/$slug")({
         { property: "og:site_name", content: "PumpPilot AI" },
         { property: "og:locale", content: "en_US" },
         { property: "article:published_time", content: post.date },
-        { property: "article:modified_time", content: post.date },
+        { property: "article:modified_time", content: post.updated ?? post.date },
         { property: "article:section", content: post.tags[0] ?? "Guides" },
         ...post.tags.map((t) => ({ property: "article:tag", content: t })),
         { property: "og:image", content: imageUrl },
