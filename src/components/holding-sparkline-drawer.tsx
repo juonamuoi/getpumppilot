@@ -235,9 +235,19 @@ export function HoldingSparklineDrawer({
           {/* Swipeable, snapping point browser */}
           <div className="rounded-xl border border-border/60 bg-card/40 p-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Swipe through points
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span>Swipe through points</span>
+                <button
+                  type="button"
+                  onClick={onExportSeries}
+                  title={`Download the ${win} timestamp/price series for ${symbol} as CSV`}
+                  className="flex items-center gap-1 rounded-md border border-border/60 px-2 py-0.5 text-[10px] normal-case tracking-normal text-muted-foreground transition-colors active:bg-muted/40 hover:text-foreground"
+                >
+                  <Download className="h-3 w-3" />
+                  Export CSV
+                </button>
               </div>
+
               <div className="flex items-center gap-1">
                 <button
                   type="button"
