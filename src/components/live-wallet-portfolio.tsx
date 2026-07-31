@@ -223,6 +223,27 @@ export function LiveWalletPortfolio() {
                         {r.symbol}
                         {r.price != null ? ` · ${fmtUsd(r.price)}` : ""}
                       </div>
+                      <div
+                        className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-muted-foreground"
+                        title={
+                          r.livePriced && priceUpdatedAt
+                            ? `CoinGecko · fetched ${new Date(priceUpdatedAt).toLocaleString()}`
+                            : undefined
+                        }
+                      >
+                        <Clock className="h-2.5 w-2.5 shrink-0" />
+                        {r.livePriced ? (
+                          <span>
+                            Source: CoinGecko · updated{" "}
+                            {pricesFetching ? "refreshing…" : freshness(priceUpdatedAt)}
+                          </span>
+                        ) : r.usdPeg ? (
+                          <span>Source: stablecoin USD peg (fixed $1.00) · no feed needed</span>
+                        ) : (
+                          <span>Source: none · no live feed for this asset</span>
+                        )}
+                      </div>
+
                     </div>
                     <div className="text-right">
                       <div className="font-mono text-sm font-semibold">
