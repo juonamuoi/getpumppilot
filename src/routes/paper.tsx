@@ -242,7 +242,7 @@ function PaperPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ASSETS.map((a) => (
+                    {(liveAssets.length ? liveAssets : ASSETS).map((a) => (
                       <SelectItem key={a.symbol} value={a.symbol}>
                         {a.symbol} — {fmtUsd(a.price)}
                       </SelectItem>
