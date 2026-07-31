@@ -67,6 +67,15 @@ const JSONLD_KEYWORDS = new Set([
  */
 const GOOGLE_EXTENSIONS = new Set(["query-input"]);
 
+/**
+ * Types published on pending.schema.org — real, documented vocabulary terms
+ * that are not yet in the core snapshot. Mapped to their core supertype so
+ * property-domain checks still resolve through the class hierarchy.
+ */
+const PENDING_TYPES: Record<string, string[]> = {
+  CryptoCurrency: ["FinancialProduct"],
+};
+
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
