@@ -1,4 +1,4 @@
-import { SOCIAL_IMAGE_URL, canonicalUrl } from "@/lib/structured-data";
+import { SITE_NAME, SOCIAL_IMAGE_URL, canonicalUrl } from "@/lib/structured-data";
 
 /**
  * Social sharing meta helper.
