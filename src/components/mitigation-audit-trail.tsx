@@ -159,6 +159,76 @@ function CopyWhyButton({
 
 }
 
+/**
+ * One-click copy of the whole audit entry as pretty-printed JSON — meant for
+ * bug reports and external analysis, so it carries the raw record plus the
+ * derived Why explanation and any validation issues.
+ */
+function CopyEntryJsonButton({ entry }: { entry: TuningLogEntry }) {
+  const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+
+  const copy = async () => {
+    const { fields: why, ok, issues } = safeExplainFields(entry);
+    const payload = {
+      schema: "pumppilot.mitigation-audit-entry",
+      schemaVersion: 1,
+      copiedAt: new Date().toISOString(),
+      correlationId: entry.correlationId ?? null,
+      timestamp: Number.isFinite(entry.ts) ? new Date(entry.ts).toISOString() : null,
+      entry,
+      why,
+      whyValidation: { ok, issues },
+    };
+
+    try {
+      if (!navigator?.clipboard?.writeText) throw new Error("no clipboard");
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      setStatus("copied");
+      setTimeout(() => setStatus("idle"), 2000);
+      toast.success("Audit entry copied as JSON", {
+        description: `Correlation ID ${entry.correlationId ?? entry.id}`,
+      });
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+      toast.error("Couldn't copy the entry JSON", {
+        description: "Clipboard access was blocked by your browser.",
+      });
+    }
+  };
+
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-6 shrink-0 gap-1 px-2 text-[10px]"
+        onClick={copy}
+        aria-label="Copy full audit entry as JSON"
+        title="Copy the full audit entry as formatted JSON"
+      >
+        {status === "copied" ? (
+          <Check className="h-3 w-3 text-emerald-500" />
+        ) : status === "error" ? (
+          <AlertCircle className="h-3 w-3 text-destructive" />
+        ) : (
+          <Braces className="h-3 w-3" />
+        )}
+        {status === "copied" ? "Copied" : status === "error" ? "Failed" : "JSON"}
+      </Button>
+      <span aria-live="polite" className="sr-only">
+        {status === "copied"
+          ? "Audit entry JSON copied to clipboard"
+          : status === "error"
+            ? "Copying the audit entry JSON failed"
+            : ""}
+      </span>
+    </div>
+  );
+}
+
+
+
 /** One-click copy of a single entry's correlation ID. */
 function CopyCorrelationIdButton({ id }: { id?: string }) {
   const [copied, setCopied] = useState(false);
