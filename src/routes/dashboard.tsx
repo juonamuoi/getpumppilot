@@ -5,6 +5,7 @@ import {
   canonicalUrl,
   ldScript,
   nodeId,
+  pageEntityGraph,
   webPageSchema,
   WEBSITE_ID,
   ORG_ID,
@@ -68,27 +69,33 @@ export const Route = createFileRoute("/dashboard")({
       },
     ]),
     scripts: [
-      ldScript({
-        ...webPageSchema({
-          name: DASH_TITLE,
-          description: DASH_DESC,
-          path: "/dashboard",
-          type: "WebApplication",
-        }),
-        applicationCategory: "FinanceApplication",
-        operatingSystem: "Web, iOS, Android",
-        browserRequirements: "Requires JavaScript. Sign-in required.",
-        image: DASH_IMAGE,
-        featureList: [
-          "Portfolio overview with dollar-at-risk breakdown",
-          "Explainable momentum signals for tracked assets",
-          "Stop-loss and take-profit risk guidance",
-          "Paper trading only — live execution locked by default",
-        ],
-        isPartOf: { "@id": WEBSITE_ID },
-        publisher: { "@id": ORG_ID },
-      }),
-      ldScript(breadcrumbSchema([{ name: "Dashboard", path: "/dashboard" }])),
+      // Organization + WebSite travel with the page graph so the dashboard's
+      // WebApplication node is bound to the same publisher/site entities.
+      ldScript(
+        pageEntityGraph([
+          {
+            ...webPageSchema({
+              name: DASH_TITLE,
+              description: DASH_DESC,
+              path: "/dashboard",
+              type: "WebApplication",
+            }),
+            applicationCategory: "FinanceApplication",
+            operatingSystem: "Web, iOS, Android",
+            browserRequirements: "Requires JavaScript. Sign-in required.",
+            image: DASH_IMAGE,
+            featureList: [
+              "Portfolio overview with dollar-at-risk breakdown",
+              "Explainable momentum signals for tracked assets",
+              "Stop-loss and take-profit risk guidance",
+              "Paper trading only — live execution locked by default",
+            ],
+            isPartOf: { "@id": WEBSITE_ID },
+            publisher: { "@id": ORG_ID },
+          },
+          breadcrumbSchema([{ name: "Dashboard", path: "/dashboard" }]),
+        ]),
+      ),
     ],
   }),
   component: Dashboard,

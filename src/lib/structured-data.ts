@@ -356,6 +356,67 @@ export function howToSchema(opts: {
 }
 
 
+/**
+ * Article node for pages whose main content is editorial/explanatory prose
+ * (guides, explainers). App screens should NOT emit this — Google treats
+ * Article on a tool UI as mismatched structured data.
+ */
+export function articleSchema(opts: {
+  headline: string;
+  description: string;
+  path: string;
+  datePublished: string;
+  dateModified?: string;
+  image?: string;
+  imageAlt?: string;
+  section?: string;
+  /** Use "Article" (default) or a subtype such as "TechArticle". */
+  type?: string;
+}) {
+  const url = canonicalUrl(opts.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": opts.type ?? "Article",
+    "@id": `${url}#${NODE.article}`,
+    headline: opts.headline,
+    name: opts.headline,
+    description: opts.description,
+    datePublished: opts.datePublished,
+    dateModified: opts.dateModified ?? opts.datePublished,
+    author: { "@id": ORG_ID },
+    publisher: { "@id": ORG_ID },
+    isPartOf: { "@id": WEBSITE_ID },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    image: {
+      "@type": "ImageObject",
+      url: opts.image ?? SOCIAL_IMAGE_URL,
+      width: 1200,
+      height: 630,
+      caption: opts.imageAlt ?? opts.headline,
+    },
+    ...(opts.section ? { articleSection: opts.section } : {}),
+    url,
+    inLanguage: "en",
+  };
+}
+
+/**
+ * Single per-page `@graph` that always carries the site-wide Organization and
+ * WebSite nodes alongside the page's own nodes. Stable `@id`s mean crawlers
+ * merge these with the root graph instead of seeing competing entities.
+ */
+export function pageEntityGraph(nodes: unknown[]) {
+  const strip = (n: unknown) => {
+    if (!n || typeof n !== "object") return n;
+    const { "@context": _ctx, ...rest } = n as Record<string, unknown>;
+    return rest;
+  };
+  return {
+    "@context": "https://schema.org",
+    "@graph": [organizationSchema, websiteSchema, ...nodes.map(strip)],
+  };
+}
+
 /** Convenience wrapper so routes can pass objects straight into head().scripts. */
 export const ldScript = (schema: unknown) => ({
   type: "application/ld+json",
