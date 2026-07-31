@@ -618,6 +618,19 @@ export function MitigationAuditTrail({
     } as Record<OutcomeFilter, number>;
   }, [sourceLog, q, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry]);
 
+  /** Totals and rates for the currently filtered entries. */
+  const stats = useMemo(() => {
+    const total = entries.length;
+    const fired = entries.filter((e) => e.outcome?.status === "alerts-fired").length;
+    const muted = entries.filter((e) => e.outcome?.status === "channels-muted").length;
+    const noMatches = entries.filter((e) => e.outcome?.status === "no-matches").length;
+    const resolved = entries.filter((e) => !!e.outcome).length;
+    const pending = total - resolved;
+    const pct = (n: number) => (total ? Math.round((n / total) * 1000) / 10 : 0);
+    return { total, fired, muted, noMatches, resolved, pending, pct };
+  }, [entries]);
+
+
 
 
   /** Export scope honours the retention policy's preview toggle. */
