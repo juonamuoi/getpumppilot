@@ -7,8 +7,8 @@ import { SITE_NAME, SITE_URL, socialImageUrl } from "./structured-data";
 export const FEED_TITLE = `${SITE_NAME} Journal`;
 export const FEED_DESCRIPTION =
   "Guides on AI investment apps, explainable momentum signals, paper trading and risk-first portfolio management from PumpPilot AI.";
-export const RSS_PATH = "/journal/rss.xml";
-export const ATOM_PATH = "/journal/atom.xml";
+export const RSS_PATH = "/rss.xml";
+export const ATOM_PATH = "/atom.xml";
 export const FEED_LANGUAGE = "en-us";
 
 export interface FeedItem {
