@@ -526,7 +526,7 @@ export function assetDemoDataNodes(asset: AssetDemoData, opts: { updated?: strin
     inLanguage: "en",
     dateModified,
     url,
-    mainEntityOfPage: { "@id": nodeId(path, NODE.webpage) },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
     author: { "@id": ORG_ID },
     publisher: { "@id": ORG_ID },
   };
