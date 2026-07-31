@@ -416,7 +416,7 @@ async function readBalances(address: string): Promise<WalletBalances> {
   // Auto-detect any other ERC-20 the wallet has touched recently.
   let discoveryFailed = false;
   try {
-    const activity = await discoverTokenContracts(provider, address);
+    const activity = await discoverTokenContracts(provider, address, chainId);
     const contracts = [...activity.keys()]
       .filter((c) => !seen.has(c))
       .slice(0, MAX_DISCOVERED);
