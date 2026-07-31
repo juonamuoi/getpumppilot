@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Copy, Share2, Twitter, Mail, MessageCircle, Gift, Users, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
+import { PumpReferralRewards } from "@/components/pump-referral-rewards";
 
 const BASE = "https://www.getpumppilot.app";
 
@@ -101,7 +102,7 @@ function ReferPage() {
         </div>
         <h1 className="mt-2 text-4xl font-bold tracking-tight">Invite friends. Earn free Pro.</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Share your personal link. When a friend signs up and stays for 7 days, <span className="text-foreground font-medium">you both get 1 month of Pro free</span>.
+          Share your personal link. When a friend signs up and completes their first required action, <span className="text-foreground font-medium">you both get PUMP instantly</span> — and you each get 1 month of Pro free once they stay active for 7 days.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-4">
@@ -148,6 +149,8 @@ function ReferPage() {
           </CardContent>
         </Card>
 
+        <PumpReferralRewards />
+
         <Card className="mt-6">
           <CardHeader>
             <CardTitle>How it works</CardTitle>
@@ -157,6 +160,7 @@ function ReferPage() {
               {[
                 "Share your link with anyone learning to trade smarter.",
                 "They sign up and get 1 month of Pro on us.",
+                "When they complete their first required action (connect a wallet), you get 750 PUMP and they get 250 PUMP — instantly.",
                 "Once they stay active for 7 days, you get 1 month of Pro too.",
                 "No limit — the more friends you refer, the more free Pro you stack.",
               ].map((step, i) => (
