@@ -776,8 +776,11 @@ export function LiveWalletPortfolio() {
                             points={r.sparkline}
                             up={(r.change24h ?? 0) >= 0}
                             className={r.stale || r.failed ? "opacity-40" : ""}
+                            symbol={r.symbol}
+                            endTs={priceUpdatedAt || undefined}
                             title={`${r.symbol} — last 24h price movement (${r.sparkline.length} hourly points)`}
                           />
+
                           <span className="text-[10px] text-muted-foreground">24h</span>
                         </div>
                       )}
