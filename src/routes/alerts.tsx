@@ -4347,7 +4347,9 @@ function loadAuto(): AutoConfig {
 
 
 function ReplayPanel() {
-  const { audit: auditFocus } = Route.useSearch();
+  const { audit: auditFocus, af: auditShareParam } = Route.useSearch();
+  const auditShareState = useMemo(() => decodeAuditShareState(auditShareParam), [auditShareParam]);
+
   const {
 
     scannerRules,
