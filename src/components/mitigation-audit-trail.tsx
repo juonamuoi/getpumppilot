@@ -737,6 +737,35 @@ export function MitigationAuditTrail({
     return [...counts.entries()].map(([cid, count]) => ({ cid, count })).slice(0, 24);
   }, [sourceLog, q, outcome, range, tokens, alertTypes, wallets, walletsForEntry]);
 
+  /**
+   * Ranked impact per symbol across the currently filtered entries: how often a
+   * token was matched, how often that turned into a delivered alert, and the
+   * resulting fire rate. Sorted by matches, then fire rate.
+   */
+  const symbolImpact = useMemo(() => {
+    const map = new Map<string, { symbol: string; matches: number; fired: number; muted: number }>();
+    for (const e of entriesForStats) {
+      const o = e.outcome;
+      if (!o) continue;
+      for (const s of o.symbols) {
+        const row = map.get(s) ?? { symbol: s, matches: 0, fired: 0, muted: 0 };
+        row.matches += 1;
+        if (o.status === "alerts-fired") row.fired += 1;
+        if (o.status === "channels-muted") row.muted += 1;
+        map.set(s, row);
+      }
+    }
+    const rows = [...map.values()].map((r) => ({
+      ...r,
+      fireRate: r.matches ? Math.round((r.fired / r.matches) * 100) : 0,
+      muteRate: r.matches ? Math.round((r.muted / r.matches) * 100) : 0,
+    }));
+    rows.sort((a, b) => b.matches - a.matches || b.fireRate - a.fireRate || a.symbol.localeCompare(b.symbol));
+    return rows.slice(0, 10);
+  }, [entriesForStats]);
+
+
+
 
 
 
