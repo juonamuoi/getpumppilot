@@ -427,6 +427,12 @@ export function LiveWalletPortfolio() {
                 .map((r) => ({ symbol: r.symbol, value: r.value as number }))}
             />
 
+            <LivePaperAllocationCompare
+              liveItems={rows
+                .filter((r) => r.counted && r.value != null && r.value > 0)
+                .map((r) => ({ symbol: r.symbol, value: r.value as number }))}
+            />
+
 
 
             {isFetching && rows.length === 0 && (
