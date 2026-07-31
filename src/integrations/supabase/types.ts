@@ -556,6 +556,10 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          pump_activation_key: string | null
+          pump_awarded_at: string | null
+          pump_referred_award: number
+          pump_referrer_award: number
           qualified_at: string | null
           referred_user_id: string
           referrer_code: string
@@ -566,6 +570,10 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          pump_activation_key?: string | null
+          pump_awarded_at?: string | null
+          pump_referred_award?: number
+          pump_referrer_award?: number
           qualified_at?: string | null
           referred_user_id: string
           referrer_code: string
@@ -576,6 +584,10 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          pump_activation_key?: string | null
+          pump_awarded_at?: string | null
+          pump_referred_award?: number
+          pump_referrer_award?: number
           qualified_at?: string | null
           referred_user_id?: string
           referrer_code?: string
@@ -1128,7 +1140,12 @@ export type Database = {
         Returns: undefined
       }
       pump_my_summary: { Args: never; Returns: Json }
+      pump_referral_status: { Args: never; Returns: Json }
       pump_set_payout_address: { Args: { _address: string }; Returns: Json }
+      pump_settle_referral: {
+        Args: { _activation_key: string; _user_id: string }
+        Returns: Json
+      }
       pump_transfer: {
         Args: { _amount: number; _memo?: string; _to_tag: string }
         Returns: Json
