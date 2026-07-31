@@ -78,6 +78,10 @@ export type WalletBalance = {
   /** Fixed USD price for pegged stablecoins; otherwise priced from the live feed. */
   usdPeg?: number;
   kind: "native" | "erc20";
+  /** Contract address for ERC-20s. */
+  address?: string;
+  /** True when the token was auto-detected on-chain rather than pre-configured. */
+  discovered?: boolean;
 };
 
 export type WalletBalances = {
@@ -85,7 +89,10 @@ export type WalletBalances = {
   chainId: number;
   chainName: string;
   balances: WalletBalance[];
+  /** True when auto-detection of extra ERC-20s could not run on this network. */
+  discoveryFailed?: boolean;
 };
+
 
 const CHAIN_NAMES: Record<number, string> = {
   1: "Ethereum",
@@ -110,6 +117,122 @@ function toAmount(raw: bigint, decimals: number): number {
   return Number(raw) / 10 ** decimals;
 }
 
+/* ----------------------- ERC-20 auto-detection ---------------------- *
+ * Discovery is read-only: we scan recent Transfer logs involving the
+ * account, then call balanceOf/symbol/decimals on each contract found.
+ * No signing, no approvals — eth_getLogs + eth_call only.
+ * ------------------------------------------------------------------- */
+
+const TRANSFER_TOPIC =
+  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+/** Blocks of history scanned for token activity (~2 weeks on most chains). */
+const SCAN_BLOCKS = 100_000;
+/** Hard cap so a busy wallet can't fire hundreds of eth_calls. */
+const MAX_DISCOVERED = 24;
+
+function pad32(address: string): string {
+  return `0x${address.toLowerCase().replace("0x", "").padStart(64, "0")}`;
+}
+
+function decodeAbiString(hex: unknown): string | null {
+  if (typeof hex !== "string" || hex.length < 3) return null;
+  const body = hex.replace("0x", "");
+  const bytes = (h: string) =>
+    (h.match(/.{1,2}/g) ?? [])
+      .map((b) => parseInt(b, 16))
+      .filter((c) => c >= 32 && c < 127)
+      .map((c) => String.fromCharCode(c))
+      .join("");
+  // Dynamic string: offset, length, data.
+  if (body.length >= 128) {
+    const len = parseInt(body.slice(64, 128), 16);
+    if (len > 0 && len <= 64) {
+      const s = bytes(body.slice(128, 128 + len * 2)).trim();
+      if (s) return s;
+    }
+  }
+  // bytes32 fallback.
+  const s = bytes(body.slice(0, 64)).trim();
+  return s || null;
+}
+
+async function call(
+  provider: Eip1193,
+  to: string,
+  data: string,
+): Promise<unknown> {
+  return provider.request({ method: "eth_call", params: [{ to, data }, "latest"] });
+}
+
+/** Contract addresses this account has sent or received ERC-20 transfers with. */
+async function discoverTokenContracts(
+  provider: Eip1193,
+  address: string,
+): Promise<string[]> {
+  const latest = Number(hexToNumber(await provider.request({ method: "eth_blockNumber" })));
+  const from = Math.max(0, latest - SCAN_BLOCKS);
+  const fromBlock = `0x${from.toString(16)}`;
+  const topic = pad32(address);
+
+  const queries = [
+    { topics: [TRANSFER_TOPIC, null, topic] }, // incoming
+    { topics: [TRANSFER_TOPIC, topic] }, // outgoing
+  ];
+
+  const found = new Set<string>();
+  let ok = false;
+
+  for (const q of queries) {
+    try {
+      const logs = (await provider.request({
+        method: "eth_getLogs",
+        params: [{ fromBlock, toBlock: "latest", ...q }],
+      })) as { address?: string }[];
+      ok = true;
+      for (const l of logs ?? []) {
+        if (l?.address) found.add(l.address.toLowerCase());
+      }
+    } catch {
+      // RPC may cap log ranges or disable eth_getLogs entirely.
+    }
+  }
+
+  if (!ok) throw new Error("log scan unavailable");
+  return [...found];
+}
+
+/** Reads symbol/decimals/balanceOf for a discovered contract. */
+async function readDiscoveredToken(
+  provider: Eip1193,
+  contract: string,
+  address: string,
+): Promise<WalletBalance | null> {
+  const rawBal = hexToNumber(
+    await call(provider, contract, `0x70a08231${pad32(address).slice(2)}`),
+  );
+  if (rawBal === 0n) return null;
+
+  const [symRes, decRes] = await Promise.all([
+    call(provider, contract, "0x95d89b41").catch(() => null), // symbol()
+    call(provider, contract, "0x313ce567").catch(() => null), // decimals()
+  ]);
+
+  const decimals = Number(hexToNumber(decRes));
+  const dec = Number.isFinite(decimals) && decimals >= 0 && decimals <= 36 ? decimals : 18;
+  const symbol = decodeAbiString(symRes) ?? `${contract.slice(0, 6)}…`;
+  const amount = toAmount(rawBal, dec);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+
+  return {
+    symbol,
+    name: symbol,
+    amount,
+    kind: "erc20",
+    address: contract,
+    discovered: true,
+  };
+}
+
 async function readBalances(address: string): Promise<WalletBalances> {
   const provider = getInjectedProvider();
   if (!provider) throw new Error("No browser wallet detected");
@@ -127,14 +250,13 @@ async function readBalances(address: string): Promise<WalletBalances> {
     if (amount > 0) balances.push({ ...native, amount, kind: "native" });
   }
 
-  for (const t of TOKENS_BY_CHAIN[chainId] ?? []) {
+  const known = TOKENS_BY_CHAIN[chainId] ?? [];
+  const seen = new Set(known.map((t) => t.address.toLowerCase()));
+
+  for (const t of known) {
     try {
-      const data = `0x70a08231${address.toLowerCase().replace("0x", "").padStart(64, "0")}`;
       const raw = hexToNumber(
-        await provider.request({
-          method: "eth_call",
-          params: [{ to: t.address, data }, "latest"],
-        }),
+        await call(provider, t.address, `0x70a08231${pad32(address).slice(2)}`),
       );
       const amount = toAmount(raw, t.decimals);
       if (amount > 0) {
@@ -144,6 +266,7 @@ async function readBalances(address: string): Promise<WalletBalances> {
           amount,
           usdPeg: t.usdPeg,
           kind: "erc20",
+          address: t.address,
         });
       }
     } catch {
@@ -151,13 +274,32 @@ async function readBalances(address: string): Promise<WalletBalances> {
     }
   }
 
+  // Auto-detect any other ERC-20 the wallet has touched recently.
+  let discoveryFailed = false;
+  try {
+    const contracts = (await discoverTokenContracts(provider, address))
+      .filter((c) => !seen.has(c))
+      .slice(0, MAX_DISCOVERED);
+
+    const results = await Promise.allSettled(
+      contracts.map((c) => readDiscoveredToken(provider, c, address)),
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) balances.push(r.value);
+    }
+  } catch {
+    discoveryFailed = true;
+  }
+
   return {
     address,
     chainId,
     chainName: CHAIN_NAMES[chainId] ?? `Chain ${chainId}`,
     balances,
+    discoveryFailed,
   };
 }
+
 
 /** Tracks the injected wallet's currently authorised account (read-only). */
 export function useInjectedAccount() {

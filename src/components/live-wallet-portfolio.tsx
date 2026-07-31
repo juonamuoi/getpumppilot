@@ -209,23 +209,35 @@ export function LiveWalletPortfolio() {
                 .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
                 .map((r) => (
                   <div
-                    key={`${r.symbol}-${r.kind}`}
+                    key={`${r.symbol}-${r.kind}-${r.address ?? "native"}`}
                     className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2"
                   >
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="truncate text-sm font-semibold">{r.symbol}</span>
                         <Badge
                           variant="outline"
                           className={`text-[9px] uppercase ${
                             r.livePriced
                               ? "border-emerald-500/30 text-emerald-300"
-                              : "border-border/60 text-muted-foreground"
+                              : r.usdPeg
+                                ? "border-border/60 text-muted-foreground"
+                                : "border-amber-500/40 text-amber-300"
                           }`}
                         >
-                          {r.livePriced ? "live price" : r.usdPeg ? "USD peg" : "unpriced"}
+                          {r.livePriced ? "live price" : r.usdPeg ? "USD peg" : "no live price"}
                         </Badge>
+                        {r.discovered && (
+                          <Badge
+                            variant="outline"
+                            className="border-sky-500/30 text-[9px] uppercase text-sky-300"
+                            title={r.address}
+                          >
+                            auto-detected
+                          </Badge>
+                        )}
                       </div>
+
                       <div className="truncate font-mono text-xs text-muted-foreground">
                         {r.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
                         {r.symbol}
@@ -272,11 +284,21 @@ export function LiveWalletPortfolio() {
             </div>
 
             {unpriced > 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                {unpriced} holding{unpriced > 1 ? "s" : ""} has no live price feed and is
-                excluded from the totals.
+              <p className="text-[11px] text-amber-300/90">
+                {unpriced} holding{unpriced > 1 ? "s" : ""} has no live price feed — shown for
+                visibility only and excluded from wallet value, 24h change and allocation.
+                Auto-detected tokens can be spam airdrops; verify the contract before trusting
+                the name.
               </p>
             )}
+
+            {data?.discoveryFailed && (
+              <p className="text-[11px] text-muted-foreground">
+                Auto-detection of extra ERC-20s couldn't run on this network (your wallet's RPC
+                blocked the log scan). Tracked tokens are still shown.
+              </p>
+            )}
+
           </>
         )}
 
