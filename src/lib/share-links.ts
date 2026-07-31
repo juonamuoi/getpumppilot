@@ -1,3 +1,4 @@
+import { getAsset } from "./mock-data";
 import { SITE_URL } from "./structured-data";
 
 /**
