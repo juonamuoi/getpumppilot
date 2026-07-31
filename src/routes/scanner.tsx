@@ -2,8 +2,9 @@ import { withSocialMeta } from "@/lib/social-meta";
 import { faqSchema, ldScript } from "@/lib/structured-data";
 import { FaqSection } from "@/components/faq-section";
 import { scannerFaqs } from "@/lib/page-faqs";
+import { markQuestAction } from "@/lib/quest-progress";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner, DemoBadge } from "@/components/disclaimer";
 import { fmtPct, fmtUsd, type Asset } from "@/lib/mock-data";
@@ -125,6 +126,9 @@ function ScoreCell({ v }: { v: number }) {
 }
 
 function Scanner() {
+  useEffect(() => {
+    markQuestAction("first_scan");
+  }, []);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"all" | "major" | "demo-smallcap">("all");
   const [sort, setSort] = useState<SortKey>("total");

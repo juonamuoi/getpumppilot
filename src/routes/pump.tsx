@@ -263,6 +263,9 @@ function PumpPage() {
                 </div>
               ))}
               {!summary ? <p className="text-sm text-muted-foreground">Loading quests…</p> : null}
+              <Button variant="secondary" size="sm" asChild className="mt-2">
+                <Link to="/quests">Open quest dashboard</Link>
+              </Button>
             </CardContent>
           </Card>
 

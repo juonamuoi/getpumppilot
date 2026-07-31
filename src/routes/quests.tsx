@@ -4,7 +4,7 @@ import { ShieldAlert } from "lucide-react";
 import { PumpQuestDashboard } from "@/components/pump-quest-dashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { canonicalLinks, hreflangLinks } from "@/lib/structured-data";
+import { canonicalLinks } from "@/lib/structured-data";
 
 export const Route = createFileRoute("/quests")({
   head: () => ({
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/quests")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [...canonicalLinks("/quests"), ...hreflangLinks("/quests")],
+    links: canonicalLinks("/quests"),
   }),
   component: QuestsPage,
 });
