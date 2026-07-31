@@ -116,6 +116,8 @@ export const Route = createFileRoute("/blog/")({
 
 
 function BlogIndex() {
+  const { paged } = Route.useLoaderData();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 bg-card/30">
@@ -125,11 +127,16 @@ function BlogIndex() {
             <span>PumpPilot AI Blog</span>
           </div>
           <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
-            AI Investment & Crypto Trading, Explained
+            AI Investment &amp; Crypto Trading, Explained
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
             Practical guides on the best AI investment apps, momentum signals, paper trading, and risk-first portfolio management.
           </p>
+          {paged.totalPages > 1 && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Page {paged.page} of {paged.totalPages} · {paged.totalItems} articles
+            </p>
+          )}
           <p className="mt-4 text-sm text-muted-foreground">
             Subscribe:{" "}
             <a href={RSS_PATH} className="underline hover:text-foreground">RSS feed</a>{" "}
@@ -141,7 +148,7 @@ function BlogIndex() {
 
       <main className="mx-auto max-w-5xl px-6 py-12">
         <div className="grid gap-6 md:grid-cols-2">
-          {BLOG_POSTS.map((post) => (
+          {paged.items.map((post) => (
             <Link
               key={post.slug}
               to="/blog/$slug"
@@ -173,6 +180,58 @@ function BlogIndex() {
             </Link>
           ))}
         </div>
+
+        {paged.totalPages > 1 && (
+          // Real crawlable <a> links (not JS-only controls) so every page of
+          // the series is discoverable from page 1.
+          <nav className="mt-12 flex items-center justify-between gap-4" aria-label="Blog pagination">
+            {paged.hasPrev ? (
+              <Link
+                to="/blog"
+                search={paged.page - 1 > 1 ? { page: paged.page - 1 } : {}}
+                rel="prev"
+                className="inline-flex items-center gap-2 rounded-md border border-border/60 px-4 py-2 text-sm font-medium hover:border-primary/50 hover:text-primary"
+              >
+                <ChevronLeft className="h-4 w-4" /> Previous
+              </Link>
+            ) : (
+              <span />
+            )}
+
+            <ol className="flex items-center gap-2">
+              {Array.from({ length: paged.totalPages }, (_, i) => i + 1).map((n) => (
+                <li key={n}>
+                  <Link
+                    to="/blog"
+                    search={n > 1 ? { page: n } : {}}
+                    aria-current={n === paged.page ? "page" : undefined}
+                    className={
+                      n === paged.page
+                        ? "inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground"
+                        : "inline-flex h-9 w-9 items-center justify-center rounded-md border border-border/60 text-sm hover:border-primary/50 hover:text-primary"
+                    }
+                  >
+                    {n}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+
+            {paged.hasNext ? (
+              <Link
+                to="/blog"
+                search={{ page: paged.page + 1 }}
+                rel="next"
+                className="inline-flex items-center gap-2 rounded-md border border-border/60 px-4 py-2 text-sm font-medium hover:border-primary/50 hover:text-primary"
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        )}
+
 
         <div className="mt-16 rounded-2xl border border-border/50 bg-card/30 p-8 text-center">
           <h2 className="text-2xl font-semibold">Ready to try the AI Copilot?</h2>
