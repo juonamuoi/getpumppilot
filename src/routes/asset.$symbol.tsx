@@ -97,10 +97,13 @@ export const Route = createFileRoute("/asset/$symbol")({
 
 function AssetPage() {
   const { symbol } = Route.useParams();
+  const { w } = Route.useSearch();
   const asset = useLiveAsset(symbol);
   const navigate = useNavigate();
   const paper = usePaper();
   const [qty, setQty] = useState("");
+  const horizon: SparkWindowValue = w ?? "24h";
+
 
   // Activation milestone: the visitor reached their first asset chart.
   useEffect(() => {
