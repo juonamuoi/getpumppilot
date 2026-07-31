@@ -33,6 +33,7 @@ import { Route as ReferRouteImport } from './routes/refer'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as RiskRouteImport } from './routes/risk'
 import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
+import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SeoMonitorRouteImport } from './routes/seo-monitor'
@@ -179,6 +180,11 @@ const RiskRoute = RiskRouteImport.update({
 const RiskDisclosureRoute = RiskDisclosureRouteImport.update({
   id: '/risk-disclosure',
   path: '/risk-disclosure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RssDotxmlRoute = RssDotxmlRouteImport.update({
+  id: '/rss.xml',
+  path: '/rss.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScannerRoute = ScannerRouteImport.update({
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/risk-disclosure': typeof RiskDisclosureRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/seo-monitor': typeof SeoMonitorRoute
@@ -402,6 +409,7 @@ export interface FileRoutesByTo {
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/risk-disclosure': typeof RiskDisclosureRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/seo-monitor': typeof SeoMonitorRoute
@@ -456,6 +464,7 @@ export interface FileRoutesById {
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/risk-disclosure': typeof RiskDisclosureRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/seo-monitor': typeof SeoMonitorRoute
@@ -511,6 +520,7 @@ export interface FileRouteTypes {
     | '/refund'
     | '/risk'
     | '/risk-disclosure'
+    | '/rss.xml'
     | '/scanner'
     | '/security'
     | '/seo-monitor'
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/refund'
     | '/risk'
     | '/risk-disclosure'
+    | '/rss.xml'
     | '/scanner'
     | '/security'
     | '/seo-monitor'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/refund'
     | '/risk'
     | '/risk-disclosure'
+    | '/rss.xml'
     | '/scanner'
     | '/security'
     | '/seo-monitor'
@@ -671,6 +683,7 @@ export interface RootRouteChildren {
   RefundRoute: typeof RefundRoute
   RiskRoute: typeof RiskRoute
   RiskDisclosureRoute: typeof RiskDisclosureRoute
+  RssDotxmlRoute: typeof RssDotxmlRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
   SeoMonitorRoute: typeof SeoMonitorRoute
@@ -867,6 +880,13 @@ declare module '@tanstack/react-router' {
       path: '/risk-disclosure'
       fullPath: '/risk-disclosure'
       preLoaderRoute: typeof RiskDisclosureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rss.xml': {
+      id: '/rss.xml'
+      path: '/rss.xml'
+      fullPath: '/rss.xml'
+      preLoaderRoute: typeof RssDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scanner': {
@@ -1097,6 +1117,7 @@ const rootRouteChildren: RootRouteChildren = {
   RefundRoute: RefundRoute,
   RiskRoute: RiskRoute,
   RiskDisclosureRoute: RiskDisclosureRoute,
+  RssDotxmlRoute: RssDotxmlRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
   SeoMonitorRoute: SeoMonitorRoute,
