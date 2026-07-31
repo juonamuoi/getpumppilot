@@ -594,6 +594,7 @@ export function LiveWalletPortfolio() {
                   >
                     Priced first
                   </Button>
+                  <SpamListManager />
                 </div>
 
                 <div className="text-[10px] text-muted-foreground">
