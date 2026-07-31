@@ -521,6 +521,11 @@ export function LiveWalletPortfolio() {
                           </span>
                         ) : r.usdPeg ? (
                           <span>Source: stablecoin USD peg (fixed $1.00) · no feed needed</span>
+                        ) : r.failed ? (
+                          <span className="text-rose-300">
+                            Source: CoinGecko · last fetch failed
+                            {pricesFetching ? " · retrying…" : " · retry to restore pricing"}
+                          </span>
                         ) : (
                           <span>Source: none · no live feed for this asset</span>
                         )}
@@ -530,14 +535,24 @@ export function LiveWalletPortfolio() {
                     <div className="text-right">
                       <div
                         className={`font-mono text-sm font-semibold ${
-                          r.stale ? "text-muted-foreground line-through" : ""
+                          r.stale || r.failed ? "text-muted-foreground line-through" : ""
                         }`}
-                        title={r.stale ? "Last known value — excluded from totals" : undefined}
+                        title={
+                          r.failed
+                            ? "Price unavailable — excluded from totals"
+                            : r.stale
+                              ? "Last known value — excluded from totals"
+                              : undefined
+                        }
                       >
                         {r.value != null ? fmtUsd(r.value) : "—"}
                       </div>
+                      {r.failed && (
+                        <div className="text-[10px] uppercase text-rose-300">not counted</div>
+                      )}
                       {r.stale && (
                         <div className="text-[10px] uppercase text-amber-300">not counted</div>
+
                       )}
                       {r.change24h != null && !r.usdPeg && (
                         <div
