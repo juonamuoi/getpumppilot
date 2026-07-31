@@ -65,7 +65,15 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
 
 
   const copy = async () => {
-    const f = explainFields(entry);
+    const { fields: f, ok, issues } = safeExplainFields(entry);
+    if (!ok) {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+      toast.error("Why explanation looks malformed — nothing copied", {
+        description: issues.slice(0, 3).join(" · "),
+      });
+      return;
+    }
     const val = (v: unknown) => {
       const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
       return s.length ? s : "—";
