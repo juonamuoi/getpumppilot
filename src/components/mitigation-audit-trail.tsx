@@ -43,6 +43,8 @@ import {
   sanitizedExplainFields,
   INVALID_FIELD_MARKER,
 } from "@/lib/mitigation-explain";
+import { recordValidationNote } from "@/lib/explain-validation-log";
+import { ExplainValidationNotes } from "@/components/explain-validation-notes";
 import { buildAuditShareUrl, type AuditShareState } from "@/lib/audit-share-link";
 
 import { AuditTrendCharts } from "@/components/audit-trend-charts";
@@ -93,6 +95,7 @@ function CopyWhyButton({
       onValidationError?.([
         { id: entry.id, correlationId: entry.correlationId, issues },
       ]);
+      recordValidationNote(entry, "copy", issues, sanitizedExplainFields(entry).invalidKeys);
       toast.error("Why explanation looks malformed — nothing copied", {
         description: `${issues.slice(0, 3).join(" · ")} — use “Copy sanitized” to keep the valid fields.`,
       });
@@ -100,6 +103,9 @@ function CopyWhyButton({
     }
     const sane = sanitizedExplainFields(entry);
     const f = sanitized ? sane.fields : raw;
+    if (sanitized && !ok) {
+      recordValidationNote(entry, "copy-sanitized", issues, sane.invalidKeys);
+    }
     if (ok) onValidationClear?.();
     const val = (v: unknown) => {
       const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
@@ -854,6 +860,7 @@ export function MitigationAuditTrail({
       const { fields: why, ok, issues } = safeExplainFields(e);
       if (!ok) {
         whyProblems.push({ id: e.id, correlationId: e.correlationId, issues });
+        recordValidationNote(e, "export", issues, sanitizedExplainFields(e).invalidKeys);
       }
       return {
       correlationId: e.correlationId ?? "",
@@ -1280,6 +1287,14 @@ export function MitigationAuditTrail({
 
       </CardHeader>
       <CardContent>
+        <ExplainValidationNotes
+          onFocusSymbol={(symbol) =>
+            setTokens((prev) =>
+              prev.includes(symbol) ? prev.filter((t) => t !== symbol) : [...prev, symbol],
+            )
+          }
+        />
+
         {whyErrors && whyErrors.problems.length > 0 && (
           <div
             role="alert"
