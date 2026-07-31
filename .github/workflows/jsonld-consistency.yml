@@ -20,6 +20,9 @@ jobs:
         run: bun install --frozen-lockfile
 
       # Static gates — fail fast before spending time on a build.
+      - name: Every route ships OG/Twitter metadata
+        run: bun run check:route-seo
+
       - name: Sitemap up to date
         run: bun run check:sitemap
 

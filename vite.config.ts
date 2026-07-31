@@ -6,9 +6,10 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
+import { routeSeoSync } from "./plugins/route-seo-sync";
 
 export default defineConfig({
-  plugins: [mcpPlugin()],
+  plugins: [mcpPlugin(), routeSeoSync()],
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
