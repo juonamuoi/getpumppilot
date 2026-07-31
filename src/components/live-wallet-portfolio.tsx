@@ -11,6 +11,7 @@ import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
+import { DataSourcesDialog } from "@/components/data-sources-dialog";
 
 function freshness(ts: number | undefined): string {
   if (!ts) return "not yet fetched";
@@ -81,22 +82,25 @@ export function LiveWalletPortfolio() {
             Read-only · trading disabled
           </Badge>
         </CardTitle>
-        {address && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-xs"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-          >
-            {isFetching ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3.5 w-3.5" />
-            )}
-            Refresh
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <DataSourcesDialog />
+          {address && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              Refresh
+            </Button>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-3">
