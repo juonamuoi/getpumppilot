@@ -47,7 +47,7 @@ const UNIT_MS: Record<BucketUnit, number> = { hour: HOUR, day: DAY, week: WEEK }
 
 /** Bucket granularity for a range: enough resolution to read, few enough to plot. */
 export function bucketUnitFor(range: RangeFilter, spanMs: number): BucketUnit {
-  if (range === "24h") return "hour";
+  if (range === "1h" || range === "6h" || range === "24h") return "hour";
   if (range === "7d" || range === "30d") return "day";
   if (range === "90d") return "week";
   // "All time" adapts to how much history actually exists.
