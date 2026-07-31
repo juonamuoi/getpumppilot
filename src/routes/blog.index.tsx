@@ -11,6 +11,7 @@ import {
   WEBSITE_ID,
   breadcrumbSchema,
   blogPostingSchema,
+  authorNodesFor,
   ldScript,
   nodeId,
   NODE,
