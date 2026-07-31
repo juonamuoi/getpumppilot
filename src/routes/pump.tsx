@@ -319,33 +319,11 @@ function PumpPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Wallet className="h-4 w-4 text-emerald-400" /> On-chain payout address
-                </CardTitle>
-                <CardDescription>
-                  Where your PUMP should be sent when on-chain claims open. Read-only — we never
-                  request keys or seed phrases.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Input
-                  placeholder="0x…"
-                  value={payout}
-                  onChange={(e) => setPayout(e.target.value)}
-                />
-                <Button
-                  variant="secondary"
-                  onClick={onSavePayout}
-                  disabled={busy === "payout"}
-                  className="w-full"
-                >
-                  {busy === "payout" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Save address
-                </Button>
-              </CardContent>
-            </Card>
+            <PumpPayoutSettings
+              address={summary?.payout_address ?? null}
+              updatedAt={summary?.payout_address_updated_at ?? null}
+              onSaved={refresh}
+            />
           </div>
 
           <Card>
