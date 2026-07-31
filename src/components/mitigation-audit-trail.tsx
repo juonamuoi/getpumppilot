@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, AlertTriangle, Download, Link2 } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, AlertTriangle, Braces, Download, Link2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
