@@ -183,6 +183,12 @@ export function LiveWalletPortfolio() {
               </div>
             </div>
 
+            <WalletValueHistoryChart
+              address={address}
+              total={total}
+              ready={rows.length > 0 && !isFetching}
+            />
+
             <WalletAllocationChart
               items={rows
                 .filter((r) => r.value != null && r.value > 0)
