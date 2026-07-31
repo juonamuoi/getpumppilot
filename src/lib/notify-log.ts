@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------ */
 import { useSyncExternalStore } from "react";
 
-export type NotifyChannel = "push" | "email";
+export type NotifyChannel = "push" | "email" | "in_app";
 export type NotifyStatus = "sent" | "failed" | "skipped";
 
 export type NotifySkipReason =

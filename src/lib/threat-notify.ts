@@ -61,7 +61,12 @@ export async function requestPushPermission(): Promise<PushPermission> {
 
 type PushResult = { ok: boolean; reason?: string };
 
-async function showPush(title: string, body: string, tag: string): Promise<PushResult> {
+export async function showPush(
+  title: string,
+  body: string,
+  tag: string,
+  route = "/security",
+): Promise<PushResult> {
   if (isNativeApp()) {
     try {
       const { LocalNotifications } = await import("@capacitor/local-notifications");
@@ -72,7 +77,7 @@ async function showPush(title: string, body: string, tag: string): Promise<PushR
             title,
             body,
             smallIcon: "ic_stat_icon",
-            extra: { tag, route: "/security" },
+            extra: { tag, route },
           },
         ],
       });
@@ -94,7 +99,7 @@ async function showPush(title: string, body: string, tag: string): Promise<PushR
     });
     n.onclick = () => {
       window.focus();
-      window.location.href = "/security";
+      window.location.href = route;
       n.close();
     };
     return { ok: true };
