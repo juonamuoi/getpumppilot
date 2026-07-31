@@ -81,6 +81,11 @@ export function ShareLinks({
     window.open(intent, "_blank", "noopener,noreferrer");
   }
 
+  // Not a shareable surface (gated/internal route) — render nothing rather
+  // than emit a tracked link for a page that must never be indexed.
+  if (!target) return null;
+
+
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
