@@ -100,11 +100,26 @@ async function blogEntries() {
   return entries;
 }
 
+/**
+ * Every demo token rendered by /asset/$symbol. Parsed from the ASSETS array
+ * in src/lib/mock-data.ts (the same source getAsset() reads), so adding a
+ * token to the app automatically adds its detail URL here. Paths are
+ * lowercased to match the canonical URL emitted by the route.
+ */
 async function assetEntries() {
   const src = await readFile(resolve(ROOT, "src/lib/mock-data.ts"), "utf8");
-  const symbols = [...src.matchAll(/\n\s*symbol:\s*"([A-Z0-9]+)"/g)].map((m) => m[1]);
-  return [...new Set(symbols)].map((s) => ({ path: `/asset/${s.toLowerCase()}` }));
+  const block = src.split("export const ASSETS")[1]?.split("\nexport ")[0] ?? "";
+  const symbols = [...block.matchAll(/\n\s*symbol:\s*"([A-Za-z0-9]+)"/g)].map((m) => m[1]);
+  if (symbols.length === 0) {
+    console.error("sitemap: no demo tokens parsed from src/lib/mock-data.ts ASSETS");
+    process.exit(1);
+  }
+  return [...new Set(symbols.map((s) => s.toLowerCase()))].map((s) => ({
+    path: `/asset/${s}`,
+    changefreq: "weekly",
+  }));
 }
+
 
 const entries = [
   ...(await staticRoutes()).map((path) => ({ path })),
