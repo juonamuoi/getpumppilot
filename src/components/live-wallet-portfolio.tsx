@@ -182,6 +182,13 @@ export function LiveWalletPortfolio() {
     };
   });
 
+  const comparable = rows.filter((r) => r.sparkline.length > 1);
+  const comparePair = comparePicks
+    .map((s) => comparable.find((r) => r.symbol === s))
+    .filter((r): r is (typeof comparable)[number] => Boolean(r));
+
+
+
   const spamCount = rows.filter((r) => isSpamLikely(r, spamLists)).length;
   const visibleRows = applyHoldingControls(rows, {
     query,
