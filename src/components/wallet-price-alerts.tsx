@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BellRing, Plus, Trash2, ShieldOff, Mail, Smartphone, MessageSquare, Send } from "lucide-react";
+import { BellRing, Plus, Trash2, ShieldOff, Mail, Smartphone, MessageSquare, Send, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
@@ -24,6 +24,12 @@ import {
   describeRule,
   isPriceKind,
   isMoveKind,
+  isRuleMuted,
+  formatCooldown,
+  muteRule,
+  unmuteRule,
+  COOLDOWN_PRESETS,
+  MUTE_PRESETS,
   removeRule,
   updateRule,
   useWalletAlertEvents,
@@ -283,15 +289,57 @@ export function WalletPriceAlerts() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{describeRule(r)}</p>
+                <p className="truncate text-sm font-medium">
+                  {describeRule(r)}
+                  {isRuleMuted(r) && (
+                    <Badge variant="outline" className="ml-2 text-[10px]">
+                      Muted until {new Date(r.mutedUntil!).toLocaleTimeString()}
+                    </Badge>
+                  )}
+                </p>
                 <p className="text-[11px] text-muted-foreground">
-                  Cooldown {r.cooldownMinutes}m ·{" "}
+                  Cooldown {formatCooldown(r.cooldownMinutes)} ·{" "}
                   {r.lastFiredAt
                     ? `last fired ${new Date(r.lastFiredAt).toLocaleString()}`
                     : "never fired"}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={String(r.cooldownMinutes)}
+                  onValueChange={(v) => updateRule(r.id, { cooldownMinutes: Number(v) })}
+                >
+                  <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="Cooldown">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COOLDOWN_PRESETS.map((m) => (
+                      <SelectItem key={m} value={String(m)}>
+                        Cooldown {formatCooldown(m)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isRuleMuted(r) ? (
+                  <Button variant="outline" size="sm" onClick={() => unmuteRule(r.id)}>
+                    Unmute
+                  </Button>
+                ) : (
+                  <Select value="" onValueChange={(v) => muteRule(r.id, Number(v))}>
+                    <SelectTrigger className="h-8 w-[110px] text-xs" aria-label="Mute alert">
+                      <span className="flex items-center gap-1">
+                        <BellOff className="h-3 w-3" /> Mute
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MUTE_PRESETS.map((h) => (
+                        <SelectItem key={h} value={String(h)}>
+                          Mute {h}h
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <Switch
                   checked={r.enabled}
                   onCheckedChange={(v) => updateRule(r.id, { enabled: v })}

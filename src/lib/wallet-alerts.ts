@@ -26,6 +26,8 @@ export type WalletAlertRule = {
   /** Reference price for move_* rules — the "last check" baseline. */
   refPrice?: number;
   refAt?: number;
+  /** Epoch ms until which this rule is muted (no delivery). */
+  mutedUntil?: number;
 };
 
 export type WalletAlertEvent = {
@@ -57,6 +59,24 @@ export function isPriceKind(kind: WalletAlertKind) {
 /** Rules measured as a move away from a rolling reference price. */
 export function isMoveKind(kind: WalletAlertKind) {
   return kind === "move_up" || kind === "move_down";
+}
+
+/** Cooldown presets offered per rule, in minutes. */
+export const COOLDOWN_PRESETS = [0, 5, 15, 30, 60, 180, 360, 720, 1440] as const;
+
+export function formatCooldown(minutes: number) {
+  if (minutes <= 0) return "no cooldown";
+  if (minutes < 60) return `${minutes}m`;
+  if (minutes % 1440 === 0) return `${minutes / 1440}d`;
+  if (minutes % 60 === 0) return `${minutes / 60}h`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
+/** Mute durations offered per rule, in hours. */
+export const MUTE_PRESETS = [1, 4, 8, 24, 72] as const;
+
+export function isRuleMuted(rule: WalletAlertRule, now = Date.now()) {
+  return !!rule.mutedUntil && rule.mutedUntil > now;
 }
 
 export function describeRule(rule: WalletAlertRule) {
@@ -145,6 +165,15 @@ export function updateRule(id: string, patch: Partial<WalletAlertRule>) {
   rules = rules.map((r) => (r.id === id ? { ...r, ...patch } : r));
   persist();
   emit();
+}
+
+/** Mute a rule for a number of hours; delivery resumes automatically after. */
+export function muteRule(id: string, hours: number) {
+  updateRule(id, { mutedUntil: Date.now() + hours * 3_600_000 });
+}
+
+export function unmuteRule(id: string) {
+  updateRule(id, { mutedUntil: undefined });
 }
 
 export function removeRule(id: string) {
@@ -245,7 +274,13 @@ export function evaluateWalletAlerts(
     if (!rule.enabled) continue;
     const obs = observations[rule.symbol];
     if (!obs) continue;
-    if (rule.lastFiredAt && now - rule.lastFiredAt < rule.cooldownMinutes * 60_000) continue;
+    if (isRuleMuted(rule, now)) continue;
+    if (
+      rule.cooldownMinutes > 0 &&
+      rule.lastFiredAt &&
+      now - rule.lastFiredAt < rule.cooldownMinutes * 60_000
+    )
+      continue;
     const observed = ruleTriggered(rule, obs);
     if (observed == null) continue;
 
