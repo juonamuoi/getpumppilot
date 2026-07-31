@@ -14,7 +14,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, Download } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -597,8 +606,11 @@ export function MitigationAuditTrail({
     : entries.filter((e) => e.phase !== "preview");
 
   const rows = () =>
-    exportEntries.map((e) => ({
+    exportEntries.map((e) => {
+      const why = explainFields(e);
+      return {
       correlationId: e.correlationId ?? "",
+
       timestamp: new Date(e.ts).toISOString(),
       phase: e.phase ?? "applied",
       mitigation: e.mitigation ?? "",
@@ -624,7 +636,15 @@ export function MitigationAuditTrail({
       wallets: (walletsForEntry.get(e.id) ?? []).join("|"),
       outcomeAt: e.outcome ? new Date(e.outcome.ts).toISOString() : "",
       revertedAt: e.revertedAt ? new Date(e.revertedAt).toISOString() : "",
-    }));
+      why: why.why,
+      whyChange: why.whyChange,
+      whyStrictness: why.whyStrictness,
+      whyImpact: why.whyImpact,
+      whyOutcome: why.whyOutcome,
+      whyFragility: why.whyFragility,
+      };
+    });
+
 
   /** The filter scope stamped into every export so it matches this view. */
   const exportFilters = () => ({
@@ -743,12 +763,27 @@ export function MitigationAuditTrail({
               scopeLabel={RANGE_LABEL[range]}
               isImported={isImportedEntry}
             />
-            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("csv")}>
-              Quick CSV
-            </Button>
-            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => download("json")}>
-              Quick JSON
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" className="h-8 gap-1 text-xs">
+                  <Download className="h-3.5 w-3.5" />
+                  Export ({exportEntries.length})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="text-[11px]">
+                  Includes correlation IDs + full Why explanation
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-xs" onClick={() => download("csv")}>
+                  CSV (spreadsheet)
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-xs" onClick={() => download("json")}>
+                  JSON (with filters metadata)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
           </div>
 
         </div>
