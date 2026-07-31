@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PumpPayoutSettings } from "@/components/pump-payout-settings";
+import { PumpRedemptions } from "@/components/pump-redemptions";
 
 const BASE = "https://www.getpumppilot.app";
 
@@ -308,6 +309,8 @@ function PumpPage() {
               onSaved={refresh}
             />
           </div>
+
+          <PumpRedemptions onRedeemed={refresh} />
 
           <Card>
             <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">

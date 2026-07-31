@@ -188,7 +188,9 @@ export function pumpErrorMessage(reason?: string) {
     case "self_transfer":
       return "You can't send PUMP to yourself.";
     case "insufficient_balance":
-      return "Not enough PUMP for that transfer.";
+      return "Not enough PUMP for that.";
+    case "unknown_perk":
+      return "That perk is no longer available.";
     case "invalid_amount":
       return "Enter a whole amount between 1 and 1,000,000.";
     case "daily_limit":
@@ -237,4 +239,69 @@ export async function fetchPumpReferralStatus(): Promise<PumpReferralStatus> {
   const { data, error } = await rpc("pump_referral_status");
   if (error) throw new Error(error.message);
   return data as PumpReferralStatus;
+}
+
+/* ------------------------------------------------------------------ */
+/* PUMP redemption — spend PUMP on in-app perks (never market trading) */
+/* ------------------------------------------------------------------ */
+
+export type PumpPerk = {
+  key: string;
+  title: string;
+  description: string;
+  cost: number;
+  /** Null for one-off perks such as credit packs. */
+  duration_days: number | null;
+  /** App credits granted on redeem (0 for feature unlocks). */
+  credits: number;
+  category: "feature" | "credits" | string;
+  /** ISO date this perk stays unlocked until, or null when not active. */
+  active_until: string | null;
+  times_redeemed: number;
+};
+
+export type PumpRedemption = {
+  id: string;
+  perk_key: string;
+  title: string;
+  cost: number;
+  credits_granted: number;
+  created_at: string;
+  expires_at: string | null;
+};
+
+export type PumpPerkState = {
+  ok: boolean;
+  reason?: string;
+  balance: number;
+  perks: PumpPerk[];
+  history: PumpRedemption[];
+};
+
+/** Catalog of redeemable perks plus what the member already unlocked. */
+export async function fetchPumpPerks(): Promise<PumpPerkState> {
+  const { data, error } = await rpc("pump_my_perks");
+  if (error) throw new Error(error.message);
+  return data as PumpPerkState;
+}
+
+/** Spend PUMP on an in-app perk. Deducted through the double-entry ledger. */
+export async function redeemPumpPerk(perkKey: string) {
+  const { data, error } = await rpc("pump_redeem", { _perk_key: perkKey });
+  if (error) throw new Error(error.message);
+  return data as {
+    ok: boolean;
+    reason?: string;
+    perk?: string;
+    title?: string;
+    spent?: number;
+    balance?: number;
+    expires_at?: string | null;
+    credits_granted?: number;
+  };
+}
+
+/** True when a timed perk is currently unlocked. */
+export function isPerkActive(perk: Pick<PumpPerk, "active_until">) {
+  return !!perk.active_until && new Date(perk.active_until).getTime() > Date.now();
 }

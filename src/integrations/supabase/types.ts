@@ -443,6 +443,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pump_perks: {
+        Row: {
+          active: boolean
+          category: string
+          cost: number
+          created_at: string
+          credits: number
+          description: string
+          duration_days: number | null
+          key: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          cost: number
+          created_at?: string
+          credits?: number
+          description: string
+          duration_days?: number | null
+          key: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          cost?: number
+          created_at?: string
+          credits?: number
+          description?: string
+          duration_days?: number | null
+          key?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
       pump_quest_claims: {
         Row: {
           awarded: number
@@ -501,6 +540,47 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      pump_redemptions: {
+        Row: {
+          cost: number
+          created_at: string
+          credits_granted: number
+          expires_at: string | null
+          id: string
+          perk_key: string
+          starts_at: string
+          user_id: string
+        }
+        Insert: {
+          cost: number
+          created_at?: string
+          credits_granted?: number
+          expires_at?: string | null
+          id?: string
+          perk_key: string
+          starts_at?: string
+          user_id: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          credits_granted?: number
+          expires_at?: string | null
+          id?: string
+          perk_key?: string
+          starts_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pump_redemptions_perk_key_fkey"
+            columns: ["perk_key"]
+            isOneToOne: false
+            referencedRelation: "pump_perks"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       referral_codes: {
         Row: {
@@ -1142,7 +1222,9 @@ export type Database = {
         Args: { _signup_bonus?: number; _user_id: string }
         Returns: undefined
       }
+      pump_my_perks: { Args: never; Returns: Json }
       pump_my_summary: { Args: never; Returns: Json }
+      pump_redeem: { Args: { _perk_key: string }; Returns: Json }
       pump_referral_status: { Args: never; Returns: Json }
       pump_set_payout_address: { Args: { _address: string }; Returns: Json }
       pump_settle_referral: {
