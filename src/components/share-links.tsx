@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   CHANNEL_PRESETS,
-  SHARE_TARGETS,
+  getShareTarget,
   buildChannelShareUrl,
   channelIntentUrl,
   checkSharePreview,
