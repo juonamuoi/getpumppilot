@@ -12,6 +12,7 @@ import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
+import { PriceSparkline } from "@/components/price-sparkline";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,8 +89,10 @@ export function LiveWalletPortfolio() {
       price,
       value: price != null ? price * b.amount : null,
       change24h: b.usdPeg ? 0 : (live?.change24h ?? null),
+      sparkline: live?.sparkline ?? [],
       priced: price != null,
       livePriced,
+
       failed,
       stale,
       // Excluded from totals while stale, failed or unpriced.
@@ -531,7 +534,20 @@ export function LiveWalletPortfolio() {
                         )}
                       </div>
 
+                      {r.sparkline.length > 1 && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <PriceSparkline
+                            points={r.sparkline}
+                            up={(r.change24h ?? 0) >= 0}
+                            className={r.stale || r.failed ? "opacity-40" : ""}
+                            title={`${r.symbol} — last 24h price movement (${r.sparkline.length} hourly points)`}
+                          />
+                          <span className="text-[10px] text-muted-foreground">24h</span>
+                        </div>
+                      )}
+
                     </div>
+
                     <div className="text-right">
                       <div
                         className={`font-mono text-sm font-semibold ${
