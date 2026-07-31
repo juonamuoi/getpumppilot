@@ -12,7 +12,6 @@ import {
   formatPump,
   pumpErrorMessage,
   sendPump,
-  setPumpPayoutAddress,
   type PumpSummary,
 } from "@/lib/pump";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,9 +28,9 @@ import {
   Send,
   ShieldAlert,
   Sparkles,
-  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PumpPayoutSettings } from "@/components/pump-payout-settings";
 
 const BASE = "https://www.getpumppilot.app";
 
@@ -67,13 +66,11 @@ function PumpPage() {
   const [toTag, setToTag] = useState("");
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
-  const [payout, setPayout] = useState("");
 
   const refresh = useCallback(async () => {
     try {
       const s = await fetchPumpSummary();
       setSummary(s);
-      setPayout(s.payout_address ?? "");
     } catch {
       /* signed out or offline */
     }
@@ -116,20 +113,6 @@ function PumpPage() {
       await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Transfer failed");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function onSavePayout() {
-    setBusy("payout");
-    try {
-      const res = await setPumpPayoutAddress(payout);
-      if (!res.ok) toast.error(pumpErrorMessage(res.reason));
-      else toast.success(res.payout_address ? "Payout address saved" : "Payout address cleared");
-      await refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save address");
     } finally {
       setBusy(null);
     }
@@ -319,33 +302,11 @@ function PumpPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Wallet className="h-4 w-4 text-emerald-400" /> On-chain payout address
-                </CardTitle>
-                <CardDescription>
-                  Where your PUMP should be sent when on-chain claims open. Read-only — we never
-                  request keys or seed phrases.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Input
-                  placeholder="0x…"
-                  value={payout}
-                  onChange={(e) => setPayout(e.target.value)}
-                />
-                <Button
-                  variant="secondary"
-                  onClick={onSavePayout}
-                  disabled={busy === "payout"}
-                  className="w-full"
-                >
-                  {busy === "payout" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Save address
-                </Button>
-              </CardContent>
-            </Card>
+            <PumpPayoutSettings
+              address={summary?.payout_address ?? null}
+              updatedAt={summary?.payout_address_updated_at ?? null}
+              onSaved={refresh}
+            />
           </div>
 
           <Card>

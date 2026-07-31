@@ -376,6 +376,7 @@ export type Database = {
           lifetime_received: number
           lifetime_sent: number
           payout_address: string | null
+          payout_address_updated_at: string | null
           updated_at: string
           user_id: string
         }
@@ -386,6 +387,7 @@ export type Database = {
           lifetime_received?: number
           lifetime_sent?: number
           payout_address?: string | null
+          payout_address_updated_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -396,6 +398,7 @@ export type Database = {
           lifetime_received?: number
           lifetime_sent?: number
           payout_address?: string | null
+          payout_address_updated_at?: string | null
           updated_at?: string
           user_id?: string
         }
