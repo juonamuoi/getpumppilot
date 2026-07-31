@@ -109,8 +109,11 @@ export const SITE_LOCALE = "en";
 export function hreflangLinks(path: string) {
   const href = canonicalUrl(path);
   return [
-    { rel: "alternate", hrefLang: SITE_LOCALE, href },
-    { rel: "alternate", hrefLang: "x-default", href },
+    // The head renderer serializes link props verbatim, so the attribute must
+    // be spelled `hreflang` (lowercase) — `hrefLang` would emit an attribute
+    // crawlers ignore.
+    { rel: "alternate", hreflang: SITE_LOCALE, href },
+    { rel: "alternate", hreflang: "x-default", href },
   ] as const;
 }
 
