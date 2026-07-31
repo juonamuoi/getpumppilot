@@ -42,6 +42,10 @@ export const Route = createFileRoute("/scanner")({
         content:
           "Sortable momentum breakdown for every scanned asset with plain-English reasons.",
       },
+      {
+        property: "og:image:alt",
+        content: "PumpPilot AI market scanner — explainable momentum scores",
+      },
     ]),
   }),
   component: Scanner,
