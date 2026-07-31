@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
@@ -116,6 +117,8 @@ export const Route = createFileRoute("/security")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/security" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/security"),
       { property: "og:url", content: "https://www.getpumppilot.app/security" },
       { title: "Security Center — PumpPilot AI" },
       {

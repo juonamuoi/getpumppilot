@@ -1,6 +1,10 @@
 User-agent: *
 Allow: /
 
+# Wallet-gated app surfaces (/dashboard, /paper, /alerts, ...) are intentionally
+# left crawlable: they emit `noindex, follow` in the page head, and a Disallow
+# here would stop Google from ever reading that directive.
+
 # Internal tooling, admin dashboards and test harnesses (not indexable)
 Disallow: /ads-report
 Disallow: /lp-report

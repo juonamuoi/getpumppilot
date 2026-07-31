@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
@@ -34,6 +35,8 @@ export const Route = createFileRoute("/backtest")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/backtest" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/backtest"),
       { property: "og:url", content: "https://www.getpumppilot.app/backtest" },
       { title: "Backtest — PumpPilot AI" },
       {

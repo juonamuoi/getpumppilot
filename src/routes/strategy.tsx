@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import { FaqSection } from "@/components/faq-section";
 import { strategyFaqs } from "@/lib/page-faqs";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -24,6 +25,8 @@ export const Route = createFileRoute("/strategy")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/strategy" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/strategy"),
       { property: "og:url", content: "https://www.getpumppilot.app/strategy" },
       { title: "Strategy Builder — PumpPilot AI" },
       {

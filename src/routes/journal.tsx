@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import {
   SOCIAL_IMAGE_URL,
   breadcrumbSchema,
@@ -35,6 +36,8 @@ export const Route = createFileRoute("/journal")({
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/journal" }],
     meta: withSocialMeta([
+      // Wallet-gated app surface: crawlable, but never indexed.
+      ...robotsMetaFor("/journal"),
       { title: J_TITLE },
       { name: "description", content: J_DESC },
       { property: "og:title", content: J_TITLE },
