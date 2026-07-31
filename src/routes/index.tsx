@@ -52,7 +52,18 @@ const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =
   "Explainable AI for crypto: momentum scanner, paper trading, AI coaching and strict risk controls. Start free with demo data — no seed phrases required.";
 
+/** Comparison guides linked prominently from the homepage for crawl discovery. */
+const FEATURED_GUIDE_SLUGS = [
+  "pumppilot-vs-autopilot-comparison",
+  "pumppilot-vs-tradingview-paper-trading",
+] as const;
+
+const FEATURED_GUIDES: BlogPost[] = FEATURED_GUIDE_SLUGS.map((slug) =>
+  getPostBySlug(slug),
+).filter((p): p is BlogPost => Boolean(p));
+
 const faqs = [
+
   {
     q: "Is PumpPilot AI the best AI investment app for crypto?",
     a: "PumpPilot AI is built for investors who want explainable AI signals instead of black-box calls. Every momentum score shows the exact rules that fired, you can paper trade before risking capital, and risk controls are on by default. That combination — explainability, safety and coaching — is what makes it the top pick for people who take investing seriously.",
