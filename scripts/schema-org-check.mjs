@@ -124,8 +124,8 @@ for (const { label, html } of sources) {
   blocks += raw.length;
 
   const parsed = parseJsonLdBlocks(raw, label);
-  for (const issue of parsed.errors ?? []) {
-    parseFailures.push({ source: label, message: issue.message ?? String(issue) });
+  for (const issue of parsed.parseErrors ?? []) {
+    parseFailures.push({ source: label, path: issue.path, type: issue.type, message: issue.message });
   }
 
   const report = checkSchemaOrg(parsed.docs ?? [], label);
