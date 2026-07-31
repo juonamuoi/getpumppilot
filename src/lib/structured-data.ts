@@ -202,13 +202,16 @@ export function blogPostingSchema(
  * (schema.org domain: WebPage), so this node is what ties the article to the
  * page's BreadcrumbList — the article stays reachable via `mainEntity`.
  */
-export function blogPostPageSchema(slug: string) {
-  const path = `/blog/${slug}`;
+export function blogPostPageSchema(post: { slug: string; title: string; description: string }) {
+  const path = `/blog/${post.slug}`;
   const url = canonicalUrl(path);
   return {
     "@type": "WebPage",
-    "@id": url,
+    "@id": `${url}#${NODE.webpage}`,
     url,
+    name: post.title,
+    description: post.description,
+    inLanguage: "en",
     isPartOf: { "@id": WEBSITE_ID },
     breadcrumb: { "@id": nodeId(path, NODE.breadcrumb) },
     mainEntity: { "@id": `${url}#${NODE.article}` },

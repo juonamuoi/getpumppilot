@@ -71,7 +71,7 @@ export const Route = createFileRoute("/blog/$slug")({
       scripts: [
         ldScript(
           pageEntityGraph([
-            blogPostPageSchema(params.slug),
+            blogPostPageSchema(post),
             blogPostingSchema({ ...post, wordCount: countWords(post.body) }),
             breadcrumbSchema([
               { name: "Blog", path: "/blog" },
