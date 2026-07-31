@@ -69,6 +69,13 @@ jobs:
       - name: Journal Twitter card / JSON-LD image parity
         run: bun run test:seo:journal-images
 
+      # Single-language site: every annotated page must self-reference an
+      # `en` + `x-default` alternate that matches its canonical exactly.
+      - name: hreflang self-reference parity
+        run: bun run test:seo:hreflang
+
+
+
 
 
       # Google-style rich-results gate: fails with the route, JSON path,
