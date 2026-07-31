@@ -60,7 +60,15 @@ import {
 
 
 /** One-click copy of an entry's plain-English "Why" explanation. */
-function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
+function CopyWhyButton({
+  entry,
+  onValidationError,
+  onValidationClear,
+}: {
+  entry: TuningLogEntry;
+  onValidationError?: (problems: WhyProblem[]) => void;
+  onValidationClear?: () => void;
+}) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
 
 
@@ -69,11 +77,15 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
     if (!ok) {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
+      onValidationError?.([
+        { id: entry.id, correlationId: entry.correlationId, issues },
+      ]);
       toast.error("Why explanation looks malformed — nothing copied", {
         description: issues.slice(0, 3).join(" · "),
       });
       return;
     }
+    onValidationClear?.();
     const val = (v: unknown) => {
       const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
       return s.length ? s : "—";
