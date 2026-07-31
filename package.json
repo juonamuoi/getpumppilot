@@ -36,6 +36,8 @@
     "check:schema-org:json": "bun scripts/schema-org-check.mjs --json",
     "test:seo:schema-org": "vitest run --config vitest.seo.config.ts src/tests/seo/schema-org-vocabulary.test.ts",
     "check:jsonld:json": "bun scripts/jsonld-build-check.mjs --json",
+    "check:rich-results": "bun scripts/rich-results-check.mjs",
+    "check:rich-results:json": "bun scripts/rich-results-check.mjs --json",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs"
   },
   "dependencies": {

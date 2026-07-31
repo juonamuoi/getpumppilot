@@ -49,6 +49,12 @@ jobs:
       - name: Rich-result eligibility (SSR routes)
         run: bun run test:seo:jsonld
 
+      # Google-style rich-results gate: fails with the route, JSON path,
+      # offending property and a concrete fix hint when parsing or an
+      # eligibility signal fails.
+      - name: Rich-results parse + eligibility gate
+        run: bun run check:rich-results -- --server http://localhost:8080 --out test-artifacts/rich-results.json
+
       - name: Validate rendered JSON-LD in build output
         run: bun run check:jsonld
 
