@@ -341,21 +341,21 @@ export function useWalletAlertWatcher(
   updatedAt: number,
 ) {
   const key = useMemo(() => symbols.slice().sort().join(","), [symbols]);
-  const snapshot = useCallback(() => {
-    const obs: Record<string, Observation> = {};
-    for (const symbol of key ? key.split(",") : []) {
-      const live = prices[symbol];
-      obs[symbol] = {
-        price: live?.price ?? null,
-        change24h: live?.change24h ?? null,
-      };
-    }
-    return obs;
-  }, [prices, key]);
+
+  // Keep the latest price map in a ref so a new object identity on every render
+  // cannot re-trigger the effect (which would emit → rerender → loop).
+  const pricesRef = useRef(prices);
+  pricesRef.current = prices;
 
   useEffect(() => {
     if (!key) return;
-    evaluateWalletAlerts(snapshot());
-    // updatedAt changes on every live-price refresh
-  }, [key, updatedAt, snapshot]);
+    const obs: Record<string, Observation> = {};
+    for (const symbol of key.split(",")) {
+      const live = pricesRef.current[symbol];
+      obs[symbol] = { price: live?.price ?? null, change24h: live?.change24h ?? null };
+    }
+    evaluateWalletAlerts(obs);
+    // Only re-evaluate when the watched symbols change or prices actually refresh.
+  }, [key, updatedAt]);
 }
+
