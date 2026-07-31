@@ -292,7 +292,19 @@ export function LiveWalletPortfolio() {
               {dataUpdatedAt ? (
                 <span>· updated {new Date(dataUpdatedAt).toLocaleTimeString()}</span>
               ) : null}
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto h-7 gap-1 text-xs"
+                disabled={rows.length === 0}
+                onClick={onExportCsv}
+                title="Download holdings as CSV (amount, value, price source, last updated)"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Export CSV
+              </Button>
             </div>
+
 
             {isError && (
               <p className="text-xs text-amber-300">
