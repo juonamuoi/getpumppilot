@@ -40,6 +40,7 @@ import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome, safeExplainFields } from "@/lib/mitigation-explain";
 import { buildAuditShareUrl, type AuditShareState } from "@/lib/audit-share-link";
 
+import { AuditTrendCharts } from "@/components/audit-trend-charts";
 import { MitigationImport } from "@/components/mitigation-import";
 import { MitigationImportDiff } from "@/components/mitigation-import-diff";
 import { isImportedEntry } from "@/lib/mitigation-import";
@@ -1212,6 +1213,9 @@ export function MitigationAuditTrail({
             </div>
           ))}
         </div>
+
+        {/* Shape of the same filtered set the tiles above summarise. */}
+        <AuditTrendCharts entries={entries} range={range} />
 
         {entries.length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">
