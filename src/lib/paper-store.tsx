@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ASSETS, getAsset } from "./mock-data";
 import { livePriceOf } from "./live-price-registry";
+import { getLiveTrading } from "./live-trading";
 
 /** Live price when the feed covers the symbol, else the simulated demo price. */
 function markPrice(symbol: string, fallback: number): number {
@@ -178,7 +179,7 @@ type State = {
   scannerRules: ScannerRules;
   deliveries: AlertDelivery[];
   tuningLog: TuningLogEntry[];
-  liveExecutionEnabled: boolean; // always false — locked
+  liveExecutionEnabled: boolean; // mirrors the opt-in live-trading switch
   masterSwitchLocked: boolean;
   risk: {
     maxPositionPct: number;
@@ -495,7 +496,7 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     scannerRules,
     deliveries,
     tuningLog,
-    liveExecutionEnabled: false,
+    liveExecutionEnabled: getLiveTrading().mode === "live",
     masterSwitchLocked: true,
     risk,
     trade,

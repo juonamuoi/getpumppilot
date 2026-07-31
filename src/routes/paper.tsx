@@ -32,6 +32,10 @@ import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 import { requestTrade } from "@/lib/trade-gate";
+import { useLiveTrading } from "@/lib/live-trading";
+import { TradeModeSwitch } from "@/components/trade-mode-switch";
+import { LiveSwapPanel } from "@/components/live-swap-panel";
+
 
 export const Route = createFileRoute("/paper")({
   head: () => ({
@@ -40,13 +44,13 @@ export const Route = createFileRoute("/paper")({
       // Wallet-gated app surface: crawlable, but never indexed.
       ...robotsMetaFor("/paper"),
       { property: "og:url", content: "https://www.getpumppilot.app/paper" },
-      { title: "Paper Trading — PumpPilot AI" },
+      { title: "Trading — Paper & Live | PumpPilot AI" },
       {
         name: "description",
         content:
-          "Practice trading with simulated cash. Live execution is disabled and locked.",
+          "Practice with simulated cash, or enable live mode and sign real DEX swaps in your own wallet.",
       },
-      { property: "og:title", content: "Paper Trading — PumpPilot AI" },
+      { property: "og:title", content: "Trading — Paper & Live | PumpPilot AI" },
       {
         property: "og:description",
         content: "Practice trading with simulated cash — no real assets moved.",
@@ -71,6 +75,8 @@ export const Route = createFileRoute("/paper")({
 
 function PaperPage() {
   const paper = usePaper();
+  const liveMode = useLiveTrading().mode === "live";
+
   const { spend } = useCredits();
   const [symbol, setSymbol] = useState("BTC");
   const [qty, setQty] = useState("");
@@ -142,31 +148,41 @@ function PaperPage() {
       <div className="space-y-5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold sm:text-3xl">Paper Trading</h1>
+            <h1 className="truncate text-2xl font-bold sm:text-3xl">Trading</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Practice with simulated cash. No real orders are ever placed.
+              Paper by default. Live mode routes real swaps you sign in your own wallet.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <TourStartButton />
             <div
               data-tour="paper-live-lock"
-              className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5"
+              className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 ${
+                liveMode
+                  ? "border-destructive/40 bg-destructive/10"
+                  : "border-amber-500/30 bg-amber-500/5"
+              }`}
             >
-              <Lock className="h-3.5 w-3.5 text-amber-400" />
-              <span className="text-xs text-amber-200">Live execution</span>
-              <Switch checked={false} disabled />
+              <Lock className={`h-3.5 w-3.5 ${liveMode ? "text-destructive" : "text-amber-400"}`} />
+              <span className={`text-xs ${liveMode ? "text-destructive" : "text-amber-200"}`}>
+                Live execution
+              </span>
+              <Switch checked={liveMode} disabled />
             </div>
           </div>
         </div>
 
         <DisclaimerBanner />
 
+        <TradeModeSwitch />
+        <LiveSwapPanel />
+
         <div data-tour="paper-balances" className="grid gap-3 sm:grid-cols-3">
           <StatBlock label="Equity" value={fmtUsd(paper.equity)} />
           <StatBlock label="Cash" value={fmtUsd(paper.cash)} />
           <StatBlock label="Positions" value={String(paper.positions.length)} />
         </div>
+
 
         <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
           <Card className="border-border/60 bg-card/60">
