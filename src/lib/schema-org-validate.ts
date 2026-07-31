@@ -67,6 +67,15 @@ const JSONLD_KEYWORDS = new Set([
  */
 const GOOGLE_EXTENSIONS = new Set(["query-input"]);
 
+/**
+ * Types published on pending.schema.org — real, documented vocabulary terms
+ * that are not yet in the core snapshot. Mapped to their core supertype so
+ * property-domain checks still resolve through the class hierarchy.
+ */
+const PENDING_TYPES: Record<string, string[]> = {
+  CryptoCurrency: ["FinancialProduct"],
+};
+
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -76,8 +85,11 @@ const asArray = <T,>(v: T | T[] | undefined): T[] =>
 const localName = (value: string): string =>
   value.replace(/^https?:\/\/schema\.org\//, "").replace(/^schema:/, "");
 
+const supertypesOf = (name: string): string[] | undefined =>
+  TYPES[name] ?? PENDING_TYPES[name];
+
 export const isSchemaOrgType = (name: string): boolean =>
-  Object.prototype.hasOwnProperty.call(TYPES, localName(name));
+  supertypesOf(localName(name)) !== undefined;
 
 export const isSchemaOrgProperty = (name: string): boolean =>
   Object.prototype.hasOwnProperty.call(PROPERTIES, name);
@@ -91,9 +103,10 @@ export function typeAncestors(name: string): string[] {
   const queue = [localName(name)];
   while (queue.length) {
     const current = queue.shift()!;
-    if (seen.has(current) || !TYPES[current]) continue;
+    const parents = supertypesOf(current);
+    if (seen.has(current) || !parents) continue;
     seen.add(current);
-    queue.push(...TYPES[current]);
+    queue.push(...parents);
   }
   return [...seen];
 }

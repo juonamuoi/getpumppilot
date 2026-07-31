@@ -19,10 +19,12 @@ import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
 import {
   absoluteUrl,
+  assetDemoDataNodes,
   assetSocialImageUrl,
   breadcrumbSchema,
   faqSchema,
   ldScript,
+  pageEntityGraph,
   webPageSchema,
 } from "@/lib/structured-data";
 
@@ -54,19 +56,20 @@ export const Route = createFileRoute("/asset/$symbol")({
       ]),
       scripts: [
         ldScript(
-          webPageSchema({
-            name: `${name} (${sym}) momentum & paper trading`,
-            description,
-            path: `/asset/${slug}`,
-          }),
-        ),
-        ldScript(
-          breadcrumbSchema([
-            { name: "Scanner", path: "/scanner" },
-            { name: sym, path: `/asset/${slug}` },
+          pageEntityGraph([
+            webPageSchema({
+              name: `${name} (${sym}) momentum & paper trading`,
+              description,
+              path: `/asset/${slug}`,
+            }),
+            breadcrumbSchema([
+              { name: "Scanner", path: "/scanner" },
+              { name: sym, path: `/asset/${slug}` },
+            ]),
+            faqSchema(assetFaqs(sym, name), `/asset/${slug}`),
+            ...(asset ? assetDemoDataNodes(asset) : []),
           ]),
         ),
-        ldScript(faqSchema(assetFaqs(sym, name), `/asset/${slug}`)),
       ],
     };
   },

@@ -13,6 +13,7 @@ import {
   socialImageUrl,
   breadcrumbSchema,
   blogPostingSchema,
+  blogPostPageSchema,
   pageEntityGraph,
   ldScript,
 } from "@/lib/structured-data";
@@ -70,10 +71,8 @@ export const Route = createFileRoute("/blog/$slug")({
       scripts: [
         ldScript(
           pageEntityGraph([
-            blogPostingSchema(
-              { ...post, wordCount: countWords(post.body) },
-              { breadcrumb: true },
-            ),
+            blogPostPageSchema(post),
+            blogPostingSchema({ ...post, wordCount: countWords(post.body) }),
             breadcrumbSchema([
               { name: "Blog", path: "/blog" },
               { name: post.title, path: `/blog/${params.slug}` },
