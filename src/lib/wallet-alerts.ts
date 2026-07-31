@@ -239,7 +239,7 @@ export function evaluateWalletAlerts(
     }
     return r;
   });
-  if (baselineChanged) save();
+  if (baselineChanged) persist();
 
   for (const rule of [...rules]) {
     if (!rule.enabled) continue;
