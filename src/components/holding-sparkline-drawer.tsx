@@ -3,7 +3,7 @@
 // browsable as a swipeable, snapping carousel.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Download } from "lucide-react";
 
 import {
   Drawer,
@@ -16,6 +16,9 @@ import {
 } from "@/components/ui/drawer";
 import { PriceSparkline, SparklineStats, fmtPrice } from "@/components/price-sparkline";
 import { SPARK_WINDOW_OPTIONS, type SparkWindowValue } from "@/lib/sparkline-window";
+import { seriesCsvFilename, seriesToCsv } from "@/lib/series-export";
+import { downloadCsv } from "@/lib/wallet-export";
+
 
 
 type Props = {
@@ -121,6 +124,23 @@ export function HoldingSparklineDrawer({
       ? ((activePoint.price - prevPoint.price) / prevPoint.price) * 100
       : null;
 
+  const onExportSeries = () => {
+    if (points.length === 0) return;
+    const meta = {
+      symbol,
+      name,
+      window: win,
+      intervalMs,
+      source: sourceNote ?? "CoinGecko hourly closes",
+    };
+    // series is newest-first; CSV is written oldest-first.
+    const csv = seriesToCsv(
+      [...series].reverse().map((p) => ({ ts: p.ts, price: p.price })),
+      meta,
+    );
+    downloadCsv(seriesCsvFilename(meta), csv);
+  };
+
 
   return (
     <Drawer>
@@ -215,9 +235,19 @@ export function HoldingSparklineDrawer({
           {/* Swipeable, snapping point browser */}
           <div className="rounded-xl border border-border/60 bg-card/40 p-3">
             <div className="flex items-center justify-between gap-2">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Swipe through points
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <span>Swipe through points</span>
+                <button
+                  type="button"
+                  onClick={onExportSeries}
+                  title={`Download the ${win} timestamp/price series for ${symbol} as CSV`}
+                  className="flex items-center gap-1 rounded-md border border-border/60 px-2 py-0.5 text-[10px] normal-case tracking-normal text-muted-foreground transition-colors active:bg-muted/40 hover:text-foreground"
+                >
+                  <Download className="h-3 w-3" />
+                  Export CSV
+                </button>
               </div>
+
               <div className="flex items-center gap-1">
                 <button
                   type="button"
