@@ -15,7 +15,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { TuningLogEntry } from "@/lib/paper-store";
-import { explainFields, sanitizedExplainFields } from "@/lib/mitigation-explain";
+import { explainFields, safeExplainFields, sanitizedExplainFields } from "@/lib/mitigation-explain";
+import { recordValidationNote } from "@/lib/explain-validation-log";
 
 /* ------------------------------------------------------------------ *
  * Bulk export — current filtered scope only
@@ -188,6 +189,11 @@ export function MitigationBulkExport({
     if (cols.length === 0) {
       toast.error("Select at least one column to export");
       return;
+    }
+    // Every malformed record becomes a dated audit-trail note before export.
+    for (const e of entries) {
+      const { ok, issues } = safeExplainFields(e);
+      if (!ok) recordValidationNote(e, "bulk-export", issues, sanitizedExplainFields(e).invalidKeys);
     }
     const data = rows();
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
