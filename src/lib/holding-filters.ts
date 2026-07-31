@@ -1,4 +1,6 @@
 // Search / filter / sort helpers for the live wallet holdings list.
+import { evaluateSpam, type SpamInput } from "@/lib/spam-signals";
+import type { SpamListState } from "@/lib/spam-lists";
 
 export type HoldingLike = {
   symbol: string;
@@ -13,41 +15,17 @@ export type HoldingLike = {
   priced: boolean;
   failed: boolean;
   stale: boolean;
+  decimals?: number;
+  activity?: import("@/lib/wallet-balances").TokenActivity;
 };
 
-const SPAM_WORDS = [
-  "http",
-  "www.",
-  ".com",
-  ".io",
-  ".xyz",
-  ".org",
-  ".net",
-  "visit",
-  "claim",
-  "reward",
-  "airdrop",
-  "voucher",
-  "giveaway",
-  "bonus",
-  "free",
-  "$ ",
-];
-
 /**
- * Heuristic only — never authoritative. Flags auto-detected, unpriced tokens
- * whose symbol/name looks like a drainer lure (URLs, "claim rewards", emoji,
- * absurd symbol length). Pre-configured and priced tokens are never flagged.
+ * Heuristic only — never authoritative. Delegates to the explainable signal
+ * engine so every badge can be traced to concrete reasons, and honours the
+ * user's allowlist / blocklist.
  */
-export function isSpamLikely(h: HoldingLike): boolean {
-  if (!h.discovered || h.kind !== "erc20") return false;
-  if (h.priced || h.price != null) return false;
-  const text = `${h.symbol} ${h.name}`.toLowerCase();
-  if (SPAM_WORDS.some((w) => text.includes(w))) return true;
-  if (h.symbol.length > 12) return true;
-  // Non-ASCII / emoji in ticker is a strong lure signal.
-  if (/[^\x20-\x7E]/.test(h.symbol)) return true;
-  return false;
+export function isSpamLikely(h: HoldingLike, lists?: SpamListState): boolean {
+  return evaluateSpam(h as SpamInput, lists).spam;
 }
 
 export type HoldingFilter = "all" | "priced" | "unpriced" | "detected" | "issues";
@@ -109,13 +87,14 @@ export function applyHoldingControls<T extends HoldingLike>(
     sort: HoldingSort;
     hideSpam: boolean;
     pricedFirst: boolean;
+    lists?: SpamListState;
   },
 ): T[] {
   const out = rows.filter(
     (r) =>
       matchesQuery(r, opts.query) &&
       matchesFilter(r, opts.filter) &&
-      (!opts.hideSpam || !isSpamLikely(r)),
+      (!opts.hideSpam || !isSpamLikely(r, opts.lists)),
   );
 
   const cmp = (a: T, b: T): number => {
