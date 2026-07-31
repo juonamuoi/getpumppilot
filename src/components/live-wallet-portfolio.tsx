@@ -121,6 +121,36 @@ export function LiveWalletPortfolio() {
   const staleValue = staleRows.reduce((s, r) => s + (r.value ?? 0), 0);
 
 
+  const onExportCsv = () => {
+    if (!address || rows.length === 0) return;
+    const meta = {
+      address,
+      chainName: data?.chainName,
+      priceUpdatedAt,
+      balancesUpdatedAt: dataUpdatedAt,
+    };
+    const csv = holdingsToCsv(
+      rows.map((r) => ({
+        symbol: r.symbol,
+        name: r.name,
+        kind: r.kind,
+        address: r.address,
+        amount: r.amount,
+        price: r.price,
+        value: r.value,
+        change24h: r.change24h,
+        usdPeg: r.usdPeg,
+        livePriced: r.livePriced,
+        failed: r.failed,
+        stale: r.stale,
+        counted: r.counted,
+      })),
+      meta,
+    );
+    downloadCsv(holdingsCsvFilename(meta), csv);
+    toast.success(`Exported ${rows.length} holdings to CSV`);
+  };
+
   const onConnect = async () => {
     try {
       const next = await connect();
