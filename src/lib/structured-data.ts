@@ -158,7 +158,7 @@ export type BlogPostMeta = {
  */
 export function blogPostingSchema(
   post: BlogPostMeta,
-  opts: { standalone?: boolean; breadcrumb?: boolean } = {},
+  opts: { standalone?: boolean } = {},
 ) {
   const url = canonicalUrl(`/blog/${post.slug}`);
   const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
