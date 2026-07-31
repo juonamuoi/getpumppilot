@@ -737,6 +737,16 @@ export function MitigationAuditTrail({
     return [...counts.entries()].map(([cid, count]) => ({ cid, count })).slice(0, 24);
   }, [sourceLog, q, outcome, range, tokens, alertTypes, wallets, walletsForEntry]);
 
+  const entries = useMemo(
+    () =>
+      filterAuditEntries(
+        sourceLog,
+        { q, outcome, range, correlationIds, tokens, alertTypes, wallets },
+        (e) => walletsForEntry.get(e.id) ?? [],
+      ),
+    [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry],
+  );
+
   /**
    * Ranked impact per symbol across the currently filtered entries: how often a
    * token was matched, how often that turned into a delivered alert, and the
@@ -744,7 +754,7 @@ export function MitigationAuditTrail({
    */
   const symbolImpact = useMemo(() => {
     const map = new Map<string, { symbol: string; matches: number; fired: number; muted: number }>();
-    for (const e of entriesForStats) {
+    for (const e of entries) {
       const o = e.outcome;
       if (!o) continue;
       for (const s of o.symbols) {
@@ -760,24 +770,12 @@ export function MitigationAuditTrail({
       fireRate: r.matches ? Math.round((r.fired / r.matches) * 100) : 0,
       muteRate: r.matches ? Math.round((r.muted / r.matches) * 100) : 0,
     }));
-    rows.sort((a, b) => b.matches - a.matches || b.fireRate - a.fireRate || a.symbol.localeCompare(b.symbol));
+    rows.sort(
+      (a, b) => b.matches - a.matches || b.fireRate - a.fireRate || a.symbol.localeCompare(b.symbol),
+    );
     return rows.slice(0, 10);
-  }, [entriesForStats]);
+  }, [entries]);
 
-
-
-
-
-
-  const entries = useMemo(
-    () =>
-      filterAuditEntries(
-        sourceLog,
-        { q, outcome, range, correlationIds, tokens, alertTypes, wallets },
-        (e) => walletsForEntry.get(e.id) ?? [],
-      ),
-    [sourceLog, q, outcome, range, correlationIds, tokens, alertTypes, wallets, walletsForEntry],
-  );
 
   /** Same scope as `entries` but ignoring the outcome filter, for chip counts. */
   const outcomeCounts = useMemo(() => {
