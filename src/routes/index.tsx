@@ -653,6 +653,53 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Guides — prominent internal links for discovery */}
+      <section id="guides" className="px-4 py-16">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Comparison guides
+          </h2>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Deep-dive reads on how PumpPilot AI's explainable momentum compares with the tools
+            most crypto traders already use.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {FEATURED_GUIDES.map((post) => (
+              <Link
+                key={post.slug}
+                to="/blog/$slug"
+                params={{ slug: post.slug }}
+                className="group rounded-2xl border border-border/60 bg-card/40 p-6 transition hover:border-emerald-500/40 hover:bg-card/70"
+              >
+                <div className="text-[10px] uppercase tracking-widest text-emerald-300">
+                  {post.tags[0] ?? "Guide"} · {post.readMinutes} min read
+                </div>
+                <h3 className="mt-2 text-lg font-semibold tracking-tight group-hover:text-emerald-200">
+                  {post.title}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">{post.description}</p>
+                <span className="mt-4 inline-flex items-center text-sm font-medium text-emerald-300">
+                  Read the comparison <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button variant="outline" asChild>
+              <Link to="/scanner">Open the momentum scanner</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/pricing">View credits & pricing</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/blog">All guides</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+
+
       {/* CTA */}
       <section className="px-4 py-16">
         <div className="mx-auto max-w-3xl rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 p-8 text-center">
