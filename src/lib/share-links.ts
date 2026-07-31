@@ -148,14 +148,14 @@ export const CHANNEL_PRESETS: Record<
  * UTM value normalizes away — never a URL with empty parameters.
  */
 export function buildShareUrl(path: string, utm: Partial<UtmParams>): string {
-  if (!isShareablePath(path)) {
+  const target = getShareTarget(path);
+  if (!target) {
     // Unknown/gated route: hand back a clean URL rather than an indexable
     // tracked duplicate.
     const clean = path.startsWith("/") ? path : `/${path}`;
     return `${SITE_URL}${clean === "/" ? "/" : clean.replace(/\/+$/, "")}`;
   }
 
-  const target = SHARE_TARGETS[path];
   const source = normalizeUtmValue(utm.source ?? "");
   const medium = normalizeUtmValue(utm.medium ?? "");
   const campaign = normalizeUtmValue(utm.campaign ?? "", target.campaign);
@@ -182,10 +182,11 @@ export function buildChannelShareUrl(
   return buildShareUrl(path, {
     source: preset.source,
     medium: preset.medium,
-    campaign: SHARE_TARGETS[path].campaign,
+    campaign: getShareTarget(path)?.campaign,
     ...overrides,
   });
 }
+
 
 /** The intent URL that actually opens the share sheet for a channel. */
 export function channelIntentUrl(
