@@ -1,6 +1,6 @@
 // Price-change and threshold alerts for live wallet holdings.
 // Monitoring only — this module never places, signs or simulates an order.
-import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { dispatchAlert } from "@/lib/wallet-alert-channels";
 import type { LivePrice } from "@/lib/market-data";
 
