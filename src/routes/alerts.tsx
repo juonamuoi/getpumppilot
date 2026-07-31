@@ -107,7 +107,10 @@ export const Route = createFileRoute("/alerts")({
   validateSearch: (search: Record<string, unknown>) => ({
     tab: typeof search.tab === "string" ? search.tab : undefined,
     audit: typeof search.audit === "string" ? search.audit : undefined,
+    // Shareable audit-trail deep link: encoded filters + expanded entries.
+    af: typeof search.af === "string" ? search.af : undefined,
   }),
+
 
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/alerts" }],
