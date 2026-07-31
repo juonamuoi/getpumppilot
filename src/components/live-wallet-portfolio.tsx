@@ -79,8 +79,9 @@ function freshness(ts: number | undefined): string {
 
 export function LiveWalletPortfolio() {
   const { address, available, connect } = useInjectedAccount();
+  const { value: syncValue, setValue: setSyncValue, ms: syncMs } = useSyncInterval();
   const { data, isFetching, isError, error, refetch, dataUpdatedAt } =
-    useWalletBalances(address);
+    useWalletBalances(address, syncMs);
   const prices = useLivePriceMap();
   const {
     dataUpdatedAt: priceUpdatedAt,
@@ -88,7 +89,7 @@ export function LiveWalletPortfolio() {
     isError: pricesError,
     error: priceError,
     refetch: refetchPrices,
-  } = useLivePrices();
+  } = useLivePrices(syncMs);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<HoldingFilter>("all");
@@ -97,6 +98,28 @@ export function LiveWalletPortfolio() {
   const [pricedFirst, setPricedFirst] = useState(true);
   const [staleMs, setStaleMs] = useStaleThresholdMs();
   const { lists: spamLists } = useSpamLists();
+  const [rescanning, setRescanning] = useState(false);
+
+  const syncing = rescanning || isFetching || pricesFetching;
+  // Last successful sync = the older of the two feeds, so it never overstates.
+  const lastSyncAt =
+    dataUpdatedAt && priceUpdatedAt
+      ? Math.min(dataUpdatedAt, priceUpdatedAt)
+      : dataUpdatedAt || priceUpdatedAt || 0;
+
+  /** Manual full sync: drop the cached log scan, re-detect ERC-20s, re-price. */
+  const onRefreshAll = async () => {
+    setRescanning(true);
+    try {
+      await forceRescan(address);
+      await Promise.all([refetch(), refetchPrices()]);
+      toast.success("Wallet re-scanned and prices refreshed");
+    } catch {
+      toast.error("Refresh failed — check your wallet connection");
+    } finally {
+      setRescanning(false);
+    }
+  };
 
   // Re-evaluate freshness on a timer so the warning appears without a refetch.
   const [now, setNow] = useState(() => Date.now());
