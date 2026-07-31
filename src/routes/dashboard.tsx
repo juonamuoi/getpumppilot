@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PlainSignalCard } from "@/components/plain-signal";
 import { PortfolioHealthCard } from "@/components/portfolio-health";
+import { LiveWalletPortfolio } from "@/components/live-wallet-portfolio";
 import { LiveMarket } from "@/components/live-market";
 import { RealtimeMomentumAlerts } from "@/components/realtime-momentum-alerts";
 import { RiskGuidanceCard } from "@/components/risk-guidance-card";
@@ -206,6 +207,12 @@ function Dashboard() {
         <DisclaimerBanner />
 
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Portfolio overview</h2>
+
+        <LiveWalletPortfolio />
+
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+          Paper portfolio · simulated
+        </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Equity"
