@@ -873,8 +873,26 @@ export function LiveWalletPortfolio() {
                         )}
                       </div>
 
+                      {compareMode && r.sparkline.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleCompare(r.symbol)}
+                          aria-pressed={comparePicks.includes(r.symbol)}
+                          className={`mt-1 rounded-md border px-2 py-0.5 text-[10px] uppercase tracking-wide transition-colors ${
+                            comparePicks.includes(r.symbol)
+                              ? "border-primary/50 bg-primary/20 text-foreground"
+                              : "border-border/60 text-muted-foreground hover:bg-muted/40"
+                          }`}
+                        >
+                          {comparePicks.includes(r.symbol)
+                            ? "Selected for compare"
+                            : "Compare"}
+                        </button>
+                      )}
+
                       {r.sparkline.length > 1 && (
                         <div className="mt-1">
+
                         <HoldingSparklineDrawer
                           symbol={r.symbol}
                           name={r.name}
