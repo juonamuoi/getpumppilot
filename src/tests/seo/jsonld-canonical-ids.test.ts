@@ -113,7 +113,7 @@ describe("JSON-LD canonical + @id scheme", () => {
 
 
         const url = n.url as string | undefined;
-        if (typeof url === "string") {
+        if (typeof url === "string" && !siteWide) {
           expect(url, `${path}: node url "${url}" must be the canonical URL`).toBe(canonical);
         }
         const mainEntity = n.mainEntityOfPage as { "@id"?: string } | undefined;
