@@ -1,8 +1,10 @@
 // Mobile tap-to-expand drawer: enlarges a holding's sparkline and shows the
-// exact timestamp/price of every point in the selected window.
-import { useMemo } from "react";
+// exact timestamp/price of every point in the selected window. The points are
+// browsable as a swipeable, snapping carousel.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+
 import {
   Drawer,
   DrawerClose,
