@@ -6,7 +6,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner, DemoBadge } from "@/components/disclaimer";
-import { ASSETS, fmtPct, fmtUsd, type Asset } from "@/lib/mock-data";
+import { fmtPct, fmtUsd, type Asset } from "@/lib/mock-data";
+import { useLiveAssets } from "@/lib/live-assets";
 import { Card, CardContent } from "@/components/ui/card";
 import { MomentumBadge, scoreColor } from "@/components/momentum";
 import { Sparkline } from "@/components/sparkline";
@@ -138,8 +139,10 @@ function Scanner() {
     }
   };
 
+  const { assets: liveAssets, liveCount } = useLiveAssets();
+
   const filtered = useMemo(() => {
-    const base = ASSETS.filter(
+    const base = liveAssets.filter(
       (a) =>
         (tab === "all" || a.category === tab) &&
         (q === "" ||
@@ -156,7 +159,7 @@ function Scanner() {
       const bn = bv as number;
       return dir === "asc" ? an - bn : bn - an;
     });
-  }, [q, tab, sort, dir]);
+  }, [q, tab, sort, dir, liveAssets]);
 
   const avgScore = filtered.length
     ? Math.round(filtered.reduce((s, a) => s + a.momentum.total, 0) / filtered.length)
@@ -194,7 +197,8 @@ function Scanner() {
           ))}
         </div>
         <div className="text-[11px] text-muted-foreground">
-          {risers} of {filtered.length} up on the day.
+          {risers} of {filtered.length} up on the day. {liveCount} priced with live CoinGecko data;
+          fictional demo tokens remain simulated.
         </div>
 
         <h2 className="text-lg font-semibold">Asset Scanner</h2>

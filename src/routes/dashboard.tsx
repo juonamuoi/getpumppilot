@@ -13,7 +13,8 @@ import {
   canonicalLinks,
 } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
+import { fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
+import { useLiveAssets } from "@/lib/live-assets";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner, DemoBadge } from "@/components/disclaimer";
 import { ShareLinks } from "@/components/share-links";
@@ -143,8 +144,11 @@ function Dashboard() {
   const { cash, positions, equity } = usePaper();
   const { state: onb } = useOnboarding();
 
+  const { assets: liveAssets } = useLiveAssets();
+  const priced = (sym: string) => liveAssets.find((x) => x.symbol === sym) ?? getAsset(sym)!;
+
   const posRows = positions.map((p) => {
-    const a = getAsset(p.symbol)!;
+    const a = priced(p.symbol);
     const value = a.price * p.qty;
     const pnl = (a.price - p.avgCost) * p.qty;
     const pnlPct = ((a.price - p.avgCost) / p.avgCost) * 100;
@@ -155,8 +159,8 @@ function Dashboard() {
   const invested = posRows.reduce((s, r) => s + r.p.avgCost * r.p.qty, 0);
   const totalPnlPct = invested > 0 ? (totalPnl / invested) * 100 : 0;
 
-  const topMomentum = [...ASSETS].sort((a, b) => b.momentum.total - a.momentum.total).slice(0, 4);
-  const topSignals = [...ASSETS]
+  const topMomentum = [...liveAssets].sort((a, b) => b.momentum.total - a.momentum.total).slice(0, 4);
+  const topSignals = [...liveAssets]
     .sort((a, b) => b.momentum.total - a.momentum.total)
     .slice(0, 3);
 

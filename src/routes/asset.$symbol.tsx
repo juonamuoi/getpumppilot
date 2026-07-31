@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DemoBadge, DisclaimerBanner } from "@/components/disclaimer";
 import { getAsset, fmtPct, fmtUsd } from "@/lib/mock-data";
+import { useLiveAsset } from "@/lib/live-assets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MomentumBreakdown } from "@/components/momentum";
 import { Button } from "@/components/ui/button";
@@ -80,7 +81,7 @@ export const Route = createFileRoute("/asset/$symbol")({
 
 function AssetPage() {
   const { symbol } = Route.useParams();
-  const asset = getAsset(symbol);
+  const asset = useLiveAsset(symbol);
   const navigate = useNavigate();
   const paper = usePaper();
   const [qty, setQty] = useState("");
@@ -159,7 +160,9 @@ function AssetPage() {
         <div className="grid gap-5 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Price (demo)</CardTitle>
+              <CardTitle className="text-base">
+                Price {asset.isLive ? "· live" : "(demo)"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="h-72 pl-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -218,7 +221,7 @@ function AssetPage() {
               <Stat label="Market cap" value={fmtUsd(asset.marketCap)} />
               <Stat label="24h volume" value={fmtUsd(asset.volume24h)} />
               <Stat label="Category" value={asset.category === "major" ? "Major" : "Demo small-cap"} />
-              <Stat label="Data source" value="Mock / Demo" />
+              <Stat label="Data source" value={asset.isLive ? "CoinGecko · live" : "Mock / Demo"} />
             </CardContent>
           </Card>
 
@@ -256,7 +259,7 @@ function AssetPage() {
                 </Button>
               </div>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Simulated fills at last mock price. No real assets are moved.
+                Simulated fills at the last quoted price. No real assets are moved.
               </p>
             </CardContent>
           </Card>
