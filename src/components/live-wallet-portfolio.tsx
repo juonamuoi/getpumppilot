@@ -40,7 +40,7 @@ import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 import { LivePaperAllocationCompare } from "@/components/live-paper-allocation-compare";
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
-import { PriceSparkline } from "@/components/price-sparkline";
+import { PriceSparkline, SparklineStats } from "@/components/price-sparkline";
 import { HoldingInfoDrawer } from "@/components/holding-info-drawer";
 import { SpamListManager } from "@/components/spam-list-manager";
 import { useSpamLists } from "@/lib/spam-lists";
@@ -771,7 +771,7 @@ export function LiveWalletPortfolio() {
                       </div>
 
                       {r.sparkline.length > 1 && (
-                        <div className="mt-1 flex items-center gap-2">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                           <PriceSparkline
                             points={r.sparkline}
                             up={(r.change24h ?? 0) >= 0}
@@ -782,6 +782,10 @@ export function LiveWalletPortfolio() {
                           />
 
                           <span className="text-[10px] text-muted-foreground">24h</span>
+                          <SparklineStats
+                            points={r.sparkline}
+                            className={r.stale || r.failed ? "opacity-60" : ""}
+                          />
                         </div>
                       )}
 
