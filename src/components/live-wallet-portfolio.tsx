@@ -41,6 +41,7 @@ import { LivePaperAllocationCompare } from "@/components/live-paper-allocation-c
 import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
 import { PriceSparkline, SparklineStats } from "@/components/price-sparkline";
+import { HoldingSparklineDrawer } from "@/components/holding-sparkline-drawer";
 import {
   SPARK_WINDOW_OPTIONS,
   sliceSparkline,
@@ -805,7 +806,25 @@ export function LiveWalletPortfolio() {
                       </div>
 
                       {r.sparkline.length > 1 && (
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <div className="mt-1">
+                        <HoldingSparklineDrawer
+                          symbol={r.symbol}
+                          name={r.name}
+                          points={r.sparkline}
+                          up={(r.change24h ?? 0) >= 0}
+                          endTs={priceUpdatedAt || undefined}
+                          intervalMs={sparkConfig.intervalMs}
+                          window={sparkWindow}
+                          onWindowChange={setSparkWindow}
+                          dimmed={r.stale || r.failed}
+                          sourceNote={
+                            r.usdPeg
+                              ? "Stablecoin USD peg (fixed $1.00) — no live feed needed."
+                              : r.failed
+                                ? "CoinGecko — last fetch failed, prices may be out of date."
+                                : "CoinGecko hourly closes. Read-only: no trades are executed."
+                          }
+                        >
                           <PriceSparkline
                             points={r.sparkline}
                             up={(r.change24h ?? 0) >= 0}
@@ -823,6 +842,10 @@ export function LiveWalletPortfolio() {
                             points={r.sparkline}
                             className={r.stale || r.failed ? "opacity-60" : ""}
                           />
+                          <span className="text-[10px] text-muted-foreground md:hidden">
+                            Tap to expand
+                          </span>
+                        </HoldingSparklineDrawer>
                         </div>
                       )}
 
