@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-store";
 import { CREDIT_COSTS, CREDIT_LABELS, LOW_BALANCE_THRESHOLD, type CreditFeature } from "@/lib/credits";
@@ -59,20 +59,27 @@ export function useCredits() {
     refetch();
   }, [refetch]);
 
+  const refetchRef = useRef(refetch);
+  useEffect(() => {
+    refetchRef.current = refetch;
+  }, [refetch]);
+
   useEffect(() => {
     if (!user) return;
+    // Unique channel name per mount: reusing a name can return an already
+    // subscribed channel, and `.on()` after `subscribe()` throws.
     const ch = supabase
-      .channel(`credits:${user.id}`)
+      .channel(`credits:${user.id}:${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "credit_balances", filter: `user_id=eq.${user.id}` },
-        () => refetch(),
+        () => refetchRef.current(),
       )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [user, refetch]);
+  }, [user]);
 
   /** Charge credits for a feature. Returns ok:false when the account is out of credits. */
   const spend = useCallback(
