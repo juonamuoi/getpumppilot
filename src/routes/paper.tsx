@@ -105,21 +105,30 @@ function PaperPage() {
   };
 
 
-  const doTrade = async (side: "buy" | "sell") => {
+  const doTrade = (side: "buy" | "sell") => {
     const n = parseFloat(qty);
     if (!n) return toast.error("Enter a quantity");
-    const charge = await spend("bot_execution", { description: `${side.toUpperCase()} ${symbol}`, metadata: { symbol, side } });
-    if (!charge.ok) {
-      return toast.error(
-        charge.reason === "insufficient_credits"
-          ? `Out of credits — execution stopped. Each order costs ${CREDIT_COSTS.bot_execution} credit. Recharge to resume.`
-          : "Could not charge credits. Try again.",
-      );
-    }
-    const r = paper.trade(symbol, side, n);
-    r.ok ? toast.success(r.msg) : toast.error(r.msg);
-    if (r.ok) setQty("");
+    // Global safety gate — nothing is submitted until the notice is acknowledged.
+    requestTrade({
+      action: `${side.toUpperCase()} ${n} ${symbol}`,
+      mode: "paper",
+      detail: "Simulated order — no wallet signature and no on-chain submission.",
+      onConfirm: async () => {
+        const charge = await spend("bot_execution", { description: `${side.toUpperCase()} ${symbol}`, metadata: { symbol, side } });
+        if (!charge.ok) {
+          return toast.error(
+            charge.reason === "insufficient_credits"
+              ? `Out of credits — execution stopped. Each order costs ${CREDIT_COSTS.bot_execution} credit. Recharge to resume.`
+              : "Could not charge credits. Try again.",
+          );
+        }
+        const r = paper.trade(symbol, side, n);
+        r.ok ? toast.success(r.msg) : toast.error(r.msg);
+        if (r.ok) setQty("");
+      },
+    });
   };
+
 
   return (
     <AppShell>
