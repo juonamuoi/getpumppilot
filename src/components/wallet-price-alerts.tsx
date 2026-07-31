@@ -23,6 +23,7 @@ import {
   clearEvents,
   describeRule,
   isPriceKind,
+  isMoveKind,
   removeRule,
   updateRule,
   useWalletAlertEvents,
@@ -41,7 +42,14 @@ import {
 } from "@/lib/wallet-alert-channels";
 import { reasonLabel, useDeliveryLog } from "@/lib/notify-log";
 
-const KINDS: WalletAlertKind[] = ["price_above", "price_below", "change_up", "change_down"];
+const KINDS: WalletAlertKind[] = [
+  "price_above",
+  "price_below",
+  "change_up",
+  "change_down",
+  "move_up",
+  "move_down",
+];
 
 export function WalletPriceAlerts() {
   const { address } = useInjectedAccount();
@@ -219,7 +227,9 @@ export function WalletPriceAlerts() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{isPriceKind(kind) ? "Price (USD)" : "Change (%)"}</Label>
+            <Label className="text-xs">
+              {isPriceKind(kind) ? "Price (USD)" : isMoveKind(kind) ? "Move (%)" : "Change (%)"}
+            </Label>
             <Input
               inputMode="decimal"
               value={value}
@@ -236,6 +246,14 @@ export function WalletPriceAlerts() {
             />
           </div>
         </div>
+
+        {isMoveKind(kind) && (
+          <p className="text-xs text-muted-foreground">
+            Measured against a rolling baseline captured at the last check. A drop rule tracks the
+            recent peak, a rise rule tracks the recent trough, and the baseline resets each time the
+            alert fires. Informational only — no trades are placed.
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" onClick={onAdd}>
