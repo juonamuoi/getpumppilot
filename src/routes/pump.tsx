@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PumpPayoutSettings } from "@/components/pump-payout-settings";
+import { PumpRedemptions } from "@/components/pump-redemptions";
 
 const BASE = "https://www.getpumppilot.app";
 
