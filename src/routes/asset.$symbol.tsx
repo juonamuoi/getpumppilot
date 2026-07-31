@@ -41,6 +41,7 @@ export const Route = createFileRoute("/asset/$symbol")({
         : undefined,
     };
   },
+  head: ({ params }) => {
 
     const sym = params.symbol.toUpperCase();
     const asset = getAsset(params.symbol);
