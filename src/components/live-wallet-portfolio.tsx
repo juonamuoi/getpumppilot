@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Loader2, ShieldCheck } from "lucide-react";
+import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
