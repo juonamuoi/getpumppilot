@@ -20,6 +20,7 @@
  */
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 const SOURCE = "https://schema.org/version/latest/schemaorg-current-https.jsonld";
 const OUT = path.join("src", "lib", "schema-org-vocabulary.json");
@@ -27,13 +28,19 @@ const CHECK = process.argv.includes("--check");
 
 const localName = (value) => {
   if (typeof value !== "string") return null;
-  const raw = value.replace(/^https?:\/\/schema\.org\//, "");
+  const raw = value
+    .replace(/^https?:\/\/schema\.org\//, "")
+    .replace(/^schema:/, "");
   return /^[A-Za-z][A-Za-z0-9_]*$/.test(raw) ? raw : null;
 };
 
+/** Keeps prefixed vocabulary terms (rdfs:Class, rdf:Property) intact. */
+const rawType = (value) =>
+  typeof value === "string" ? value.replace(/^https?:\/\/schema\.org\//, "") : "";
+
 const asArray = (v) => (v === undefined || v === null ? [] : Array.isArray(v) ? v : [v]);
 const ids = (v) => asArray(v).map((e) => localName(e?.["@id"] ?? e)).filter(Boolean);
-const typesOf = (node) => asArray(node["@type"]).map((t) => localName(t)).filter(Boolean);
+const typesOf = (node) => asArray(node["@type"]).map((t) => rawType(t?.["@id"] ?? t));
 
 async function build() {
   const response = await fetch(SOURCE);
@@ -44,8 +51,12 @@ async function build() {
   const types = {};
   const properties = {};
   const enumerations = new Set();
-  let version = doc.schemaVersion ?? "unknown";
-  if (typeof version === "string") version = version.replace(/^.*\//, "");
+  // schema.org's JSON-LD release carries no version field, so fingerprint the
+  // downloaded vocabulary instead — that is what staleness checks compare.
+  const version = `sha256:${createHash("sha256")
+    .update(JSON.stringify(graph))
+    .digest("hex")
+    .slice(0, 12)}`;
 
   for (const node of graph) {
     const name = localName(node["@id"]);
