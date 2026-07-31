@@ -10,6 +10,7 @@ import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
+import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart";
 
 function freshness(ts: number | undefined): string {
   if (!ts) return "not yet fetched";
