@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ASSETS, fmtPct, fmtUsd, getAsset } from "@/lib/mock-data";
+import { useLiveAssets } from "@/lib/live-assets";
 import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { usePaper } from "@/lib/paper-store";
