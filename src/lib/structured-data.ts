@@ -187,13 +187,6 @@ export function blogPostingSchema(
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     isPartOf: { "@id": nodeId("/blog", NODE.blog) },
-    ...(opts.breadcrumb
-      ? {
-          breadcrumb: {
-            "@id": nodeId(`/blog/${post.slug}`, NODE.breadcrumb),
-          },
-        }
-      : {}),
     url,
     inLanguage: "en",
   };
@@ -202,6 +195,24 @@ export function blogPostingSchema(
   if (post.wordCount) node.wordCount = post.wordCount;
   if (post.readMinutes) node.timeRequired = `PT${post.readMinutes}M`;
   return node;
+}
+
+/**
+ * WebPage node for a single journal entry. `breadcrumb` belongs on the page
+ * (schema.org domain: WebPage), so this node is what ties the article to the
+ * page's BreadcrumbList — the article stays reachable via `mainEntity`.
+ */
+export function blogPostPageSchema(slug: string) {
+  const path = `/blog/${slug}`;
+  const url = canonicalUrl(path);
+  return {
+    "@type": "WebPage",
+    "@id": url,
+    url,
+    isPartOf: { "@id": WEBSITE_ID },
+    breadcrumb: { "@id": nodeId(path, NODE.breadcrumb) },
+    mainEntity: { "@id": `${url}#${NODE.article}` },
+  };
 }
 
 export type Crumb = { name: string; path: string };
