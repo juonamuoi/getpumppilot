@@ -17,6 +17,7 @@
     "gen:social-hashes": "node scripts/social-image-hashes.mjs",
     "gen:sitemap": "node scripts/gen-sitemap.mjs",
     "check:sitemap": "node scripts/gen-sitemap.mjs --check",
+    "check:robots": "node scripts/validate-robots.mjs",
     "check:social-hashes": "node scripts/social-image-hashes.mjs --check",
     "lint:supabase": "node scripts/supabase-lint-check.mjs",
     "lint:supabase:live": "node scripts/supabase-lint-check.mjs --live",
