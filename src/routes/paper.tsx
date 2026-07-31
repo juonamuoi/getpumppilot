@@ -79,7 +79,11 @@ function PaperPage() {
     target: number;
   } | null>(null);
 
-  const asset = getAsset(symbol)!;
+  // Live-overlaid universe so /paper marks positions exactly like /dashboard.
+  const { assets: liveAssets } = useLiveAssets();
+  const priced = (sym: string) =>
+    liveAssets.find((a) => a.symbol === sym) ?? getAsset(sym)!;
+  const asset = priced(symbol);
 
   const applyRiskControls = () => {
     const { maxPositionPct, stopLossPct, takeProfitPct } = paper.risk;
