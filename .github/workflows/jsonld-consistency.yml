@@ -107,3 +107,16 @@ jobs:
           path: test-artifacts/
           if-no-files-found: ignore
 
+
+      # Post-build indexing push: submits only URLs whose sitemap <lastmod>
+      # changed. Dry run on pull requests; real submission on main.
+      - name: Indexing ping (dry run)
+        if: github.event_name == 'pull_request'
+        run: bun run ping:indexing:dry
+
+      - name: Ping Google + Bing indexing APIs
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          GOOGLE_INDEXING_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_INDEXING_SERVICE_ACCOUNT_JSON }}
+        run: bun run ping:indexing
