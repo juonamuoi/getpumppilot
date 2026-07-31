@@ -1344,7 +1344,9 @@ export function MitigationAuditTrail({
         ) : (
           <div className="space-y-2">
             {entries.map((e, i) => {
-              const focused = !!focusCorrelationId && e.correlationId === focusCorrelationId;
+              const focused =
+                (!!focusCorrelationId && e.correlationId === focusCorrelationId) ||
+                (!!drillCid && e.correlationId === drillCid);
               return (
               <div
                 key={e.id}
