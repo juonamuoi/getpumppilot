@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BLOG_POSTS } from "@/lib/blog-posts";
+import { PAGE_SIZE, pagePath } from "@/lib/pagination";
 import { ASSETS } from "@/lib/mock-data";
 import {
   CANONICAL_ORIGIN,
@@ -122,6 +123,19 @@ const routeFiles = Object.keys(routeModules)
   .filter((p) => !SKIP.some((re) => re.test(p)))
   .sort();
 
+/**
+ * Paginated listing pages ("/blog?page=2", …) are separate indexable URLs that
+ * the file-route glob cannot see, because the page lives in a search param.
+ * They self-canonicalise, so they must appear both here and in the sitemap.
+ */
+function paginatedListingCanonicals(): RouteCanonical[] {
+  const totalPages = Math.max(1, Math.ceil(BLOG_POSTS.length / PAGE_SIZE));
+  return Array.from({ length: totalPages - 1 }, (_, i) => {
+    const path = pagePath("/blog", i + 2);
+    return { id: `/src/routes/blog.index.tsx page ${i + 2}`, path, canonical: `${CANONICAL_ORIGIN}${path}` };
+  });
+}
+
 let cached: Promise<RouteCanonical[]> | null = null;
 
 function collectRouteCanonicals(): Promise<RouteCanonical[]> {
@@ -139,6 +153,7 @@ function collectRouteCanonicals(): Promise<RouteCanonical[]> {
         out.push({ id: `${file} ${JSON.stringify(params)}`, path: pathFor(file, params), canonical, noindex });
       }
     }
+    out.push(...paginatedListingCanonicals());
     return out;
   })();
   return cached;
