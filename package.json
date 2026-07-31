@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "bun run gen:social-hashes && bun run gen:sitemap && bun run test:security && bun run test:seo:social && vite build",
-    "build:dev": "bun run gen:social-hashes && bun run gen:sitemap && bun run test:security && bun run test:seo:social && vite build --mode development",
+    "build": "bun run gen:asset-og && bun run gen:social-hashes && bun run gen:sitemap && bun run test:security && bun run test:seo:social && vite build",
+    "build:dev": "bun run gen:asset-og && bun run gen:social-hashes && bun run gen:sitemap && bun run test:security && bun run test:seo:social && vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
