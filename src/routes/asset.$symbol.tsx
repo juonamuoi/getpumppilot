@@ -123,7 +123,7 @@ function AssetPage() {
     );
   }
 
-  const chartData = asset.sparkline.map((v, i) => ({ i, v }));
+  const chartData = sliceSparkline(asset.sparkline, horizon).map((v, i) => ({ i, v }));
   const positive = asset.change24h >= 0;
 
   const doTrade = (side: "buy" | "sell") => {
