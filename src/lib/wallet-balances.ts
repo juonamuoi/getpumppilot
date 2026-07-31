@@ -9,6 +9,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  loadLogScanCache,
+  saveLogScanCache,
+  mergeActivity,
+  type CachedActivity,
+} from "@/lib/log-scan-cache";
 
 type Eip1193 = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -180,61 +186,155 @@ async function call(
   return provider.request({ method: "eth_call", params: [{ to, data }, "latest"] });
 }
 
+/** Initial block span per eth_getLogs request; halved on RPC range errors. */
+const CHUNK_BLOCKS = 20_000;
+const MIN_CHUNK_BLOCKS = 1_000;
+/** Chunk requests issued in parallel (keeps public RPCs happy). */
+const CHUNK_CONCURRENCY = 4;
+
+type RawLog = { address?: string; blockNumber?: string };
+
+/** eth_getLogs for one range, splitting recursively when the RPC caps it. */
+async function getLogsChunked(
+  provider: Eip1193,
+  filter: Record<string, unknown>,
+  fromBlock: number,
+  toBlock: number,
+  span: number,
+): Promise<RawLog[]> {
+  const ranges: [number, number][] = [];
+  for (let start = fromBlock; start <= toBlock; start += span) {
+    ranges.push([start, Math.min(start + span - 1, toBlock)]);
+  }
+
+  const out: RawLog[] = [];
+  let anyOk = false;
+
+  for (let i = 0; i < ranges.length; i += CHUNK_CONCURRENCY) {
+    const batch = ranges.slice(i, i + CHUNK_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(async ([a, b]) => {
+        try {
+          const logs = (await provider.request({
+            method: "eth_getLogs",
+            params: [
+              { fromBlock: `0x${a.toString(16)}`, toBlock: `0x${b.toString(16)}`, ...filter },
+            ],
+          })) as RawLog[];
+          return { ok: true, logs: logs ?? [], range: [a, b] as [number, number] };
+        } catch {
+          return { ok: false, logs: [] as RawLog[], range: [a, b] as [number, number] };
+        }
+      }),
+    );
+
+    for (const r of results) {
+      if (r.ok) {
+        anyOk = true;
+        out.push(...r.logs);
+        continue;
+      }
+      // Likely a range/result-size cap: retry this slice with a smaller span.
+      if (span > MIN_CHUNK_BLOCKS) {
+        const sub = await getLogsChunked(
+          provider,
+          filter,
+          r.range[0],
+          r.range[1],
+          Math.max(MIN_CHUNK_BLOCKS, Math.floor(span / 2)),
+        );
+        anyOk = true;
+        out.push(...sub);
+      }
+    }
+  }
+
+  if (!anyOk) throw new Error("log scan unavailable");
+  return out;
+}
+
 /** Contract addresses this account transferred with, plus per-token activity. */
 async function discoverTokenContracts(
   provider: Eip1193,
   address: string,
+  chainId: number,
 ): Promise<Map<string, TokenActivity>> {
   const latest = Number(hexToNumber(await provider.request({ method: "eth_blockNumber" })));
-  const from = Math.max(0, latest - SCAN_BLOCKS);
-  const fromBlock = `0x${from.toString(16)}`;
+  const windowStart = Math.max(0, latest - SCAN_BLOCKS);
   const topic = pad32(address);
+
+  const cached = loadLogScanCache(chainId, address);
+  // Only scan blocks we haven't already covered.
+  const reusable =
+    cached && cached.toBlock <= latest && cached.fromBlock <= windowStart + 1
+      ? cached
+      : null;
+  const from = reusable ? Math.min(latest, reusable.toBlock + 1) : windowStart;
 
   const queries = [
     { topics: [TRANSFER_TOPIC, null, topic] }, // incoming
     { topics: [TRANSFER_TOPIC, topic] }, // outgoing
   ];
 
-  const found = new Map<string, TokenActivity>();
+  const fresh: Record<string, CachedActivity> = {};
   let ok = false;
 
-  for (const [i, q] of queries.entries()) {
-    const direction = i === 0 ? "incoming" : "outgoing";
-    try {
-      const logs = (await provider.request({
-        method: "eth_getLogs",
-        params: [{ fromBlock, toBlock: "latest", ...q }],
-      })) as { address?: string; blockNumber?: string }[];
-      ok = true;
-      for (const l of logs ?? []) {
-        if (!l?.address) continue;
-        const key = l.address.toLowerCase();
-        const block = Number(hexToNumber(l.blockNumber)) || latest;
-        const prev =
-          found.get(key) ??
-          ({
-            transfers: 0,
-            incoming: 0,
-            outgoing: 0,
-            firstBlock: block,
-            lastBlock: block,
-            scannedBlocks: latest - from,
-          } satisfies TokenActivity);
-        prev.transfers += 1;
-        if (direction === "incoming") prev.incoming += 1;
-        else prev.outgoing += 1;
-        prev.firstBlock = Math.min(prev.firstBlock, block);
-        prev.lastBlock = Math.max(prev.lastBlock, block);
-        found.set(key, prev);
+  if (from <= latest) {
+    for (const [i, q] of queries.entries()) {
+      const direction = i === 0 ? "incoming" : "outgoing";
+      try {
+        const logs = await getLogsChunked(provider, q, from, latest, CHUNK_BLOCKS);
+        ok = true;
+        for (const l of logs) {
+          if (!l?.address) continue;
+          const key = l.address.toLowerCase();
+          const block = Number(hexToNumber(l.blockNumber)) || latest;
+          const prev =
+            fresh[key] ??
+            ({
+              transfers: 0,
+              incoming: 0,
+              outgoing: 0,
+              firstBlock: block,
+              lastBlock: block,
+              scannedBlocks: latest - from,
+            } satisfies CachedActivity);
+          prev.transfers += 1;
+          if (direction === "incoming") prev.incoming += 1;
+          else prev.outgoing += 1;
+          prev.firstBlock = Math.min(prev.firstBlock, block);
+          prev.lastBlock = Math.max(prev.lastBlock, block);
+          fresh[key] = prev;
+        }
+      } catch {
+        // RPC may cap log ranges or disable eth_getLogs entirely.
       }
-    } catch {
-      // RPC may cap log ranges or disable eth_getLogs entirely.
     }
+  } else {
+    ok = true; // cache already covers the head block
   }
 
-  if (!ok) throw new Error("log scan unavailable");
+  if (!ok && !reusable) throw new Error("log scan unavailable");
+
+  const merged = mergeActivity(reusable?.tokens ?? {}, fresh);
+  const scanned = latest - (reusable ? reusable.fromBlock : from);
+  const found = new Map<string, TokenActivity>();
+  for (const [addr, a] of Object.entries(merged)) {
+    found.set(addr, { ...a, scannedBlocks: Math.max(a.scannedBlocks, scanned) });
+  }
+
+  if (ok) {
+    saveLogScanCache(chainId, address, {
+      fromBlock: reusable ? reusable.fromBlock : from,
+      toBlock: latest,
+      tokens: merged,
+      updatedAt: Date.now(),
+    });
+  }
+
   return found;
 }
+
 
 /** Reads symbol/decimals/balanceOf for a discovered contract. */
 async function readDiscoveredToken(
@@ -316,7 +416,7 @@ async function readBalances(address: string): Promise<WalletBalances> {
   // Auto-detect any other ERC-20 the wallet has touched recently.
   let discoveryFailed = false;
   try {
-    const activity = await discoverTokenContracts(provider, address);
+    const activity = await discoverTokenContracts(provider, address, chainId);
     const contracts = [...activity.keys()]
       .filter((c) => !seen.has(c))
       .slice(0, MAX_DISCOVERED);
