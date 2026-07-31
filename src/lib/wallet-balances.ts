@@ -78,6 +78,10 @@ export type WalletBalance = {
   /** Fixed USD price for pegged stablecoins; otherwise priced from the live feed. */
   usdPeg?: number;
   kind: "native" | "erc20";
+  /** Contract address for ERC-20s. */
+  address?: string;
+  /** True when the token was auto-detected on-chain rather than pre-configured. */
+  discovered?: boolean;
 };
 
 export type WalletBalances = {
@@ -85,7 +89,10 @@ export type WalletBalances = {
   chainId: number;
   chainName: string;
   balances: WalletBalance[];
+  /** True when auto-detection of extra ERC-20s could not run on this network. */
+  discoveryFailed?: boolean;
 };
+
 
 const CHAIN_NAMES: Record<number, string> = {
   1: "Ethereum",
