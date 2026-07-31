@@ -1,14 +1,18 @@
 User-agent: *
 Allow: /
+
+# Internal tooling, admin dashboards and test harnesses (not indexable)
 Disallow: /ads-report
 Disallow: /lp-report
-Disallow: /go-live-test
-Disallow: /mcp-console
-Disallow: /mcp
 Disallow: /seo-preview
 Disallow: /seo-monitor
-Disallow: /paper
-
-
+Disallow: /storage-audit
+Disallow: /mcp-console
+Disallow: /mcp
+Disallow: /go-live-test
+Disallow: /doctor
+Disallow: /settings
+Disallow: /embed/
+Disallow: /api/
 
 Sitemap: https://www.getpumppilot.app/sitemap.xml
