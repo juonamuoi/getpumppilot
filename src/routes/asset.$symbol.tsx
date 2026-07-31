@@ -39,13 +39,9 @@ import {
 
 
 export const Route = createFileRoute("/asset/$symbol")({
-  validateSearch: (search: Record<string, unknown>) => {
+  validateSearch: (search: Record<string, unknown>): { w?: SparkWindowValue } => {
     const w = search.w;
-    return {
-      w: SPARK_WINDOW_OPTIONS.some((o) => o.value === w)
-        ? (w as SparkWindowValue)
-        : undefined,
-    };
+    return SPARK_WINDOW_OPTIONS.some((o) => o.value === w) ? { w: w as SparkWindowValue } : {};
   },
   head: ({ params }) => {
 
