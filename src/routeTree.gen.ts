@@ -47,6 +47,7 @@ import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as EmbedMomentumRouteImport } from './routes/embed.momentum'
+import { Route as FeaturesDashboardRouteImport } from './routes/features.dashboard'
 import { Route as LpVariantRouteImport } from './routes/lp.$variant'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -250,6 +251,11 @@ const EmbedMomentumRoute = EmbedMomentumRouteImport.update({
   path: '/embed/momentum',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FeaturesDashboardRoute = FeaturesDashboardRouteImport.update({
+  id: '/features/dashboard',
+  path: '/features/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LpVariantRoute = LpVariantRouteImport.update({
   id: '/lp/$variant',
   path: '/lp/$variant',
@@ -344,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/asset/$symbol': typeof AssetSymbolRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
+  '/features/dashboard': typeof FeaturesDashboardRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/asset/$symbol': typeof AssetSymbolRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
+  '/features/dashboard': typeof FeaturesDashboardRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog': typeof BlogIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -445,6 +453,7 @@ export interface FileRoutesById {
   '/asset/$symbol': typeof AssetSymbolRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
+  '/features/dashboard': typeof FeaturesDashboardRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -497,6 +506,7 @@ export interface FileRouteTypes {
     | '/asset/$symbol'
     | '/blog/$slug'
     | '/embed/momentum'
+    | '/features/dashboard'
     | '/lp/$variant'
     | '/blog/'
     | '/.lovable/oauth/consent'
@@ -547,6 +557,7 @@ export interface FileRouteTypes {
     | '/asset/$symbol'
     | '/blog/$slug'
     | '/embed/momentum'
+    | '/features/dashboard'
     | '/lp/$variant'
     | '/blog'
     | '/.lovable/oauth/consent'
@@ -597,6 +608,7 @@ export interface FileRouteTypes {
     | '/asset/$symbol'
     | '/blog/$slug'
     | '/embed/momentum'
+    | '/features/dashboard'
     | '/lp/$variant'
     | '/blog/'
     | '/.lovable/oauth/consent'
@@ -648,6 +660,7 @@ export interface RootRouteChildren {
   AssetSymbolRoute: typeof AssetSymbolRoute
   BlogSlugRoute: typeof BlogSlugRoute
   EmbedMomentumRoute: typeof EmbedMomentumRoute
+  FeaturesDashboardRoute: typeof FeaturesDashboardRoute
   LpVariantRoute: typeof LpVariantRoute
   BlogIndexRoute: typeof BlogIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -928,6 +941,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbedMomentumRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/features/dashboard': {
+      id: '/features/dashboard'
+      path: '/features/dashboard'
+      fullPath: '/features/dashboard'
+      preLoaderRoute: typeof FeaturesDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lp/$variant': {
       id: '/lp/$variant'
       path: '/lp/$variant'
@@ -1051,6 +1071,7 @@ const rootRouteChildren: RootRouteChildren = {
   AssetSymbolRoute: AssetSymbolRoute,
   BlogSlugRoute: BlogSlugRoute,
   EmbedMomentumRoute: EmbedMomentumRoute,
+  FeaturesDashboardRoute: FeaturesDashboardRoute,
   LpVariantRoute: LpVariantRoute,
   BlogIndexRoute: BlogIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
