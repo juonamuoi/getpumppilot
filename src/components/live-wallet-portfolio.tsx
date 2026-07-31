@@ -437,9 +437,17 @@ export function LiveWalletPortfolio() {
 
                     </div>
                     <div className="text-right">
-                      <div className="font-mono text-sm font-semibold">
+                      <div
+                        className={`font-mono text-sm font-semibold ${
+                          r.stale ? "text-muted-foreground line-through" : ""
+                        }`}
+                        title={r.stale ? "Last known value — excluded from totals" : undefined}
+                      >
                         {r.value != null ? fmtUsd(r.value) : "—"}
                       </div>
+                      {r.stale && (
+                        <div className="text-[10px] uppercase text-amber-300">not counted</div>
+                      )}
                       {r.change24h != null && !r.usdPeg && (
                         <div
                           className={`font-mono text-[11px] ${
