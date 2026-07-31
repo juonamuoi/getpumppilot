@@ -734,12 +734,14 @@ export function MitigationAuditTrail({
       return;
     }
     if (whyProblems.length > 0) {
+      setWhyErrors({ source: "export", problems: [...whyProblems] });
       toast.error(
         `Export blocked — ${whyProblems.length} entr${whyProblems.length === 1 ? "y has" : "ies have"} malformed Why data`,
-        { description: whyProblems.slice(0, 3).join(" · ") },
+        { description: whyProblems.slice(0, 3).map((p) => p.correlationId ?? p.id).join(" · ") },
       );
       return;
     }
+    setWhyErrors(null);
     let blob: Blob;
     if (kind === "json") {
       blob = new Blob(
