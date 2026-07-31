@@ -128,6 +128,15 @@ export function LiveWalletPortfolio() {
     };
   });
 
+  const spamCount = rows.filter((r) => isSpamLikely(r)).length;
+  const visibleRows = applyHoldingControls(rows, {
+    query,
+    filter,
+    sort,
+    hideSpam,
+    pricedFirst,
+  });
+
   const total = rows.reduce((s, r) => s + (r.counted ? (r.value ?? 0) : 0), 0);
   const dayChange = rows.reduce(
     (s, r) =>
