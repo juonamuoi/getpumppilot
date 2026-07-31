@@ -210,6 +210,8 @@ function Dashboard() {
 
         <LiveWalletPortfolio />
 
+        <WalletPriceAlerts />
+
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
           Paper portfolio · simulated
         </div>
