@@ -56,17 +56,11 @@ export function priceSourceLabel(r: HoldingExportRow): string {
 export function priceStatusLabel(r: HoldingExportRow): string {
   if (r.failed) return "unavailable";
   if (r.stale) return "stale";
-  if (!r.priceKnown()) return "unpriced";
-  return "ok";
-}
-
-// keep status logic simple without methods on plain objects
-function statusOf(r: HoldingExportRow): string {
-  if (r.failed) return "unavailable";
-  if (r.stale) return "stale";
   if (r.price == null) return "unpriced";
   return "ok";
 }
+
+const statusOf = priceStatusLabel;
 
 export function holdingsToCsv(rows: HoldingExportRow[], meta: HoldingExportMeta): string {
   const priceIso = meta.priceUpdatedAt ? new Date(meta.priceUpdatedAt).toISOString() : "";
