@@ -33,7 +33,15 @@ import {
 
 
 export const Route = createFileRoute("/asset/$symbol")({
-  head: ({ params }) => {
+  validateSearch: (search: Record<string, unknown>) => {
+    const w = search.w;
+    return {
+      w: SPARK_WINDOW_OPTIONS.some((o) => o.value === w)
+        ? (w as SparkWindowValue)
+        : undefined,
+    };
+  },
+
     const sym = params.symbol.toUpperCase();
     const asset = getAsset(params.symbol);
     const name = asset?.name ?? sym;
