@@ -82,6 +82,8 @@ export type WalletBalance = {
   address?: string;
   /** True when the token was auto-detected on-chain rather than pre-configured. */
   discovered?: boolean;
+  /** Token decimals, used for the balance breakdown in the info drawer. */
+  decimals?: number;
 };
 
 export type WalletBalances = {
@@ -230,6 +232,7 @@ async function readDiscoveredToken(
     kind: "erc20",
     address: contract,
     discovered: true,
+    decimals: dec,
   };
 }
 
@@ -267,6 +270,7 @@ async function readBalances(address: string): Promise<WalletBalances> {
           usdPeg: t.usdPeg,
           kind: "erc20",
           address: t.address,
+          decimals: t.decimals,
         });
       }
     } catch {
