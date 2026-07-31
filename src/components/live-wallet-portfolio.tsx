@@ -9,6 +9,7 @@ import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
+import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 
 function freshness(ts: number | undefined): string {
   if (!ts) return "not yet fetched";
@@ -181,6 +182,13 @@ export function LiveWalletPortfolio() {
                 </div>
               </div>
             </div>
+
+            <WalletAllocationChart
+              items={rows
+                .filter((r) => r.value != null && r.value > 0)
+                .map((r) => ({ symbol: r.symbol, value: r.value as number }))}
+            />
+
 
             {isFetching && rows.length === 0 && (
               <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
