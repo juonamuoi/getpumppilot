@@ -1,7 +1,7 @@
 // Global trade safety gate.
 // Every trade/submit action in the app routes through this store first, so a
 // single read-only / probabilistic-signal notice is shown before anything runs.
-// Live execution is hard-disabled: there is no code path that places a real order.
+// Live execution is opt-in per account and always user-signed; paper stays the default.
 import { useSyncExternalStore } from "react";
 
 export type TradeGateRequest = {
@@ -16,9 +16,9 @@ export type TradeGateRequest = {
 };
 
 export const SAFETY_NOTICE = [
-  "Wallet connections are read-only — PumpPilot never signs, routes or submits an on-chain order and never asks for a seed phrase.",
+  "PumpPilot never holds your keys and never asks for a seed phrase — any on-chain order is signed by you, in your wallet.",
   "Momentum scores and price signals are probabilistic indicators, not guarantees or financial advice.",
-  "Live trading execution is disabled app-wide. Any fill you see is a simulated paper trade.",
+  "Paper mode fills are simulated. In live mode you sign every swap yourself in your own wallet — trades are real and irreversible.",
 ];
 
 let current: TradeGateRequest | null = null;
@@ -43,7 +43,7 @@ export async function confirmTradeGate() {
   const req = current;
   current = null;
   emit();
-  if (req?.mode === "paper") await req.onConfirm?.();
+  await req?.onConfirm?.();
 }
 
 function subscribe(cb: () => void) {

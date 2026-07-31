@@ -44,13 +44,13 @@ export const Route = createFileRoute("/paper")({
       // Wallet-gated app surface: crawlable, but never indexed.
       ...robotsMetaFor("/paper"),
       { property: "og:url", content: "https://www.getpumppilot.app/paper" },
-      { title: "Paper Trading — PumpPilot AI" },
+      { title: "Trading — Paper & Live | PumpPilot AI" },
       {
         name: "description",
         content:
-          "Practice trading with simulated cash. Live execution is disabled and locked.",
+          "Practice with simulated cash, or enable live mode and sign real DEX swaps in your own wallet.",
       },
-      { property: "og:title", content: "Paper Trading — PumpPilot AI" },
+      { property: "og:title", content: "Trading — Paper & Live | PumpPilot AI" },
       {
         property: "og:description",
         content: "Practice trading with simulated cash — no real assets moved.",
