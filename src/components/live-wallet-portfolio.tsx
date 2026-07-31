@@ -41,7 +41,7 @@ export function LiveWalletPortfolio() {
     useWalletBalances(address);
   const prices = useLivePriceMap();
   const { dataUpdatedAt: priceUpdatedAt, isFetching: pricesFetching } = useLivePrices();
-
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const rows = (data?.balances ?? []).map((b) => {
     const live = prices[b.symbol];
