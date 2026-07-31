@@ -1,7 +1,7 @@
 import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
-import { BLOG_POSTS } from "@/lib/blog-posts";
+import { BLOG_POSTS, type BlogPost } from "@/lib/blog-posts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
@@ -26,6 +26,7 @@ import {
   collectionPageSchema,
   paginationChainSchema,
   pagePath,
+  type Paged,
 } from "@/lib/pagination";
 
 
@@ -44,9 +45,9 @@ export const Route = createFileRoute("/blog/")({
   },
   // The page number must reach head(), so it travels through the loader.
   loaderDeps: ({ search }) => ({ page: search.page ?? 1 }),
-  loader: ({ deps }) => ({ paged: paginate(BLOG_POSTS, deps.page) }),
+  loader: ({ deps }): { paged: Paged<BlogPost> } => ({ paged: paginate<BlogPost>(BLOG_POSTS, deps.page) }),
   head: ({ loaderData }) => {
-    const paged = loaderData?.paged ?? paginate(BLOG_POSTS, 1);
+    const paged: Paged<BlogPost> = loaderData?.paged ?? paginate<BlogPost>(BLOG_POSTS, 1);
     const suffix = paginationTitleSuffix(paged);
     const title = BASE_TITLE + suffix;
     const description = BASE_DESCRIPTION + (suffix ? ` Page ${paged.page} of ${paged.totalPages}.` : "");
