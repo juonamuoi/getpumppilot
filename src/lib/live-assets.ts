@@ -66,6 +66,13 @@ export function useLiveAssets() {
 
   const assets = useMemo(() => ASSETS.map((a) => overlay(a, map[a.symbol])), [map]);
 
+  // Publish prices so the paper store marks positions at the same values.
+  useEffect(() => {
+    const next: Record<string, number> = {};
+    for (const [symbol, p] of Object.entries(map)) next[symbol] = p.price;
+    setLivePrices(next);
+  }, [map]);
+
   return {
     assets,
     liveCount: assets.filter((a) => a.isLive).length,
