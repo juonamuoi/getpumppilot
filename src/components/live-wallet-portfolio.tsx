@@ -3,7 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock } from "lucide-react";
+import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock, Download } from "lucide-react";
+import {
+  downloadCsv,
+  holdingsCsvFilename,
+  holdingsToCsv,
+} from "@/lib/wallet-export";
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { LIVE_SYMBOLS, useLivePriceMap, useLivePrices } from "@/lib/market-data";
@@ -115,6 +120,36 @@ export function LiveWalletPortfolio() {
   const staleRows = rows.filter((r) => r.stale);
   const staleValue = staleRows.reduce((s, r) => s + (r.value ?? 0), 0);
 
+
+  const onExportCsv = () => {
+    if (!address || rows.length === 0) return;
+    const meta = {
+      address,
+      chainName: data?.chainName,
+      priceUpdatedAt,
+      balancesUpdatedAt: dataUpdatedAt,
+    };
+    const csv = holdingsToCsv(
+      rows.map((r) => ({
+        symbol: r.symbol,
+        name: r.name,
+        kind: r.kind,
+        address: r.address,
+        amount: r.amount,
+        price: r.price,
+        value: r.value,
+        change24h: r.change24h,
+        usdPeg: r.usdPeg,
+        livePriced: r.livePriced,
+        failed: r.failed,
+        stale: r.stale,
+        counted: r.counted,
+      })),
+      meta,
+    );
+    downloadCsv(holdingsCsvFilename(meta), csv);
+    toast.success(`Exported ${rows.length} holdings to CSV`);
+  };
 
   const onConnect = async () => {
     try {
@@ -292,7 +327,19 @@ export function LiveWalletPortfolio() {
               {dataUpdatedAt ? (
                 <span>· updated {new Date(dataUpdatedAt).toLocaleTimeString()}</span>
               ) : null}
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto h-7 gap-1 text-xs"
+                disabled={rows.length === 0}
+                onClick={onExportCsv}
+                title="Download holdings as CSV (amount, value, price source, last updated)"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Export CSV
+              </Button>
             </div>
+
 
             {isError && (
               <p className="text-xs text-amber-300">
