@@ -54,6 +54,11 @@ jobs:
       - name: Rich-result eligibility (SSR routes)
         run: bun run test:seo:jsonld
 
+      # Journal Article JSON-LD must agree with the rendered HTML title,
+      # meta description and canonical link.
+      - name: Journal Article JSON-LD / HTML parity
+        run: bun run test:seo:journal-parity
+
       # Google-style rich-results gate: fails with the route, JSON path,
       # offending property and a concrete fix hint when parsing or an
       # eligibility signal fails.
