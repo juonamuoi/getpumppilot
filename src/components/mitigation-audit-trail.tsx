@@ -198,7 +198,7 @@ function OutcomeBreakdown({
     <div className="mt-2 rounded-md border border-border/50 bg-muted/20">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
         className="flex w-full items-center gap-2 px-2 py-1.5 text-[11px] font-medium"
       >
