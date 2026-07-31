@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
-import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
+import { LIVE_SYMBOLS, useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
 import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
