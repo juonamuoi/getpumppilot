@@ -1285,6 +1285,7 @@ export function MitigationAuditTrail({
                       <span className="font-medium text-foreground">Why: </span>
                       {explainOutcome(e)}
                     </p>
+                    <CopyEntryJsonButton entry={e} />
                     <CopyWhyButton
                       entry={e}
                       onValidationError={(problems) =>
