@@ -35,8 +35,8 @@ export const Route = createFileRoute("/blog/")({
       // The index's own card image is the site cover — kept identical to the
       // Blog node's `image` below so JSON-LD and the Twitter card never drift.
       { property: "og:image", content: SOCIAL_IMAGE_URL },
-      { property: "og:image:width", content: "1200" },
-      { property: "og:image:height", content: "630" },
+      { property: "og:image:width", content: String(SOCIAL_IMAGE.width) },
+      { property: "og:image:height", content: String(SOCIAL_IMAGE.height) },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: SOCIAL_IMAGE_URL },
     ]),
