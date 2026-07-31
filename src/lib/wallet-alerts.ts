@@ -217,7 +217,31 @@ export function evaluateWalletAlerts(
   const now = Date.now();
   const fired: WalletAlertEvent[] = [];
 
-  for (const rule of rules) {
+  // Maintain the rolling "last check" baseline for move_* rules before evaluating.
+  let baselineChanged = false;
+  rules = rules.map((r) => {
+    if (!isMoveKind(r.kind)) return r;
+    const price = observations[r.symbol]?.price;
+    if (price == null || !Number.isFinite(price) || price <= 0) return r;
+    if (!r.refPrice) {
+      baselineChanged = true;
+      return { ...r, refPrice: price, refAt: now };
+    }
+    // Trail the baseline against the rule direction so a drop is measured from
+    // the recent peak (and a rise from the recent trough).
+    if (r.kind === "move_down" && price > r.refPrice) {
+      baselineChanged = true;
+      return { ...r, refPrice: price, refAt: now };
+    }
+    if (r.kind === "move_up" && price < r.refPrice) {
+      baselineChanged = true;
+      return { ...r, refPrice: price, refAt: now };
+    }
+    return r;
+  });
+  if (baselineChanged) save();
+
+  for (const rule of [...rules]) {
     if (!rule.enabled) continue;
     const obs = observations[rule.symbol];
     if (!obs) continue;
@@ -225,9 +249,13 @@ export function evaluateWalletAlerts(
     const observed = ruleTriggered(rule, obs);
     if (observed == null) continue;
 
-    const message = `${rule.symbol} ${ALERT_KIND_LABELS[rule.kind].toLowerCase()} ${
-      isPriceKind(rule.kind) ? `$${rule.value}` : `${rule.value}%`
-    } — now ${formatObserved(rule.kind, observed)}`;
+    const message = isMoveKind(rule.kind)
+      ? `${rule.symbol} moved ${formatObserved(rule.kind, observed)} from last check ($${
+          rule.refPrice?.toLocaleString(undefined, { maximumFractionDigits: 6 }) ?? "?"
+        }) — threshold ${Math.abs(rule.value)}%`
+      : `${rule.symbol} ${ALERT_KIND_LABELS[rule.kind].toLowerCase()} ${
+          isPriceKind(rule.kind) ? `$${rule.value}` : `${rule.value}%`
+        } — now ${formatObserved(rule.kind, observed)}`;
 
     const event: WalletAlertEvent = {
       id: uid(),
@@ -238,9 +266,21 @@ export function evaluateWalletAlerts(
       threshold: rule.value,
       observed,
       message,
+      refPrice: rule.refPrice,
     };
     fired.push(event);
-    rules = rules.map((r) => (r.id === rule.id ? { ...r, lastFiredAt: now } : r));
+    rules = rules.map((r) =>
+      r.id === rule.id
+        ? {
+            ...r,
+            lastFiredAt: now,
+            // Re-baseline so the next alert measures from this point forward.
+            ...(isMoveKind(r.kind) && obs.price != null
+              ? { refPrice: obs.price, refAt: now }
+              : {}),
+          }
+        : r,
+    );
   }
 
   if (fired.length) {
