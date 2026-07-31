@@ -38,7 +38,9 @@ async function breadcrumbsFor(routePath: string, params: Record<string, string>)
 function expectValidTrail(nodes: Record<string, unknown>[], lastUrl: string) {
   expect(nodes).toHaveLength(1);
   const node = nodes[0];
-  expect(validateJsonLd(node, "breadcrumb")).toEqual([]);
+  expect(
+    validateJsonLd({ "@context": "https://schema.org", ...node }, "breadcrumb"),
+  ).toEqual([]);
   const items = node.itemListElement as { position: number; name: string; item: string }[];
   expect(items.length).toBeGreaterThanOrEqual(3);
   expect(items[0]).toMatchObject({ position: 1, name: "Home", item: `${SITE_URL}/` });
