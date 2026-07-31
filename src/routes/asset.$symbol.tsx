@@ -19,6 +19,7 @@ import { AssetShareButtons } from "@/components/asset-share";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
+import { requestTrade } from "@/lib/trade-gate";
 import {
   absoluteUrl,
   assetDemoDataNodes,
