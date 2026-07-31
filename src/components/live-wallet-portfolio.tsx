@@ -88,8 +88,10 @@ export function LiveWalletPortfolio() {
       price,
       value: price != null ? price * b.amount : null,
       change24h: b.usdPeg ? 0 : (live?.change24h ?? null),
+      sparkline: live?.sparkline ?? [],
       priced: price != null,
       livePriced,
+
       failed,
       stale,
       // Excluded from totals while stale, failed or unpriced.
