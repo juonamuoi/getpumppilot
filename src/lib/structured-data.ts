@@ -158,7 +158,7 @@ export type BlogPostMeta = {
  */
 export function blogPostingSchema(
   post: BlogPostMeta,
-  opts: { standalone?: boolean } = {},
+  opts: { standalone?: boolean; breadcrumb?: boolean } = {},
 ) {
   const url = canonicalUrl(`/blog/${post.slug}`);
   const imageUrl = post.image ? socialImageUrl(post.image) : SOCIAL_IMAGE_URL;
@@ -187,6 +187,13 @@ export function blogPostingSchema(
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     isPartOf: { "@id": nodeId("/blog", NODE.blog) },
+    ...(opts.breadcrumb
+      ? {
+          breadcrumb: {
+            "@id": nodeId(`/blog/${post.slug}`, NODE.breadcrumb),
+          },
+        }
+      : {}),
     url,
     inLanguage: "en",
   };
