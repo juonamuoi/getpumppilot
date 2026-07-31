@@ -192,8 +192,6 @@ export function LiveWalletPortfolio() {
             )}
           </div>
         )}
-          </div>
-        )}
 
         {address && (
           <>
