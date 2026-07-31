@@ -90,7 +90,7 @@ export function WalletPriceAlerts() {
       symbol: activeSymbolForTest(symbols, symbol),
       message: `Test alert — delivery check only, no market condition met`,
       ts: Date.now(),
-      address,
+      address: address ?? undefined,
       test: true,
     });
     setTesting(false);
