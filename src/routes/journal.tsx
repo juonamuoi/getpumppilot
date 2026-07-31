@@ -35,7 +35,7 @@ const J_IMAGE = SOCIAL_IMAGE_URL;
 
 export const Route = createFileRoute("/journal")({
   head: () => ({
-    links: [{ rel: "canonical", href: "https://www.getpumppilot.app/journal" }],
+    links: canonicalLinks("/journal"),
     meta: withSocialMeta([
       // Wallet-gated app surface: crawlable, but never indexed.
       ...robotsMetaFor("/journal"),

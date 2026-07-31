@@ -42,7 +42,7 @@ const IMAGE_ALT = "PumpPilot AI trade journal with equity curve and win-rate sta
 
 export const Route = createFileRoute("/features/journal")({
   head: () => ({
-    links: [{ rel: "canonical", href: `${SITE_URL}${PATH}` }],
+    links: canonicalLinks(PATH),
     meta: withSocialMeta([
       { title: TITLE },
       { name: "description", content: DESC },

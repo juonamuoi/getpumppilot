@@ -68,7 +68,7 @@ export const Route = createFileRoute("/blog/$slug")({
         { name: "twitter:title", content: socialTitle },
         { name: "twitter:description", content: post.description },
       ]),
-      links: [{ rel: "canonical", href: url }],
+      links: canonicalLinks(`/blog/${post.slug}`),
       scripts: [
         ldScript(
           pageEntityGraph([

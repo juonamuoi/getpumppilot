@@ -40,7 +40,7 @@ export const Route = createFileRoute("/blog/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: SOCIAL_IMAGE_URL },
     ]),
-    links: [{ rel: "canonical", href: CANONICAL }],
+    links: canonicalLinks("/blog"),
     scripts: [
       ldScript({
         "@context": "https://schema.org",
