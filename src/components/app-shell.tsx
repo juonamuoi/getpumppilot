@@ -38,6 +38,8 @@ import { PositionRiskNotifier } from "./position-risk-notifier";
 
 import { cn } from "@/lib/utils";
 import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
+import { getPostBySlug } from "@/lib/blog-posts";
+
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
