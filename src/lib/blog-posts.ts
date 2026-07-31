@@ -11,6 +11,8 @@ export interface BlogPost {
   /** Unique social/share cover image path (served from /public). */
   image?: string;
   imageAlt?: string;
+  /** Author key from AUTHORS in structured-data (defaults to the editorial team). */
+  author?: string;
   // Body is an array of blocks for simple structured rendering.
   body: BlogBlock[];
 }
