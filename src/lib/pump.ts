@@ -95,6 +95,78 @@ export async function setPumpPayoutAddress(address: string) {
   return data as { ok: boolean; reason?: string; payout_address?: string | null };
 }
 
+/** One leg of the double-entry record for a peer transfer. */
+export type PumpTransferReceipt = {
+  id: string;
+  created_at: string;
+  /** Shared reference that ties the two ledger legs together. */
+  ref: string;
+  kind: "transfer_out" | "transfer_in";
+  direction: "sent" | "received";
+  /** Absolute PUMP amount moved. */
+  amount: number;
+  /** Signed change on YOUR account (negative = debit). */
+  my_delta: number;
+  /** Your account balance immediately after the entry was posted. */
+  my_balance_after: number;
+  /** Signed change on the counterparty account (opposite sign of yours). */
+  counterparty_delta: number | null;
+  counterparty_tag: string | null;
+  counterparty_id: string | null;
+  memo: string | null;
+};
+
+export type PumpTransferHistory = {
+  ok: boolean;
+  reason?: string;
+  total: number;
+  limit: number;
+  offset: number;
+  transfers: PumpTransferReceipt[];
+};
+
+export const PUMP_HISTORY_PAGE_SIZE = 25;
+
+export async function fetchPumpTransferHistory(
+  limit = PUMP_HISTORY_PAGE_SIZE,
+  offset = 0,
+): Promise<PumpTransferHistory> {
+  const { data, error } = await rpc("pump_transfer_history", { _limit: limit, _offset: offset });
+  if (error) throw new Error(error.message);
+  const res = data as PumpTransferHistory;
+  return { ...res, transfers: res.transfers ?? [] };
+}
+
+/** Balanced double-entry lines for one transfer, from the caller's point of view. */
+export function receiptLines(t: PumpTransferReceipt) {
+  const you = {
+    account: "You",
+    role: t.direction === "sent" ? ("Debit" as const) : ("Credit" as const),
+    delta: t.my_delta,
+    balanceAfter: t.my_balance_after as number | null,
+  };
+  const them = {
+    account: t.counterparty_tag ? `@${t.counterparty_tag}` : "Counterparty",
+    role: t.direction === "sent" ? ("Credit" as const) : ("Debit" as const),
+    delta: t.counterparty_delta ?? -t.my_delta,
+    balanceAfter: null as number | null,
+  };
+  return t.direction === "sent" ? [you, them] : [them, you];
+}
+
+/** True when the two legs cancel out, i.e. the ledger is balanced. */
+export function isReceiptBalanced(t: PumpTransferReceipt) {
+  return (t.counterparty_delta ?? -t.my_delta) + t.my_delta === 0;
+}
+
+export function receiptExplanation(t: PumpTransferReceipt) {
+  const tag = t.counterparty_tag ? `@${t.counterparty_tag}` : "another member";
+  return t.direction === "sent"
+    ? `Your account was debited ${formatPump(t.amount)} and ${tag} was credited the same amount in a single atomic entry. Nothing is minted or burned — the two lines cancel to zero.`
+    : `${tag} was debited ${formatPump(t.amount)} and your account was credited the same amount in a single atomic entry. Nothing is minted or burned — the two lines cancel to zero.`;
+}
+
+
 export function pumpErrorMessage(reason?: string) {
   switch (reason) {
     case "unauthenticated":
