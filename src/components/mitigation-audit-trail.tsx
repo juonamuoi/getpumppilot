@@ -735,6 +735,22 @@ export function MitigationAuditTrail({
     toast.success(`Exported ${data.length} mitigation record(s) as ${kind.toUpperCase()}`);
   };
 
+  /** Copies a deep link that reopens this view with the same filters + expanded entries. */
+  const shareLink = async () => {
+    const url = buildAuditShareUrl({ filters: current, expanded });
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Share link copied", {
+        description: `Opens the audit trail with these filters${
+          expanded.length ? ` and ${expanded.length} expanded entr${expanded.length === 1 ? "y" : "ies"}` : ""
+        }.`,
+      });
+    } catch {
+      toast.error("Could not copy the link", { description: url });
+    }
+  };
+
+
   return (
     <Card>
       <CardHeader className="gap-3">
