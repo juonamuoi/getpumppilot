@@ -42,6 +42,7 @@ import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
 import { PriceSparkline, SparklineStats } from "@/components/price-sparkline";
 import { HoldingSparklineDrawer } from "@/components/holding-sparkline-drawer";
+import { SparklineCompare } from "@/components/sparkline-compare";
 import {
   SPARK_WINDOW_OPTIONS,
   sliceSparkline,
