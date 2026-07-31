@@ -31,6 +31,7 @@ export type SocialIssueCode =
   | "og_url_insecure"
   | "og_url_foreign_origin"
   | "og_url_mismatch"
+  | "twitter_url_mismatch"
   | "image_relative"
   | "image_insecure"
   | "image_mismatch"
@@ -67,6 +68,7 @@ export const REQUIRED_TAGS = [
   "twitter:card",
   "twitter:title",
   "twitter:description",
+  "twitter:url",
 ] as const;
 
 export const ALLOWED_OG_TYPES = [
@@ -178,6 +180,18 @@ export function checkSocialTags(set: SocialTagSet): SocialIssue[] {
         );
       }
     }
+  }
+
+  const twUrl = set.tags["twitter:url"]?.trim();
+  if (ogUrl && twUrl && ogUrl !== twUrl) {
+    out.push(
+      issue(
+        "twitter_url_mismatch",
+        set.id,
+        "twitter:url",
+        `"${twUrl}" does not match og:url "${ogUrl}" — the canonical URL must be identical`,
+      ),
+    );
   }
 
   checkAbsoluteImage(set, "og:image", out);
