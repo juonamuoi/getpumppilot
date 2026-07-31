@@ -167,9 +167,17 @@ function CopyCorrelationIdButton({ id }: { id?: string }) {
 }
 
 /** Expandable per-entry summary of alerts fired, muted and assets affected. */
-function OutcomeBreakdown({ entry }: { entry: TuningLogEntry }) {
-  const [open, setOpen] = useState(false);
+function OutcomeBreakdown({
+  entry,
+  open,
+  onToggle,
+}: {
+  entry: TuningLogEntry;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const o = entry.outcome;
+
 
   const fired = o?.delivered ?? 0;
   const matched = o?.matched ?? 0;
