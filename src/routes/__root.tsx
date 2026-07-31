@@ -24,6 +24,7 @@ import { AppLockProvider, useAppLock } from "@/lib/app-lock";
 import { TourProvider } from "@/lib/tour-store";
 import { GuidedTour } from "@/components/guided-tour";
 import { AppLockScreen } from "@/components/app-lock-screen";
+import { TradeSafetyGate } from "@/components/trade-safety-gate";
 
 function NotFoundComponent() {
   return (
