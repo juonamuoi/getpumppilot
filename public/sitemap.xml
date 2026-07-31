@@ -21,12 +21,12 @@
   <url><loc>https://www.getpumppilot.app/blog/paper-trading-vs-live-trading</loc><lastmod>2026-06-28</lastmod><priority>0.8</priority></url>
   <url><loc>https://www.getpumppilot.app/blog/pumppilot-vs-autopilot-comparison</loc><lastmod>2026-07-28</lastmod><priority>0.8</priority></url>
   <url><loc>https://www.getpumppilot.app/blog/pumppilot-vs-tradingview-paper-trading</loc><lastmod>2026-07-28</lastmod><priority>0.8</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/btc</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/eth</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/sol</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/bnb</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/demox</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/pilot</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/nova</loc><priority>0.6</priority></url>
-  <url><loc>https://www.getpumppilot.app/asset/orbit</loc><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/btc</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/eth</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/sol</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/bnb</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/demox</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/pilot</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/nova</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://www.getpumppilot.app/asset/orbit</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
 </urlset>
