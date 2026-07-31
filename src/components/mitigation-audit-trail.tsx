@@ -37,7 +37,12 @@ import { MitigationDiffView } from "@/components/mitigation-diff-view";
 import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
-import { explainOutcome, safeExplainFields } from "@/lib/mitigation-explain";
+import {
+  explainOutcome,
+  safeExplainFields,
+  sanitizedExplainFields,
+  INVALID_FIELD_MARKER,
+} from "@/lib/mitigation-explain";
 import { buildAuditShareUrl, type AuditShareState } from "@/lib/audit-share-link";
 
 import { AuditTrendCharts } from "@/components/audit-trend-charts";
@@ -204,7 +209,8 @@ function CopyEntryJsonButton({ entry }: { entry: TuningLogEntry }) {
       timestamp: Number.isFinite(entry.ts) ? new Date(entry.ts).toISOString() : null,
       entry,
       why,
-      whyValidation: { ok, issues },
+      whySanitized: sanitizedExplainFields(entry).fields,
+      whyValidation: { ok, issues, invalidMarker: INVALID_FIELD_MARKER },
     };
 
     try {
