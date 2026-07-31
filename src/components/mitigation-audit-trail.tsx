@@ -646,9 +646,15 @@ export function MitigationAuditTrail({
     ? entries
     : entries.filter((e) => e.phase !== "preview");
 
+  /** Collects Zod validation problems found while building the last export. */
+  const whyProblems: string[] = [];
+
   const rows = () =>
     exportEntries.map((e) => {
-      const why = explainFields(e);
+      const { fields: why, ok, issues } = safeExplainFields(e);
+      if (!ok) {
+        whyProblems.push(`${e.correlationId ?? e.id}: ${issues.join("; ")}`);
+      }
       return {
       correlationId: e.correlationId ?? "",
 
