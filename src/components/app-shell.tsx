@@ -113,7 +113,43 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Prominent in-app links to the comparison guides + blog index. */
+function GuideLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const posts = guideSlugs.map((s) => getPostBySlug(s)).filter(Boolean);
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/10 p-3">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <BookOpen className="h-3.5 w-3.5 text-emerald-300" aria-hidden /> Guides
+      </div>
+      <ul className="mt-2 space-y-1.5">
+        {posts.map((post) => (
+          <li key={post!.slug}>
+            <Link
+              to="/blog/$slug"
+              params={{ slug: post!.slug }}
+              onClick={onNavigate}
+              className="block text-[11px] leading-snug text-muted-foreground hover:text-foreground"
+            >
+              {post!.title}
+            </Link>
+          </li>
+        ))}
+        <li>
+          <Link
+            to="/blog"
+            onClick={onNavigate}
+            className="text-[11px] font-medium text-emerald-300 hover:text-emerald-200"
+          >
+            All guides →
+          </Link>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 /** Journal feed autodiscovery links, shown in the sidebar and mobile menu. */
+
 function FeedLinks() {
   return (
     <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
