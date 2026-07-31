@@ -35,6 +35,9 @@ const BASE_PATH = "/blog";
 const BASE_TITLE = "PumpPilot AI Blog — AI Investment & Crypto Trading Guides";
 const BASE_DESCRIPTION =
   "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management from the PumpPilot AI team.";
+// The share card runs a shorter line than the meta description (baseline-locked).
+const BASE_SOCIAL_DESCRIPTION =
+  "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management.";
 
 type BlogSearch = { page?: number };
 
@@ -50,7 +53,9 @@ export const Route = createFileRoute("/blog/")({
     const paged: Paged<BlogPost> = loaderData?.paged ?? paginate<BlogPost>(BLOG_POSTS, 1);
     const suffix = paginationTitleSuffix(paged);
     const title = BASE_TITLE + suffix;
-    const description = BASE_DESCRIPTION + (suffix ? ` Page ${paged.page} of ${paged.totalPages}.` : "");
+    const pageNote = suffix ? ` Page ${paged.page} of ${paged.totalPages}.` : "";
+    const description = BASE_DESCRIPTION + pageNote;
+    const socialDescription = BASE_SOCIAL_DESCRIPTION + pageNote;
     const selfUrl = canonicalUrl(pagePath(BASE_PATH, paged.page));
     const postUrls = paged.items.map((p) => canonicalUrl(`/blog/${p.slug}`));
 
@@ -60,7 +65,7 @@ export const Route = createFileRoute("/blog/")({
         { name: "description", content: description },
         { name: "keywords", content: "ai investment blog, ai crypto trading, best ai investment app, paper trading, momentum signals" },
         { property: "og:title", content: title },
-        { property: "og:description", content: description },
+        { property: "og:description", content: socialDescription },
         { property: "og:type", content: "website" },
         { property: "og:url", content: selfUrl },
         // The index's own card image is the site cover — kept identical to the
@@ -87,8 +92,10 @@ export const Route = createFileRoute("/blog/")({
               image: SOCIAL_IMAGE,
               isPartOf: { "@id": WEBSITE_ID },
               publisher: { "@id": ORG_ID },
-              // Only the posts actually rendered on this page.
-              blogPost: paged.items.map((p) => blogPostingSchema(p)),
+              // The Blog *entity* is the whole publication, so it keeps every
+              // post regardless of page; per-page entries live on the
+              // CollectionPage node below.
+              blogPost: BLOG_POSTS.map((p) => blogPostingSchema(p)),
             },
             // The paginated view itself, listing this page's entries.
             collectionPageSchema({
@@ -104,7 +111,7 @@ export const Route = createFileRoute("/blog/")({
             // prev/next chain in JSON-LD, mirroring the <link> tags.
             paginationChainSchema(BASE_PATH, paged, "PumpPilot AI Blog"),
             // Author entities referenced by every BlogPosting above.
-            ...authorNodesFor(paged.items),
+            ...authorNodesFor(BLOG_POSTS),
           ],
         }),
         ldScript(breadcrumbSchema([{ name: "Blog", path: "/blog" }])),
