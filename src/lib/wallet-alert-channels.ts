@@ -13,7 +13,12 @@
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { recordDelivery, type NotifyChannel } from "@/lib/notify-log";
-import { pushPermission, pushSupported, showPush } from "@/lib/threat-notify";
+import {
+  pushPermission,
+  pushSupported,
+  requestPushPermission,
+  showPush,
+} from "@/lib/threat-notify";
 import { sendPriceAlertEmail } from "@/lib/wallet-price-alert-email.functions";
 
 export type AlertChannelPrefs = {
@@ -187,3 +192,4 @@ export async function dispatchAlert(
 }
 
 export { pushPermission, pushSupported };
+export const requestPushPermissionForAlerts = requestPushPermission;
