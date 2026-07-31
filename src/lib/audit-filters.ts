@@ -92,10 +92,27 @@ export function filterAuditEntries(
     .filter((e) => (wallets.length === 0 ? true : (walletsFor?.(e) ?? []).some((w) => wallets.includes(w))))
     .filter((e) => {
       if (!q) return true;
-      return [e.mitigation, e.ruleLabel, e.trigger, e.correlationId, e.outcome?.symbols.join(" ")]
+      const d = new Date(e.ts);
+      const timestamps = [
+        d.toISOString(), // 2026-07-31T01:47:00.000Z
+        d.toISOString().slice(0, 10), // 2026-07-31
+        d.toLocaleString(), // locale date + time
+        d.toLocaleDateString(),
+        d.toLocaleTimeString(),
+        String(e.ts),
+      ];
+      return [
+        e.mitigation,
+        e.ruleLabel,
+        e.trigger,
+        e.correlationId,
+        e.outcome?.symbols.join(" "),
+        ...timestamps,
+      ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(q);
     });
+
 }
