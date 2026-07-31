@@ -193,7 +193,7 @@ function PaperPage() {
               ) : (
                 <div className="divide-y divide-border/60">
                   {paper.positions.map((p) => {
-                    const a = getAsset(p.symbol)!;
+                    const a = priced(p.symbol);
                     const value = a.price * p.qty;
                     const pnl = (a.price - p.avgCost) * p.qty;
                     const pnlPct = ((a.price - p.avgCost) / p.avgCost) * 100;
