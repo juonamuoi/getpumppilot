@@ -9,6 +9,7 @@ import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
+import { WalletAllocationChart } from "@/components/wallet-allocation-chart";
 
 function freshness(ts: number | undefined): string {
   if (!ts) return "not yet fetched";
