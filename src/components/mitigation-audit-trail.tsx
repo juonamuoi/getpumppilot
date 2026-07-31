@@ -1033,6 +1033,26 @@ export function MitigationAuditTrail({
 
       </CardHeader>
       <CardContent>
+        <div
+          aria-label="Filtered audit summary"
+          className="mb-3 grid grid-cols-2 gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-6"
+        >
+          {[
+            { label: "Entries", value: String(stats.total), sub: "in current filter" },
+            { label: "Alerts fired", value: String(stats.fired), sub: `${stats.pct(stats.fired)}%` },
+            { label: "Channels muted", value: String(stats.muted), sub: `${stats.pct(stats.muted)}%` },
+            { label: "No matches", value: String(stats.noMatches), sub: `${stats.pct(stats.noMatches)}%` },
+            { label: "Resolved", value: String(stats.resolved), sub: `${stats.pct(stats.resolved)}%` },
+            { label: "Pending", value: String(stats.pending), sub: `${stats.pct(stats.pending)}%` },
+          ].map((s) => (
+            <div key={s.label}>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
+              <p className="text-lg font-semibold tabular-nums">{s.value}</p>
+              <p className="text-[10px] text-muted-foreground tabular-nums">{s.sub}</p>
+            </div>
+          ))}
+        </div>
+
         {entries.length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">
             No mitigations recorded yet. Apply a safer alternative from the tuning dialog and it
