@@ -549,6 +549,9 @@ export function MitigationAuditTrail({
   /** Records loaded from a previously exported file — review only, never applied. */
   const [importedEntries, setImportedEntries] = useState<TuningLogEntry[]>([]);
   const focusRef = useRef<HTMLDivElement | null>(null);
+  /** Correlation ID the user drilled into from the summary panel or an entry. */
+  const [drillCid, setDrillCid] = useState<string | null>(null);
+
 
 
 
@@ -688,6 +691,54 @@ export function MitigationAuditTrail({
     () => (importedEntries.length ? [...importedEntries, ...log].sort((a, b) => b.ts - a.ts) : log),
     [importedEntries, log],
   );
+
+  /**
+   * Drill-down: focus one correlation batch, clear every other filter so nothing
+   * is hidden, auto-expand all its rows and scroll the first one into view.
+   */
+  const drillIntoCid = (cid: string) => {
+    const matches = sourceLog.filter((e) => e.correlationId === cid);
+    setCorrelationIds([cid]);
+    setRange("all");
+    setOutcome("all");
+    setQ("");
+    setTokens([]);
+    setWallets([]);
+    setAlertTypes([]);
+    setExpanded((prev) => [...new Set([...prev, ...matches.map((e) => e.id)])]);
+    setDrillCid(cid);
+    window.setTimeout(
+      () => focusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      120,
+    );
+    toast.success(`Showing ${matches.length} row${matches.length === 1 ? "" : "s"} for ${cid}`);
+  };
+
+  const clearDrill = () => {
+    setDrillCid(null);
+    setCorrelationIds([]);
+  };
+
+  /**
+   * Correlation IDs present under the current filters, ignoring the correlation
+   * filter itself so drilling in never hides the other batches.
+   */
+  const cidCounts = useMemo(() => {
+    const scoped = filterAuditEntries(
+      sourceLog,
+      { q, outcome, range, correlationIds: [], tokens, alertTypes, wallets },
+      (e) => walletsForEntry.get(e.id) ?? [],
+    );
+    const counts = new Map<string, number>();
+    for (const e of scoped) {
+      if (!e.correlationId) continue;
+      counts.set(e.correlationId, (counts.get(e.correlationId) ?? 0) + 1);
+    }
+    return [...counts.entries()].map(([cid, count]) => ({ cid, count })).slice(0, 24);
+  }, [sourceLog, q, outcome, range, tokens, alertTypes, wallets, walletsForEntry]);
+
+
+
 
   const entries = useMemo(
     () =>
@@ -1239,6 +1290,49 @@ export function MitigationAuditTrail({
           ))}
         </div>
 
+        {/* Correlation ID drill-down: one click filters + expands the whole batch. */}
+        <div
+          aria-label="Correlation ID drill-down"
+          className="mb-3 flex flex-wrap items-center gap-1.5 rounded-lg border border-border/60 bg-muted/20 p-2"
+        >
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Correlation IDs
+          </span>
+          {cidCounts.length === 0 ? (
+            <span className="text-[11px] text-muted-foreground">None in current filter.</span>
+          ) : (
+            cidCounts.map(({ cid, count }) => (
+              <Button
+                key={cid}
+                type="button"
+                size="sm"
+                variant={drillCid === cid ? "default" : "outline"}
+                aria-pressed={drillCid === cid}
+                title={`Show and expand all ${count} row${count === 1 ? "" : "s"} for ${cid}`}
+                className="h-6 gap-1 px-2 font-mono text-[10px]"
+                onClick={() => drillIntoCid(cid)}
+              >
+                {cid}
+                <span className="tabular-nums opacity-70">{count}</span>
+              </Button>
+            ))
+          )}
+          {drillCid && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="ml-auto h-6 gap-1 px-2 text-[10px]"
+              onClick={clearDrill}
+            >
+              <X className="h-3 w-3" />
+              Clear drill-down
+            </Button>
+          )}
+        </div>
+
+
+
         {/* Shape of the same filtered set the tiles above summarise. */}
         <AuditTrendCharts entries={entries} range={range} />
 
@@ -1250,7 +1344,9 @@ export function MitigationAuditTrail({
         ) : (
           <div className="space-y-2">
             {entries.map((e, i) => {
-              const focused = !!focusCorrelationId && e.correlationId === focusCorrelationId;
+              const focused =
+                (!!focusCorrelationId && e.correlationId === focusCorrelationId) ||
+                (!!drillCid && e.correlationId === drillCid);
               return (
               <div
                 key={e.id}
@@ -1377,6 +1473,19 @@ export function MitigationAuditTrail({
                     <MitigationDiffView entry={e} />
                     <MitigationReplayDiff entry={e} />
                     <MitigationReplayButton entry={e} imported={isImportedEntry(e)} />
+                    {e.correlationId && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 gap-1 px-2 text-[10px]"
+                        title={`Show all rows sharing ${e.correlationId}`}
+                        onClick={() => drillIntoCid(e.correlationId!)}
+                      >
+                        <Filter className="h-3 w-3" />
+                        View batch
+                      </Button>
+                    )}
                     <CopyCorrelationIdButton id={e.correlationId} />
 
                   </div>
