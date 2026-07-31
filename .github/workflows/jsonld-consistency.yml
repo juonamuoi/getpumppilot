@@ -19,6 +19,13 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Static gates — fail fast before spending time on a build.
+      - name: Sitemap up to date
+        run: bun run check:sitemap
+
+      - name: robots.txt validation
+        run: bun run check:robots
+
       - name: JSON-LD + sitemap/canonical suite
         run: bun run test:seo
 
@@ -32,5 +39,20 @@ jobs:
           bun run dev --port 8080 > /tmp/ssr.log 2>&1 &
           for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:8080/ && break; sleep 2; done
 
-      - name: Validate rendered JSON-LD
+      # Renders every public route through real SSR and asserts each
+      # ld+json block parses, is structurally valid, and meets Google's
+      # rich-result eligibility signals for its @type.
+      - name: Rich-result eligibility (SSR routes)
+        run: bun run test:seo:jsonld
+
+      - name: Validate rendered JSON-LD in build output
         run: bun run check:jsonld
+
+      - name: Upload structured-data report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jsonld-reports
+          path: test-artifacts/
+          if-no-files-found: ignore
+
