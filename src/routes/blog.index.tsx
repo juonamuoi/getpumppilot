@@ -15,6 +15,8 @@ import {
   ldScript,
   nodeId,
   NODE,
+  SOCIAL_IMAGE,
+  SOCIAL_IMAGE_URL,
 } from "@/lib/structured-data";
 
 
@@ -30,7 +32,13 @@ export const Route = createFileRoute("/blog/")({
       { property: "og:description", content: "Deep guides on AI investment apps, crypto momentum trading, paper trading strategies, and risk-first portfolio management." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: CANONICAL },
+      // The index's own card image is the site cover — kept identical to the
+      // Blog node's `image` below so JSON-LD and the Twitter card never drift.
+      { property: "og:image", content: SOCIAL_IMAGE_URL },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: SOCIAL_IMAGE_URL },
     ]),
     links: [{ rel: "canonical", href: CANONICAL }],
     scripts: [
@@ -44,6 +52,7 @@ export const Route = createFileRoute("/blog/")({
             url: CANONICAL,
             description: "AI investment and crypto trading guides.",
             inLanguage: "en",
+            image: SOCIAL_IMAGE,
             isPartOf: { "@id": WEBSITE_ID },
             publisher: { "@id": ORG_ID },
             blogPost: BLOG_POSTS.map((p) => blogPostingSchema(p)),
