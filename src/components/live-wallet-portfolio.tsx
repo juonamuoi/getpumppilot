@@ -37,6 +37,9 @@ import { WalletValueHistoryChart } from "@/components/wallet-value-history-chart
 import { DataSourcesDialog } from "@/components/data-sources-dialog";
 import { PriceSparkline } from "@/components/price-sparkline";
 import { HoldingInfoDrawer } from "@/components/holding-info-drawer";
+import { SpamListManager } from "@/components/spam-list-manager";
+import { useSpamLists } from "@/lib/spam-lists";
+import { evaluateSpam, type SpamInput } from "@/lib/spam-signals";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -93,6 +96,7 @@ export function LiveWalletPortfolio() {
   const [hideSpam, setHideSpam] = useState(true);
   const [pricedFirst, setPricedFirst] = useState(true);
   const [staleMs, setStaleMs] = useStaleThresholdMs();
+  const { lists: spamLists } = useSpamLists();
 
   // Re-evaluate freshness on a timer so the warning appears without a refetch.
   const [now, setNow] = useState(() => Date.now());
@@ -129,13 +133,14 @@ export function LiveWalletPortfolio() {
     };
   });
 
-  const spamCount = rows.filter((r) => isSpamLikely(r)).length;
+  const spamCount = rows.filter((r) => isSpamLikely(r, spamLists)).length;
   const visibleRows = applyHoldingControls(rows, {
     query,
     filter,
     sort,
     hideSpam,
     pricedFirst,
+    lists: spamLists,
   });
 
   const total = rows.reduce((s, r) => s + (r.counted ? (r.value ?? 0) : 0), 0);
@@ -654,6 +659,24 @@ export function LiveWalletPortfolio() {
 
                                 : "no live price"}
                         </Badge>
+                        {(() => {
+                          const v = evaluateSpam(r as SpamInput, spamLists);
+                          if (!v.spam) return null;
+                          return (
+                            <Badge
+                              variant="outline"
+                              className="border-rose-500/40 text-[9px] uppercase text-rose-300"
+                              title={
+                                v.source === "blocklist"
+                                  ? "You blocklisted this token"
+                                  : v.signals.map((s) => `• ${s.label} (+${s.weight})`).join("\n")
+                              }
+                            >
+                              spam-likely
+                              {v.source === "blocklist" ? " · blocklisted" : ` · ${v.signals.length} signals`}
+                            </Badge>
+                          );
+                        })()}
                         {r.discovered && (
                           <Badge
                             variant="outline"

@@ -39,7 +39,7 @@ export function SpamSignalsPanel({ holding }: { holding: SpamInput }) {
         </Badge>
         {verdict.source !== "heuristic" && (
           <Badge variant="outline" className="border-sky-500/40 text-[9px] uppercase text-sky-300">
-            {verdict.source === "allow" + "list" ? "your allowlist" : "your blocklist"}
+            {verdict.source === "allowlist" ? "your allowlist" : "your blocklist"}
           </Badge>
         )}
       </div>
