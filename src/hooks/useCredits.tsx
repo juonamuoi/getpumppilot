@@ -55,31 +55,44 @@ export function useCredits() {
     setLoading(false);
   }, [user]);
 
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
   const refetchRef = useRef(refetch);
   useEffect(() => {
     refetchRef.current = refetch;
   }, [refetch]);
 
   useEffect(() => {
-    if (!user) return;
-    // Unique channel name per mount: reusing a name can return an already
-    // subscribed channel, and `.on()` after `subscribe()` throws.
-    const ch = supabase
-      .channel(`credits:${user.id}:${Math.random().toString(36).slice(2)}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "credit_balances", filter: `user_id=eq.${user.id}` },
-        () => refetchRef.current(),
-      )
-      .subscribe();
+    refetch();
+  }, [refetch]);
+
+  const userId = user?.id ?? null;
+
+  useEffect(() => {
+    if (!userId) return;
+
+    let disposed = false;
+    // Build the channel and register every callback BEFORE subscribing —
+    // Supabase throws if `.on()` is called after `subscribe()`.
+    const channel = supabase.channel(`credits:${userId}:${crypto.randomUUID()}`);
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "credit_balances", filter: `user_id=eq.${userId}` },
+      () => {
+        if (!disposed) void refetchRef.current();
+      },
+    );
+
+    // Subscribe only if this effect hasn't already been torn down.
+    if (!disposed) channel.subscribe();
+
     return () => {
-      supabase.removeChannel(ch);
+      disposed = true;
+      // unsubscribe() closes the socket topic; removeChannel() drops it from
+      // the client registry so the name is never reused while still joined.
+      void channel.unsubscribe();
+      void supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userId]);
+
 
   /** Charge credits for a feature. Returns ok:false when the account is out of credits. */
   const spend = useCallback(
