@@ -763,6 +763,11 @@ export function MitigationAuditTrail({
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={shareLink}>
+              <Link2 className="h-3.5 w-3.5" />
+              Share link
+            </Button>
+
             <MitigationRetentionSettings />
             <MitigationImport
               onImport={({ add, replace }) =>
