@@ -154,13 +154,16 @@ async function assetEntries() {
  * section's index `lastmod` is the newest `lastmod` among its own URLs —
  * never build time, never "today".
  */
+const blogPosts = await blogEntries();
+
 const sections = {
   pages: (await staticRoutes())
     .filter((path) => !path.startsWith("/blog") && !path.startsWith("/asset/"))
     .map((path) => ({ path })),
   blog: [
     ...(await staticRoutes()).filter((p) => p === "/blog").map((path) => ({ path })),
-    ...(await blogEntries()),
+    ...(await blogPageEntries(blogPosts.length)),
+    ...blogPosts,
   ],
   assets: await assetEntries(),
 };
