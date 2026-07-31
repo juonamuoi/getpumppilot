@@ -28,7 +28,6 @@ import {
   Send,
   ShieldAlert,
   Sparkles,
-  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PumpPayoutSettings } from "@/components/pump-payout-settings";
