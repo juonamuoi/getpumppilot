@@ -34,6 +34,8 @@ import { ShareLinks } from "@/components/share-links";
 
 
 import { CREDIT_PACKS } from "@/lib/credits";
+import { getPostBySlug, type BlogPost } from "@/lib/blog-posts";
+
 import {
   SITE_URL,
   ORG_ID,
@@ -52,7 +54,18 @@ const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
 const DESCRIPTION =
   "Explainable AI for crypto: momentum scanner, paper trading, AI coaching and strict risk controls. Start free with demo data — no seed phrases required.";
 
+/** Comparison guides linked prominently from the homepage for crawl discovery. */
+const FEATURED_GUIDE_SLUGS = [
+  "pumppilot-vs-autopilot-comparison",
+  "pumppilot-vs-tradingview-paper-trading",
+] as const;
+
+const FEATURED_GUIDES: BlogPost[] = FEATURED_GUIDE_SLUGS.map((slug) =>
+  getPostBySlug(slug),
+).filter((p): p is BlogPost => Boolean(p));
+
 const faqs = [
+
   {
     q: "Is PumpPilot AI the best AI investment app for crypto?",
     a: "PumpPilot AI is built for investors who want explainable AI signals instead of black-box calls. Every momentum score shows the exact rules that fired, you can paper trade before risking capital, and risk controls are on by default. That combination — explainability, safety and coaching — is what makes it the top pick for people who take investing seriously.",
@@ -340,12 +353,18 @@ function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <a href="#features">Features</a>
             </Button>
             <Button variant="ghost" size="sm" asChild>
+              <Link to="/scanner">Scanner</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
               <Link to="/pricing">Pricing</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+              <a href="#guides">Guides</a>
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link to="/blog">Blog</Link>
@@ -354,6 +373,7 @@ function LandingPage() {
               <Link to={launchHref}>{launchLabel}</Link>
             </Button>
           </div>
+
         </div>
       </header>
 
@@ -645,6 +665,53 @@ function LandingPage() {
           </Accordion>
         </div>
       </section>
+
+      {/* Guides — prominent internal links for discovery */}
+      <section id="guides" className="px-4 py-16">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Comparison guides
+          </h2>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Deep-dive reads on how PumpPilot AI's explainable momentum compares with the tools
+            most crypto traders already use.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {FEATURED_GUIDES.map((post) => (
+              <Link
+                key={post.slug}
+                to="/blog/$slug"
+                params={{ slug: post.slug }}
+                className="group rounded-2xl border border-border/60 bg-card/40 p-6 transition hover:border-emerald-500/40 hover:bg-card/70"
+              >
+                <div className="text-[10px] uppercase tracking-widest text-emerald-300">
+                  {post.tags[0] ?? "Guide"} · {post.readMinutes} min read
+                </div>
+                <h3 className="mt-2 text-lg font-semibold tracking-tight group-hover:text-emerald-200">
+                  {post.title}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">{post.description}</p>
+                <span className="mt-4 inline-flex items-center text-sm font-medium text-emerald-300">
+                  Read the comparison <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button variant="outline" asChild>
+              <Link to="/scanner">Open the momentum scanner</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/pricing">View credits & pricing</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/blog">All guides</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+
 
       {/* CTA */}
       <section className="px-4 py-16">

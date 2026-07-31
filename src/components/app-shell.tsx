@@ -38,6 +38,8 @@ import { PositionRiskNotifier } from "./position-risk-notifier";
 
 import { cn } from "@/lib/utils";
 import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
+import { getPostBySlug } from "@/lib/blog-posts";
+
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -58,6 +60,13 @@ const nav = [
   { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
+
+/** Comparison guides surfaced in-app so crawlers and users reach them from every page. */
+const guideSlugs = [
+  "pumppilot-vs-autopilot-comparison",
+  "pumppilot-vs-tradingview-paper-trading",
+] as const;
+
 
 
 function Brand() {
@@ -106,7 +115,43 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Prominent in-app links to the comparison guides + blog index. */
+function GuideLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const posts = guideSlugs.map((s) => getPostBySlug(s)).filter(Boolean);
+  return (
+    <div className="rounded-xl border border-border/60 bg-muted/10 p-3">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <BookOpen className="h-3.5 w-3.5 text-emerald-300" aria-hidden /> Guides
+      </div>
+      <ul className="mt-2 space-y-1.5">
+        {posts.map((post) => (
+          <li key={post!.slug}>
+            <Link
+              to="/blog/$slug"
+              params={{ slug: post!.slug }}
+              onClick={onNavigate}
+              className="block text-[11px] leading-snug text-muted-foreground hover:text-foreground"
+            >
+              {post!.title}
+            </Link>
+          </li>
+        ))}
+        <li>
+          <Link
+            to="/blog"
+            onClick={onNavigate}
+            className="text-[11px] font-medium text-emerald-300 hover:text-emerald-200"
+          >
+            All guides →
+          </Link>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
 /** Journal feed autodiscovery links, shown in the sidebar and mobile menu. */
+
 function FeedLinks() {
   return (
     <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -161,6 +206,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="mt-4 flex-1 overflow-y-auto px-3">
           <NavList />
+          <div className="mt-3">
+            <GuideLinks />
+          </div>
+
         </div>
         <div className="space-y-2 p-3">
           <button
@@ -210,6 +259,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="mt-4 px-3">
                 <NavList onNavigate={() => setOpen(false)} />
+                <div className="mt-3">
+                  <GuideLinks onNavigate={() => setOpen(false)} />
+                </div>
+
               </div>
               <div className="space-y-2 p-3">
                 <CreditMeter />
