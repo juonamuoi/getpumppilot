@@ -59,6 +59,10 @@ import {
 
 
 
+/** One malformed "Why" explanation surfaced by Zod validation. */
+type WhyProblem = { id: string; correlationId?: string; issues: string[] };
+
+
 /** One-click copy of an entry's plain-English "Why" explanation. */
 function CopyWhyButton({
   entry,
