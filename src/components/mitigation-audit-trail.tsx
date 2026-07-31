@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, Download, Link2 } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, AlertTriangle, Download, Link2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,8 +59,20 @@ import {
 
 
 
+/** One malformed "Why" explanation surfaced by Zod validation. */
+type WhyProblem = { id: string; correlationId?: string; issues: string[] };
+
+
 /** One-click copy of an entry's plain-English "Why" explanation. */
-function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
+function CopyWhyButton({
+  entry,
+  onValidationError,
+  onValidationClear,
+}: {
+  entry: TuningLogEntry;
+  onValidationError?: (problems: WhyProblem[]) => void;
+  onValidationClear?: () => void;
+}) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
 
 
@@ -69,11 +81,15 @@ function CopyWhyButton({ entry }: { entry: TuningLogEntry }) {
     if (!ok) {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
+      onValidationError?.([
+        { id: entry.id, correlationId: entry.correlationId, issues },
+      ]);
       toast.error("Why explanation looks malformed — nothing copied", {
         description: issues.slice(0, 3).join(" · "),
       });
       return;
     }
+    onValidationClear?.();
     const val = (v: unknown) => {
       const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
       return s.length ? s : "—";
@@ -638,7 +654,10 @@ export function MitigationAuditTrail({
     return { total, fired, muted, noMatches, resolved, pending, pct };
   }, [entries]);
 
-
+  /** Inline panel state: which Why fields failed Zod on the last blocked action. */
+  const [whyErrors, setWhyErrors] = useState<
+    { source: "copy" | "export"; problems: WhyProblem[] } | null
+  >(null);
 
 
   /** Export scope honours the retention policy's preview toggle. */
@@ -647,13 +666,13 @@ export function MitigationAuditTrail({
     : entries.filter((e) => e.phase !== "preview");
 
   /** Collects Zod validation problems found while building the last export. */
-  const whyProblems: string[] = [];
+  const whyProblems: WhyProblem[] = [];
 
   const rows = () =>
     exportEntries.map((e) => {
       const { fields: why, ok, issues } = safeExplainFields(e);
       if (!ok) {
-        whyProblems.push(`${e.correlationId ?? e.id}: ${issues.join("; ")}`);
+        whyProblems.push({ id: e.id, correlationId: e.correlationId, issues });
       }
       return {
       correlationId: e.correlationId ?? "",
@@ -718,12 +737,14 @@ export function MitigationAuditTrail({
       return;
     }
     if (whyProblems.length > 0) {
+      setWhyErrors({ source: "export", problems: [...whyProblems] });
       toast.error(
         `Export blocked — ${whyProblems.length} entr${whyProblems.length === 1 ? "y has" : "ies have"} malformed Why data`,
-        { description: whyProblems.slice(0, 3).join(" · ") },
+        { description: whyProblems.slice(0, 3).map((p) => p.correlationId ?? p.id).join(" · ") },
       );
       return;
     }
+    setWhyErrors(null);
     let blob: Blob;
     if (kind === "json") {
       blob = new Blob(
@@ -1055,6 +1076,53 @@ export function MitigationAuditTrail({
 
       </CardHeader>
       <CardContent>
+        {whyErrors && whyErrors.problems.length > 0 && (
+          <div
+            role="alert"
+            aria-label="Why validation errors"
+            className="mb-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3"
+          >
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-destructive">
+                  {whyErrors.source === "copy" ? "Copy blocked" : "Export blocked"} —{" "}
+                  {whyErrors.problems.length} entr
+                  {whyErrors.problems.length === 1 ? "y" : "ies"} failed Why validation
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {whyErrors.problems.slice(0, 10).map((p) => (
+                    <li key={p.id} className="text-[11px] leading-relaxed">
+                      <span className="font-mono text-foreground">
+                        {p.correlationId ?? p.id}
+                      </span>
+                      <ul className="ml-3 list-disc space-y-0.5 text-muted-foreground">
+                        {p.issues.map((iss, idx) => (
+                          <li key={idx}>{iss}</li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+                {whyErrors.problems.length > 10 && (
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    +{whyErrors.problems.length - 10} more…
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-1.5"
+                aria-label="Dismiss Why validation errors"
+                onClick={() => setWhyErrors(null)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div
           aria-label="Filtered audit summary"
           className="mb-3 grid grid-cols-2 gap-2 rounded-lg border border-border/60 bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-6"
@@ -1147,7 +1215,15 @@ export function MitigationAuditTrail({
                       <span className="font-medium text-foreground">Why: </span>
                       {explainOutcome(e)}
                     </p>
-                    <CopyWhyButton entry={e} />
+                    <CopyWhyButton
+                      entry={e}
+                      onValidationError={(problems) =>
+                        setWhyErrors({ source: "copy", problems })
+                      }
+                      onValidationClear={() =>
+                        setWhyErrors((prev) => (prev?.source === "copy" ? null : prev))
+                      }
+                    />
                   </div>
                 </div>
 
