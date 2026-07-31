@@ -64,6 +64,13 @@ jobs:
       - name: Journal Article JSON-LD dates
         run: bun run test:seo:journal-dates
 
+      # twitter:card / twitter:image / og:image must match the Article
+      # JSON-LD image on every journal route, including the /blog index.
+      - name: Journal Twitter card / JSON-LD image parity
+        run: bun run test:seo:journal-images
+
+
+
       # Google-style rich-results gate: fails with the route, JSON path,
       # offending property and a concrete fix hint when parsing or an
       # eligibility signal fails.
