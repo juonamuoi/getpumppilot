@@ -1,3 +1,4 @@
+import { getAsset } from "./mock-data";
 import { SITE_URL } from "./structured-data";
 
 /**
@@ -29,7 +30,12 @@ export type ShareChannel =
   | "email"
   | "copy";
 
-export type ShareablePath = "/" | "/dashboard" | "/journal";
+/** Token detail pages: `/asset/<lowercase symbol>`. */
+export type AssetSharePath = `/asset/${string}`;
+
+export type StaticSharePath = "/" | "/dashboard" | "/journal";
+
+export type ShareablePath = StaticSharePath | AssetSharePath;
 
 export type ShareTarget = {
   path: ShareablePath;
@@ -43,7 +49,8 @@ export type ShareTarget = {
   campaign: string;
 };
 
-export const SHARE_TARGETS: Record<ShareablePath, ShareTarget> = {
+export const SHARE_TARGETS: Record<StaticSharePath, ShareTarget> = {
+
   "/": {
     path: "/",
     canonical: `${SITE_URL}/`,
@@ -73,8 +80,36 @@ export const SHARE_TARGETS: Record<ShareablePath, ShareTarget> = {
   },
 };
 
-export const isShareablePath = (p: string): p is ShareablePath =>
-  Object.prototype.hasOwnProperty.call(SHARE_TARGETS, p);
+/**
+ * Token detail share target, derived from the same ASSETS data the page
+ * renders so the copy always matches the token and the canonical always
+ * matches the route's `<link rel="canonical">`.
+ */
+export function assetShareTarget(symbol: string): ShareTarget | null {
+  const asset = getAsset(symbol);
+  if (!asset) return null;
+  const slug = asset.symbol.toLowerCase();
+  return {
+    path: `/asset/${slug}`,
+    canonical: `${SITE_URL}/asset/${slug}`,
+    label: `${asset.symbol} token page`,
+    title: `${asset.name} (${asset.symbol}) momentum — PumpPilot AI`,
+    summary: `Explainable momentum score, chart and paper trading for ${asset.name} (${asset.symbol}) on PumpPilot AI. Demo data — not financial advice.`,
+    campaign: `share_asset_${slug}`,
+  };
+}
+
+/** Resolve any shareable path (static surface or token detail page). */
+export function getShareTarget(path: string): ShareTarget | null {
+  if (Object.prototype.hasOwnProperty.call(SHARE_TARGETS, path)) {
+    return SHARE_TARGETS[path as StaticSharePath];
+  }
+  const match = /^\/asset\/([A-Za-z0-9]+)$/.exec(path);
+  return match ? assetShareTarget(match[1]) : null;
+}
+
+export const isShareablePath = (p: string): p is ShareablePath => getShareTarget(p) !== null;
+
 
 /** Parameters we are willing to append. Anything else is dropped. */
 export type UtmParams = {
@@ -114,14 +149,14 @@ export const CHANNEL_PRESETS: Record<
  * UTM value normalizes away — never a URL with empty parameters.
  */
 export function buildShareUrl(path: string, utm: Partial<UtmParams>): string {
-  if (!isShareablePath(path)) {
+  const target = getShareTarget(path);
+  if (!target) {
     // Unknown/gated route: hand back a clean URL rather than an indexable
     // tracked duplicate.
     const clean = path.startsWith("/") ? path : `/${path}`;
     return `${SITE_URL}${clean === "/" ? "/" : clean.replace(/\/+$/, "")}`;
   }
 
-  const target = SHARE_TARGETS[path];
   const source = normalizeUtmValue(utm.source ?? "");
   const medium = normalizeUtmValue(utm.medium ?? "");
   const campaign = normalizeUtmValue(utm.campaign ?? "", target.campaign);
@@ -148,10 +183,11 @@ export function buildChannelShareUrl(
   return buildShareUrl(path, {
     source: preset.source,
     medium: preset.medium,
-    campaign: SHARE_TARGETS[path].campaign,
+    campaign: getShareTarget(path)?.campaign,
     ...overrides,
   });
 }
+
 
 /** The intent URL that actually opens the share sheet for a channel. */
 export function channelIntentUrl(
@@ -196,12 +232,23 @@ export type SharePreviewCheck = {
  * could stop being safe (canonical drifting off-page, or og:url carrying UTM).
  */
 export function checkSharePreview(path: ShareablePath, shareUrl: string): SharePreviewCheck {
-  const target = SHARE_TARGETS[path];
+  const target = getShareTarget(path);
   const notes: string[] = [];
   let ok = true;
 
+  if (!target) {
+    return {
+      ok: false,
+      canonical: "",
+      ogUrl: "",
+      tracked: false,
+      notes: ["This route is not shareable, so no tracked link is generated."],
+    };
+  }
+
   const canonical = target.canonical;
   const ogUrl = target.canonical;
+
 
   if (canonical.includes("utm_")) {
     ok = false;

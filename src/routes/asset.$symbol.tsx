@@ -14,6 +14,7 @@ import { trackFunnelStep } from "@/lib/funnel";
 import { toast } from "sonner";
 import { ArrowLeft, Lock } from "lucide-react";
 import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
+import { AssetShareButtons } from "@/components/asset-share";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
@@ -150,7 +151,10 @@ function AssetPage() {
           </div>
         </div>
 
+        <AssetShareButtons symbol={asset.symbol} />
+
         <DisclaimerBanner />
+
 
         <div className="grid gap-5 lg:grid-cols-3">
           <Card className="border-border/60 bg-card/60 lg:col-span-2">

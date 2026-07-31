@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   CHANNEL_PRESETS,
-  SHARE_TARGETS,
+  getShareTarget,
   buildChannelShareUrl,
   channelIntentUrl,
   checkSharePreview,
@@ -43,23 +43,24 @@ export function ShareLinks({
   image?: string;
   className?: string;
 }) {
-  const target = SHARE_TARGETS[path];
+  const target = getShareTarget(path);
   const [channel, setChannel] = useState<ShareChannel>("copy");
-  const [campaign, setCampaign] = useState(target.campaign);
+  const [campaign, setCampaign] = useState(target?.campaign ?? "");
   const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
 
   const shareUrl = useMemo(
     () =>
       buildChannelShareUrl(path, channel, {
-        campaign: normalizeUtmValue(campaign, target.campaign),
+        campaign: normalizeUtmValue(campaign, target?.campaign ?? ""),
         content: content || undefined,
       }),
-    [path, channel, campaign, content, target.campaign],
+    [path, channel, campaign, content, target?.campaign],
   );
 
   const check = useMemo(() => checkSharePreview(path, shareUrl), [path, shareUrl]);
-  const intent = channelIntentUrl(channel, shareUrl, target);
+  const intent = target ? channelIntentUrl(channel, shareUrl, target) : null;
+
 
   async function copy() {
     try {
@@ -79,6 +80,11 @@ export function ShareLinks({
     }
     window.open(intent, "_blank", "noopener,noreferrer");
   }
+
+  // Not a shareable surface (gated/internal route) — render nothing rather
+  // than emit a tracked link for a page that must never be indexed.
+  if (!target) return null;
+
 
   return (
     <Card className={className}>
