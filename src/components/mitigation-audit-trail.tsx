@@ -423,24 +423,34 @@ function MultiFilter({
 export function MitigationAuditTrail({
   log,
   focusCorrelationId,
+  shareState,
 }: {
   log: TuningLogEntry[];
   focusCorrelationId?: string;
+  /** Decoded `af` deep-link state: filters + expanded entries to restore. */
+  shareState?: AuditShareState | null;
 }) {
   const paper = usePaper();
-  const [q, setQ] = useState("");
-  const [outcome, setOutcome] = useState<OutcomeFilter>("all");
-  const [range, setRange] = useState<RangeFilter>("all");
+  const [q, setQ] = useState(shareState?.filters.q ?? "");
+  const [outcome, setOutcome] = useState<OutcomeFilter>(shareState?.filters.outcome ?? "all");
+  const [range, setRange] = useState<RangeFilter>(shareState?.filters.range ?? "all");
   const [correlationIds, setCorrelationIds] = useState<string[]>(
-    focusCorrelationId ? [focusCorrelationId] : [],
+    shareState?.filters.correlationIds?.length
+      ? shareState.filters.correlationIds
+      : focusCorrelationId
+        ? [focusCorrelationId]
+        : [],
   );
-  const [tokens, setTokens] = useState<string[]>([]);
-  const [wallets, setWallets] = useState<string[]>([]);
-  const [alertTypes, setAlertTypes] = useState<string[]>([]);
+  const [tokens, setTokens] = useState<string[]>(shareState?.filters.tokens ?? []);
+  const [wallets, setWallets] = useState<string[]>(shareState?.filters.wallets ?? []);
+  const [alertTypes, setAlertTypes] = useState<string[]>(shareState?.filters.alertTypes ?? []);
+  /** Entry IDs whose outcome breakdown is expanded — part of the shared link. */
+  const [expanded, setExpanded] = useState<string[]>(shareState?.expanded ?? []);
   const runs = useScanHistory();
   /** Records loaded from a previously exported file — review only, never applied. */
   const [importedEntries, setImportedEntries] = useState<TuningLogEntry[]>([]);
   const focusRef = useRef<HTMLDivElement | null>(null);
+
 
 
   // A deep link from the impact timeline focuses one correlation batch:
