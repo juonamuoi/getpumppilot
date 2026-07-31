@@ -57,6 +57,8 @@ export function LiveWalletPortfolio() {
   const {
     dataUpdatedAt: priceUpdatedAt,
     isFetching: pricesFetching,
+    isError: pricesError,
+    error: priceError,
     refetch: refetchPrices,
   } = useLivePrices();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -75,6 +77,10 @@ export function LiveWalletPortfolio() {
     const live = prices[b.symbol];
     const price = b.usdPeg ?? live?.price ?? null;
     const livePriced = !b.usdPeg && Boolean(live);
+    // Tracked by the live feed but no price came back -> the fetch failed
+    // or the provider omitted it. Distinct from assets with no feed at all.
+    const failed =
+      !b.usdPeg && !live && (LIVE_SYMBOLS as readonly string[]).includes(b.symbol);
     // USD-peg holdings never go stale; live-feed holdings do.
     const stale = livePriced && feedStale;
     return {
@@ -84,8 +90,9 @@ export function LiveWalletPortfolio() {
       change24h: b.usdPeg ? 0 : (live?.change24h ?? null),
       priced: price != null,
       livePriced,
+      failed,
       stale,
-      // Excluded from totals while stale or unpriced.
+      // Excluded from totals while stale, failed or unpriced.
       counted: price != null && !stale,
     };
   });
@@ -99,9 +106,11 @@ export function LiveWalletPortfolio() {
     0,
   );
   const dayPct = total - dayChange > 0 ? (dayChange / (total - dayChange)) * 100 : 0;
-  const unpriced = rows.filter((r) => !r.priced).length;
+  const unpriced = rows.filter((r) => !r.priced && !r.failed).length;
+  const failedRows = rows.filter((r) => r.failed);
   const staleRows = rows.filter((r) => r.stale);
   const staleValue = staleRows.reduce((s, r) => s + (r.value ?? 0), 0);
+
 
   const onConnect = async () => {
     try {
