@@ -71,6 +71,8 @@ export const Route = createFileRoute("/asset/$symbol")({
           ]),
         ),
       ],
+    };
+  },
   component: AssetPage,
 });
 
