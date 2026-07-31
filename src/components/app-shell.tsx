@@ -259,6 +259,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="mt-4 px-3">
                 <NavList onNavigate={() => setOpen(false)} />
+                <div className="mt-3">
+                  <GuideLinks onNavigate={() => setOpen(false)} />
+                </div>
+
               </div>
               <div className="space-y-2 p-3">
                 <CreditMeter />
