@@ -14,6 +14,7 @@ import { trackFunnelStep } from "@/lib/funnel";
 import { toast } from "sonner";
 import { ArrowLeft, Lock } from "lucide-react";
 import { PageBreadcrumbs } from "@/components/page-breadcrumbs";
+import { AssetShareButtons } from "@/components/asset-share";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
