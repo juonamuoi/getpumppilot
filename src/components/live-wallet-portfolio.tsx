@@ -368,7 +368,11 @@ export function LiveWalletPortfolio() {
                 .map((r) => (
                   <div
                     key={`${r.symbol}-${r.kind}-${r.address ?? "native"}`}
-                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border/60 bg-muted/20 px-3 py-2"
+                    className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border px-3 py-2 ${
+                      r.stale
+                        ? "border-amber-500/50 bg-amber-500/[0.07]"
+                        : "border-border/60 bg-muted/20"
+                    }`}
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -376,14 +380,22 @@ export function LiveWalletPortfolio() {
                         <Badge
                           variant="outline"
                           className={`text-[9px] uppercase ${
-                            r.livePriced
-                              ? "border-emerald-500/30 text-emerald-300"
-                              : r.usdPeg
-                                ? "border-border/60 text-muted-foreground"
-                                : "border-amber-500/40 text-amber-300"
+                            r.stale
+                              ? "border-amber-500/50 text-amber-300"
+                              : r.livePriced
+                                ? "border-emerald-500/30 text-emerald-300"
+                                : r.usdPeg
+                                  ? "border-border/60 text-muted-foreground"
+                                  : "border-amber-500/40 text-amber-300"
                           }`}
                         >
-                          {r.livePriced ? "live price" : r.usdPeg ? "USD peg" : "no live price"}
+                          {r.stale
+                            ? "stale price · excluded"
+                            : r.livePriced
+                              ? "live price"
+                              : r.usdPeg
+                                ? "USD peg"
+                                : "no live price"}
                         </Badge>
                         {r.discovered && (
                           <Badge
@@ -395,6 +407,7 @@ export function LiveWalletPortfolio() {
                           </Badge>
                         )}
                       </div>
+
 
                       <div className="truncate font-mono text-xs text-muted-foreground">
                         {r.amount.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
