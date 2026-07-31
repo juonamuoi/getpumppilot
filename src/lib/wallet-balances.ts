@@ -9,6 +9,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  loadLogScanCache,
+  saveLogScanCache,
+  mergeActivity,
+  type CachedActivity,
+} from "@/lib/log-scan-cache";
 
 type Eip1193 = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
