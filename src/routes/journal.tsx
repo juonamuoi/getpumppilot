@@ -11,7 +11,7 @@ import {
   WEBSITE_ID,
   ORG_ID,
 } from "@/lib/structured-data";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { CreditGate } from "@/components/credit-gate";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -136,6 +136,13 @@ function JournalPage() {
   return (
     <AppShell>
       <div className="space-y-6">
+        <p className="text-xs text-muted-foreground">
+          New here?{" "}
+          <Link to="/features/journal" className="underline hover:text-foreground">
+            Read the public trade journal walkthrough
+          </Link>{" "}
+          — no wallet needed.
+        </p>
         <div>
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">
             <LineChart className="h-3.5 w-3.5" /> Trade Journal
