@@ -44,6 +44,7 @@ import {
   ldScript,
   canonicalUrl,
   nodeId,
+  pageEntityGraph,
   NODE,
 } from "@/lib/structured-data";
 const TITLE = "PumpPilot AI — AI Crypto Momentum & Paper Trading";
