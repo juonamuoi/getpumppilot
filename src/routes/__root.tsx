@@ -113,7 +113,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      // Feed autodiscovery for the journal (site-wide so every page exposes it).
+      {
+        rel: "alternate",
+        type: "application/rss+xml",
+        title: `${FEED_TITLE} — RSS`,
+        href: RSS_PATH,
+      },
+      {
+        rel: "alternate",
+        type: "application/atom+xml",
+        title: `${FEED_TITLE} — Atom`,
+        href: ATOM_PATH,
+      },
     ],
+
     // Site-wide Organization + WebSite graph. Page-specific schemas live on
     // their own routes and reference these nodes by @id.
     scripts: [ldScript(siteGraph)],
