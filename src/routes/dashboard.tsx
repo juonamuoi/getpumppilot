@@ -164,6 +164,13 @@ function Dashboard() {
   return (
     <AppShell>
       <div className="space-y-6">
+        <p className="text-xs text-muted-foreground">
+          New here?{" "}
+          <Link to="/features/dashboard" className="underline hover:text-foreground">
+            Read the public dashboard walkthrough
+          </Link>{" "}
+          — no wallet needed.
+        </p>
         {/* Header */}
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:items-end sm:justify-between">
           <div className="min-w-0">
