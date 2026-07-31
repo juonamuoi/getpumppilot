@@ -143,6 +143,17 @@ export function LiveWalletPortfolio() {
   const { value: sparkWindow, setValue: setSparkWindow, config: sparkConfig } =
     useSparkWindow();
 
+  // Compare mode: pick up to two holdings and overlay their sparklines.
+  const [compareMode, setCompareMode] = useState(false);
+  const [comparePicks, setComparePicks] = useState<string[]>([]);
+  const toggleCompare = (symbol: string) =>
+    setComparePicks((prev) =>
+      prev.includes(symbol)
+        ? prev.filter((s) => s !== symbol)
+        : [...prev, symbol].slice(-2),
+    );
+
+
   const feedStale = isStale(priceUpdatedAt, staleMs, now);
 
   const rows = (data?.balances ?? []).map((b) => {
