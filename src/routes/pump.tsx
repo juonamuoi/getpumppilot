@@ -12,7 +12,6 @@ import {
   formatPump,
   pumpErrorMessage,
   sendPump,
-  setPumpPayoutAddress,
   type PumpSummary,
 } from "@/lib/pump";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +31,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PumpPayoutSettings } from "@/components/pump-payout-settings";
 
 const BASE = "https://www.getpumppilot.app";
 
@@ -67,13 +67,11 @@ function PumpPage() {
   const [toTag, setToTag] = useState("");
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
-  const [payout, setPayout] = useState("");
 
   const refresh = useCallback(async () => {
     try {
       const s = await fetchPumpSummary();
       setSummary(s);
-      setPayout(s.payout_address ?? "");
     } catch {
       /* signed out or offline */
     }
@@ -116,20 +114,6 @@ function PumpPage() {
       await refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Transfer failed");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function onSavePayout() {
-    setBusy("payout");
-    try {
-      const res = await setPumpPayoutAddress(payout);
-      if (!res.ok) toast.error(pumpErrorMessage(res.reason));
-      else toast.success(res.payout_address ? "Payout address saved" : "Payout address cleared");
-      await refresh();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save address");
     } finally {
       setBusy(null);
     }
