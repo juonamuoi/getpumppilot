@@ -1,21 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "node:crypto";
 
 /**
- * Scheduled crawl-health check (pg_cron -> pg_net).
+ * Scheduled crawl-health check (pg_cron -> pg_net, or an external scheduler).
  *
  * Public prefix so the scheduler can reach it, but the caller must present the
- * project's publishable key in the apikey header before any work is done.
+ * server-only `SEO_CRON_SECRET` in the `x-seo-cron-secret` header. The Supabase
+ * publishable key is NOT accepted: it ships in the client bundle, so it proves
+ * nothing about the caller.
  */
+function authorized(request: Request) {
+  const secret = process.env.SEO_CRON_SECRET;
+  if (!secret) return false;
+  const provided =
+    request.headers.get("x-seo-cron-secret") ??
+    request.headers.get("authorization")?.replace(/^Bearer /, "") ??
+    "";
+  const a = Buffer.from(provided);
+  const b = Buffer.from(secret);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export const Route = createFileRoute("/api/public/hooks/seo-crawl-check")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key =
-          request.headers.get("apikey") ??
-          request.headers.get("authorization")?.replace(/^Bearer /, "");
-        const expected =
-          process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        if (!expected || key !== expected) {
+        if (!authorized(request)) {
           return new Response(JSON.stringify({ error: "unauthorized" }), {
             status: 401,
             headers: { "Content-Type": "application/json" },
