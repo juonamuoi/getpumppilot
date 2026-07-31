@@ -27,7 +27,11 @@ async function breadcrumbsFor(routePath: string, params: Record<string, string>)
   const scripts = options?.head?.({ params, loaderData })?.scripts ?? [];
   return scripts
     .filter((s) => s.type === "application/ld+json" && s.children)
-    .map((s) => JSON.parse(s.children as string) as Record<string, unknown>)
+    .flatMap((s) => {
+      const parsed = JSON.parse(s.children as string) as Record<string, unknown>;
+      const graph = parsed["@graph"];
+      return Array.isArray(graph) ? (graph as Record<string, unknown>[]) : [parsed];
+    })
     .filter((node) => node["@type"] === "BreadcrumbList");
 }
 
