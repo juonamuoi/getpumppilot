@@ -29,7 +29,12 @@ export type ShareChannel =
   | "email"
   | "copy";
 
-export type ShareablePath = "/" | "/dashboard" | "/journal";
+/** Token detail pages: `/asset/<lowercase symbol>`. */
+export type AssetSharePath = `/asset/${string}`;
+
+export type StaticSharePath = "/" | "/dashboard" | "/journal";
+
+export type ShareablePath = StaticSharePath | AssetSharePath;
 
 export type ShareTarget = {
   path: ShareablePath;
@@ -43,7 +48,8 @@ export type ShareTarget = {
   campaign: string;
 };
 
-export const SHARE_TARGETS: Record<ShareablePath, ShareTarget> = {
+export const SHARE_TARGETS: Record<StaticSharePath, ShareTarget> = {
+
   "/": {
     path: "/",
     canonical: `${SITE_URL}/`,
