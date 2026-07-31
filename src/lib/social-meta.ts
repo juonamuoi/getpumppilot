@@ -65,12 +65,21 @@ export function withSocialMeta(meta: MetaEntry[], options: SocialMetaOptions = {
     else out.push({ property: "og:url", content: url });
   }
 
+  if (!has(out, "og:site_name")) out.push({ property: "og:site_name", content: SITE_NAME });
+  if (!has(out, "og:locale")) out.push({ property: "og:locale", content: "en_US" });
+
   if (!has(out, "twitter:card"))
     out.push({ name: "twitter:card", content: options.card ?? "summary_large_image" });
   if (!has(out, "twitter:title") && title) out.push({ name: "twitter:title", content: title });
   if (!has(out, "twitter:description") && description)
     out.push({ name: "twitter:description", content: description });
   if (!has(out, "twitter:image") && image) out.push({ name: "twitter:image", content: image });
+  // Keep the alt text in sync across both card formats.
+  const imageAlt = get(out, "og:image:alt") ?? (title ? `${title} — ${SITE_NAME}` : undefined);
+  if (!has(out, "og:image:alt") && imageAlt)
+    out.push({ property: "og:image:alt", content: imageAlt });
+  if (!has(out, "twitter:image:alt") && imageAlt)
+    out.push({ name: "twitter:image:alt", content: imageAlt });
   if (url) {
     const existing = out.findIndex((m) => m.name === "twitter:url" || m.property === "twitter:url");
     if (existing >= 0) out[existing] = { name: "twitter:url", content: url };
