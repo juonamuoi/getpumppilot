@@ -627,7 +627,15 @@ export function MitigationAuditTrail({
       wallets: (walletsForEntry.get(e.id) ?? []).join("|"),
       outcomeAt: e.outcome ? new Date(e.outcome.ts).toISOString() : "",
       revertedAt: e.revertedAt ? new Date(e.revertedAt).toISOString() : "",
-    }));
+      why: why.why,
+      whyChange: why.whyChange,
+      whyStrictness: why.whyStrictness,
+      whyImpact: why.whyImpact,
+      whyOutcome: why.whyOutcome,
+      whyFragility: why.whyFragility,
+      };
+    });
+
 
   /** The filter scope stamped into every export so it matches this view. */
   const exportFilters = () => ({
