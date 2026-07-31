@@ -206,6 +206,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="mt-4 flex-1 overflow-y-auto px-3">
           <NavList />
+          <div className="mt-3">
+            <GuideLinks />
+          </div>
+
         </div>
         <div className="space-y-2 p-3">
           <button
