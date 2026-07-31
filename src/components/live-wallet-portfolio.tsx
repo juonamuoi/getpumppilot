@@ -134,18 +134,64 @@ export function LiveWalletPortfolio() {
               is a read-only balance read — no signing, no approvals, and never a seed phrase.
             </p>
             {available ? (
-              <Button
-                onClick={() => void onConnect()}
-                className="bg-emerald-500 text-black hover:bg-emerald-400"
-              >
-                Connect wallet (read-only)
-              </Button>
+              <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button className="bg-emerald-500 text-black hover:bg-emerald-400">
+                    Connect wallet (read-only)
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-lg">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex flex-wrap items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                      Read-only wallet connection
+                      <Badge
+                        variant="outline"
+                        className="border-amber-500/40 text-[10px] uppercase text-amber-300"
+                      >
+                        Trading disabled
+                      </Badge>
+                    </AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-3 text-left">
+                        <ul className="space-y-1.5 text-sm text-muted-foreground">
+                          {[
+                            "PumpPilot reads your public balances only. It never asks for a seed phrase or private key, and never requests a signature or token approval.",
+                            "Momentum scores and price signals are probabilistic indicators, not guarantees or financial advice.",
+                            "Trading execution is disabled app-wide — no order can be routed or submitted from your wallet.",
+                            "Prices come from the CoinGecko public feed and refresh about every 60 seconds; unpriced tokens are excluded from totals.",
+                          ].map((line) => (
+                            <li key={line} className="flex gap-2">
+                              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-emerald-400" />
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-xs text-muted-foreground">
+                          You can disconnect at any time from your wallet extension.
+                        </p>
+                      </div>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-emerald-500 text-black hover:bg-emerald-400"
+                      onClick={() => void onConnect()}
+                    >
+                      I understand — connect read-only
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             ) : (
               <p className="text-xs text-amber-300">
                 No browser wallet detected. Install MetaMask, Rabby or Coinbase Wallet, then
                 reload this page.
               </p>
             )}
+          </div>
+        )}
           </div>
         )}
 
