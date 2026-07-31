@@ -75,11 +75,13 @@ async function fetchLive(): Promise<LivePrice[]> {
     });
 }
 
-export function useLivePrices() {
+export function useLivePrices(refetchIntervalMs?: number) {
   return useQuery({
     queryKey: ["live-prices", "coingecko", IDS],
     queryFn: fetchLive,
-    refetchInterval: 60_000, // 1 min — respects free-tier limits
+    // 1 min default — respects free-tier limits. 0/undefined disables polling.
+    refetchInterval:
+      refetchIntervalMs === undefined ? 60_000 : refetchIntervalMs > 0 ? refetchIntervalMs : false,
     staleTime: 45_000,
     retry: 1,
   });
