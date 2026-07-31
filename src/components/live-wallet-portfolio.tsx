@@ -130,8 +130,36 @@ export function LiveWalletPortfolio() {
             Read-only · trading disabled
           </Badge>
         </CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <DataSourcesDialog />
+          <div className="flex flex-col items-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 border-emerald-500/30 text-xs"
+              onClick={() => void refetchPrices()}
+              disabled={pricesFetching}
+              title={
+                priceUpdatedAt
+                  ? `Prices fetched ${new Date(priceUpdatedAt).toLocaleString()}`
+                  : "Prices not fetched yet"
+              }
+            >
+              {pricesFetching ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              {pricesFetching ? "Refreshing prices…" : "Refresh prices"}
+            </Button>
+            <span className="mt-0.5 text-[10px] text-muted-foreground">
+              {pricesFetching
+                ? "fetching CoinGecko…"
+                : priceUpdatedAt
+                  ? `prices ${freshness(priceUpdatedAt)} · ${new Date(priceUpdatedAt).toLocaleTimeString()}`
+                  : "prices not fetched yet"}
+            </span>
+          </div>
           {address && (
             <Button
               variant="ghost"
@@ -145,10 +173,11 @@ export function LiveWalletPortfolio() {
               ) : (
                 <RefreshCw className="h-3.5 w-3.5" />
               )}
-              Refresh
+              Balances
             </Button>
           )}
         </div>
+
       </CardHeader>
 
       <CardContent className="space-y-3">
