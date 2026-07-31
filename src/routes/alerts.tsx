@@ -87,6 +87,8 @@ import {
 
 } from "@/lib/paper-store";
 import { MitigationAuditTrail } from "@/components/mitigation-audit-trail";
+import { decodeAuditShareState } from "@/lib/audit-share-link";
+
 import { TuningAuditExport } from "@/components/tuning-audit-export";
 
 
@@ -107,7 +109,10 @@ export const Route = createFileRoute("/alerts")({
   validateSearch: (search: Record<string, unknown>) => ({
     tab: typeof search.tab === "string" ? search.tab : undefined,
     audit: typeof search.audit === "string" ? search.audit : undefined,
+    // Shareable audit-trail deep link: encoded filters + expanded entries.
+    af: typeof search.af === "string" ? search.af : undefined,
   }),
+
 
   head: () => ({
     links: [{ rel: "canonical", href: "https://www.getpumppilot.app/alerts" }],
@@ -4344,7 +4349,9 @@ function loadAuto(): AutoConfig {
 
 
 function ReplayPanel() {
-  const { audit: auditFocus } = Route.useSearch();
+  const { audit: auditFocus, af: auditShareParam } = Route.useSearch();
+  const auditShareState = useMemo(() => decodeAuditShareState(auditShareParam), [auditShareParam]);
+
   const {
 
     scannerRules,
@@ -5042,7 +5049,12 @@ function ReplayPanel() {
                 }
               />
 
-              <MitigationAuditTrail log={tuningLog} focusCorrelationId={auditFocus} />
+              <MitigationAuditTrail
+                log={tuningLog}
+                focusCorrelationId={auditFocus}
+                shareState={auditShareState}
+              />
+
 
               <TuningHistoryPanel
 

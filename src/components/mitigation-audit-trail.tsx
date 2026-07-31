@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, Download } from "lucide-react";
+import { Undo2, Filter, Save, X, Copy, Check, ChevronRight, AlertCircle, Download, Link2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,8 @@ import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome, explainFields } from "@/lib/mitigation-explain";
+import { buildAuditShareUrl, type AuditShareState } from "@/lib/audit-share-link";
+
 import { MitigationImport } from "@/components/mitigation-import";
 import { MitigationImportDiff } from "@/components/mitigation-import-diff";
 import { isImportedEntry } from "@/lib/mitigation-import";
@@ -167,9 +169,17 @@ function CopyCorrelationIdButton({ id }: { id?: string }) {
 }
 
 /** Expandable per-entry summary of alerts fired, muted and assets affected. */
-function OutcomeBreakdown({ entry }: { entry: TuningLogEntry }) {
-  const [open, setOpen] = useState(false);
+function OutcomeBreakdown({
+  entry,
+  open,
+  onToggle,
+}: {
+  entry: TuningLogEntry;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const o = entry.outcome;
+
 
   const fired = o?.delivered ?? 0;
   const matched = o?.matched ?? 0;
@@ -190,7 +200,7 @@ function OutcomeBreakdown({ entry }: { entry: TuningLogEntry }) {
     <div className="mt-2 rounded-md border border-border/50 bg-muted/20">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
         className="flex w-full items-center gap-2 px-2 py-1.5 text-[11px] font-medium"
       >
@@ -415,24 +425,34 @@ function MultiFilter({
 export function MitigationAuditTrail({
   log,
   focusCorrelationId,
+  shareState,
 }: {
   log: TuningLogEntry[];
   focusCorrelationId?: string;
+  /** Decoded `af` deep-link state: filters + expanded entries to restore. */
+  shareState?: AuditShareState | null;
 }) {
   const paper = usePaper();
-  const [q, setQ] = useState("");
-  const [outcome, setOutcome] = useState<OutcomeFilter>("all");
-  const [range, setRange] = useState<RangeFilter>("all");
+  const [q, setQ] = useState(shareState?.filters.q ?? "");
+  const [outcome, setOutcome] = useState<OutcomeFilter>(shareState?.filters.outcome ?? "all");
+  const [range, setRange] = useState<RangeFilter>(shareState?.filters.range ?? "all");
   const [correlationIds, setCorrelationIds] = useState<string[]>(
-    focusCorrelationId ? [focusCorrelationId] : [],
+    shareState?.filters.correlationIds?.length
+      ? shareState.filters.correlationIds
+      : focusCorrelationId
+        ? [focusCorrelationId]
+        : [],
   );
-  const [tokens, setTokens] = useState<string[]>([]);
-  const [wallets, setWallets] = useState<string[]>([]);
-  const [alertTypes, setAlertTypes] = useState<string[]>([]);
+  const [tokens, setTokens] = useState<string[]>(shareState?.filters.tokens ?? []);
+  const [wallets, setWallets] = useState<string[]>(shareState?.filters.wallets ?? []);
+  const [alertTypes, setAlertTypes] = useState<string[]>(shareState?.filters.alertTypes ?? []);
+  /** Entry IDs whose outcome breakdown is expanded — part of the shared link. */
+  const [expanded, setExpanded] = useState<string[]>(shareState?.expanded ?? []);
   const runs = useScanHistory();
   /** Records loaded from a previously exported file — review only, never applied. */
   const [importedEntries, setImportedEntries] = useState<TuningLogEntry[]>([]);
   const focusRef = useRef<HTMLDivElement | null>(null);
+
 
 
   // A deep link from the impact timeline focuses one correlation batch:
@@ -715,6 +735,22 @@ export function MitigationAuditTrail({
     toast.success(`Exported ${data.length} mitigation record(s) as ${kind.toUpperCase()}`);
   };
 
+  /** Copies a deep link that reopens this view with the same filters + expanded entries. */
+  const shareLink = async () => {
+    const url = buildAuditShareUrl({ filters: current, expanded });
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Share link copied", {
+        description: `Opens the audit trail with these filters${
+          expanded.length ? ` and ${expanded.length} expanded entr${expanded.length === 1 ? "y" : "ies"}` : ""
+        }.`,
+      });
+    } catch {
+      toast.error("Could not copy the link", { description: url });
+    }
+  };
+
+
   return (
     <Card>
       <CardHeader className="gap-3">
@@ -727,6 +763,11 @@ export function MitigationAuditTrail({
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={shareLink}>
+              <Link2 className="h-3.5 w-3.5" />
+              Share link
+            </Button>
+
             <MitigationRetentionSettings />
             <MitigationImport
               onImport={({ add, replace }) =>
@@ -1055,7 +1096,16 @@ export function MitigationAuditTrail({
                   </div>
                 </div>
 
-                <OutcomeBreakdown entry={e} />
+                <OutcomeBreakdown
+                  entry={e}
+                  open={expanded.includes(e.id)}
+                  onToggle={() =>
+                    setExpanded((prev) =>
+                      prev.includes(e.id) ? prev.filter((id) => id !== e.id) : [...prev, e.id],
+                    )
+                  }
+                />
+
 
 
 
