@@ -24,6 +24,7 @@
     "test:security": "vitest run --config vitest.security.config.ts",
     "test:seo": "vitest run --config vitest.seo.config.ts",
     "test:seo:social": "vitest run --config vitest.seo.config.ts src/tests/seo/social-tags.test.ts",
+    "test:seo:jsonld": "vitest run --config vitest.seo.config.ts src/tests/seo/jsonld-rich-results-e2e.test.ts",
     "test:seo:cards": "vitest run --config vitest.seo.config.ts src/tests/seo/social-cards-e2e.test.ts",
     "check:social-tags": "bun scripts/social-tags-build-check.mjs",
     "check:social-tags:json": "bun scripts/social-tags-build-check.mjs --json",
