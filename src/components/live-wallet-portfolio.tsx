@@ -23,7 +23,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  STALE_OPTIONS,
+  describeAge,
+  isStale,
+  useStaleThresholdMs,
+} from "@/lib/price-freshness";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AlertTriangle } from "lucide-react";
 
 function freshness(ts: number | undefined): string {
   if (!ts) return "not yet fetched";
