@@ -21,6 +21,7 @@ import {
   Settings as SettingsIcon,
   TerminalSquare,
   Rss,
+  Coins,
 
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
