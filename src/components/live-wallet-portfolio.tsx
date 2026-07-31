@@ -3,18 +3,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Loader2, ShieldCheck } from "lucide-react";
+import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
-import { useLivePriceMap } from "@/lib/market-data";
+import { useLivePriceMap, useLivePrices } from "@/lib/market-data";
 import { useInjectedAccount, useWalletBalances } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
+
+function freshness(ts: number | undefined): string {
+  if (!ts) return "not yet fetched";
+  const secs = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (secs < 10) return "just now";
+  if (secs < 60) return `${secs}s ago`;
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  return `${Math.round(mins / 60)}h ago`;
+}
 
 export function LiveWalletPortfolio() {
   const { address, available, connect } = useInjectedAccount();
   const { data, isFetching, isError, error, refetch, dataUpdatedAt } =
     useWalletBalances(address);
   const prices = useLivePriceMap();
+  const { dataUpdatedAt: priceUpdatedAt, isFetching: pricesFetching } = useLivePrices();
+
 
   const rows = (data?.balances ?? []).map((b) => {
     const live = prices[b.symbol];
@@ -211,6 +223,27 @@ export function LiveWalletPortfolio() {
                         {r.symbol}
                         {r.price != null ? ` · ${fmtUsd(r.price)}` : ""}
                       </div>
+                      <div
+                        className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-muted-foreground"
+                        title={
+                          r.livePriced && priceUpdatedAt
+                            ? `CoinGecko · fetched ${new Date(priceUpdatedAt).toLocaleString()}`
+                            : undefined
+                        }
+                      >
+                        <Clock className="h-2.5 w-2.5 shrink-0" />
+                        {r.livePriced ? (
+                          <span>
+                            Source: CoinGecko · updated{" "}
+                            {pricesFetching ? "refreshing…" : freshness(priceUpdatedAt)}
+                          </span>
+                        ) : r.usdPeg ? (
+                          <span>Source: stablecoin USD peg (fixed $1.00) · no feed needed</span>
+                        ) : (
+                          <span>Source: none · no live feed for this asset</span>
+                        )}
+                      </div>
+
                     </div>
                     <div className="text-right">
                       <div className="font-mono text-sm font-semibold">
