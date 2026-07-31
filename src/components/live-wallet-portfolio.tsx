@@ -3,7 +3,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock, Download } from "lucide-react";
+import {
+  Wallet,
+  RefreshCw,
+  Loader2,
+  ShieldCheck,
+  Clock,
+  Download,
+  Search,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  FILTER_LABELS,
+  SORT_LABELS,
+  applyHoldingControls,
+  isSpamLikely,
+  type HoldingFilter,
+  type HoldingSort,
+} from "@/lib/holding-filters";
 import {
   downloadCsv,
   holdingsCsvFilename,
