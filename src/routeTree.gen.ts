@@ -32,6 +32,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PumpRouteImport } from './routes/pump'
 import { Route as PumpHistoryRouteImport } from './routes/pump-history'
+import { Route as QuestsRouteImport } from './routes/quests'
 import { Route as ReferRouteImport } from './routes/refer'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as RiskRouteImport } from './routes/risk'
@@ -178,6 +179,11 @@ const PumpRoute = PumpRouteImport.update({
 const PumpHistoryRoute = PumpHistoryRouteImport.update({
   id: '/pump-history',
   path: '/pump-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuestsRoute = QuestsRouteImport.update({
+  id: '/quests',
+  path: '/quests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReferRoute = ReferRouteImport.update({
@@ -372,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/pump': typeof PumpRoute
   '/pump-history': typeof PumpHistoryRoute
+  '/quests': typeof QuestsRoute
   '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/pump': typeof PumpRoute
   '/pump-history': typeof PumpHistoryRoute
+  '/quests': typeof QuestsRoute
   '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
@@ -487,6 +495,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/pump': typeof PumpRoute
   '/pump-history': typeof PumpHistoryRoute
+  '/quests': typeof QuestsRoute
   '/refer': typeof ReferRoute
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
@@ -546,6 +555,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/pump'
     | '/pump-history'
+    | '/quests'
     | '/refer'
     | '/refund'
     | '/risk'
@@ -603,6 +613,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/pump'
     | '/pump-history'
+    | '/quests'
     | '/refer'
     | '/refund'
     | '/risk'
@@ -660,6 +671,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/pump'
     | '/pump-history'
+    | '/quests'
     | '/refer'
     | '/refund'
     | '/risk'
@@ -718,6 +730,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   PumpRoute: typeof PumpRoute
   PumpHistoryRoute: typeof PumpHistoryRoute
+  QuestsRoute: typeof QuestsRoute
   ReferRoute: typeof ReferRoute
   RefundRoute: typeof RefundRoute
   RiskRoute: typeof RiskRoute
@@ -912,6 +925,13 @@ declare module '@tanstack/react-router' {
       path: '/pump-history'
       fullPath: '/pump-history'
       preLoaderRoute: typeof PumpHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quests': {
+      id: '/quests'
+      path: '/quests'
+      fullPath: '/quests'
+      preLoaderRoute: typeof QuestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/refer': {
@@ -1176,6 +1196,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   PumpRoute: PumpRoute,
   PumpHistoryRoute: PumpHistoryRoute,
+  QuestsRoute: QuestsRoute,
   ReferRoute: ReferRoute,
   RefundRoute: RefundRoute,
   RiskRoute: RiskRoute,
