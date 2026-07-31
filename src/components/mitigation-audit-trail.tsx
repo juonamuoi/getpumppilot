@@ -719,6 +719,26 @@ export function MitigationAuditTrail({
     setCorrelationIds([]);
   };
 
+  /**
+   * Correlation IDs present under the current filters, ignoring the correlation
+   * filter itself so drilling in never hides the other batches.
+   */
+  const cidCounts = useMemo(() => {
+    const scoped = filterAuditEntries(
+      sourceLog,
+      { q, outcome, range, correlationIds: [], tokens, alertTypes, wallets },
+      (e) => walletsForEntry.get(e.id) ?? [],
+    );
+    const counts = new Map<string, number>();
+    for (const e of scoped) {
+      if (!e.correlationId) continue;
+      counts.set(e.correlationId, (counts.get(e.correlationId) ?? 0) + 1);
+    }
+    return [...counts.entries()].map(([cid, count]) => ({ cid, count })).slice(0, 24);
+  }, [sourceLog, q, outcome, range, tokens, alertTypes, wallets, walletsForEntry]);
+
+
+
 
   const entries = useMemo(
     () =>
