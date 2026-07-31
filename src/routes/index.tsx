@@ -34,6 +34,8 @@ import { ShareLinks } from "@/components/share-links";
 
 
 import { CREDIT_PACKS } from "@/lib/credits";
+import { getPostBySlug, type BlogPost } from "@/lib/blog-posts";
+
 import {
   SITE_URL,
   ORG_ID,
