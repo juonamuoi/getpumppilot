@@ -5,25 +5,28 @@ import { PumpQuestDashboard } from "@/components/pump-quest-dashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { canonicalLinks } from "@/lib/structured-data";
+import { withSocialMeta } from "@/lib/social-meta";
 
 export const Route = createFileRoute("/quests")({
   head: () => ({
-    meta: [
-      { title: "PUMP quest dashboard — unlocked, pending & claimable | PumpPilot AI" },
-      {
-        name: "description",
-        content:
-          "Track every PumpPilot PUMP quest: which rewards you've unlocked, which are still pending, and exactly when each quest can be claimed.",
-      },
-      { property: "og:title", content: "PUMP quest dashboard — unlocked, pending & claimable" },
-      {
-        property: "og:description",
-        content:
-          "See unlocked, claimable and pending PUMP quests with the action needed to unlock each reward.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
+    meta: withSocialMeta(
+      [
+        { title: "PUMP quest dashboard — unlocked, pending & claimable | PumpPilot AI" },
+        {
+          name: "description",
+          content:
+            "Track every PumpPilot PUMP quest: which rewards you've unlocked, which are still pending, and exactly when each quest can be claimed.",
+        },
+        { property: "og:title", content: "PUMP quest dashboard — unlocked, pending & claimable" },
+        {
+          property: "og:description",
+          content:
+            "See unlocked, claimable and pending PUMP quests with the action needed to unlock each reward.",
+        },
+        { property: "og:type", content: "website" },
+      ],
+      { url: "https://www.getpumppilot.app/quests" },
+    ),
     links: canonicalLinks("/quests"),
   }),
   component: QuestsPage,
