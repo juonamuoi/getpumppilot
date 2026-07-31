@@ -654,7 +654,10 @@ export function MitigationAuditTrail({
     return { total, fired, muted, noMatches, resolved, pending, pct };
   }, [entries]);
 
-
+  /** Inline panel state: which Why fields failed Zod on the last blocked action. */
+  const [whyErrors, setWhyErrors] = useState<
+    { source: "copy" | "export"; problems: WhyProblem[] } | null
+  >(null);
 
 
   /** Export scope honours the retention policy's preview toggle. */
