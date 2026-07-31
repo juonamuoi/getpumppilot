@@ -48,6 +48,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as EmbedMomentumRouteImport } from './routes/embed.momentum'
 import { Route as FeaturesDashboardRouteImport } from './routes/features.dashboard'
+import { Route as FeaturesJournalRouteImport } from './routes/features.journal'
 import { Route as LpVariantRouteImport } from './routes/lp.$variant'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -256,6 +257,11 @@ const FeaturesDashboardRoute = FeaturesDashboardRouteImport.update({
   path: '/features/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FeaturesJournalRoute = FeaturesJournalRouteImport.update({
+  id: '/features/journal',
+  path: '/features/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LpVariantRoute = LpVariantRouteImport.update({
   id: '/lp/$variant',
   path: '/lp/$variant',
@@ -351,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
   '/features/dashboard': typeof FeaturesDashboardRoute
+  '/features/journal': typeof FeaturesJournalRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -402,6 +409,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
   '/features/dashboard': typeof FeaturesDashboardRoute
+  '/features/journal': typeof FeaturesJournalRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog': typeof BlogIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -454,6 +462,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/embed/momentum': typeof EmbedMomentumRoute
   '/features/dashboard': typeof FeaturesDashboardRoute
+  '/features/journal': typeof FeaturesJournalRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -507,6 +516,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/embed/momentum'
     | '/features/dashboard'
+    | '/features/journal'
     | '/lp/$variant'
     | '/blog/'
     | '/.lovable/oauth/consent'
@@ -558,6 +568,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/embed/momentum'
     | '/features/dashboard'
+    | '/features/journal'
     | '/lp/$variant'
     | '/blog'
     | '/.lovable/oauth/consent'
@@ -609,6 +620,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/embed/momentum'
     | '/features/dashboard'
+    | '/features/journal'
     | '/lp/$variant'
     | '/blog/'
     | '/.lovable/oauth/consent'
@@ -661,6 +673,7 @@ export interface RootRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
   EmbedMomentumRoute: typeof EmbedMomentumRoute
   FeaturesDashboardRoute: typeof FeaturesDashboardRoute
+  FeaturesJournalRoute: typeof FeaturesJournalRoute
   LpVariantRoute: typeof LpVariantRoute
   BlogIndexRoute: typeof BlogIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -948,6 +961,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/features/journal': {
+      id: '/features/journal'
+      path: '/features/journal'
+      fullPath: '/features/journal'
+      preLoaderRoute: typeof FeaturesJournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lp/$variant': {
       id: '/lp/$variant'
       path: '/lp/$variant'
@@ -1072,6 +1092,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogSlugRoute: BlogSlugRoute,
   EmbedMomentumRoute: EmbedMomentumRoute,
   FeaturesDashboardRoute: FeaturesDashboardRoute,
+  FeaturesJournalRoute: FeaturesJournalRoute,
   LpVariantRoute: LpVariantRoute,
   BlogIndexRoute: BlogIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
