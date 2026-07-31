@@ -258,6 +258,60 @@ export function LiveWalletPortfolio() {
               </p>
             )}
 
+            {staleRows.length > 0 && (
+              <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
+                  <span className="text-sm font-semibold text-amber-200">
+                    Stale price data — {staleRows.length} holding
+                    {staleRows.length > 1 ? "s" : ""} excluded from totals
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs text-amber-200/90">
+                  The CoinGecko feed is {describeAge(priceUpdatedAt, now)}, past your{" "}
+                  {Math.round(staleMs / 60_000)}-minute freshness limit.{" "}
+                  {staleRows.map((r) => r.symbol).join(", ")} —{" "}
+                  {fmtUsd(staleValue)} at last known prices — {staleRows.length > 1 ? "are" : "is"}{" "}
+                  held out of wallet value, 24h change and allocation until the feed refreshes.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2 h-7 gap-1 border-amber-500/50 text-xs text-amber-200"
+                  onClick={() => void refetchPrices()}
+                  disabled={pricesFetching}
+                >
+                  {pricesFetching ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  Refresh prices
+                </Button>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>Flag prices older than</span>
+              <Select
+                value={String(staleMs)}
+                onValueChange={(v) => setStaleMs(Number(v))}
+              >
+                <SelectTrigger className="h-7 w-[130px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STALE_OPTIONS.map((o) => (
+                    <SelectItem key={o.ms} value={String(o.ms)} className="text-xs">
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>· stale holdings are excluded from totals until refreshed</span>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-border/60 bg-card/60 p-3">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -283,14 +337,15 @@ export function LiveWalletPortfolio() {
             <WalletValueHistoryChart
               address={address}
               total={total}
-              ready={rows.length > 0 && !isFetching}
+              ready={rows.length > 0 && !isFetching && staleRows.length === 0}
             />
 
             <WalletAllocationChart
               items={rows
-                .filter((r) => r.value != null && r.value > 0)
+                .filter((r) => r.counted && r.value != null && r.value > 0)
                 .map((r) => ({ symbol: r.symbol, value: r.value as number }))}
             />
+
 
 
             {isFetching && rows.length === 0 && (
