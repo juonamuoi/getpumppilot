@@ -3,7 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock } from "lucide-react";
+import { Wallet, RefreshCw, Loader2, ShieldCheck, Clock, Download } from "lucide-react";
+import {
+  downloadCsv,
+  holdingsCsvFilename,
+  holdingsToCsv,
+} from "@/lib/wallet-export";
 import { toast } from "sonner";
 import { fmtPct, fmtUsd } from "@/lib/mock-data";
 import { LIVE_SYMBOLS, useLivePriceMap, useLivePrices } from "@/lib/market-data";
