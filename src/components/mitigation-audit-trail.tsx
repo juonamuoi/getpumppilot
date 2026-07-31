@@ -692,6 +692,34 @@ export function MitigationAuditTrail({
     [importedEntries, log],
   );
 
+  /**
+   * Drill-down: focus one correlation batch, clear every other filter so nothing
+   * is hidden, auto-expand all its rows and scroll the first one into view.
+   */
+  const drillIntoCid = (cid: string) => {
+    const matches = sourceLog.filter((e) => e.correlationId === cid);
+    setCorrelationIds([cid]);
+    setRange("all");
+    setOutcome("all");
+    setQ("");
+    setTokens([]);
+    setWallets([]);
+    setAlertTypes([]);
+    setExpanded((prev) => [...new Set([...prev, ...matches.map((e) => e.id)])]);
+    setDrillCid(cid);
+    window.setTimeout(
+      () => focusRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      120,
+    );
+    toast.success(`Showing ${matches.length} row${matches.length === 1 ? "" : "s"} for ${cid}`);
+  };
+
+  const clearDrill = () => {
+    setDrillCid(null);
+    setCorrelationIds([]);
+  };
+
+
   const entries = useMemo(
     () =>
       filterAuditEntries(
