@@ -60,6 +60,12 @@ export function LiveWalletPortfolio() {
           >
             Live wallet · real prices
           </Badge>
+          <Badge
+            variant="outline"
+            className="border-amber-500/40 text-[10px] uppercase tracking-wide text-amber-300"
+          >
+            Read-only · trading disabled
+          </Badge>
         </CardTitle>
         {address && (
           <Button
