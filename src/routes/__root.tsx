@@ -184,6 +184,7 @@ function RootComponent() {
                   </LockGate>
                   <GuidedTour />
                 </TourProvider>
+                <TradeSafetyGate />
                 <Toaster theme="dark" position="top-right" />
               </AppLockProvider>
             </PaperProvider>
