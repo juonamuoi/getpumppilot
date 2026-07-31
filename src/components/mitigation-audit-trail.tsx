@@ -38,6 +38,8 @@ import { MitigationReplayDiff } from "@/components/mitigation-replay-diff";
 import { MitigationBulkReplay } from "@/components/mitigation-bulk-replay";
 import { MitigationReplayButton } from "@/components/mitigation-replay-button";
 import { explainOutcome, explainFields } from "@/lib/mitigation-explain";
+import { buildAuditShareUrl, type AuditShareState } from "@/lib/audit-share-link";
+
 import { MitigationImport } from "@/components/mitigation-import";
 import { MitigationImportDiff } from "@/components/mitigation-import-diff";
 import { isImportedEntry } from "@/lib/mitigation-import";
