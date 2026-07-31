@@ -47,6 +47,7 @@ import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as EmbedMomentumRouteImport } from './routes/embed.momentum'
+import { Route as FeaturesIndexRouteImport } from './routes/features.index'
 import { Route as FeaturesDashboardRouteImport } from './routes/features.dashboard'
 import { Route as FeaturesJournalRouteImport } from './routes/features.journal'
 import { Route as LpVariantRouteImport } from './routes/lp.$variant'
@@ -252,6 +253,11 @@ const EmbedMomentumRoute = EmbedMomentumRouteImport.update({
   path: '/embed/momentum',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FeaturesIndexRoute = FeaturesIndexRouteImport.update({
+  id: '/features/',
+  path: '/features/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FeaturesDashboardRoute = FeaturesDashboardRouteImport.update({
   id: '/features/dashboard',
   path: '/features/dashboard',
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/features/journal': typeof FeaturesJournalRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
+  '/features/': typeof FeaturesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
@@ -412,6 +419,7 @@ export interface FileRoutesByTo {
   '/features/journal': typeof FeaturesJournalRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog': typeof BlogIndexRoute
+  '/features': typeof FeaturesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
@@ -465,6 +473,7 @@ export interface FileRoutesById {
   '/features/journal': typeof FeaturesJournalRoute
   '/lp/$variant': typeof LpVariantRoute
   '/blog/': typeof BlogIndexRoute
+  '/features/': typeof FeaturesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/momentum': typeof ApiPublicMomentumRoute
@@ -519,6 +528,7 @@ export interface FileRouteTypes {
     | '/features/journal'
     | '/lp/$variant'
     | '/blog/'
+    | '/features/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/features/journal'
     | '/lp/$variant'
     | '/blog'
+    | '/features'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
@@ -623,6 +634,7 @@ export interface FileRouteTypes {
     | '/features/journal'
     | '/lp/$variant'
     | '/blog/'
+    | '/features/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/momentum'
@@ -676,6 +688,7 @@ export interface RootRouteChildren {
   FeaturesJournalRoute: typeof FeaturesJournalRoute
   LpVariantRoute: typeof LpVariantRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  FeaturesIndexRoute: typeof FeaturesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicMomentumRoute: typeof ApiPublicMomentumRoute
@@ -954,6 +967,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbedMomentumRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/features/': {
+      id: '/features/'
+      path: '/features'
+      fullPath: '/features/'
+      preLoaderRoute: typeof FeaturesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/features/dashboard': {
       id: '/features/dashboard'
       path: '/features/dashboard'
@@ -1095,6 +1115,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeaturesJournalRoute: FeaturesJournalRoute,
   LpVariantRoute: LpVariantRoute,
   BlogIndexRoute: BlogIndexRoute,
+  FeaturesIndexRoute: FeaturesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicMomentumRoute: ApiPublicMomentumRoute,
