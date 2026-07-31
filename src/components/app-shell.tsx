@@ -20,6 +20,8 @@ import {
   Gift,
   Settings as SettingsIcon,
   TerminalSquare,
+  Rss,
+
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -35,6 +37,7 @@ import { SeoAlertNotifier } from "./seo-alert-notifier";
 import { PositionRiskNotifier } from "./position-risk-notifier";
 
 import { cn } from "@/lib/utils";
+import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -103,6 +106,31 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Journal feed autodiscovery links, shown in the sidebar and mobile menu. */
+function FeedLinks() {
+  return (
+    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+      <Rss className="h-3.5 w-3.5 text-amber-300" aria-hidden />
+      <span>Journal feed:</span>
+      <a
+        href={RSS_PATH}
+        className="underline underline-offset-2 hover:text-foreground"
+        title="Subscribe to the PumpPilot AI journal via RSS"
+      >
+        RSS
+      </a>
+      <span aria-hidden>·</span>
+      <a
+        href={ATOM_PATH}
+        className="underline underline-offset-2 hover:text-foreground"
+        title="Subscribe to the PumpPilot AI journal via Atom"
+      >
+        Atom
+      </a>
+    </div>
+  );
+}
+
 function LiveLockedCard() {
   return (
     <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
@@ -127,6 +155,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="px-3">
           <WalletConnect />
+        </div>
+        <div className="mt-3 px-4">
+          <FeedLinks />
         </div>
         <div className="mt-4 flex-1 overflow-y-auto px-3">
           <NavList />
@@ -173,6 +204,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
               <div className="px-3">
                 <WalletConnect />
+              </div>
+              <div className="mt-3 px-4">
+                <FeedLinks />
               </div>
               <div className="mt-4 px-3">
                 <NavList onNavigate={() => setOpen(false)} />

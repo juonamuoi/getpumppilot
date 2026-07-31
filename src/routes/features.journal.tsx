@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
 import {
   ArrowRight,
   Award,
@@ -180,6 +181,12 @@ function JournalOverviewPage() {
               <Link to="/paper">Start paper trading</Link>
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Subscribe to new journal articles:{" "}
+            <a href={RSS_PATH} className="underline hover:text-foreground">RSS</a>{" "}
+            ·{" "}
+            <a href={ATOM_PATH} className="underline hover:text-foreground">Atom</a>
+          </p>
         </header>
 
         <DisclaimerBanner />

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdsReportRouteImport } from './routes/ads-report'
 import { Route as AlertsRouteImport } from './routes/alerts'
+import { Route as AtomDotxmlRouteImport } from './routes/atom[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as CommunityRouteImport } from './routes/community'
@@ -33,6 +34,7 @@ import { Route as ReferRouteImport } from './routes/refer'
 import { Route as RefundRouteImport } from './routes/refund'
 import { Route as RiskRouteImport } from './routes/risk'
 import { Route as RiskDisclosureRouteImport } from './routes/risk-disclosure'
+import { Route as RssDotxmlRouteImport } from './routes/rss[.]xml'
 import { Route as ScannerRouteImport } from './routes/scanner'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SeoMonitorRouteImport } from './routes/seo-monitor'
@@ -74,6 +76,11 @@ const AdsReportRoute = AdsReportRouteImport.update({
 const AlertsRoute = AlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AtomDotxmlRoute = AtomDotxmlRouteImport.update({
+  id: '/atom.xml',
+  path: '/atom.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -179,6 +186,11 @@ const RiskRoute = RiskRouteImport.update({
 const RiskDisclosureRoute = RiskDisclosureRouteImport.update({
   id: '/risk-disclosure',
   path: '/risk-disclosure',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RssDotxmlRoute = RssDotxmlRouteImport.update({
+  id: '/rss.xml',
+  path: '/rss.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScannerRoute = ScannerRouteImport.update({
@@ -328,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
@@ -349,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/risk-disclosure': typeof RiskDisclosureRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/seo-monitor': typeof SeoMonitorRoute
@@ -381,6 +395,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
@@ -402,6 +417,7 @@ export interface FileRoutesByTo {
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/risk-disclosure': typeof RiskDisclosureRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/seo-monitor': typeof SeoMonitorRoute
@@ -435,6 +451,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
@@ -456,6 +473,7 @@ export interface FileRoutesById {
   '/refund': typeof RefundRoute
   '/risk': typeof RiskRoute
   '/risk-disclosure': typeof RiskDisclosureRoute
+  '/rss.xml': typeof RssDotxmlRoute
   '/scanner': typeof ScannerRoute
   '/security': typeof SecurityRoute
   '/seo-monitor': typeof SeoMonitorRoute
@@ -490,6 +508,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/atom.xml'
     | '/auth'
     | '/backtest'
     | '/community'
@@ -511,6 +530,7 @@ export interface FileRouteTypes {
     | '/refund'
     | '/risk'
     | '/risk-disclosure'
+    | '/rss.xml'
     | '/scanner'
     | '/security'
     | '/seo-monitor'
@@ -543,6 +563,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/atom.xml'
     | '/auth'
     | '/backtest'
     | '/community'
@@ -564,6 +585,7 @@ export interface FileRouteTypes {
     | '/refund'
     | '/risk'
     | '/risk-disclosure'
+    | '/rss.xml'
     | '/scanner'
     | '/security'
     | '/seo-monitor'
@@ -596,6 +618,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/atom.xml'
     | '/auth'
     | '/backtest'
     | '/community'
@@ -617,6 +640,7 @@ export interface FileRouteTypes {
     | '/refund'
     | '/risk'
     | '/risk-disclosure'
+    | '/rss.xml'
     | '/scanner'
     | '/security'
     | '/seo-monitor'
@@ -650,6 +674,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdsReportRoute: typeof AdsReportRoute
   AlertsRoute: typeof AlertsRoute
+  AtomDotxmlRoute: typeof AtomDotxmlRoute
   AuthRoute: typeof AuthRoute
   BacktestRoute: typeof BacktestRoute
   CommunityRoute: typeof CommunityRoute
@@ -671,6 +696,7 @@ export interface RootRouteChildren {
   RefundRoute: typeof RefundRoute
   RiskRoute: typeof RiskRoute
   RiskDisclosureRoute: typeof RiskDisclosureRoute
+  RssDotxmlRoute: typeof RssDotxmlRoute
   ScannerRoute: typeof ScannerRoute
   SecurityRoute: typeof SecurityRoute
   SeoMonitorRoute: typeof SeoMonitorRoute
@@ -720,6 +746,13 @@ declare module '@tanstack/react-router' {
       path: '/alerts'
       fullPath: '/alerts'
       preLoaderRoute: typeof AlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/atom.xml': {
+      id: '/atom.xml'
+      path: '/atom.xml'
+      fullPath: '/atom.xml'
+      preLoaderRoute: typeof AtomDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -867,6 +900,13 @@ declare module '@tanstack/react-router' {
       path: '/risk-disclosure'
       fullPath: '/risk-disclosure'
       preLoaderRoute: typeof RiskDisclosureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rss.xml': {
+      id: '/rss.xml'
+      path: '/rss.xml'
+      fullPath: '/rss.xml'
+      preLoaderRoute: typeof RssDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scanner': {
@@ -1076,6 +1116,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdsReportRoute: AdsReportRoute,
   AlertsRoute: AlertsRoute,
+  AtomDotxmlRoute: AtomDotxmlRoute,
   AuthRoute: AuthRoute,
   BacktestRoute: BacktestRoute,
   CommunityRoute: CommunityRoute,
@@ -1097,6 +1138,7 @@ const rootRouteChildren: RootRouteChildren = {
   RefundRoute: RefundRoute,
   RiskRoute: RiskRoute,
   RiskDisclosureRoute: RiskDisclosureRoute,
+  RssDotxmlRoute: RssDotxmlRoute,
   ScannerRoute: ScannerRoute,
   SecurityRoute: SecurityRoute,
   SeoMonitorRoute: SeoMonitorRoute,

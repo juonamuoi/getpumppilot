@@ -12,6 +12,7 @@ import {
   ORG_ID,
 } from "@/lib/structured-data";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
 import { CreditGate } from "@/components/credit-gate";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
@@ -142,6 +143,12 @@ function JournalPage() {
             Read the public trade journal walkthrough
           </Link>{" "}
           — no wallet needed.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Subscribe to the journal:{" "}
+          <a href={RSS_PATH} className="underline hover:text-foreground">RSS</a>{" "}
+          ·{" "}
+          <a href={ATOM_PATH} className="underline hover:text-foreground">Atom</a>
         </p>
         <div>
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-emerald-300">

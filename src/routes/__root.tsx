@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { ldScript, siteGraph } from "@/lib/structured-data";
+import { ATOM_PATH, FEED_TITLE, RSS_PATH } from "@/lib/feed";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -113,7 +114,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      // Feed autodiscovery for the journal (site-wide so every page exposes it).
+      {
+        rel: "alternate",
+        type: "application/rss+xml",
+        title: `${FEED_TITLE} — RSS`,
+        href: RSS_PATH,
+      },
+      {
+        rel: "alternate",
+        type: "application/atom+xml",
+        title: `${FEED_TITLE} — Atom`,
+        href: ATOM_PATH,
+      },
     ],
+
     // Site-wide Organization + WebSite graph. Page-specific schemas live on
     // their own routes and reference these nodes by @id.
     scripts: [ldScript(siteGraph)],

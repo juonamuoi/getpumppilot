@@ -1,5 +1,6 @@
 import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
 import { BLOG_POSTS } from "@/lib/blog-posts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,12 @@ function BlogIndex() {
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
             Practical guides on the best AI investment apps, momentum signals, paper trading, and risk-first portfolio management.
+          </p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Subscribe:{" "}
+            <a href={RSS_PATH} className="underline hover:text-foreground">RSS feed</a>{" "}
+            ·{" "}
+            <a href={ATOM_PATH} className="underline hover:text-foreground">Atom feed</a>
           </p>
         </div>
       </header>
