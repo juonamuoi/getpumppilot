@@ -56,6 +56,8 @@ import {
   type OutcomeFilter,
   type RangeFilter,
   type SavedAuditFilter,
+  RANGE_CHIPS,
+  RANGE_CHIP_LABEL,
 } from "@/lib/audit-filters";
 
 
@@ -980,7 +982,30 @@ export function MitigationAuditTrail({
             </Button>
           ))}
         </div>
+        <div
+          className="flex flex-wrap items-center gap-1"
+          role="group"
+          aria-label="Quick time range"
+        >
+          <span className="mr-1 text-[11px] text-muted-foreground">Quick range</span>
+          {RANGE_CHIPS.map((r) => (
+            <Button
+              key={r}
+              type="button"
+              size="sm"
+              variant={range === r ? "default" : "outline"}
+              aria-pressed={range === r}
+              title={RANGE_LABEL[r]}
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setRange(r)}
+            >
+              {RANGE_CHIP_LABEL[r]}
+            </Button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2">
+
+
 
           <div className="relative w-full max-w-xs">
             <Input
