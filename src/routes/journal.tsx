@@ -5,6 +5,7 @@ import {
   canonicalUrl,
   ldScript,
   nodeId,
+  pageEntityGraph,
   webPageSchema,
   WEBSITE_ID,
   ORG_ID,
