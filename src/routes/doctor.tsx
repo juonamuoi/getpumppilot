@@ -28,6 +28,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { requestTrade } from "@/lib/trade-gate";
 
 export const Route = createFileRoute("/doctor")({
   head: () => ({
@@ -128,8 +129,16 @@ function DoctorPage() {
     if (action === "buy") {
       const useNotional = notional && notional > 0 ? notional : paper.cash * 0.05;
       const qty = useNotional / a.price;
-      const r = paper.trade(symbol, "buy", qty);
-      r.ok ? toast.success(r.msg) : toast.error(r.msg);
+      // Global safety gate — nothing is submitted until the notice is acknowledged.
+      requestTrade({
+        action: `BUY ${qty.toFixed(6)} ${symbol}`,
+        mode: "paper",
+        detail: "Simulated order — no wallet signature and no on-chain submission.",
+        onConfirm: () => {
+          const r = paper.trade(symbol, "buy", qty);
+          r.ok ? toast.success(r.msg) : toast.error(r.msg);
+        },
+      });
       return;
     }
 
@@ -137,8 +146,15 @@ function DoctorPage() {
     const pos = paper.positions.find((p) => p.symbol === symbol);
     if (!pos) return toast.error("No open position for that symbol");
     const qty = action === "trim" ? pos.qty * 0.25 : pos.qty;
-    const r = paper.trade(symbol, "sell", qty);
-    r.ok ? toast.success(r.msg) : toast.error(r.msg);
+    requestTrade({
+      action: `SELL ${qty.toFixed(6)} ${symbol}`,
+      mode: "paper",
+      detail: "Simulated order — no wallet signature and no on-chain submission.",
+      onConfirm: () => {
+        const r = paper.trade(symbol, "sell", qty);
+        r.ok ? toast.success(r.msg) : toast.error(r.msg);
+      },
+    });
   };
 
   return (

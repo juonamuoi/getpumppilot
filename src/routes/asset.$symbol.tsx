@@ -19,6 +19,7 @@ import { AssetShareButtons } from "@/components/asset-share";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
+import { requestTrade } from "@/lib/trade-gate";
 import {
   absoluteUrl,
   assetDemoDataNodes,
@@ -110,13 +111,21 @@ function AssetPage() {
   const doTrade = (side: "buy" | "sell") => {
     const n = parseFloat(qty);
     if (!n || n <= 0) return toast.error("Enter a positive quantity");
-    const r = paper.trade(asset.symbol, side, n);
-    if (r.ok) {
-      toast.success(r.msg);
-      setQty("");
-    } else {
-      toast.error(r.msg);
-    }
+    // Global safety gate — nothing is submitted until the notice is acknowledged.
+    requestTrade({
+      action: `${side.toUpperCase()} ${n} ${asset.symbol}`,
+      mode: "paper",
+      detail: "Simulated order — no wallet signature and no on-chain submission.",
+      onConfirm: () => {
+        const r = paper.trade(asset.symbol, side, n);
+        if (r.ok) {
+          toast.success(r.msg);
+          setQty("");
+        } else {
+          toast.error(r.msg);
+        }
+      },
+    });
   };
 
   return (
