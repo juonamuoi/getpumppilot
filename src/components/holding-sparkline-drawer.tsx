@@ -3,7 +3,7 @@
 // browsable as a swipeable, snapping carousel.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Download } from "lucide-react";
 
 import {
   Drawer,
@@ -16,6 +16,9 @@ import {
 } from "@/components/ui/drawer";
 import { PriceSparkline, SparklineStats, fmtPrice } from "@/components/price-sparkline";
 import { SPARK_WINDOW_OPTIONS, type SparkWindowValue } from "@/lib/sparkline-window";
+import { seriesCsvFilename, seriesToCsv } from "@/lib/series-export";
+import { downloadCsv } from "@/lib/wallet-export";
+
 
 
 type Props = {
