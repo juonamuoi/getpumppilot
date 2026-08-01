@@ -31,6 +31,7 @@ import {
 import { useAuth } from "@/lib/auth-store";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { ShareLinks } from "@/components/share-links";
+import { AdPreview } from "@/components/ad-preview";
 
 
 import { CREDIT_PACKS } from "@/lib/credits";
@@ -427,6 +428,9 @@ function LandingPage() {
             <span className="inline-flex items-center gap-1">
               <Star className="h-3.5 w-3.5 text-amber-400" /> 4.8 avg from early users
             </span>
+          </div>
+          <div className="mt-12">
+            <AdPreview href={launchHref} label={user ? "Open dashboard" : "Sign up free"} />
           </div>
         </div>
       </section>
