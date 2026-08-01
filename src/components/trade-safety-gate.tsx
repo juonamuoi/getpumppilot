@@ -28,13 +28,19 @@ export function TradeSafetyGate() {
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex flex-wrap items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-amber-400" />
-            Trading is disabled
+            <ShieldAlert
+              className={`h-5 w-5 ${paper ? "text-emerald-400" : "text-amber-400"}`}
+            />
+            {paper ? "Before your first paper trade" : "Live execution is disabled"}
             <Badge
               variant="outline"
-              className="border-amber-500/40 text-[10px] uppercase text-amber-300"
+              className={
+                paper
+                  ? "border-emerald-500/40 text-[10px] uppercase text-emerald-300"
+                  : "border-amber-500/40 text-[10px] uppercase text-amber-300"
+              }
             >
-              Read-only · no execution
+              {paper ? "Simulated · no real funds" : "Read-only · no execution"}
             </Badge>
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
@@ -50,14 +56,16 @@ export function TradeSafetyGate() {
               <ul className="space-y-1.5 text-sm text-muted-foreground">
                 {SAFETY_NOTICE.map((line) => (
                   <li key={line} className="flex gap-2">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-400" />
+                    <span
+                      className={`mt-1.5 h-1 w-1 shrink-0 rounded-full ${paper ? "bg-emerald-400" : "bg-amber-400"}`}
+                    />
                     <span>{line}</span>
                   </li>
                 ))}
               </ul>
               <p className="text-xs text-muted-foreground">
                 {paper
-                  ? "You can continue with a simulated paper fill — no real funds move."
+                  ? "Continue to place the simulated fill — no real funds move. You won't see this notice again for paper trades."
                   : "This action is blocked. Nothing was submitted."}
               </p>
             </div>
@@ -69,7 +77,7 @@ export function TradeSafetyGate() {
           </AlertDialogCancel>
           {paper && (
             <AlertDialogAction onClick={() => void confirmTradeGate()}>
-              Continue as simulated paper trade
+              Place simulated trade
             </AlertDialogAction>
           )}
         </AlertDialogFooter>
