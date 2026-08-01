@@ -71,6 +71,7 @@ export async function confirmTradeGate() {
   const req = current;
   current = null;
   emit();
+  if (req?.mode === "paper") setPaperAcknowledged();
   await req?.onConfirm?.();
 }
 
