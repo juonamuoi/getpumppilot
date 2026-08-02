@@ -199,6 +199,7 @@ export function PumpWalletPanel() {
             onClick={() => {
               markBackedUp();
               setPhrase(null);
+              void trackWalletStep("wallet_backup_confirmed");
               toast.success("Backup confirmed — the phrase will not be shown again.");
             }}
           >
