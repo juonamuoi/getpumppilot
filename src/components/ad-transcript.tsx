@@ -82,7 +82,7 @@ export function AdTranscript({
   return (
     <details
       id={id}
-      open={activeIndex >= 0 ? undefined : undefined}
+
       className="mt-3 rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left"
     >
       <summary className="cursor-pointer text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
