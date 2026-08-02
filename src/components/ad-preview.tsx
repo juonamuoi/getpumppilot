@@ -394,24 +394,47 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         >
           {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </button>
+        <button
+          type="button"
+          onClick={toggleCaptions}
+          aria-label={
+            captionsOn
+              ? "Turn off English captions for the PumpPilot AI ad video. Keyboard shortcut: C"
+              : "Turn on English captions for the PumpPilot AI ad video. Keyboard shortcut: C"
+          }
+          aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
+          aria-pressed={captionsOn}
+          title="Captions on or off (C)"
+          className={`flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 p-2 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+            captionsOn ? "text-emerald-300" : "text-white/80"
+          }`}
+        >
+          {captionsOn ? (
+            <Captions className="h-4 w-4" />
+          ) : (
+            <CaptionsOff className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
         {/* Screen-reader status + keyboard instructions */}
         <p aria-live="polite" className="sr-only">
           {playing ? "Ad playing" : "Ad paused"}
           {muted ? ", muted" : ", sound on"}
+          {captionsOn ? ", captions on" : ", captions off"}
         </p>
         <p id="ad-preview-shortcuts" className="sr-only">
-          Keyboard shortcuts for this ad preview: press Space or K to play or pause the video, and
-          press M to mute or unmute it. Shortcuts work while focus is anywhere inside the preview,
-          including on these controls. Press Tab to reach the sign-up button below the video, then
-          the text transcript.
+          Keyboard shortcuts for this ad preview: press Space or K to play or pause the video,
+          press M to mute or unmute it, and press C to turn English captions on or off. Shortcuts
+          work while focus is anywhere inside the preview, including on these controls. Press Tab
+          to reach the sign-up button below the video, then the text transcript.
         </p>
         <p id="ad-preview-transcript-note" className="sr-only">
           {hasCaptions
-            ? "Captions are available for this video."
+            ? "Optional English captions are available for this video and can be toggled with the captions button or the C key. A full text transcript is also provided directly below the player."
             : "Captions are not available for this video. A full text transcript of the ad is provided directly below the player."}
         </p>
+
       </div>
 
       <AdTranscript id="ad-preview-transcript" />
