@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { ASSETS, getAsset } from "./mock-data";
 import { livePriceOf } from "./live-price-registry";
 import { getLiveTrading } from "./live-trading";
+import { describeRiskBlock, type RiskBlock } from "./risk-block";
+
 
 /** Live price when the feed covers the symbol, else the simulated demo price. */
 function markPrice(symbol: string, fallback: number): number {
