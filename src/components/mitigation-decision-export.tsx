@@ -925,6 +925,7 @@ export function MitigationDecisionExport<F,>({
                   {renamingId === p.id ? (
                     <Input
                       autoFocus
+                      aria-label={`Rename preset ${p.name}`}
                       value={renameValue}
                       onChange={(e) => setRenameValue(e.target.value)}
                       onBlur={() => commitRename(p)}
