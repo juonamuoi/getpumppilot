@@ -8,9 +8,11 @@ import {
   AD_VIEW_DEPTH_MILESTONES,
   type AdPreviewEvent,
 } from "@/lib/funnel";
+import { AdTranscript } from "@/components/ad-transcript";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
 import adPoster from "@/assets/pumppilot-ad-poster.jpg.asset.json";
 import robotImg from "@/assets/pumppilot-robot.png.asset.json";
+
 
 type Props = {
   /** Where the sign-up CTA points */
@@ -31,6 +33,9 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   /** Poster + skeleton stay up until the first frame is decodable. */
   const [ready, setReady] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
+  /** No WebVTT track ships with the ad, so the transcript is the fallback. */
+  const [hasCaptions, setHasCaptions] = useState(false);
+
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) {
@@ -158,12 +163,14 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   const showPoster = !ready || (reducedMotion === true && !playing);
 
   return (
+    <div className="mx-auto w-full max-w-[340px]">
     <div
       ref={containerRef}
       role="group"
       tabIndex={0}
       aria-label="PumpPilot AI ad preview with playback controls"
-      aria-describedby="ad-preview-shortcuts"
+      aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
+
       onKeyDown={(e) => {
         const target = e.target as HTMLElement;
         const onControl = !!target.closest("button, a, input");
@@ -193,13 +200,18 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         muted={muted}
         playsInline
         preload={inView ? "auto" : "none"}
-        onLoadedData={() => setReady(true)}
+        onLoadedData={(e) => {
+          setReady(true);
+          setHasCaptions(e.currentTarget.textTracks.length > 0);
+        }}
         onCanPlay={() => setReady(true)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => void trackAdPreviewEvent("complete")}
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
+        aria-describedby="ad-preview-transcript-note"
       />
+
 
       {/* Lightweight poster stand-in + skeleton while the video loads */}
       {showPoster && (
@@ -225,7 +237,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           onClick={startPlayback}
           className="absolute inset-x-0 top-0 flex h-3/5 flex-col items-center justify-center gap-2 text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-inset"
           aria-label="Play the PumpPilot AI ad. Motion is paused because your system prefers reduced motion. Keyboard shortcut: Space or K"
-          aria-describedby="ad-preview-shortcuts"
+          aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
 
         >
           <span className="rounded-full bg-emerald-500/90 p-4 shadow-lg shadow-emerald-500/40">
@@ -299,7 +311,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
               ? "Pause the PumpPilot AI ad video. Keyboard shortcut: Space or K"
               : "Play the PumpPilot AI ad video. Keyboard shortcut: Space or K"
           }
-          aria-describedby="ad-preview-shortcuts"
+          aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
           aria-pressed={playing}
           title="Play or pause (Space or K)"
           className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
@@ -314,7 +326,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
               ? "Unmute the PumpPilot AI ad video. Keyboard shortcut: M"
               : "Mute the PumpPilot AI ad video. Keyboard shortcut: M"
           }
-          aria-describedby="ad-preview-shortcuts"
+          aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
           aria-pressed={!muted}
           title="Mute or unmute (M)"
           className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
@@ -323,18 +335,26 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         </button>
       </div>
 
-      {/* Screen-reader status + keyboard instructions */}
-      <p aria-live="polite" className="sr-only">
-        {playing ? "Ad playing" : "Ad paused"}
-        {muted ? ", muted" : ", sound on"}
-      </p>
-      <p id="ad-preview-shortcuts" className="sr-only">
-        Keyboard shortcuts for this ad preview: press Space or K to play or pause the video, and
-        press M to mute or unmute it. Shortcuts work while focus is anywhere inside the preview,
-        including on these controls. Press Tab to reach the sign-up button below the video.
-      </p>
+        {/* Screen-reader status + keyboard instructions */}
+        <p aria-live="polite" className="sr-only">
+          {playing ? "Ad playing" : "Ad paused"}
+          {muted ? ", muted" : ", sound on"}
+        </p>
+        <p id="ad-preview-shortcuts" className="sr-only">
+          Keyboard shortcuts for this ad preview: press Space or K to play or pause the video, and
+          press M to mute or unmute it. Shortcuts work while focus is anywhere inside the preview,
+          including on these controls. Press Tab to reach the sign-up button below the video, then
+          the text transcript.
+        </p>
+        <p id="ad-preview-transcript-note" className="sr-only">
+          {hasCaptions
+            ? "Captions are available for this video."
+            : "Captions are not available for this video. A full text transcript of the ad is provided directly below the player."}
+        </p>
+      </div>
 
-
+      <AdTranscript id="ad-preview-transcript" />
     </div>
   );
 }
+
