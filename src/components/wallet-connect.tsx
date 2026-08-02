@@ -51,6 +51,10 @@ export function WalletConnect() {
 
   const [connected, setConnected] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  // True while the in-app wallet shows a recovery phrase or runs an operation —
+  // the dialog must not close on Esc / outside click during that window.
+  const [walletSensitive, setWalletSensitive] = useState(false);
+  const dialogContentRef = useRef<HTMLDivElement | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
