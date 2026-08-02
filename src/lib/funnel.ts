@@ -255,7 +255,9 @@ export type AdPreviewEvent =
   | "view_depth_25"
   | "view_depth_50"
   | "view_depth_75"
-  | "view_depth_100";
+  | "view_depth_100"
+  | "captions_on"
+  | "captions_off";
 
 /** Visibility milestones (fraction of the ad in view), tracked once each. */
 export const AD_VIEW_DEPTH_MILESTONES = [0.25, 0.5, 0.75, 1] as const;
