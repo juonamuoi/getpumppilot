@@ -24,6 +24,8 @@ import {
 import { toast } from "sonner";
 import { useSecurity } from "@/lib/security-store";
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
+import { OPEN_WALLET_EVENT } from "@/lib/backup-reminder";
+
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { PumpWalletPanel } from "@/components/pump-wallet-panel";
 
@@ -59,6 +61,14 @@ export function WalletConnect() {
   const [scanOpen, setScanOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scan, setScan] = useState<WalletScanResult | null>(null);
+
+  // The backup reminder can ask us to open the wallet dialog.
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_WALLET_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_WALLET_EVENT, onOpen);
+  }, []);
+
 
   const DEMO_ADDRESS = DEMO_WALLET_ADDRESS;
 

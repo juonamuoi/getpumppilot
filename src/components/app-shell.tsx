@@ -36,6 +36,8 @@ import { CreditBadge, CreditMeter } from "./credit-badge";
 import { AccountButton } from "./account-button";
 import { SeoAlertNotifier } from "./seo-alert-notifier";
 import { PositionRiskNotifier } from "./position-risk-notifier";
+import { WalletBackupReminder } from "./wallet-backup-reminder";
+
 
 import { cn } from "@/lib/utils";
 import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
@@ -232,6 +234,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to main content
       </a>
       <RouteAnnouncer />
+      <WalletBackupReminder />
+
       {/* Sidebar (desktop) */}
       <aside aria-label="Sidebar" className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border/60 bg-card/40 backdrop-blur lg:flex">
         <div className="p-4">
