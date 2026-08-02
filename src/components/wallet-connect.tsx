@@ -395,6 +395,11 @@ export function WalletConnect() {
             </p>
           </div>
 
+          {/* Optional in-app wallet for users without a browser extension */}
+          <PumpWalletPanel />
+
+
+
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
             <div className="flex items-center gap-2 font-semibold">
               <ShieldAlert className="h-4 w-4" /> Security notice
