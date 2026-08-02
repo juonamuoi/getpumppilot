@@ -60,6 +60,7 @@ export function LiveSwapPanel() {
   const [busy, setBusy] = useState<null | "quote" | "approve" | "swap">(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [failure, setFailure] = useState<FriendlySwapError | null>(null);
+  const [progress, setProgress] = useState<SwapProgress>(IDLE_PROGRESS);
 
   const sell = findToken(settings.chainId, sellSymbol);
   const buy = findToken(settings.chainId, buySymbol);
@@ -75,12 +76,19 @@ export function LiveSwapPanel() {
 
   if (settings.mode !== "live") return null;
 
+  function step(id: SwapStepId, status: SwapStepStatus, note?: string) {
+    setProgress((p) => ({ ...p, [id]: { status, note } }));
+  }
+
   function fail(e: unknown, stage: SwapErrorStage) {
     const friendly = explainSwapError(e, stage, {
       sellSymbol,
       chainName: chainName(settings.chainId),
     });
     setFailure(friendly);
+    const stepId: SwapStepId =
+      stage === "quote" ? "quote" : stage === "approve" ? "approve" : "submit";
+    step(stepId, "error", friendly.title);
     if (friendly.userRejected) toast.info(friendly.title);
     else toast.error(friendly.title);
   }
@@ -116,6 +124,7 @@ export function LiveSwapPanel() {
     setBusy("quote");
     setTxHash(null);
     setFailure(null);
+    step("quote", "active", "Finding the best route across DEX liquidity…");
     try {
       const q = await quoteFn({
         data: {
@@ -128,12 +137,39 @@ export function LiveSwapPanel() {
         },
       });
       setQuote(q);
-      if (!q.ok) fail(new Error(q.error ?? "Quote failed."), "quote");
+      if (!q.ok) {
+        fail(new Error(q.error ?? "Quote failed."), "quote");
+        return;
+      }
+      step("quote", "done", "Route ready — review the numbers below.");
+      if (q.allowanceTarget) {
+        step("approve", "idle", `One-time ${sellSymbol} approval required first.`);
+      } else {
+        step("approve", "skipped", `${sellSymbol} needs no approval.`);
+      }
+      step("submit", "idle");
+      step("confirm", "idle");
     } catch (e) {
       fail(e, "quote");
     } finally {
       setBusy(null);
     }
+  }
+
+  /** Poll for a receipt; resolves null when it never lands in the window. */
+  async function waitForReceipt(
+    provider: { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> },
+    hash: string,
+    tries = 60,
+  ): Promise<{ status?: string } | null> {
+    for (let i = 0; i < tries; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const receipt = (await provider
+        .request({ method: "eth_getTransactionReceipt", params: [hash] })
+        .catch(() => null)) as { status?: string } | null;
+      if (receipt) return receipt;
+    }
+    return null;
   }
 
   async function handleSwap() {
@@ -150,6 +186,7 @@ export function LiveSwapPanel() {
     try {
       if (quote.allowanceTarget) {
         setBusy("approve");
+        step("approve", "active", "Confirm the approval in your wallet…");
         const max = "f".repeat(64);
         const approvalHash = (await provider.request({
           method: "eth_sendTransaction",
@@ -162,25 +199,18 @@ export function LiveSwapPanel() {
           ],
         })) as string;
         toast.info("Approval submitted — waiting for confirmation, then we'll re-quote for you.");
+        step("approve", "active", "Approval sent — waiting for it to confirm on-chain…");
 
         // Wait for the approval receipt so the user doesn't have to re-quote
         // by hand; poll for up to ~2 minutes, then hand control back.
-        let confirmed = false;
-        for (let i = 0; i < 60; i++) {
-          await new Promise((r) => setTimeout(r, 2000));
-          const receipt = await provider
-            .request({ method: "eth_getTransactionReceipt", params: [approvalHash] })
-            .catch(() => null);
-          if (receipt) {
-            confirmed = true;
-            break;
-          }
-        }
+        const receipt = await waitForReceipt(provider, approvalHash);
         setBusy(null);
-        if (confirmed) {
+        if (receipt) {
+          step("approve", "done", "Approval confirmed.");
           toast.success("Approval confirmed — refreshing your quote.");
           await handleQuote();
         } else {
+          step("approve", "active", "Still pending — tap “Get route & quote” once it confirms.");
           toast.warning("Approval is still pending. Tap “Get route & quote” once it confirms.");
         }
         return;
@@ -188,6 +218,7 @@ export function LiveSwapPanel() {
 
 
       setBusy("swap");
+      step("submit", "active", "Confirm the swap in your wallet…");
       const hash = (await provider.request({
         method: "eth_sendTransaction",
         params: [
@@ -204,13 +235,28 @@ export function LiveSwapPanel() {
       })) as string;
       setTxHash(hash);
       setQuote(null);
+      step("submit", "done", `Broadcast as ${hash.slice(0, 10)}…${hash.slice(-6)}`);
       toast.success("Swap submitted to the network.");
+
+      step("confirm", "active", "Waiting for the network to include your trade…");
+      setBusy(null);
+      const receipt = await waitForReceipt(provider, hash);
+      if (!receipt) {
+        step("confirm", "active", "Still pending — follow the transaction link below.");
+      } else if (receipt.status === "0x0") {
+        step("confirm", "error", "The transaction reverted on-chain. No swap took place.");
+        toast.error("Swap reverted on-chain.");
+      } else {
+        step("confirm", "done", "Confirmed — tokens are in your wallet.");
+        toast.success("Swap confirmed on-chain.");
+      }
     } catch (e) {
       fail(e, stage);
     } finally {
       setBusy(null);
     }
   }
+
 
   /** One-click retry: pick the right action for the failure we saw. */
   async function handleRetry() {
