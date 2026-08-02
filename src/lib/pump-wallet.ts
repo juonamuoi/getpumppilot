@@ -357,6 +357,8 @@ export async function resetPumpWalletPassword(
 
 const ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel", "touchstart", "scroll"] as const;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
+/** Wall-clock sweep: background tabs throttle setTimeout, so we re-check. */
+let idleSweep: ReturnType<typeof setInterval> | null = null;
 
 export const AUTO_LOCK_OPTIONS = [1, 5, 10, 30, 60, 0] as const;
 
@@ -377,9 +379,24 @@ function armIdleTimer() {
   emit();
 }
 
+/**
+ * Locks when the deadline already passed (throttled timer, suspended tab,
+ * sleeping laptop) — otherwise reports that the session is still live.
+ */
+function enforceDeadline(): boolean {
+  if (!account) return false;
+  const at = state.autoLockAt;
+  if (at !== null && Date.now() >= at) {
+    lockPumpWallet("idle");
+    return true;
+  }
+  return false;
+}
+
 /** Any user interaction pushes the auto-lock deadline back. */
 export function noteWalletActivity() {
   if (!account) return;
+  if (enforceDeadline()) return;
   armIdleTimer();
 }
 
@@ -388,8 +405,15 @@ function onActivity() {
 }
 
 function onVisibility() {
-  // Returning to a backgrounded tab counts as activity; leaving does not.
-  if (typeof document !== "undefined" && document.visibilityState === "visible") noteWalletActivity();
+  if (typeof document === "undefined" || document.visibilityState !== "visible") return;
+  // Coming back from a hidden tab is NOT activity: if the idle window elapsed
+  // while we were away, re-authentication is required before anything else.
+  if (enforceDeadline()) return;
+  armIdleTimer();
+}
+
+function onReturnFocus() {
+  enforceDeadline();
 }
 
 function startAutoLock() {
@@ -398,6 +422,9 @@ function startAutoLock() {
   for (const ev of ACTIVITY_EVENTS)
     window.addEventListener(ev, onActivity, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
+  window.addEventListener("focus", onReturnFocus);
+  window.addEventListener("pageshow", onReturnFocus);
+  idleSweep = setInterval(enforceDeadline, 5_000);
   armIdleTimer();
 }
 
@@ -405,8 +432,12 @@ function stopAutoLock() {
   if (typeof window === "undefined") return;
   for (const ev of ACTIVITY_EVENTS) window.removeEventListener(ev, onActivity);
   document.removeEventListener("visibilitychange", onVisibility);
+  window.removeEventListener("focus", onReturnFocus);
+  window.removeEventListener("pageshow", onReturnFocus);
   if (idleTimer) clearTimeout(idleTimer);
   idleTimer = null;
+  if (idleSweep) clearInterval(idleSweep);
+  idleSweep = null;
   if (state.autoLockAt !== null) state = { ...state, autoLockAt: null };
 }
 
