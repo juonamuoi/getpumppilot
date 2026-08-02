@@ -191,20 +191,13 @@ export function LiveSwapPanel() {
         </div>
 
         {!address ? (
-          <Button
-            className="w-full"
-            variant="outline"
-            disabled={!available}
-            onClick={() => connect().catch(() => toast.error("Wallet connection cancelled."))}
-          >
-            <Wallet className="mr-2 h-4 w-4" />
-            {available ? "Connect wallet to trade live" : "No browser wallet detected"}
-          </Button>
+          <ConnectWalletButton label="Connect wallet to trade live" />
         ) : (
           <p className="text-xs text-muted-foreground">
             Signing as <span className="font-mono">{address.slice(0, 6)}…{address.slice(-4)}</span>
           </p>
         )}
+
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-1.5">
