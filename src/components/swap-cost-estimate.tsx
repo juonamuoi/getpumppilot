@@ -129,7 +129,7 @@ export function SwapCostBar({
   // the moment of signing. Paused while a wallet action is in flight.
   const cadence = Math.max(1, Math.round(refreshMs / 1000));
   const secondsLeft =
-    autoRefresh && age !== null && !busy ? Math.max(0, cadence - age) : null;
+    autoRefresh && age !== null ? Math.max(0, cadence - (busy ? cadence : age)) : null;
   const pct = secondsLeft === null ? 0 : ((cadence - secondsLeft) / cadence) * 100;
 
   const tone =
