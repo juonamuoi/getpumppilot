@@ -96,7 +96,68 @@ export function LiveSwapPanel() {
     });
   }, [quote, settings.chainId, settings.slippageBps, notionalUsd]);
 
+  // Live view of which network the wallet is actually on.
+  const [walletChainId, setWalletChainId] = useState<number | null>(null);
+  useEffect(() => {
+    const provider = getInjectedProvider();
+    if (!provider || !address) {
+      setWalletChainId(null);
+      return;
+    }
+    let alive = true;
+    const read = () => {
+      void provider
+        .request({ method: "eth_chainId" })
+        .then((id) => {
+          if (alive) setWalletChainId(Number(id));
+        })
+        .catch(() => undefined);
+    };
+    read();
+    const onChain = () => read();
+    provider.on?.("chainChanged", onChain);
+    return () => {
+      alive = false;
+      provider.removeListener?.("chainChanged", onChain);
+    };
+  }, [address]);
+
+  const readiness = useMemo(
+    () =>
+      evaluateSwapReadiness({
+        address,
+        walletChainId,
+        targetChainId: settings.chainId,
+        targetChainName: chainName(settings.chainId),
+        sellSymbol,
+        buySymbol,
+        amount,
+        notionalUsd,
+        maxTradeUsd: settings.maxTradeUsd,
+        hasQuote: Boolean(quote?.ok),
+        needsApproval: Boolean(quote?.allowanceTarget),
+      }),
+    [
+      address,
+      walletChainId,
+      settings.chainId,
+      settings.maxTradeUsd,
+      sellSymbol,
+      buySymbol,
+      amount,
+      notionalUsd,
+      quote,
+    ],
+  );
+
+  const focusAmount = useCallback(() => {
+    const el = document.getElementById("live-amount");
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (el as HTMLInputElement | null)?.focus();
+  }, []);
+
   if (settings.mode !== "live") return null;
+
 
   function step(id: SwapStepId, status: SwapStepStatus, note?: string) {
     setProgress((p) => ({ ...p, [id]: { status, note } }));
