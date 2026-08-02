@@ -46,6 +46,8 @@ import {
   type FriendlySwapError,
   type SwapErrorStage,
 } from "@/lib/swap-errors";
+import { SwapCostEstimateCard } from "@/components/swap-cost-estimate";
+import { estimateSwapCost, nativeSymbolFor } from "@/lib/swap-fees";
 
 
 function encodeApprove(spender: string, amountHex: string) {
@@ -80,6 +82,17 @@ export function LiveSwapPanel() {
   }, [sell, amount]);
 
   const overLimit = notionalUsd !== null && notionalUsd > settings.maxTradeUsd;
+
+  const costEstimate = useMemo(() => {
+    if (!quote?.ok) return null;
+    return estimateSwapCost({
+      chainId: settings.chainId,
+      totalNetworkFeeWei: quote.totalNetworkFeeWei,
+      nativeUsd: livePriceOf(nativeSymbolFor(settings.chainId)) ?? null,
+      notionalUsd,
+      slippageBps: settings.slippageBps,
+    });
+  }, [quote, settings.chainId, settings.slippageBps, notionalUsd]);
 
   if (settings.mode !== "live") return null;
 
@@ -424,6 +437,11 @@ export function LiveSwapPanel() {
             )}
           </div>
         )}
+
+        {quote?.ok && costEstimate && (
+          <SwapCostEstimateCard estimate={costEstimate} slippageBps={settings.slippageBps} />
+        )}
+
 
         {txHash && (
           <a
