@@ -286,31 +286,46 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         <button
           type="button"
           onClick={togglePlayback}
-          aria-label={playing ? "Pause ad" : "Play ad"}
+          aria-label={
+            playing
+              ? "Pause the PumpPilot AI ad video. Keyboard shortcut: Space or K"
+              : "Play the PumpPilot AI ad video. Keyboard shortcut: Space or K"
+          }
+          aria-describedby="ad-preview-shortcuts"
           aria-pressed={playing}
-          className="rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          title="Play or pause (Space or K)"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         >
           {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </button>
         <button
           type="button"
           onClick={toggleMute}
-          aria-label={muted ? "Unmute ad" : "Mute ad"}
+          aria-label={
+            muted
+              ? "Unmute the PumpPilot AI ad video. Keyboard shortcut: M"
+              : "Mute the PumpPilot AI ad video. Keyboard shortcut: M"
+          }
+          aria-describedby="ad-preview-shortcuts"
           aria-pressed={!muted}
-          className="rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          title="Mute or unmute (M)"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         >
           {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </button>
       </div>
 
-      {/* Screen-reader status + keyboard hint */}
+      {/* Screen-reader status + keyboard instructions */}
       <p aria-live="polite" className="sr-only">
         {playing ? "Ad playing" : "Ad paused"}
         {muted ? ", muted" : ", sound on"}
       </p>
-      <p className="sr-only">
-        Press Space or K to play or pause the ad, and M to toggle sound.
+      <p id="ad-preview-shortcuts" className="sr-only">
+        Keyboard shortcuts for this ad preview: press Space or K to play or pause the video, and
+        press M to mute or unmute it. Shortcuts work while focus is anywhere inside the preview,
+        including on these controls. Press Tab to reach the sign-up button below the video.
       </p>
+
 
     </div>
   );
