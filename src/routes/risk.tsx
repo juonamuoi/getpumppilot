@@ -189,6 +189,7 @@ function SliderRow({
         </span>
       </div>
       <Slider
+        aria-label={label}
         value={[value]}
         onValueChange={(v) => onChange(v[0])}
         min={min}

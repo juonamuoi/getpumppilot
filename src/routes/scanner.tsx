@@ -119,7 +119,7 @@ function SortHeader({
 function ScoreCell({ v }: { v: number }) {
   return (
     <div className="flex items-center justify-end gap-2">
-      <Progress value={v} className="h-1 w-10" />
+      <Progress aria-label="Momentum score" value={v} className="h-1 w-10" />
       <span className={cn("w-6 text-right font-mono text-xs", scoreColor(v))}>{v}</span>
     </div>
   );
@@ -355,7 +355,7 @@ function Scanner() {
                                       {a.momentum[c.key]}
                                     </span>
                                   </div>
-                                  <Progress value={a.momentum[c.key]} className="mt-1 h-1" />
+                                  <Progress aria-label={`${c.label} score`} value={a.momentum[c.key]} className="mt-1 h-1" />
                                 </div>
                               ))}
                             </div>
@@ -363,7 +363,7 @@ function Scanner() {
                               {COMPONENTS.map((c) => (
                                 <div key={c.key} className="flex items-center gap-3">
                                   <div className="w-20 text-xs text-muted-foreground">{c.label}</div>
-                                  <Progress value={a.momentum[c.key]} className="h-1.5 flex-1" />
+                                  <Progress aria-label={`${c.label} score`} value={a.momentum[c.key]} className="h-1.5 flex-1" />
                                   <div className={cn("w-8 text-right font-mono text-xs", scoreColor(a.momentum[c.key]))}>
                                     {a.momentum[c.key]}
                                   </div>

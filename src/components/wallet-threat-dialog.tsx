@@ -221,7 +221,7 @@ export function WalletThreatDialog({
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
               Scanning approvals, spenders and signature history…
             </div>
-            <Progress value={66} />
+            <Progress aria-label="Wallet scan in progress" value={66} />
           </div>
         )}
 

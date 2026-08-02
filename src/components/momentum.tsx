@@ -44,7 +44,7 @@ export function MomentumBreakdown({ asset }: { asset: Asset }) {
               <span className="text-muted-foreground">{label}</span>
               <span className={`font-mono ${scoreColor(v)}`}>{v}</span>
             </div>
-            <Progress value={v} className="h-1.5" />
+            <Progress aria-label={`${label} score`} value={v} className="h-1.5" />
           </div>
         ))}
       </div>

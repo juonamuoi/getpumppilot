@@ -129,7 +129,7 @@ export function PumpQuestDashboard({ onChanged }: { onChanged?: () => void }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Progress value={pct} className="h-2" />
+            <Progress aria-label="Quest progress" value={pct} className="h-2" />
             <p className="text-xs text-muted-foreground">
               {earned.toLocaleString()} of {totalReward.toLocaleString()} quest PUMP earned ({pct}%).
             </p>

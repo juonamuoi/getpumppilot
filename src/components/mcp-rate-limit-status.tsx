@@ -37,7 +37,7 @@ function ScopeRow({
           {scope.remaining}/{scope.limit} left
         </span>
       </div>
-      <Progress value={pct(scope)} className="h-1.5" />
+      <Progress aria-label="Rate limit usage" value={pct(scope)} className="h-1.5" />
       <p className="text-[11px] text-muted-foreground">
         {scope.throttled
           ? `Throttled — retry in ${scope.retryAfterSeconds}s (${new Date(scope.nextRetryAt).toLocaleTimeString()})`

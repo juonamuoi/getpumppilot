@@ -358,7 +358,7 @@ export function MitigationBulkReplay({
 
         {busy || resultList.length > 0 ? (
           <div className="space-y-2">
-            <Progress value={chosen.length ? (done / chosen.length) * 100 : 0} className="h-1.5" />
+            <Progress aria-label="Bulk replay progress" value={chosen.length ? (done / chosen.length) * 100 : 0} className="h-1.5" />
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span>
                 {done}/{chosen.length} processed

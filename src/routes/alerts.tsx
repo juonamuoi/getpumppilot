@@ -4591,6 +4591,7 @@ function ReplayPanel() {
               <span className="font-mono text-xs text-emerald-300">{steps}</span>
             </div>
             <Slider
+              aria-label="Snapshots to evaluate"
               value={[steps]}
               onValueChange={(v) => setSteps(v[0])}
               min={10}
@@ -4683,6 +4684,7 @@ function ReplayPanel() {
                   <span className="font-mono text-xs text-emerald-300">{auto.maxPerRun}</span>
                 </div>
                 <Slider
+                  aria-label="Max changes per replay"
                   value={[auto.maxPerRun]}
                   onValueChange={(v) => setAuto((a) => ({ ...a, maxPerRun: v[0] }))}
                   min={1}

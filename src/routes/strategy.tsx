@@ -230,7 +230,7 @@ function SliderRow({
         <Label className="text-xs">{label}</Label>
         <span className="font-mono text-xs text-emerald-300">{display}</span>
       </div>
-      <Slider value={value} onValueChange={onValueChange} min={0} max={100} step={1} />
+      <Slider aria-label={label} value={value} onValueChange={onValueChange} min={0} max={100} step={1} />
     </div>
   );
 }
