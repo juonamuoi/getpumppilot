@@ -16,6 +16,7 @@ import { Route as AtomDotxmlRouteImport } from './routes/atom[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as CommunityRouteImport } from './routes/community'
+import { Route as ControlPanelRouteImport } from './routes/control-panel'
 import { Route as CopilotRouteImport } from './routes/copilot'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DevelopersRouteImport } from './routes/developers'
@@ -99,6 +100,11 @@ const BacktestRoute = BacktestRouteImport.update({
 const CommunityRoute = CommunityRouteImport.update({
   id: '/community',
   path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ControlPanelRoute = ControlPanelRouteImport.update({
+  id: '/control-panel',
+  path: '/control-panel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CopilotRoute = CopilotRouteImport.update({
@@ -362,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
+  '/control-panel': typeof ControlPanelRoute
   '/copilot': typeof CopilotRoute
   '/dashboard': typeof DashboardRoute
   '/developers': typeof DevelopersRoute
@@ -420,6 +427,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
+  '/control-panel': typeof ControlPanelRoute
   '/copilot': typeof CopilotRoute
   '/dashboard': typeof DashboardRoute
   '/developers': typeof DevelopersRoute
@@ -479,6 +487,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
   '/community': typeof CommunityRoute
+  '/control-panel': typeof ControlPanelRoute
   '/copilot': typeof CopilotRoute
   '/dashboard': typeof DashboardRoute
   '/developers': typeof DevelopersRoute
@@ -539,6 +548,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/backtest'
     | '/community'
+    | '/control-panel'
     | '/copilot'
     | '/dashboard'
     | '/developers'
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/backtest'
     | '/community'
+    | '/control-panel'
     | '/copilot'
     | '/dashboard'
     | '/developers'
@@ -655,6 +666,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/backtest'
     | '/community'
+    | '/control-panel'
     | '/copilot'
     | '/dashboard'
     | '/developers'
@@ -714,6 +726,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BacktestRoute: typeof BacktestRoute
   CommunityRoute: typeof CommunityRoute
+  ControlPanelRoute: typeof ControlPanelRoute
   CopilotRoute: typeof CopilotRoute
   DashboardRoute: typeof DashboardRoute
   DevelopersRoute: typeof DevelopersRoute
@@ -813,6 +826,13 @@ declare module '@tanstack/react-router' {
       path: '/community'
       fullPath: '/community'
       preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/control-panel': {
+      id: '/control-panel'
+      path: '/control-panel'
+      fullPath: '/control-panel'
+      preLoaderRoute: typeof ControlPanelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/copilot': {
@@ -1180,6 +1200,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BacktestRoute: BacktestRoute,
   CommunityRoute: CommunityRoute,
+  ControlPanelRoute: ControlPanelRoute,
   CopilotRoute: CopilotRoute,
   DashboardRoute: DashboardRoute,
   DevelopersRoute: DevelopersRoute,
