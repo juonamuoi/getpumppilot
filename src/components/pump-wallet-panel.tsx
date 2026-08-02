@@ -404,6 +404,7 @@ export function PumpWalletPanel() {
               )
             ) {
               deletePumpWallet();
+              void trackWalletStep("wallet_removed");
               toast.success("Wallet removed from this device");
             }
           }}
