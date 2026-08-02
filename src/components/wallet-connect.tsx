@@ -363,7 +363,27 @@ export function WalletConnect() {
             <Wallet className="h-4 w-4" /> Connect wallet
           </Button>
         </DialogTrigger>
-        <DialogContent onPaste={handlePaste}>
+        <DialogContent
+          ref={dialogContentRef}
+          onPaste={handlePaste}
+          aria-describedby="wallet-dialog-keys"
+          className="max-h-[85dvh] overflow-y-auto"
+          onEscapeKeyDown={(e) => {
+            if (walletSensitive) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (walletSensitive) e.preventDefault();
+          }}
+          onOpenAutoFocus={(e) => {
+            // Land focus on the first control inside the dialog instead of the
+            // container, so the very first Tab moves forward through the form.
+            e.preventDefault();
+            const first = dialogContentRef.current?.querySelector<HTMLElement>(
+              'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+            );
+            (first ?? dialogContentRef.current)?.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               Connect a wallet
@@ -375,6 +395,24 @@ export function WalletConnect() {
               Read-only demo connection. PumpPilot AI never requests seed phrases or private keys.
             </DialogDescription>
           </DialogHeader>
+
+          <p
+            id="wallet-dialog-keys"
+            className="rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-[11px] text-muted-foreground"
+          >
+            Keyboard: <kbd className="font-mono">Tab</kbd> /{" "}
+            <kbd className="font-mono">Shift + Tab</kbd> cycle through the controls in this dialog
+            only, <kbd className="font-mono">Enter</kbd> or{" "}
+            <kbd className="font-mono">Space</kbd> activates, and{" "}
+            <kbd className="font-mono">Esc</kbd> closes it.
+            {walletSensitive ? (
+              <span className="ml-1 font-medium text-amber-300">
+                Closing is disabled while your recovery phrase is on screen — finish the backup
+                steps first.
+              </span>
+            ) : null}
+          </p>
+
 
           {!originCheck.ok && (
             <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">
