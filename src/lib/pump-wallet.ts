@@ -38,6 +38,8 @@ export type PumpWalletRecord = {
   iv: string;
   /** base64 AES-GCM ciphertext of the recovery phrase */
   cipher: string;
+  /** ISO timestamp of the last password change/reset, if any. */
+  rotatedAt?: string;
 };
 
 export type PumpWalletState = {
@@ -230,6 +232,92 @@ export function markBackedUp() {
   state = { ...state, record };
   emit();
 }
+
+/* --------------------- password change / reset ----------------------- */
+
+/** Re-encrypts an existing phrase under a fresh salt/IV and new password. */
+async function reencrypt(
+  record: PumpWalletRecord,
+  mnemonic: string,
+  newPassword: string,
+): Promise<PumpWalletRecord> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(newPassword, salt);
+  const cipher = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv as unknown as BufferSource },
+    key,
+    enc.encode(mnemonic),
+  );
+  return {
+    ...record,
+    salt: toB64(salt),
+    iv: toB64(iv),
+    cipher: toB64(cipher),
+    rotatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Changes the vault password. Decrypts with the current password in memory,
+ * re-encrypts under a brand-new salt/IV, and writes the vault back. The
+ * phrase itself is never persisted in plaintext and never leaves the device.
+ */
+export async function changePumpWalletPassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  hydrate();
+  const record = state.record;
+  if (!record) throw new Error("No PumpPilot wallet on this device.");
+  const problem = passwordProblem(newPassword);
+  if (problem) throw new Error(problem);
+  if (newPassword === currentPassword)
+    throw new Error("Choose a password different from the current one.");
+
+  const mnemonic = await decryptMnemonic(record, currentPassword);
+  const next = await reencrypt(record, mnemonic, newPassword);
+  persist(next);
+  state = { ...state, record: next };
+  emit();
+}
+
+/**
+ * Password reset — only possible with the 12-word recovery phrase, since the
+ * password is never stored or recoverable. The phrase is used in memory to
+ * verify it matches this vault's address, then discarded: we persist only the
+ * newly encrypted vault.
+ */
+export async function resetPumpWalletPassword(
+  recoveryPhrase: string,
+  newPassword: string,
+): Promise<void> {
+  hydrate();
+  const record = state.record;
+  if (!record) throw new Error("No PumpPilot wallet on this device.");
+  const problem = passwordProblem(newPassword);
+  if (problem) throw new Error(problem);
+
+  const phrase = recoveryPhrase.trim().toLowerCase().replace(/\s+/g, " ");
+  if (phrase.split(" ").length !== 12)
+    throw new Error("Enter all 12 recovery words, separated by spaces.");
+
+  let acct: Account;
+  try {
+    acct = mnemonicToAccount(phrase);
+  } catch {
+    throw new Error("That recovery phrase is not valid.");
+  }
+  if (acct.address.toLowerCase() !== record.address.toLowerCase())
+    throw new Error("That phrase belongs to a different wallet.");
+
+  const next = await reencrypt(record, phrase, newPassword);
+  persist(next);
+  account = acct;
+  state = { record: next, unlockedAddress: acct.address };
+  emit();
+}
+
 
 /** Permanently removes the encrypted vault from this browser. */
 export function deletePumpWallet() {
