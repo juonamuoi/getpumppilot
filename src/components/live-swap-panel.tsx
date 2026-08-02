@@ -408,7 +408,7 @@ export function LiveSwapPanel() {
         </div>
 
         {!address ? (
-          <div className="space-y-3">
+          <div id="live-swap-connect" className="space-y-3">
             <ConnectWalletButton label="Connect wallet to trade live" />
             <p className="text-center text-[11px] text-muted-foreground">or</p>
             <PumpWalletPanel />
