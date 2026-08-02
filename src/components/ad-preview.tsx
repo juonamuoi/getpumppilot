@@ -153,6 +153,30 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     void trackAdPreviewEvent(`captions_lang_${code}`);
   }
 
+  /** Caption text size — larger sizes help on small phone screens. */
+  function chooseCaptionSize(value: string) {
+    setCaptionSize(value as CaptionSize);
+    setCaptionsOn(true);
+    try {
+      window.localStorage.setItem("pp.ad-caption-size", value);
+      window.localStorage.setItem("pp.ad-captions", "on");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Cue background — solid box, dimmed box, or outlined text only. */
+  function chooseCaptionBg(value: string) {
+    setCaptionBg(value as CaptionBg);
+    setCaptionsOn(true);
+    try {
+      window.localStorage.setItem("pp.ad-caption-bg", value);
+      window.localStorage.setItem("pp.ad-captions", "on");
+    } catch {
+      /* ignore */
+    }
+  }
+
 
 
 
@@ -512,7 +536,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
               </span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Caption language</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup
@@ -525,7 +549,37 @@ export function AdPreview({ href, label = "Start free" }: Props) {
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Caption size</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={captionSize}
+              onValueChange={chooseCaptionSize}
+            >
+              {CAPTION_SIZES.map((size) => (
+                <DropdownMenuRadioItem key={size.value} value={size.value}>
+                  {size.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Caption background</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={captionBg}
+              onValueChange={chooseCaptionBg}
+            >
+              {CAPTION_BACKGROUNDS.map((bg) => (
+                <DropdownMenuRadioItem key={bg.value} value={bg.value}>
+                  <span>
+                    {bg.label}
+                    <span className="block text-[11px] text-muted-foreground">
+                      {bg.hint}
+                    </span>
+                  </span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
           </DropdownMenuContent>
+
         </DropdownMenu>
       </div>
 
