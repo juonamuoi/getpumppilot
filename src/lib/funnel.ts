@@ -230,3 +230,58 @@ export async function trackSignupAttribution(userId: string) {
     /* ignore */
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Landing ad preview engagement
+ *
+ * Interactions with the embedded auto-play ad on the landing page are
+ * recorded so we can measure whether the creative actually drives the
+ * overlaid sign-up CTA. Stored in the same event table under a dedicated
+ * experiment so funnel and creative reports stay clean.
+ * ------------------------------------------------------------------ */
+
+export const AD_PREVIEW_EXPERIMENT = "landing_ad_preview";
+
+export type AdPreviewEvent =
+  | "impression"
+  | "autoplay_started"
+  | "autoplay_blocked"
+  | "unmute"
+  | "mute"
+  | "complete"
+  | "cta_click";
+
+/** Fire-once-per-browser events (impressions, first completion). */
+const ONCE_EVENTS: AdPreviewEvent[] = ["impression", "autoplay_started", "complete"];
+
+/**
+ * Record an ad preview interaction. Best-effort — analytics must never break
+ * playback or the CTA.
+ */
+export async function trackAdPreviewEvent(
+  event: AdPreviewEvent,
+  creativeId = "landing-hero-ad",
+) {
+  if (typeof window === "undefined") return;
+  if (ONCE_EVENTS.includes(event)) {
+    const key = `pp_ad_preview:${creativeId}:${event}`;
+    if (safeGet(key)) return;
+    safeSet(key, new Date().toISOString());
+  }
+
+  const ctx = getUtmContext();
+  try {
+    await supabase.from("ad_creative_events").insert({
+      experiment: AD_PREVIEW_EXPERIMENT,
+      variant: ctx?.variant ?? "site",
+      creative_id: creativeId,
+      event,
+      visitor_id: getVisitorId(),
+      utm_source: ctx?.utm_source ?? null,
+      utm_medium: ctx?.utm_medium ?? null,
+      utm_campaign: ctx?.utm_campaign ?? null,
+    });
+  } catch {
+    /* ignore */
+  }
+}

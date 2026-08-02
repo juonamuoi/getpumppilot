@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { trackCtaClick } from "@/lib/funnel";
+import { trackCtaClick, trackAdPreviewEvent } from "@/lib/funnel";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
 import adPoster from "@/assets/pumppilot-ad-poster.jpg.asset.json";
 import robotImg from "@/assets/pumppilot-robot.png.asset.json";
@@ -16,19 +16,44 @@ type Props = {
 /** Autoplaying (muted, looping) ad preview with the robot + sign-up CTA overlaid. */
 export function AdPreview({ href, label = "Start free" }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [muted, setMuted] = useState(true);
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     el.muted = true;
-    void el.play().catch(() => {
-      /* autoplay blocked — poster stays visible */
-    });
+    void el
+      .play()
+      .then(() => void trackAdPreviewEvent("autoplay_started"))
+      .catch(() => {
+        /* autoplay blocked — poster stays visible */
+        void trackAdPreviewEvent("autoplay_blocked");
+      });
+  }, []);
+
+  // Impression: fired once the ad is actually visible in the viewport.
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.5)) {
+          void trackAdPreviewEvent("impression");
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.5 },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
   }, []);
 
   return (
-    <div className="relative mx-auto w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10">
+    <div
+      ref={containerRef}
+      className="relative mx-auto w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10"
+    >
       <video
         ref={videoRef}
         className="block h-auto w-full"
@@ -39,8 +64,10 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         muted={muted}
         playsInline
         preload="metadata"
+        onEnded={() => void trackAdPreviewEvent("complete")}
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
       />
+
 
       {/* bottom gradient so the CTA stays legible over any frame */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black via-black/70 to-transparent" />
@@ -58,7 +85,10 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           <Button
             size="lg"
             asChild
-            onClick={() => void trackCtaClick("hero-ad-overlay")}
+            onClick={() => {
+              void trackCtaClick("hero-ad-overlay");
+              void trackAdPreviewEvent("cta_click");
+            }}
             className="absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-7 text-base shadow-xl shadow-emerald-500/40"
           >
             <Link to={href}>
@@ -78,8 +108,10 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           if (!el) return;
           el.muted = !el.muted;
           setMuted(el.muted);
+          void trackAdPreviewEvent(el.muted ? "mute" : "unmute");
           void el.play().catch(() => {});
         }}
+
         aria-label={muted ? "Unmute ad" : "Mute ad"}
         className="absolute right-3 top-3 rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white"
       >
