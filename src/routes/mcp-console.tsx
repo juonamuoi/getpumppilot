@@ -257,6 +257,7 @@ function McpConsolePage() {
                         variant="ghost"
                         className="h-6 w-6"
                         onClick={() => copy(r.auditId!, "Audit ID")}
+                        aria-label="Copy audit ID"
                       >
                         <Copy className="h-3 w-3" />
                       </Button>

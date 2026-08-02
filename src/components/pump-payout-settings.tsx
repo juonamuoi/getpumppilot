@@ -122,7 +122,13 @@ export function PumpPayoutSettings({
               {address ? shorten(address) : "—"}
             </code>
             {address ? (
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={copy}>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={copy}
+                aria-label={copied ? "Address copied" : "Copy payout address"}
+              >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               </Button>
             ) : null}
