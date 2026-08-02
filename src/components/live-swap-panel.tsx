@@ -33,6 +33,12 @@ import { getInjectedProvider, useInjectedAccount } from "@/lib/wallet-balances";
 import { livePriceOf } from "@/lib/live-price-registry";
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { PumpWalletPanel } from "@/components/pump-wallet-panel";
+import { SwapErrorPanel } from "@/components/swap-error-panel";
+import {
+  explainSwapError,
+  type FriendlySwapError,
+  type SwapErrorStage,
+} from "@/lib/swap-errors";
 
 
 function encodeApprove(spender: string, amountHex: string) {
