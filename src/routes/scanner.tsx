@@ -367,25 +367,83 @@ function Scanner() {
 
         <h2 className="text-lg font-semibold">Asset Scanner</h2>
 
+        <div aria-live="polite" className="sr-only">
+          {announcement}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowShortcuts((v) => !v)}
+            aria-expanded={showShortcuts}
+            aria-controls="scanner-shortcuts"
+            className="h-8 gap-1.5 text-xs focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <Keyboard className="h-3.5 w-3.5" aria-hidden="true" />
+            Keyboard shortcuts
+          </Button>
+          <p className="text-[11px] text-muted-foreground">
+            Press <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">/</kbd> to
+            search, <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">↑</kbd>{" "}
+            <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">↓</kbd> to move
+            through results, <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">?</kbd>{" "}
+            for all shortcuts.
+          </p>
+        </div>
+
+        {showShortcuts && (
+          <div
+            id="scanner-shortcuts"
+            className="rounded-xl border border-border/60 bg-card/60 p-3"
+          >
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Scanner keyboard shortcuts
+            </h3>
+            <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+              {SHORTCUTS.map((s) => (
+                <li key={s.keys} className="flex items-center gap-2 text-xs">
+                  <kbd className="min-w-14 rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-center font-mono text-[11px]">
+                    {s.keys}
+                  </kbd>
+                  <span className="text-muted-foreground">{s.action}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
           <div className="relative w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="scanner-search" className="sr-only">
+              Search assets by symbol or name
+            </label>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
+              id="scanner-search"
+              ref={searchRef}
+              type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search symbol or name…"
-              className="pl-9"
+              placeholder="Search symbol or name…  ( / )"
+              aria-describedby="scanner-search-hint"
+              className="pl-9 focus-visible:ring-2 focus-visible:ring-emerald-400"
             />
+            <span id="scanner-search-hint" className="sr-only">
+              Press slash to focus this field, Escape to clear it. {filtered.length} results match.
+            </span>
           </div>
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-            <TabsList>
+            <TabsList aria-label="Filter assets by category">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="major">Majors</TabsTrigger>
               <TabsTrigger value="demo-smallcap">Demo small-caps</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
+
 
         <Card className="border-border/60 bg-card/60">
           <CardContent className="p-0">
