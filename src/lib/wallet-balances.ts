@@ -16,6 +16,7 @@ import {
   mergeActivity,
   type CachedActivity,
 } from "@/lib/log-scan-cache";
+import { getPumpWalletProvider, getPumpWallet } from "@/lib/pump-wallet";
 
 type Eip1193 = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -25,9 +26,13 @@ type Eip1193 = {
 
 export function getInjectedProvider(): Eip1193 | null {
   if (typeof window === "undefined") return null;
+  // An unlocked in-app PumpPilot wallet takes priority over a browser wallet.
+  const pump = getPumpWalletProvider();
+  if (pump) return pump;
   const eth = (window as unknown as { ethereum?: Eip1193 }).ethereum;
   return eth && typeof eth.request === "function" ? eth : null;
 }
+
 
 /** Native coin per chain, mapped onto our live-price symbols. */
 const NATIVE_BY_CHAIN: Record<number, { symbol: string; name: string; decimals: number }> = {
