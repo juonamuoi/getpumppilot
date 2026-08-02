@@ -62,7 +62,7 @@ function PhraseGrid({ mnemonic }: { mnemonic: string }) {
 }
 
 export function PumpWalletPanel() {
-  const { record, unlockedAddress } = usePumpWallet();
+  const { record, unlockedAddress, lockedReason } = usePumpWallet();
   const [mode, setMode] = useState<"idle" | "create">("idle");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
