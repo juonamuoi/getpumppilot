@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
-  Check,
   Copy,
   Eye,
   KeyRound,
@@ -79,7 +78,6 @@ export function PumpWalletPanel({
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [phrase, setPhrase] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [revealPassword, setRevealPassword] = useState("");
   const [showReveal, setShowReveal] = useState(false);
   const checklist = useRecoveryChecklist();
