@@ -64,7 +64,13 @@ function PhraseGrid({ mnemonic }: { mnemonic: string }) {
   );
 }
 
-export function PumpWalletPanel() {
+export function PumpWalletPanel({
+  onSensitiveChange,
+}: {
+  /** Fired while the panel shows the recovery phrase or is mid-operation, so a
+   *  parent dialog can block accidental dismissal. */
+  onSensitiveChange?: (sensitive: boolean) => void;
+} = {}) {
   const { record, unlockedAddress, lockedReason } = usePumpWallet();
   const [mode, setMode] = useState<"idle" | "create">("idle");
   const [password, setPassword] = useState("");
@@ -75,6 +81,14 @@ export function PumpWalletPanel() {
   const [revealPassword, setRevealPassword] = useState("");
   const [showReveal, setShowReveal] = useState(false);
   const checklist = useRecoveryChecklist();
+
+  const sensitive = phrase !== null || busy;
+  useEffect(() => {
+    onSensitiveChange?.(sensitive);
+    return () => onSensitiveChange?.(false);
+  }, [sensitive, onSensitiveChange]);
+
+
 
 
 
