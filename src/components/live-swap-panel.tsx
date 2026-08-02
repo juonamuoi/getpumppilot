@@ -5,7 +5,7 @@
  * approval -> eth_sendTransaction in the user's own wallet. PumpPilot never
  * holds keys, never auto-trades, and never asks for a seed phrase.
  * ------------------------------------------------------------------ */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
@@ -169,6 +169,39 @@ export function LiveSwapPanel() {
       alive = false;
     };
   }, [restored, txHash, progress.confirm.status, resumedHash]);
+
+  /* ---------------- Automatic quote refresh ----------------
+   * Gas moves fast. While a quote is on screen and nothing is being signed we
+   * silently re-quote so the fee/slippage figures are current at signing time,
+   * and we tighten the cadence when the estimate says fees are unusually high.
+   */
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const quoteRef = useRef<() => Promise<void>>(async () => {});
+  quoteRef.current = handleQuote;
+
+  const refreshMs =
+    costEstimate?.severity === "high" ? 10_000 : costEstimate?.severity === "warn" ? 20_000 : 30_000;
+
+  useEffect(() => {
+    if (!autoRefresh || !quote?.ok || busy !== null || !quotedAt) return;
+    const due = Math.max(1_000, quotedAt + refreshMs - Date.now());
+    const t = setTimeout(() => {
+      void quoteRef.current();
+    }, due);
+    return () => clearTimeout(t);
+  }, [autoRefresh, quote, busy, quotedAt, refreshMs]);
+
+  // Tell the user when a refresh reveals unusually expensive gas.
+  const lastSeverity = useRef<string | null>(null);
+  useEffect(() => {
+    const sev = costEstimate?.severity ?? null;
+    if (sev && sev !== lastSeverity.current && sev === "high") {
+      toast.warning("Network fees just spiked — re-check the cost strip before signing.");
+    }
+    lastSeverity.current = sev;
+  }, [costEstimate?.severity]);
+
+
 
 
 
@@ -566,6 +599,9 @@ export function LiveSwapPanel() {
             quotedAt={quotedAt}
             onRefresh={handleQuote}
             busy={busy !== null}
+            autoRefresh={autoRefresh}
+            onAutoRefreshChange={setAutoRefresh}
+            refreshMs={refreshMs}
           />
           <div className="flex flex-wrap gap-2">
             <Button
