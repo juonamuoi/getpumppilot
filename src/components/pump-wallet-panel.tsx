@@ -129,20 +129,44 @@ export function PumpWalletPanel() {
     return (
       <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-amber-400">
-          <AlertTriangle className="h-4 w-4" /> Write these 12 words down
+          <AlertTriangle className="h-4 w-4" /> Shown once — write these 12 words down now
         </div>
-        <p className="text-xs text-muted-foreground">
-          This recovery phrase is the only way to restore your wallet. Store it offline. Anyone with
-          these words can spend your funds — PumpPilot support will never ask for them.
-        </p>
+        <div className="space-y-1 rounded-md border border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300">
+          <p className="font-medium">Read this before you continue:</p>
+          <ul className="list-disc space-y-0.5 pl-4">
+            <li>
+              This phrase is displayed <strong>one time</strong>. Once you dismiss it, it can only be
+              re-shown by re-entering your wallet password on this device.
+            </li>
+            <li>
+              Store it <strong>offline</strong> — paper or metal. Never a screenshot, photo, notes
+              app, password manager sync, email or cloud drive.
+            </li>
+            <li>
+              Anyone with these 12 words can drain this wallet instantly, with no password and no way
+              to reverse it.
+            </li>
+            <li>Lose the phrase and lose this device, and the funds are gone permanently.</li>
+            <li>PumpPilot support will never ask for it. Every such request is a scam.</li>
+          </ul>
+        </div>
         <PhraseGrid mnemonic={phrase} />
-        <div className="flex flex-wrap gap-2">
+
+        <WalletRecoveryChecklist
+          checked={checklist.checked}
+          onToggle={checklist.toggle}
+          done={checklist.done}
+          total={checklist.total}
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
               void navigator.clipboard.writeText(phrase);
               setCopied(true);
+              toast.warning("Clipboard is not a safe backup — paste it nowhere online.");
               setTimeout(() => setCopied(false), 1500);
             }}
           >
@@ -151,18 +175,31 @@ export function PumpWalletPanel() {
           </Button>
           <Button
             size="sm"
+            disabled={!checklist.complete}
+            title={
+              checklist.complete
+                ? undefined
+                : "Tick every checklist item to confirm your backup is safe."
+            }
             onClick={() => {
               markBackedUp();
               setPhrase(null);
-              toast.success("Backup confirmed");
+              toast.success("Backup confirmed — the phrase will not be shown again.");
             }}
           >
             I've saved it securely
           </Button>
+          {!checklist.complete ? (
+            <span className="text-[11px] text-muted-foreground">
+              {checklist.total - checklist.done} step
+              {checklist.total - checklist.done === 1 ? "" : "s"} left before you can continue.
+            </span>
+          ) : null}
         </div>
       </div>
     );
   }
+
 
   /* ------------------------------ no wallet ----------------------------- */
   if (!record) {
