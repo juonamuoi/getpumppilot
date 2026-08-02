@@ -155,6 +155,12 @@ function Scanner() {
   const [sort, setSort] = useState<SortKey>("total");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
 
   const onSort = (k: SortKey) => {
     if (sort === k) setDir((d) => (d === "asc" ? "desc" : "asc"));
