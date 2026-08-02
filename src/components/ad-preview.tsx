@@ -21,6 +21,11 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   // null until the media query is read on the client (avoids SSR mismatch).
   const [reducedMotion, setReducedMotion] = useState<boolean | null>(null);
   const [playing, setPlaying] = useState(false);
+  /** Video bytes are only requested once the ad nears the viewport. */
+  const [inView, setInView] = useState(false);
+  /** Poster + skeleton stay up until the first frame is decodable. */
+  const [ready, setReady] = useState(false);
+  const [posterLoaded, setPosterLoaded] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) {
@@ -35,7 +40,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   }, []);
 
   useEffect(() => {
-    if (reducedMotion === null) return;
+    if (reducedMotion === null || !inView) return;
     const el = videoRef.current;
     if (!el) return;
     if (reducedMotion) {
@@ -56,7 +61,28 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         /* autoplay blocked — poster stays visible */
         void trackAdPreviewEvent("autoplay_blocked");
       });
-  }, [reducedMotion]);
+  }, [reducedMotion, inView]);
+
+  // Lazy-load trigger: start fetching the video slightly before it scrolls in.
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "300px 0px" },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, []);
 
   // Impression: fired once the ad is actually visible in the viewport.
   useEffect(() => {
@@ -78,32 +104,54 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   function startPlayback() {
     const el = videoRef.current;
     if (!el) return;
+    setInView(true);
     void el.play().then(() => {
       setPlaying(true);
       void trackAdPreviewEvent("manual_play");
     });
   }
 
+  const showPoster = !ready || (reducedMotion === true && !playing);
+
   return (
     <div
       ref={containerRef}
-      className="relative mx-auto w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10"
+      className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10"
     >
       <video
         ref={videoRef}
-        className="block h-auto w-full"
-        src={adVideo.url}
+        className="block size-full object-cover"
+        src={inView ? adVideo.url : undefined}
         poster={adPoster.url}
-        autoPlay={reducedMotion === false}
+        autoPlay={inView && reducedMotion === false}
         loop
         muted={muted}
         playsInline
-        preload="metadata"
+        preload={inView ? "auto" : "none"}
+        onLoadedData={() => setReady(true)}
+        onCanPlay={() => setReady(true)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => void trackAdPreviewEvent("complete")}
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
       />
+
+      {/* Lightweight poster stand-in + skeleton while the video loads */}
+      {showPoster && (
+        <div className="absolute inset-0" aria-hidden="true">
+          <img
+            src={adPoster.url}
+            alt=""
+            className="size-full object-cover"
+            loading="lazy"
+            decoding="async"
+            onLoad={() => setPosterLoaded(true)}
+          />
+          {(!posterLoaded || !ready) && (
+            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-emerald-500/10 via-black/60 to-black" />
+          )}
+        </div>
+      )}
 
       {/* Reduced-motion fallback: static poster + explicit play control */}
       {reducedMotion && !playing && (
@@ -121,6 +169,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           </span>
         </button>
       )}
+
 
 
 
