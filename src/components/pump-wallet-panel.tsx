@@ -34,6 +34,10 @@ import {
   unlockPumpWallet,
   usePumpWallet,
 } from "@/lib/pump-wallet";
+import {
+  useRecoveryChecklist,
+  WalletRecoveryChecklist,
+} from "@/components/wallet-recovery-checklist";
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
