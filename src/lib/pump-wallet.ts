@@ -258,6 +258,43 @@ export async function revealRecoveryPhrase(password: string): Promise<string> {
   return decryptMnemonic(record, password);
 }
 
+/** Throws unless the password decrypts this device's vault. */
+export async function verifyVaultPassword(password: string): Promise<void> {
+  hydrate();
+  const record = state.record;
+  if (!record) throw new Error("No PumpPilot wallet on this device.");
+  await decryptMnemonic(record, password);
+}
+
+/**
+ * Adopts an encrypted vault record from another browser. The password must
+ * decrypt the incoming ciphertext, and the derived address must match the
+ * record's, before anything is written to this device.
+ */
+export async function importPumpWalletRecord(
+  record: PumpWalletRecord,
+  password: string,
+): Promise<string> {
+  hydrate();
+  const mnemonic = await decryptMnemonic(record, password);
+  let acct: Account;
+  try {
+    acct = mnemonicToAccount(mnemonic.trim().toLowerCase().replace(/\s+/g, " "));
+  } catch {
+    throw new Error("The vault decrypted, but its contents are not a valid recovery phrase.");
+  }
+  if (acct.address.toLowerCase() !== record.address.toLowerCase())
+    throw new Error("The vault file's address does not match its encrypted contents.");
+
+  const next: PumpWalletRecord = { ...record, address: acct.address, backedUp: true };
+  persist(next);
+  account = acct;
+  state = { ...state, record: next, unlockedAddress: acct.address, lockedReason: null };
+  emit();
+  startAutoLock();
+  return acct.address;
+}
+
 export function markBackedUp() {
   hydrate();
   if (!state.record) return;
