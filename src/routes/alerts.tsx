@@ -492,6 +492,7 @@ function ScannerRulesPanel() {
               </span>
             </div>
             <Slider
+              aria-label="Cooldown per asset, in minutes"
               value={[r.cooldownMinutes]}
               onValueChange={(v) => setR({ ...r, cooldownMinutes: v[0] })}
               min={0}
@@ -647,6 +648,7 @@ function SliderRow({
         </span>
       </div>
       <Slider
+        aria-label={label}
         value={[value]}
         onValueChange={(v) => onChange(v[0])}
         min={min}
@@ -669,7 +671,7 @@ function ToggleRow({
   return (
     <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
       <span className="truncate text-sm">{label}</span>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
     </div>
   );
 }
@@ -697,7 +699,11 @@ function ChannelToggle({
         {icon}
         <span className="truncate">{label}</span>
       </span>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch
+        aria-label={`${label} delivery channel`}
+        checked={checked}
+        onCheckedChange={onChange}
+      />
     </label>
   );
 }
@@ -726,9 +732,9 @@ function CustomAlertsPanel() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1">
-            <Label className="text-xs">Symbol</Label>
+            <Label htmlFor="new-alert-symbol" className="text-xs">Symbol</Label>
             <Select value={symbol} onValueChange={setSymbol}>
-              <SelectTrigger>
+              <SelectTrigger id="new-alert-symbol" aria-label="Alert symbol">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -741,9 +747,9 @@ function CustomAlertsPanel() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Condition</Label>
+            <Label htmlFor="new-alert-condition" className="text-xs">Condition</Label>
             <Select value={kind} onValueChange={(v) => setKind(v as Alert["kind"])}>
-              <SelectTrigger>
+              <SelectTrigger id="new-alert-condition" aria-label="Alert condition">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -754,8 +760,9 @@ function CustomAlertsPanel() {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Value</Label>
+            <Label htmlFor="new-alert-value" className="text-xs">Value</Label>
             <Input
+              id="new-alert-value"
               inputMode="decimal"
               value={value}
               onChange={(e) => setValue(e.target.value)}
@@ -789,7 +796,11 @@ function CustomAlertsPanel() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Switch checked={a.active} onCheckedChange={() => toggleAlert(a.id)} />
+                    <Switch
+                      aria-label={`${a.active ? "Disable" : "Enable"} ${a.symbol} alert`}
+                      checked={a.active}
+                      onCheckedChange={() => toggleAlert(a.id)}
+                    />
                     <Button
                       size="icon"
                       variant="ghost"
@@ -915,6 +926,8 @@ function HistoryPanel() {
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              type="search"
+              aria-label="Search alert delivery history"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search symbol, rule or detail…"
@@ -1032,7 +1045,7 @@ function HistoryPanel() {
                 value={String(pageSize)}
                 onValueChange={(v) => setPageSize(parseInt(v, 10))}
               >
-                <SelectTrigger className="h-7 w-[84px] text-xs">
+                <SelectTrigger aria-label="Rows per page" className="h-7 w-[84px] text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -2222,6 +2235,8 @@ function TuningHistoryPanel({
           <div className="flex items-center gap-2">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <Input
+              type="search"
+              aria-label="Search tuning history"
               value={query}
               onChange={(ev) => setQuery(ev.target.value)}
               placeholder="Search rule, preset, window or values…"
@@ -2247,7 +2262,7 @@ function TuningHistoryPanel({
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             <Select value={ruleFilter} onValueChange={setRuleFilter}>
-              <SelectTrigger className="h-7 text-[11px]">
+              <SelectTrigger aria-label="Filter by rule" className="h-7 text-[11px]">
                 <SelectValue placeholder="Rule" />
               </SelectTrigger>
               <SelectContent>
@@ -2260,7 +2275,7 @@ function TuningHistoryPanel({
               </SelectContent>
             </Select>
             <Select value={opFilter} onValueChange={setOpFilter}>
-              <SelectTrigger className="h-7 text-[11px]">
+              <SelectTrigger aria-label="Filter by operator" className="h-7 text-[11px]">
                 <SelectValue placeholder="Operator" />
               </SelectTrigger>
               <SelectContent>
@@ -2270,7 +2285,7 @@ function TuningHistoryPanel({
               </SelectContent>
             </Select>
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="h-7 text-[11px]">
+              <SelectTrigger aria-label="Filter by source" className="h-7 text-[11px]">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
               <SelectContent>
@@ -2283,7 +2298,7 @@ function TuningHistoryPanel({
               </SelectContent>
             </Select>
             <Select value={scopeFilter} onValueChange={setScopeFilter}>
-              <SelectTrigger className="h-7 text-[11px]">
+              <SelectTrigger aria-label="Filter by asset scope" className="h-7 text-[11px]">
                 <SelectValue placeholder="Asset scope" />
               </SelectTrigger>
               <SelectContent>
@@ -2295,7 +2310,7 @@ function TuningHistoryPanel({
               </SelectContent>
             </Select>
             <Select value={rangeFilter} onValueChange={setRangeFilter}>
-              <SelectTrigger className="h-7 text-[11px]">
+              <SelectTrigger aria-label="Filter by time range" className="h-7 text-[11px]">
                 <SelectValue placeholder="Time range" />
               </SelectTrigger>
               <SelectContent>
