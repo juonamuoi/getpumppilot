@@ -199,6 +199,138 @@ function Scanner() {
   const topScore = filtered.length ? Math.max(...filtered.map((a) => a.momentum.total)) : 0;
   const risers = filtered.filter((a) => a.change24h > 0).length;
 
+  const rowButtons = useCallback(
+    () =>
+      Array.from(
+        listRef.current?.querySelectorAll<HTMLButtonElement>("[data-scanner-row]") ?? [],
+      ),
+    [],
+  );
+
+  const focusRow = useCallback(
+    (index: number) => {
+      const rows = rowButtons();
+      if (!rows.length) return;
+      const next = Math.max(0, Math.min(rows.length - 1, index));
+      rows[next]?.focus();
+    },
+    [rowButtons],
+  );
+
+  const moveFocus = useCallback(
+    (delta: number) => {
+      const rows = rowButtons();
+      if (!rows.length) return;
+      const current = rows.findIndex((el) => el === document.activeElement);
+      focusRow(current === -1 ? (delta > 0 ? 0 : rows.length - 1) : current + delta);
+    },
+    [rowButtons, focusRow],
+  );
+
+  const focusedSymbol = useCallback(() => {
+    const el = document.activeElement as HTMLElement | null;
+    return el?.getAttribute?.("data-scanner-row") ?? null;
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+
+      if (e.key === "Escape") {
+        if (showShortcuts) {
+          setShowShortcuts(false);
+          return;
+        }
+        if (typing && target instanceof HTMLInputElement && target === searchRef.current) {
+          if (q) {
+            setQ("");
+            setAnnouncement("Search cleared.");
+          } else {
+            target.blur();
+          }
+          return;
+        }
+        if (expanded) {
+          setExpanded(null);
+          setAnnouncement("Row collapsed.");
+        }
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+        return;
+      }
+      if (e.key === "?" && !typing) {
+        e.preventDefault();
+        setShowShortcuts((v) => !v);
+        return;
+      }
+      if (typing) return;
+
+      switch (e.key) {
+        case "ArrowDown":
+        case "j":
+          e.preventDefault();
+          moveFocus(1);
+          break;
+        case "ArrowUp":
+        case "k":
+          e.preventDefault();
+          moveFocus(-1);
+          break;
+        case "Home":
+          e.preventDefault();
+          focusRow(0);
+          break;
+        case "End":
+          e.preventDefault();
+          focusRow(rowButtons().length - 1);
+          break;
+        case "o": {
+          const symbol = focusedSymbol();
+          if (symbol) {
+            e.preventDefault();
+            navigate({ to: "/asset/$symbol", params: { symbol } });
+          }
+          break;
+        }
+        case "f": {
+          e.preventDefault();
+          const order = ["all", "major", "demo-smallcap"] as const;
+          const next = order[(order.indexOf(tab) + 1) % order.length];
+          setTab(next);
+          setAnnouncement(`Filter: ${next === "demo-smallcap" ? "Demo small-caps" : next === "major" ? "Majors" : "All"}.`);
+          break;
+        }
+        case "r": {
+          e.preventDefault();
+          setDir((d) => {
+            const next = d === "asc" ? "desc" : "asc";
+            setAnnouncement(`Sorted ${next === "asc" ? "ascending" : "descending"}.`);
+            return next;
+          });
+          break;
+        }
+        default:
+          break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expanded, focusRow, focusedSymbol, moveFocus, navigate, q, rowButtons, showShortcuts, tab]);
+
+
   return (
     <AppShell>
       <div className="space-y-5">
