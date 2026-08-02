@@ -17,6 +17,7 @@ import {
   Lock,
   Plus,
   ShieldCheck,
+  Timer,
   Trash2,
   Unlock,
 } from "lucide-react";
