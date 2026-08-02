@@ -415,6 +415,8 @@ export function PumpWalletPanel({
 
       <WalletAutoLock />
 
+      <VaultTransferPanel />
+
 
       <div className="flex flex-wrap gap-2 pt-1">
         {unlocked ? (
