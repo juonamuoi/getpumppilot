@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import ReactMarkdown from "react-markdown";
 import { AlertTriangle, Bot, History, Loader2, Save, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -294,8 +293,8 @@ function ControlPanelPage() {
               </Button>
               <div aria-live="polite">
                 {advice && (
-                  <div className="prose prose-sm prose-invert mt-2 max-w-none rounded-lg border border-border/60 bg-card/40 p-4">
-                    <ReactMarkdown>{advice}</ReactMarkdown>
+                  <div className="mt-2 whitespace-pre-wrap rounded-lg border border-border/60 bg-card/40 p-4 text-sm leading-relaxed">
+                    {advice}
                   </div>
                 )}
               </div>
