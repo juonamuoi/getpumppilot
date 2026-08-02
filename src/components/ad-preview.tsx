@@ -237,7 +237,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           onClick={startPlayback}
           className="absolute inset-x-0 top-0 flex h-3/5 flex-col items-center justify-center gap-2 text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-inset"
           aria-label="Play the PumpPilot AI ad. Motion is paused because your system prefers reduced motion. Keyboard shortcut: Space or K"
-          aria-describedby="ad-preview-shortcuts"
+          aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
 
         >
           <span className="rounded-full bg-emerald-500/90 p-4 shadow-lg shadow-emerald-500/40">
@@ -311,7 +311,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
               ? "Pause the PumpPilot AI ad video. Keyboard shortcut: Space or K"
               : "Play the PumpPilot AI ad video. Keyboard shortcut: Space or K"
           }
-          aria-describedby="ad-preview-shortcuts"
+          aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
           aria-pressed={playing}
           title="Play or pause (Space or K)"
           className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
@@ -326,7 +326,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
               ? "Unmute the PumpPilot AI ad video. Keyboard shortcut: M"
               : "Mute the PumpPilot AI ad video. Keyboard shortcut: M"
           }
-          aria-describedby="ad-preview-shortcuts"
+          aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
           aria-pressed={!muted}
           title="Mute or unmute (M)"
           className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
