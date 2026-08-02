@@ -33,6 +33,9 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   /** Poster + skeleton stay up until the first frame is decodable. */
   const [ready, setReady] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
+  /** No WebVTT track ships with the ad, so the transcript is the fallback. */
+  const [hasCaptions, setHasCaptions] = useState(false);
+
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) {
