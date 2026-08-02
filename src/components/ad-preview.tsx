@@ -19,8 +19,10 @@ import {
 } from "@/lib/funnel";
 import { AdTranscript } from "@/components/ad-transcript";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
+import adCaptions from "@/assets/pumppilot-ad.en.vtt.asset.json";
 import adPoster from "@/assets/pumppilot-ad-poster.jpg.asset.json";
 import robotImg from "@/assets/pumppilot-robot.png.asset.json";
+
 
 
 type Props = {
