@@ -15,6 +15,7 @@ import {
   Loader2,
   Lock,
   Plus,
+  ShieldAlert,
   ShieldCheck,
   Timer,
   Trash2,
@@ -24,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   createPumpWallet,
   deletePumpWallet,
@@ -43,6 +45,12 @@ import { WalletAutoLock } from "@/components/wallet-auto-lock";
 import { trackWalletStep } from "@/lib/funnel";
 import { PhraseCopyGuard } from "@/components/phrase-copy-guard";
 
+
+/** Warnings that must be ticked immediately before the phrase is shown. */
+const REVEAL_ACKS = [
+  "I understand the phrase is shown once — dismissing it means re-entering my password to see it again.",
+  "I will store it offline (paper or metal), never as a screenshot, note, cloud file or message.",
+] as const;
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -80,6 +88,7 @@ export function PumpWalletPanel({
   const [phrase, setPhrase] = useState<string | null>(null);
   const [revealPassword, setRevealPassword] = useState("");
   const [showReveal, setShowReveal] = useState(false);
+  const [revealAcks, setRevealAcks] = useState<boolean[]>(() => REVEAL_ACKS.map(() => false));
   const checklist = useRecoveryChecklist();
 
   const sensitive = phrase !== null || busy;
@@ -91,6 +100,8 @@ export function PumpWalletPanel({
 
 
 
+
+  const revealAcksDone = revealAcks.every(Boolean);
 
   const reset = () => {
     setPassword("");
@@ -146,6 +157,7 @@ export function PumpWalletPanel({
       setPhrase(m);
       setShowReveal(false);
       setRevealPassword("");
+      setRevealAcks(REVEAL_ACKS.map(() => false));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Wrong password");
     } finally {
@@ -391,7 +403,11 @@ export function PumpWalletPanel({
             <Lock className="mr-1.5 h-3.5 w-3.5" /> Lock
           </Button>
         ) : null}
-        <Button variant="outline" size="sm" onClick={() => setShowReveal((v) => !v)}>
+        <Button variant="outline" size="sm" onClick={() => {
+            setRevealAcks(REVEAL_ACKS.map(() => false));
+            setRevealPassword("");
+            setShowReveal((v) => !v);
+          }}>
           <Eye className="mr-1.5 h-3.5 w-3.5" /> Recovery phrase
         </Button>
         <WalletPasswordManager rotatedAt={record?.rotatedAt} />
