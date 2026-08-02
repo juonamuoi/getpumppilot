@@ -60,6 +60,14 @@ export function WalletConnect() {
   const [scanning, setScanning] = useState(false);
   const [scan, setScan] = useState<WalletScanResult | null>(null);
 
+  // The backup reminder can ask us to open the wallet dialog.
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_WALLET_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_WALLET_EVENT, onOpen);
+  }, []);
+
+
   const DEMO_ADDRESS = DEMO_WALLET_ADDRESS;
 
   const lastThreatIds = useRef<Set<string>>(new Set());
