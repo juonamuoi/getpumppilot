@@ -204,17 +204,20 @@ export async function unlockPumpWallet(password: string): Promise<string> {
   if (!record) throw new Error("No PumpPilot wallet on this device.");
   const mnemonic = await decryptMnemonic(record, password);
   account = mnemonicToAccount(mnemonic);
-  state = { ...state, unlockedAddress: account.address };
+  state = { ...state, unlockedAddress: account.address, lockedReason: null };
   emit();
+  startAutoLock();
   return account.address;
 }
 
 /** Drops the in-memory key. The encrypted vault stays on the device. */
-export function lockPumpWallet() {
+export function lockPumpWallet(reason: LockReason = "manual") {
+  stopAutoLock();
   account = null;
-  state = { ...state, unlockedAddress: null };
+  state = { ...state, unlockedAddress: null, lockedReason: reason };
   emit();
 }
+
 
 /** Reveals the recovery phrase — always password-gated. */
 export async function revealRecoveryPhrase(password: string): Promise<string> {
