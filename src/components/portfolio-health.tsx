@@ -113,7 +113,7 @@ export function PortfolioHealthCard() {
         {rows.length > 0 && (
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
             Weighted vol: <span className="font-mono text-foreground">{avgVol.toFixed(0)}</span> · P/L view →{" "}
-            <a href="/paper" className="text-emerald-300 hover:underline">Paper</a>{" "}
+            <a href="/paper" className="text-emerald-300 underline underline-offset-2">Paper</a>{" "}
             ({fmtPct(0)} realized)
           </div>
         )}
