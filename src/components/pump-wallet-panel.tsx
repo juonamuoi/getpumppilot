@@ -95,11 +95,13 @@ export function PumpWalletPanel() {
       return;
     }
     setBusy(true);
+    void trackWalletStep("wallet_create_started");
     try {
       const { mnemonic } = await createPumpWallet(password);
       setPhrase(mnemonic);
       setMode("idle");
       reset();
+      void trackWalletStep("wallet_created");
       toast.success("PumpPilot wallet created");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create wallet");
@@ -113,6 +115,7 @@ export function PumpWalletPanel() {
     try {
       await unlockPumpWallet(password);
       reset();
+      void trackWalletStep("wallet_unlocked");
       toast.success("Wallet unlocked");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not unlock");
@@ -120,6 +123,7 @@ export function PumpWalletPanel() {
       setBusy(false);
     }
   }
+
 
   async function handleReveal() {
     setBusy(true);
