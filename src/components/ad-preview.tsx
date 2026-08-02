@@ -35,7 +35,7 @@ import {
 } from "@/lib/funnel";
 import { AdTranscript, activeTranscriptIndex } from "@/components/ad-transcript";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
-import adCaptions from "@/assets/pumppilot-ad.en.vtt.asset.json";
+
 import adPoster from "@/assets/pumppilot-ad-poster.jpg.asset.json";
 import robotImg from "@/assets/pumppilot-robot.png.asset.json";
 
@@ -67,8 +67,12 @@ export function AdPreview({ href, label = "Start free" }: Props) {
    * choice is remembered per browser.
    */
   const [captionsOn, setCaptionsOn] = useState(false);
+  /** Selected caption language (BCP-47), remembered per browser. */
+  const [captionLang, setCaptionLang] = useState(DEFAULT_CAPTION_LANG);
   /** Transcript line currently playing, synced to the video's timeline. */
   const [activeLine, setActiveLine] = useState(-1);
+
+  const activeTrack = getCaptionTrack(captionLang);
 
   function seekTo(seconds: number) {
     const el = videoRef.current;
@@ -82,21 +86,29 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   useEffect(() => {
     try {
       setCaptionsOn(window.localStorage.getItem("pp.ad-captions") === "on");
+      const saved = window.localStorage.getItem("pp.ad-caption-lang");
+      setCaptionLang(
+        saved && AD_CAPTION_TRACKS.some((t) => t.code === saved)
+          ? saved
+          : preferredCaptionLang(navigator.languages ?? [navigator.language]),
+      );
     } catch {
-      /* storage blocked — keep the default */
+      /* storage blocked — keep the defaults */
     }
   }, []);
 
-  // Keep the native text track in sync with the toggle.
+  // Keep the native text tracks in sync with the toggle and language choice.
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     const tracks = el.textTracks;
     for (let i = 0; i < tracks.length; i += 1) {
-      tracks[i].mode = captionsOn ? "showing" : "hidden";
+      const track = tracks[i];
+      track.mode =
+        captionsOn && track.language === captionLang ? "showing" : "hidden";
     }
     setHasCaptions(tracks.length > 0);
-  }, [captionsOn, inView, ready]);
+  }, [captionsOn, captionLang, inView, ready]);
 
   function toggleCaptions() {
     setCaptionsOn((on) => {
@@ -110,6 +122,20 @@ export function AdPreview({ href, label = "Start free" }: Props) {
       return next;
     });
   }
+
+  /** Pick a caption language; also switches captions on so the change is visible. */
+  function chooseCaptionLang(code: string) {
+    setCaptionLang(code);
+    setCaptionsOn(true);
+    try {
+      window.localStorage.setItem("pp.ad-caption-lang", code);
+      window.localStorage.setItem("pp.ad-captions", "on");
+    } catch {
+      /* ignore */
+    }
+    void trackAdPreviewEvent(`captions_lang_${code}`);
+  }
+
 
 
 
