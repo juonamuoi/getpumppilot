@@ -448,7 +448,11 @@ function Scanner() {
         <Card className="border-border/60 bg-card/60">
           <CardContent className="p-0">
             {/* Desktop header row with sortable columns */}
-            <div className="hidden items-center gap-3 border-b border-border/60 px-4 py-2 lg:grid lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]">
+            <div
+              role="group"
+              aria-label="Sort results"
+              className="hidden items-center gap-3 border-b border-border/60 px-4 py-2 lg:grid lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]"
+            >
               <SortHeader label="Asset" k="symbol" sort={sort} dir={dir} onSort={onSort} />
               <SortHeader label="Price" k="price" sort={sort} dir={dir} onSort={onSort} className="justify-end" />
               <SortHeader label="24h" k="change24h" sort={sort} dir={dir} onSort={onSort} className="justify-end" />
@@ -470,11 +474,17 @@ function Scanner() {
 
             {/* Mobile sort control */}
             <div className="flex items-center gap-2 border-b border-border/60 p-3 lg:hidden">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort</span>
+              <label
+                htmlFor="scanner-sort"
+                className="text-[11px] uppercase tracking-wider text-muted-foreground"
+              >
+                Sort
+              </label>
               <select
+                id="scanner-sort"
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs"
+                className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 <option value="total">Score</option>
                 <option value="change24h">24h change</option>
@@ -491,13 +501,19 @@ function Scanner() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}
-                className="h-7 px-2"
+                aria-label={`Sort direction: ${dir === "asc" ? "ascending" : "descending"}. Activate to reverse.`}
+                className="h-7 px-2 focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
-                {dir === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
+                {dir === "asc" ? (
+                  <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
               </Button>
             </div>
 
-            <div className="divide-y divide-border/60">
+            <div ref={listRef} className="divide-y divide-border/60">
+
               {filtered.map((a) => {
                 const isOpen = expanded === a.symbol;
                 return (
