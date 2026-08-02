@@ -3,8 +3,8 @@ import { faqSchema, ldScript } from "@/lib/structured-data";
 import { FaqSection } from "@/components/faq-section";
 import { scannerFaqs } from "@/lib/page-faqs";
 import { markQuestAction } from "@/lib/quest-progress";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner, DemoBadge } from "@/components/disclaimer";
 import { fmtPct, fmtUsd, type Asset } from "@/lib/mock-data";
@@ -22,6 +22,7 @@ import {
   ArrowUpDown,
   ChevronDown,
   Info,
+  Keyboard,
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -103,18 +104,38 @@ function SortHeader({
   const Icon = active ? (dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
   return (
     <button
+      type="button"
       onClick={() => onSort(k)}
+      aria-label={
+        active
+          ? `${label} — sorted ${dir === "asc" ? "ascending" : "descending"}. Activate to reverse.`
+          : `Sort by ${label}`
+      }
       className={cn(
-        "flex items-center gap-1 text-[11px] uppercase tracking-wider transition hover:text-foreground",
+        "flex items-center gap-1 rounded-sm text-[11px] uppercase tracking-wider transition hover:text-foreground",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         active ? "text-foreground" : "text-muted-foreground",
         className,
       )}
     >
       <span>{label}</span>
-      <Icon className="h-3 w-3 opacity-70" />
+      <Icon className="h-3 w-3 opacity-70" aria-hidden="true" />
     </button>
   );
 }
+
+const SHORTCUTS: { keys: string; action: string }[] = [
+  { keys: "/", action: "Focus the search box" },
+  { keys: "Esc", action: "Clear search / collapse the open row" },
+  { keys: "↓ / j", action: "Move to the next result" },
+  { keys: "↑ / k", action: "Move to the previous result" },
+  { keys: "Home / End", action: "Jump to first or last result" },
+  { keys: "Enter / Space", action: "Expand or collapse the focused result" },
+  { keys: "o", action: "Open asset details for the focused result" },
+  { keys: "f", action: "Cycle the category filter" },
+  { keys: "r", action: "Reverse the sort direction" },
+  { keys: "?", action: "Show or hide this shortcut list" },
+];
 
 function ScoreCell({ v }: { v: number }) {
   return (
@@ -125,6 +146,7 @@ function ScoreCell({ v }: { v: number }) {
   );
 }
 
+
 function Scanner() {
   useEffect(() => {
     markQuestAction("first_scan");
@@ -134,6 +156,12 @@ function Scanner() {
   const [sort, setSort] = useState<SortKey>("total");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
 
   const onSort = (k: SortKey) => {
     if (sort === k) setDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -171,6 +199,138 @@ function Scanner() {
   const topScore = filtered.length ? Math.max(...filtered.map((a) => a.momentum.total)) : 0;
   const risers = filtered.filter((a) => a.change24h > 0).length;
 
+  const rowButtons = useCallback(
+    () =>
+      Array.from(
+        listRef.current?.querySelectorAll<HTMLButtonElement>("[data-scanner-row]") ?? [],
+      ),
+    [],
+  );
+
+  const focusRow = useCallback(
+    (index: number) => {
+      const rows = rowButtons();
+      if (!rows.length) return;
+      const next = Math.max(0, Math.min(rows.length - 1, index));
+      rows[next]?.focus();
+    },
+    [rowButtons],
+  );
+
+  const moveFocus = useCallback(
+    (delta: number) => {
+      const rows = rowButtons();
+      if (!rows.length) return;
+      const current = rows.findIndex((el) => el === document.activeElement);
+      focusRow(current === -1 ? (delta > 0 ? 0 : rows.length - 1) : current + delta);
+    },
+    [rowButtons, focusRow],
+  );
+
+  const focusedSymbol = useCallback(() => {
+    const el = document.activeElement as HTMLElement | null;
+    return el?.getAttribute?.("data-scanner-row") ?? null;
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+
+      if (e.key === "Escape") {
+        if (showShortcuts) {
+          setShowShortcuts(false);
+          return;
+        }
+        if (typing && target instanceof HTMLInputElement && target === searchRef.current) {
+          if (q) {
+            setQ("");
+            setAnnouncement("Search cleared.");
+          } else {
+            target.blur();
+          }
+          return;
+        }
+        if (expanded) {
+          setExpanded(null);
+          setAnnouncement("Row collapsed.");
+        }
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+        return;
+      }
+      if (e.key === "?" && !typing) {
+        e.preventDefault();
+        setShowShortcuts((v) => !v);
+        return;
+      }
+      if (typing) return;
+
+      switch (e.key) {
+        case "ArrowDown":
+        case "j":
+          e.preventDefault();
+          moveFocus(1);
+          break;
+        case "ArrowUp":
+        case "k":
+          e.preventDefault();
+          moveFocus(-1);
+          break;
+        case "Home":
+          e.preventDefault();
+          focusRow(0);
+          break;
+        case "End":
+          e.preventDefault();
+          focusRow(rowButtons().length - 1);
+          break;
+        case "o": {
+          const symbol = focusedSymbol();
+          if (symbol) {
+            e.preventDefault();
+            navigate({ to: "/asset/$symbol", params: { symbol } });
+          }
+          break;
+        }
+        case "f": {
+          e.preventDefault();
+          const order = ["all", "major", "demo-smallcap"] as const;
+          const next = order[(order.indexOf(tab) + 1) % order.length];
+          setTab(next);
+          setAnnouncement(`Filter: ${next === "demo-smallcap" ? "Demo small-caps" : next === "major" ? "Majors" : "All"}.`);
+          break;
+        }
+        case "r": {
+          e.preventDefault();
+          setDir((d) => {
+            const next = d === "asc" ? "desc" : "asc";
+            setAnnouncement(`Sorted ${next === "asc" ? "ascending" : "descending"}.`);
+            return next;
+          });
+          break;
+        }
+        default:
+          break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expanded, focusRow, focusedSymbol, moveFocus, navigate, q, rowButtons, showShortcuts, tab]);
+
+
   return (
     <AppShell>
       <div className="space-y-5">
@@ -207,19 +367,76 @@ function Scanner() {
 
         <h2 className="text-lg font-semibold">Asset Scanner</h2>
 
+        <div aria-live="polite" className="sr-only">
+          {announcement}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowShortcuts((v) => !v)}
+            aria-expanded={showShortcuts}
+            aria-controls="scanner-shortcuts"
+            className="h-8 gap-1.5 text-xs focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <Keyboard className="h-3.5 w-3.5" aria-hidden="true" />
+            Keyboard shortcuts
+          </Button>
+          <p className="text-[11px] text-muted-foreground">
+            Press <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">/</kbd> to
+            search, <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">↑</kbd>{" "}
+            <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">↓</kbd> to move
+            through results, <kbd className="rounded border border-border/60 bg-muted/40 px-1 font-mono">?</kbd>{" "}
+            for all shortcuts.
+          </p>
+        </div>
+
+        {showShortcuts && (
+          <div
+            id="scanner-shortcuts"
+            className="rounded-xl border border-border/60 bg-card/60 p-3"
+          >
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Scanner keyboard shortcuts
+            </h3>
+            <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+              {SHORTCUTS.map((s) => (
+                <li key={s.keys} className="flex items-center gap-2 text-xs">
+                  <kbd className="min-w-14 rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-center font-mono text-[11px]">
+                    {s.keys}
+                  </kbd>
+                  <span className="text-muted-foreground">{s.action}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
           <div className="relative w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <label htmlFor="scanner-search" className="sr-only">
+              Search assets by symbol or name
+            </label>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
+              id="scanner-search"
+              ref={searchRef}
+              type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search symbol or name…"
-              className="pl-9"
+              placeholder="Search symbol or name…  ( / )"
+              aria-describedby="scanner-search-hint"
+              className="pl-9 focus-visible:ring-2 focus-visible:ring-emerald-400"
             />
+            <span id="scanner-search-hint" className="sr-only">
+              Press slash to focus this field, Escape to clear it. {filtered.length} results match.
+            </span>
           </div>
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-            <TabsList>
+            <TabsList aria-label="Filter assets by category">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="major">Majors</TabsTrigger>
               <TabsTrigger value="demo-smallcap">Demo small-caps</TabsTrigger>
@@ -227,10 +444,15 @@ function Scanner() {
           </Tabs>
         </div>
 
+
         <Card className="border-border/60 bg-card/60">
           <CardContent className="p-0">
             {/* Desktop header row with sortable columns */}
-            <div className="hidden items-center gap-3 border-b border-border/60 px-4 py-2 lg:grid lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]">
+            <div
+              role="group"
+              aria-label="Sort results"
+              className="hidden items-center gap-3 border-b border-border/60 px-4 py-2 lg:grid lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]"
+            >
               <SortHeader label="Asset" k="symbol" sort={sort} dir={dir} onSort={onSort} />
               <SortHeader label="Price" k="price" sort={sort} dir={dir} onSort={onSort} className="justify-end" />
               <SortHeader label="24h" k="change24h" sort={sort} dir={dir} onSort={onSort} className="justify-end" />
@@ -252,11 +474,17 @@ function Scanner() {
 
             {/* Mobile sort control */}
             <div className="flex items-center gap-2 border-b border-border/60 p-3 lg:hidden">
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Sort</span>
+              <label
+                htmlFor="scanner-sort"
+                className="text-[11px] uppercase tracking-wider text-muted-foreground"
+              >
+                Sort
+              </label>
               <select
+                id="scanner-sort"
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs"
+                className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 <option value="total">Score</option>
                 <option value="change24h">24h change</option>
@@ -273,21 +501,38 @@ function Scanner() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setDir((d) => (d === "asc" ? "desc" : "asc"))}
-                className="h-7 px-2"
+                aria-label={`Sort direction: ${dir === "asc" ? "ascending" : "descending"}. Activate to reverse.`}
+                className="h-7 px-2 focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
-                {dir === "asc" ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
+                {dir === "asc" ? (
+                  <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+                ) : (
+                  <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />
+                )}
               </Button>
             </div>
 
-            <div className="divide-y divide-border/60">
+            <div ref={listRef} className="divide-y divide-border/60">
+
               {filtered.map((a) => {
                 const isOpen = expanded === a.symbol;
                 return (
                   <div key={a.symbol}>
                     <button
-                      onClick={() => setExpanded(isOpen ? null : a.symbol)}
-                      className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/40 lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]"
+                      type="button"
+                      data-scanner-row={a.symbol}
+                      aria-expanded={isOpen}
+                      aria-controls={`scanner-detail-${a.symbol}`}
+                      aria-label={`${a.symbol}, ${a.name}. Momentum score ${a.momentum.total}. ${fmtPct(a.change24h)} in 24 hours. ${isOpen ? "Expanded" : "Collapsed"} — press Enter to toggle, o to open details.`}
+                      onClick={() => {
+                        setExpanded(isOpen ? null : a.symbol);
+                        setAnnouncement(
+                          isOpen ? `${a.symbol} collapsed.` : `${a.symbol} expanded. ${a.momentum.reason}`,
+                        );
+                      }}
+                      className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 focus-visible:bg-muted/40 lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]"
                     >
+
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="truncate font-semibold">{a.symbol}</span>
@@ -329,7 +574,12 @@ function Scanner() {
                     </button>
 
                     {isOpen && (
-                      <div className="border-t border-border/40 bg-muted/20 px-4 py-4">
+                      <div
+                        id={`scanner-detail-${a.symbol}`}
+                        role="region"
+                        aria-label={`${a.symbol} momentum breakdown`}
+                        className="border-t border-border/40 bg-muted/20 px-4 py-4"
+                      >
                         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
                           <div className="space-y-3">
                             <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-background/40 p-3">
@@ -381,7 +631,7 @@ function Scanner() {
                             <Link
                               to="/asset/$symbol"
                               params={{ symbol: a.symbol }}
-                              className="block rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+                              className="block rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             >
                               Open asset details →
                             </Link>
