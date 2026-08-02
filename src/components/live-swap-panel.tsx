@@ -32,6 +32,8 @@ import {
 import { getInjectedProvider, useInjectedAccount } from "@/lib/wallet-balances";
 import { livePriceOf } from "@/lib/live-price-registry";
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
+import { PumpWalletPanel } from "@/components/pump-wallet-panel";
+
 
 function encodeApprove(spender: string, amountHex: string) {
   // approve(address,uint256)
