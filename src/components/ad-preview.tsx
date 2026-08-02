@@ -200,13 +200,18 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         muted={muted}
         playsInline
         preload={inView ? "auto" : "none"}
-        onLoadedData={() => setReady(true)}
+        onLoadedData={(e) => {
+          setReady(true);
+          setHasCaptions(e.currentTarget.textTracks.length > 0);
+        }}
         onCanPlay={() => setReady(true)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => void trackAdPreviewEvent("complete")}
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
+        aria-describedby="ad-preview-transcript-note"
       />
+
 
       {/* Lightweight poster stand-in + skeleton while the video loads */}
       {showPoster && (
