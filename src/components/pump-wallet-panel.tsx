@@ -252,7 +252,9 @@ export function PumpWalletPanel() {
               />
             </div>
             <p className="text-[11px] text-muted-foreground">
-              We can't reset this password — it never leaves your device.
+              We can't reset this password — it never leaves your device. After you generate the
+              wallet, a 12-word recovery phrase is shown <strong>once</strong>: have pen and paper
+              ready and store it offline, never as a screenshot or in the cloud.
             </p>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => void handleCreate()} disabled={busy}>
