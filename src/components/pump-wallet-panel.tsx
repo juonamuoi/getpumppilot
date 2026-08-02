@@ -5,7 +5,7 @@
  * Later visits: unlock with the password, or lock / reveal phrase / remove.
  * Everything happens in this browser. Nothing is uploaded.
  * ------------------------------------------------------------------ */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
