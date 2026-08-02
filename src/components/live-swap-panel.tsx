@@ -5,7 +5,7 @@
  * approval -> eth_sendTransaction in the user's own wallet. PumpPilot never
  * holds keys, never auto-trades, and never asks for a seed phrase.
  * ------------------------------------------------------------------ */
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
@@ -48,6 +48,8 @@ import {
 } from "@/lib/swap-errors";
 import { SwapCostEstimateCard } from "@/components/swap-cost-estimate";
 import { estimateSwapCost, nativeSymbolFor } from "@/lib/swap-fees";
+import { SwapReadinessPanel } from "@/components/swap-readiness-panel";
+import { evaluateSwapReadiness, type ReadinessCheck } from "@/lib/swap-readiness";
 
 
 function encodeApprove(spender: string, amountHex: string) {
@@ -94,7 +96,68 @@ export function LiveSwapPanel() {
     });
   }, [quote, settings.chainId, settings.slippageBps, notionalUsd]);
 
+  // Live view of which network the wallet is actually on.
+  const [walletChainId, setWalletChainId] = useState<number | null>(null);
+  useEffect(() => {
+    const provider = getInjectedProvider();
+    if (!provider || !address) {
+      setWalletChainId(null);
+      return;
+    }
+    let alive = true;
+    const read = () => {
+      void provider
+        .request({ method: "eth_chainId" })
+        .then((id) => {
+          if (alive) setWalletChainId(Number(id));
+        })
+        .catch(() => undefined);
+    };
+    read();
+    const onChain = () => read();
+    provider.on?.("chainChanged", onChain);
+    return () => {
+      alive = false;
+      provider.removeListener?.("chainChanged", onChain);
+    };
+  }, [address]);
+
+  const readiness = useMemo(
+    () =>
+      evaluateSwapReadiness({
+        address,
+        walletChainId,
+        targetChainId: settings.chainId,
+        targetChainName: chainName(settings.chainId),
+        sellSymbol,
+        buySymbol,
+        amount,
+        notionalUsd,
+        maxTradeUsd: settings.maxTradeUsd,
+        hasQuote: Boolean(quote?.ok),
+        needsApproval: Boolean(quote?.allowanceTarget),
+      }),
+    [
+      address,
+      walletChainId,
+      settings.chainId,
+      settings.maxTradeUsd,
+      sellSymbol,
+      buySymbol,
+      amount,
+      notionalUsd,
+      quote,
+    ],
+  );
+
+  const focusAmount = useCallback(() => {
+    const el = document.getElementById("live-amount");
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (el as HTMLInputElement | null)?.focus();
+  }, []);
+
   if (settings.mode !== "live") return null;
+
 
   function step(id: SwapStepId, status: SwapStepStatus, note?: string) {
     setProgress((p) => ({ ...p, [id]: { status, note } }));
@@ -278,6 +341,29 @@ export function LiveSwapPanel() {
   }
 
 
+  /** One-tap fixes offered by the readiness checklist. */
+  async function handleFix(fix: NonNullable<ReadinessCheck["fix"]>) {
+    if (fix === "connect") {
+      document
+        .getElementById("live-swap-connect")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (fix === "switch-chain") {
+      if (await ensureChain()) toast.success(`Switched to ${chainName(settings.chainId)}.`);
+      return;
+    }
+    if (fix === "amount") {
+      focusAmount();
+      return;
+    }
+    if (fix === "limit") {
+      toast.info("Raise your per-trade limit in Risk controls to place this size.");
+      return;
+    }
+    await handleQuote();
+  }
+
   /** One-click retry: pick the right action for the failure we saw. */
   async function handleRetry() {
     const action = failure?.retry ?? "requote";
@@ -322,7 +408,7 @@ export function LiveSwapPanel() {
         </div>
 
         {!address ? (
-          <div className="space-y-3">
+          <div id="live-swap-connect" className="space-y-3">
             <ConnectWalletButton label="Connect wallet to trade live" />
             <p className="text-center text-[11px] text-muted-foreground">or</p>
             <PumpWalletPanel />
@@ -382,15 +468,26 @@ export function LiveSwapPanel() {
           </p>
         )}
 
+        <SwapReadinessPanel
+          result={readiness}
+          busy={busy !== null}
+          onFix={handleFix}
+        />
+
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handleQuote} disabled={busy !== null || !address}>
+          <Button
+            variant="outline"
+            onClick={handleQuote}
+            disabled={busy !== null || !readiness.canQuote}
+          >
             {busy === "quote" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Get route &amp; quote
           </Button>
           <Button
             variant="destructive"
             onClick={handleSwap}
-            disabled={busy !== null || !quote?.ok || overLimit}
+            disabled={busy !== null || !readiness.ready}
+            title={readiness.ready ? undefined : readiness.headline}
           >
             {(busy === "swap" || busy === "approve") && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -398,6 +495,7 @@ export function LiveSwapPanel() {
             {quote?.allowanceTarget ? `Approve ${sellSymbol}` : "Sign & submit swap"}
           </Button>
         </div>
+
 
         <SwapProgressSteps progress={progress} />
 
