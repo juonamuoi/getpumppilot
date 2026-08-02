@@ -42,6 +42,8 @@ import {
 import { WalletPasswordManager } from "@/components/wallet-password-manager";
 import { WalletAutoLock } from "@/components/wallet-auto-lock";
 import { trackWalletStep } from "@/lib/funnel";
+import { PhraseCopyGuard } from "@/components/phrase-copy-guard";
+
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
