@@ -519,9 +519,20 @@ function Scanner() {
                 return (
                   <div key={a.symbol}>
                     <button
-                      onClick={() => setExpanded(isOpen ? null : a.symbol)}
-                      className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/40 lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]"
+                      type="button"
+                      data-scanner-row={a.symbol}
+                      aria-expanded={isOpen}
+                      aria-controls={`scanner-detail-${a.symbol}`}
+                      aria-label={`${a.symbol}, ${a.name}. Momentum score ${a.momentum.total}. ${fmtPct(a.change24h)} in 24 hours. ${isOpen ? "Expanded" : "Collapsed"} — press Enter to toggle, o to open details.`}
+                      onClick={() => {
+                        setExpanded(isOpen ? null : a.symbol);
+                        setAnnouncement(
+                          isOpen ? `${a.symbol} collapsed.` : `${a.symbol} expanded. ${a.momentum.reason}`,
+                        );
+                      }}
+                      className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400 focus-visible:bg-muted/40 lg:grid-cols-[minmax(0,1.4fr)_90px_80px_100px_repeat(5,64px)_90px_28px]"
                     >
+
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="truncate font-semibold">{a.symbol}</span>
