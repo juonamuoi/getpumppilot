@@ -251,10 +251,26 @@ export type AdPreviewEvent =
   | "complete"
   | "reduced_motion_hold"
   | "manual_play"
-  | "cta_click";
+  | "cta_click"
+  | "view_depth_25"
+  | "view_depth_50"
+  | "view_depth_75"
+  | "view_depth_100";
 
-/** Fire-once-per-browser events (impressions, first completion). */
-const ONCE_EVENTS: AdPreviewEvent[] = ["impression", "autoplay_started", "complete"];
+/** Visibility milestones (fraction of the ad in view), tracked once each. */
+export const AD_VIEW_DEPTH_MILESTONES = [0.25, 0.5, 0.75, 1] as const;
+
+/** Fire-once-per-browser events (impressions, first completion, view depth). */
+const ONCE_EVENTS: AdPreviewEvent[] = [
+  "impression",
+  "autoplay_started",
+  "complete",
+  "view_depth_25",
+  "view_depth_50",
+  "view_depth_75",
+  "view_depth_100",
+];
+
 
 /**
  * Record an ad preview interaction. Best-effort — analytics must never break

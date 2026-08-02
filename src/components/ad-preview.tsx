@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Play, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { trackCtaClick, trackAdPreviewEvent } from "@/lib/funnel";
+import {
+  trackCtaClick,
+  trackAdPreviewEvent,
+  AD_VIEW_DEPTH_MILESTONES,
+  type AdPreviewEvent,
+} from "@/lib/funnel";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
 import adPoster from "@/assets/pumppilot-ad-poster.jpg.asset.json";
 import robotImg from "@/assets/pumppilot-robot.png.asset.json";
@@ -84,22 +89,41 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     return () => obs.disconnect();
   }, []);
 
-  // Impression: fired once the ad is actually visible in the viewport.
+  // Impression + scroll-depth milestones (25/50/75/100% of the ad in view).
   useEffect(() => {
     const node = containerRef.current;
     if (!node || typeof IntersectionObserver === "undefined") return;
+    const seen = new Set<number>();
+    let impressionSent = false;
     const obs = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.5)) {
-          void trackAdPreviewEvent("impression");
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          if (!impressionSent && e.intersectionRatio >= 0.5) {
+            impressionSent = true;
+            void trackAdPreviewEvent("impression");
+          }
+          for (const m of AD_VIEW_DEPTH_MILESTONES) {
+            if (seen.has(m)) continue;
+            // allow a small tolerance so 100% fires on tall viewports
+            if (e.intersectionRatio >= m - 0.02) {
+              seen.add(m);
+              void trackAdPreviewEvent(
+                `view_depth_${Math.round(m * 100)}` as AdPreviewEvent,
+              );
+            }
+          }
+        }
+        if (impressionSent && seen.size === AD_VIEW_DEPTH_MILESTONES.length) {
           obs.disconnect();
         }
       },
-      { threshold: 0.5 },
+      { threshold: [0.25, 0.5, 0.75, 0.98, 1] },
     );
     obs.observe(node);
     return () => obs.disconnect();
   }, []);
+
 
   function startPlayback() {
     const el = videoRef.current;
