@@ -41,6 +41,7 @@ import {
 } from "@/components/wallet-recovery-checklist";
 import { WalletPasswordManager } from "@/components/wallet-password-manager";
 import { WalletAutoLock } from "@/components/wallet-auto-lock";
+import { trackWalletStep } from "@/lib/funnel";
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
