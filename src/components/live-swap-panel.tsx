@@ -122,6 +122,52 @@ export function LiveSwapPanel() {
     };
   }, [address]);
 
+  // Restore a previously persisted swap (stepper + tx hash) after a reload, and
+  // resume watching the chain if the trade was still awaiting confirmation.
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    const saved = loadSwapProgress(settings.chainId);
+    if (saved) {
+      setProgress(saved.progress);
+      setTxHash(saved.txHash);
+    }
+    setRestored(true);
+    // Only restore once per chain selection.
+  }, [settings.chainId]);
+
+  // Persist whenever the visible progress changes.
+  useEffect(() => {
+    if (!restored) return;
+    saveSwapProgress({ progress, txHash, chainId: settings.chainId });
+  }, [restored, progress, txHash, settings.chainId]);
+
+  // Resume confirmation polling for a restored, still-pending transaction.
+  const [resumedHash, setResumedHash] = useState<string | null>(null);
+  useEffect(() => {
+    if (!restored || !txHash) return;
+    if (progress.confirm.status !== "active") return;
+    if (resumedHash === txHash) return;
+    const provider = getInjectedProvider();
+    if (!provider) return;
+    setResumedHash(txHash);
+    let alive = true;
+    void waitForReceipt(provider, txHash).then((receipt) => {
+      if (!alive) return;
+      if (!receipt) {
+        step("confirm", "active", "Still pending — follow the transaction link below.");
+      } else if (receipt.status === "0x0") {
+        step("confirm", "error", "The transaction reverted on-chain. No swap took place.");
+      } else {
+        step("confirm", "done", "Confirmed — tokens are in your wallet.");
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, [restored, txHash, progress.confirm.status, resumedHash]);
+
+
+
   const readiness = useMemo(
     () =>
       evaluateSwapReadiness({
