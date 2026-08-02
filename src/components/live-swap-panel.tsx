@@ -49,6 +49,8 @@ import {
 import { SwapCostBar, SwapCostEstimateCard } from "@/components/swap-cost-estimate";
 import { estimateSwapCost, nativeSymbolFor } from "@/lib/swap-fees";
 import { SwapReadinessPanel } from "@/components/swap-readiness-panel";
+import { SwapConfirmDialog } from "@/components/swap-confirm-dialog";
+
 import { evaluateSwapReadiness, type ReadinessCheck } from "@/lib/swap-readiness";
 import { loadSwapProgress, saveSwapProgress } from "@/lib/swap-progress-store";
 
@@ -76,6 +78,9 @@ export function LiveSwapPanel() {
   const [progress, setProgress] = useState<SwapProgress>(IDLE_PROGRESS);
   /** When the current quote (and therefore its gas figures) was fetched. */
   const [quotedAt, setQuotedAt] = useState<number | null>(null);
+  /** Last-look review modal shown before anything is signed. */
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
 
   const sell = findToken(settings.chainId, sellSymbol);
   const buy = findToken(settings.chainId, buySymbol);
@@ -614,17 +619,38 @@ export function LiveSwapPanel() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleSwap}
+              onClick={() => setConfirmOpen(true)}
               disabled={busy !== null || !readiness.ready}
               title={readiness.ready ? undefined : readiness.headline}
             >
               {(busy === "swap" || busy === "approve") && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {quote?.allowanceTarget ? `Approve ${sellSymbol}` : "Sign & submit swap"}
+              {quote?.allowanceTarget ? `Review & approve ${sellSymbol}` : "Review & sign swap"}
             </Button>
           </div>
         </div>
+
+        <SwapConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          busy={busy !== null}
+          checks={readiness.checks}
+          estimate={costEstimate}
+          slippageBps={settings.slippageBps}
+          sellSymbol={sellSymbol}
+          buySymbol={buySymbol}
+          amount={amount}
+          notionalUsd={notionalUsd}
+          chainLabel={chainName(settings.chainId)}
+          needsApproval={Boolean(quote?.allowanceTarget)}
+          quotedAt={quotedAt}
+          onConfirm={() => {
+            setConfirmOpen(false);
+            void handleSwap();
+          }}
+        />
+
 
         <SwapProgressSteps progress={progress} />
 
