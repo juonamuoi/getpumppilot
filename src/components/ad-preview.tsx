@@ -17,7 +17,7 @@ import {
   AD_VIEW_DEPTH_MILESTONES,
   type AdPreviewEvent,
 } from "@/lib/funnel";
-import { AdTranscript } from "@/components/ad-transcript";
+import { AdTranscript, activeTranscriptIndex } from "@/components/ad-transcript";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
 import adCaptions from "@/assets/pumppilot-ad.en.vtt.asset.json";
 import adPoster from "@/assets/pumppilot-ad-poster.jpg.asset.json";
@@ -51,6 +51,17 @@ export function AdPreview({ href, label = "Start free" }: Props) {
    * choice is remembered per browser.
    */
   const [captionsOn, setCaptionsOn] = useState(false);
+  /** Transcript line currently playing, synced to the video's timeline. */
+  const [activeLine, setActiveLine] = useState(-1);
+
+  function seekTo(seconds: number) {
+    const el = videoRef.current;
+    if (!el) return;
+    setInView(true);
+    el.currentTime = seconds;
+    setActiveLine(activeTranscriptIndex(seconds));
+    void el.play().catch(() => {});
+  }
 
   useEffect(() => {
     try {
@@ -261,6 +272,12 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         onCanPlay={() => setReady(true)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) =>
+          setActiveLine(activeTranscriptIndex(e.currentTarget.currentTime))
+        }
+        onSeeked={(e) =>
+          setActiveLine(activeTranscriptIndex(e.currentTarget.currentTime))
+        }
         onEnded={() => void trackAdPreviewEvent("complete")}
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
         aria-describedby="ad-preview-transcript-note"
@@ -441,7 +458,11 @@ export function AdPreview({ href, label = "Start free" }: Props) {
 
       </div>
 
-      <AdTranscript id="ad-preview-transcript" />
+      <AdTranscript
+        id="ad-preview-transcript"
+        activeIndex={playing ? activeLine : -1}
+        onSeek={seekTo}
+      />
     </div>
   );
 }

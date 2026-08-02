@@ -10,6 +10,8 @@
 export type AdTranscriptLine = {
   /** Timestamp label, e.g. "0:00" */
   at: string;
+  /** Start time of this line in the video, in seconds */
+  start: number;
   /** What is shown on screen */
   visual: string;
   /** Narration / on-screen copy */
@@ -19,42 +21,68 @@ export type AdTranscriptLine = {
 export const AD_TRANSCRIPT: AdTranscriptLine[] = [
   {
     at: "0:00",
+    start: 0,
     visual: "A dark chart screen with a green candle spiking off the top.",
     said: "Missed another pump while you were asleep?",
   },
   {
     at: "0:03",
+    start: 3,
     visual: "The PumpPilot robot mascot powers on, eyes glowing green.",
     said: "PumpPilot AI watches the market for you, around the clock.",
   },
   {
     at: "0:06",
+    start: 6,
     visual: "The market scanner lists tokens with momentum scores climbing.",
     said: "It scores momentum on every token and ranks what is actually moving.",
   },
   {
     at: "0:09",
+    start: 9,
     visual: "A rule impact panel shows thresholds, matches and near-misses.",
     said: "Every alert comes with receipts: the exact rule that fired, and why.",
   },
   {
     at: "0:12",
+    start: 12,
     visual:
       "The robot pumps glowing coins into a wallet while a person sleeps in bed.",
     said: "You set the risk limits. The copilot does the watching.",
   },
   {
     at: "0:15",
+    start: 15,
     visual:
       "The PumpPilot AI logo with the sign-up call to action on a dark background.",
     said: "Spot momentum. Control risk. Trade smarter. Start free — paper trading by default, no card required.",
   },
 ];
 
-export function AdTranscript({ id }: { id: string }) {
+/** Index of the transcript line covering `time` (seconds); -1 before the first. */
+export function activeTranscriptIndex(time: number): number {
+  let idx = -1;
+  for (let i = 0; i < AD_TRANSCRIPT.length; i += 1) {
+    if (time >= AD_TRANSCRIPT[i].start) idx = i;
+  }
+  return idx;
+}
+
+export function AdTranscript({
+  id,
+  activeIndex = -1,
+  onSeek,
+}: {
+  id: string;
+  /** Line currently playing in the video, or -1 when nothing is active. */
+  activeIndex?: number;
+  /** Optional: jump the video to a line's timestamp. */
+  onSeek?: (seconds: number) => void;
+}) {
   return (
     <details
       id={id}
+
       className="mt-3 rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left"
     >
       <summary className="cursor-pointer text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
@@ -62,17 +90,40 @@ export function AdTranscript({ id }: { id: string }) {
       </summary>
       <p className="mt-2 text-[11px] text-muted-foreground">
         Optional English captions can be toggled on the player (captions button or
-        the C key). The full text of what is shown and said is below.
+        the C key). The line playing right now is highlighted; select any line to
+        jump the video to that moment.
       </p>
-      <ol className="mt-2 space-y-2">
-        {AD_TRANSCRIPT.map((line) => (
-          <li key={line.at} className="text-[11px] leading-relaxed">
-            <span className="font-mono text-muted-foreground">{line.at}</span>{" "}
-            <span className="text-foreground">{line.said}</span>{" "}
-            <span className="text-muted-foreground">({line.visual})</span>
-          </li>
-        ))}
+      <ol className="mt-2 space-y-1">
+        {AD_TRANSCRIPT.map((line, i) => {
+          const active = i === activeIndex;
+          return (
+            <li key={line.at}>
+              <button
+                type="button"
+                onClick={() => onSeek?.(line.start)}
+                aria-current={active ? "true" : undefined}
+                className={`block w-full rounded-md border-l-2 px-2 py-1 text-left text-[11px] leading-relaxed transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                  active
+                    ? "border-emerald-400 bg-emerald-500/10"
+                    : "border-transparent hover:bg-muted/40"
+                }`}
+              >
+                <span className="font-mono text-muted-foreground">{line.at}</span>{" "}
+                <span
+                  className={
+                    active ? "font-medium text-emerald-300" : "text-foreground"
+                  }
+                >
+                  {line.said}
+                </span>{" "}
+                <span className="text-muted-foreground">({line.visual})</span>
+                {active && <span className="sr-only"> — now playing</span>}
+              </button>
+            </li>
+          );
+        })}
       </ol>
     </details>
   );
 }
+
