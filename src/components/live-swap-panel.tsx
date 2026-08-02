@@ -386,6 +386,8 @@ export function LiveSwapPanel() {
           </Button>
         </div>
 
+        <SwapProgressSteps progress={progress} />
+
         {failure && (
           <SwapErrorPanel
             error={failure}
