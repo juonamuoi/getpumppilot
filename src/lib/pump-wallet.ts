@@ -38,6 +38,8 @@ export type PumpWalletRecord = {
   iv: string;
   /** base64 AES-GCM ciphertext of the recovery phrase */
   cipher: string;
+  /** ISO timestamp of the last password change/reset, if any. */
+  rotatedAt?: string;
 };
 
 export type PumpWalletState = {
