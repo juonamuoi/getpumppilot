@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/auth-store";
 import { McpAuditExport } from "@/components/mcp-audit-export";
 import { McpRateLimits } from "@/components/mcp-rate-limits";
 import { Gauge } from "lucide-react";
+import { AnnouncementVerbosityControl } from "@/components/execution-announcer";
 
 import { toast } from "sonner";
 import {
