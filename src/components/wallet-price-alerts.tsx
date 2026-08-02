@@ -205,9 +205,9 @@ export function WalletPriceAlerts() {
 
         <div className="grid gap-3 sm:grid-cols-5">
           <div className="space-y-1">
-            <Label className="text-xs">Asset</Label>
+            <Label htmlFor="wpa-asset" className="text-xs">Asset</Label>
             <Select value={activeSymbol} onValueChange={setSymbol}>
-              <SelectTrigger>
+              <SelectTrigger id="wpa-asset" aria-label="Alert asset">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -220,9 +220,9 @@ export function WalletPriceAlerts() {
             </Select>
           </div>
           <div className="space-y-1 sm:col-span-2">
-            <Label className="text-xs">Condition</Label>
+            <Label htmlFor="wpa-condition" className="text-xs">Condition</Label>
             <Select value={kind} onValueChange={(v) => setKind(v as WalletAlertKind)}>
-              <SelectTrigger>
+              <SelectTrigger id="wpa-condition" aria-label="Alert condition">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -239,6 +239,7 @@ export function WalletPriceAlerts() {
               {isPriceKind(kind) ? "Price (USD)" : isMoveKind(kind) ? "Move (%)" : "Change (%)"}
             </Label>
             <Input
+              aria-label={isPriceKind(kind) ? "Trigger price in USD" : "Trigger change in percent"}
               inputMode="decimal"
               value={value}
               onChange={(e) => setValue(e.target.value)}
@@ -248,6 +249,7 @@ export function WalletPriceAlerts() {
           <div className="space-y-1">
             <Label className="text-xs">Cooldown (min)</Label>
             <Input
+              aria-label="Cooldown in minutes"
               inputMode="numeric"
               value={cooldown}
               onChange={(e) => setCooldown(e.target.value)}

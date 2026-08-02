@@ -223,7 +223,7 @@ function DoctorPage() {
                       </span>
                       <span className="text-lg text-muted-foreground">/100</span>
                     </div>
-                    <Progress value={report.healthScore} className="mt-3 h-2" />
+                    <Progress aria-label="Account health score" value={report.healthScore} className="mt-3 h-2" />
                     <p className="mt-3 text-xs text-muted-foreground">{report.headline}</p>
                   </div>
                 </CardContent>

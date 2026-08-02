@@ -24,7 +24,7 @@ import {
   Coins,
 
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,7 +92,7 @@ function Brand() {
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="flex flex-col gap-1">
+    <nav aria-label="Primary" className="flex flex-col gap-1">
       {nav.map((n) => {
         const active = pathname === n.to || pathname.startsWith(n.to + "/");
         const Icon = n.icon;
@@ -101,6 +101,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             key={n.to}
             to={n.to}
             onClick={onNavigate}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
               active
@@ -125,7 +126,7 @@ function GuideLinks({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
         <BookOpen className="h-3.5 w-3.5 text-emerald-300" aria-hidden /> Guides
       </div>
-      <ul className="mt-2 space-y-1.5">
+      <ul aria-label="Guides" className="mt-2 space-y-1.5">
         {posts.map((post) => (
           <li key={post!.slug}>
             <Link
@@ -191,12 +192,48 @@ function LiveLockedCard() {
   );
 }
 
+/** Announces client-side route changes to screen readers. */
+function RouteAnnouncer() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [message, setMessage] = useState("");
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const label =
+      nav.find((n) => pathname === n.to || pathname.startsWith(n.to + "/"))?.label ??
+      (typeof document !== "undefined" ? document.title : pathname);
+    const id = window.setTimeout(() => setMessage(`Navigated to ${label}`), 120);
+    return () => window.clearTimeout(id);
+  }, [pathname]);
+  return (
+    <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+      {message}
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
+      <a
+        href="#main-content"
+        onClick={(e) => {
+          e.preventDefault();
+          const main = document.getElementById("main-content");
+          main?.focus();
+          main?.scrollIntoView({ block: "start" });
+        }}
+        className="sr-only rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-background focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60]"
+      >
+        Skip to main content
+      </a>
+      <RouteAnnouncer />
       {/* Sidebar (desktop) */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border/60 bg-card/40 backdrop-blur lg:flex">
+      <aside aria-label="Sidebar" className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border/60 bg-card/40 backdrop-blur lg:flex">
         <div className="p-4">
           <Brand />
         </div>
@@ -215,6 +252,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="space-y-2 p-3">
           <button
+            aria-label="Open quick jump command palette"
+            aria-keyshortcuts="Meta+K Control+K"
             onClick={() => {
               // trigger ⌘K
               document.dispatchEvent(
@@ -281,7 +320,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <PositionRiskNotifier />
 
 
-      <main className="lg:ml-64">
+      <main id="main-content" tabIndex={-1} className="lg:ml-64 focus:outline-none">
         <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{children}</div>
       </main>
 

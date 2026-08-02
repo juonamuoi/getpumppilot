@@ -176,7 +176,7 @@ function BacktestPage() {
                   <Label className="text-xs">Momentum threshold</Label>
                   <span className="font-mono text-xs text-emerald-300">{threshold[0]}</span>
                 </div>
-                <Slider value={threshold} onValueChange={setThreshold} min={30} max={95} step={1} />
+                <Slider aria-label="Momentum threshold" value={threshold} onValueChange={setThreshold} min={30} max={95} step={1} />
               </div>
               <Button onClick={run} className="w-full">
                 <History className="mr-2 h-4 w-4" /> Run backtest

@@ -60,7 +60,7 @@ export function QuotaMeter({ quota }: { quota: ConsoleQuotaView }) {
             {quota.remaining ?? "?"} / {quota.limit} left
           </span>
         </div>
-        <Progress value={acctPct} className="h-1.5" />
+        <Progress aria-label="Account quota used" value={acctPct} className="h-1.5" />
       </div>
 
       <div className="space-y-1">
@@ -72,7 +72,7 @@ export function QuotaMeter({ quota }: { quota: ConsoleQuotaView }) {
             {quota.clientRemaining ?? "?"} / {quota.clientLimit} left
           </span>
         </div>
-        <Progress value={clientPct} className="h-1.5" />
+        <Progress aria-label="Client quota used" value={clientPct} className="h-1.5" />
       </div>
     </div>
   );
@@ -127,7 +127,7 @@ export function ThrottleBanner({
             {ready ? "ready now" : `${secondsLeft}s`}
           </span>
         </div>
-        <Progress value={pct} className="h-1.5" />
+        <Progress aria-label="Quota used" value={pct} className="h-1.5" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-[11px]">

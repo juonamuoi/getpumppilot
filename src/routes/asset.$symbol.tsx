@@ -19,6 +19,7 @@ import { AssetShareButtons } from "@/components/asset-share";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
+import { useExecutionAnnouncer } from "@/components/execution-announcer";
 import { requestTrade } from "@/lib/trade-gate";
 import {
   SPARK_WINDOW_OPTIONS,
@@ -98,6 +99,7 @@ function AssetPage() {
   const navigate = useNavigate();
   const paper = usePaper();
   const [qty, setQty] = useState("");
+  const { announce, region: announcerRegion } = useExecutionAnnouncer();
   const horizon: SparkWindowValue = w ?? "24h";
 
 
@@ -124,7 +126,11 @@ function AssetPage() {
 
   const doTrade = (side: "buy" | "sell") => {
     const n = parseFloat(qty);
-    if (!n || n <= 0) return toast.error("Enter a positive quantity");
+    if (!n || n <= 0) {
+      announce("Order rejected: enter a positive quantity.", "assertive");
+      return toast.error("Enter a positive quantity");
+    }
+    announce(`Paper order placed: ${side} ${n} ${asset.symbol}. Confirm the safety notice to continue.`);
     // Global safety gate — nothing is submitted until the notice is acknowledged.
     requestTrade({
       action: `${side.toUpperCase()} ${n} ${asset.symbol}`,
@@ -134,9 +140,11 @@ function AssetPage() {
         const r = paper.trade(asset.symbol, side, n);
         if (r.ok) {
           toast.success(r.msg);
+          announce(`Paper order filled: ${side} ${n} ${asset.symbol}. ${r.msg}`);
           setQty("");
         } else {
           toast.error(r.msg);
+          announce(`Paper order rejected: ${r.msg}`, "assertive");
         }
       },
     });
@@ -145,6 +153,10 @@ function AssetPage() {
   return (
     <AppShell>
       <div className="space-y-5">
+        {announcerRegion}
+        <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+          Execution mode: PAPER. Orders on this page are simulated.
+        </div>
         <PageBreadcrumbs
           crumbs={[
             { name: "Scanner", path: "/scanner" },
@@ -186,7 +198,11 @@ function AssetPage() {
               <CardTitle className="text-base">
                 Price · {horizon} {asset.isLive ? "· live" : "(demo)"}
               </CardTitle>
-              <div className="flex overflow-hidden rounded-md border border-border/60 text-xs">
+              <div
+                role="group"
+                aria-label="Chart time window"
+                className="flex overflow-hidden rounded-md border border-border/60 text-xs"
+              >
                 {SPARK_WINDOW_OPTIONS.map((o) => (
                   <Link
                     key={o.value}
@@ -208,6 +224,10 @@ function AssetPage() {
             </CardHeader>
 
             <CardContent className="h-72 pl-0">
+              <p className="sr-only">
+                {`Line chart of ${asset.name} (${asset.symbol}) price over the ${horizon} window. Latest price ${fmtUsd(asset.price)}, ${fmtPct(asset.change24h)} over 24 hours. Range ${fmtUsd(Math.min(...chartData.map((d) => d.v)))} to ${fmtUsd(Math.max(...chartData.map((d) => d.v)))}.`}
+              </p>
+              <div aria-hidden className="h-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -242,6 +262,7 @@ function AssetPage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 

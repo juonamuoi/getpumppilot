@@ -146,7 +146,7 @@ export function RiskWhatIfPanel() {
               Caps each holding at the what-if max size before computing risk.
             </div>
           </div>
-          <Switch checked={applySizing} onCheckedChange={setApplySizing} />
+          <Switch aria-label="Simulate trimming oversized holdings" checked={applySizing} onCheckedChange={setApplySizing} />
         </div>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

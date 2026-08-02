@@ -147,6 +147,8 @@ export function NotificationHistory() {
         <div className="relative min-w-[180px] flex-1">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
+            type="search"
+            aria-label="Search notification history"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search token, spender, correlation ID…"
@@ -154,7 +156,7 @@ export function NotificationHistory() {
           />
         </div>
         <Select value={risk} onValueChange={setRisk}>
-          <SelectTrigger className="h-9 w-[140px] text-xs">
+          <SelectTrigger aria-label="Filter by risk level" className="h-9 w-[140px] text-xs">
             <SelectValue placeholder="Risk" />
           </SelectTrigger>
           <SelectContent>
@@ -166,7 +168,7 @@ export function NotificationHistory() {
           </SelectContent>
         </Select>
         <Select value={range} onValueChange={setRange}>
-          <SelectTrigger className="h-9 w-[130px] text-xs">
+          <SelectTrigger aria-label="Filter by time range" className="h-9 w-[130px] text-xs">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
           <SelectContent>
@@ -178,7 +180,11 @@ export function NotificationHistory() {
         </Select>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+      <div
+        role="status"
+        aria-live="polite"
+        className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground"
+      >
         <span>{rows.length} alert{rows.length === 1 ? "" : "s"}</span>
         <span>· {counts.critical} critical</span>
         <span>· {counts.high} high</span>

@@ -179,7 +179,7 @@ function StrategyPage() {
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Publishing shares your rule set publicly. <Link to="/community" className="text-emerald-300 hover:underline">Browse community</Link>.
+                Publishing shares your rule set publicly. <Link to="/community" className="text-emerald-300 underline underline-offset-2">Browse community</Link>.
               </p>
             </CardContent>
           </Card>
@@ -230,7 +230,7 @@ function SliderRow({
         <Label className="text-xs">{label}</Label>
         <span className="font-mono text-xs text-emerald-300">{display}</span>
       </div>
-      <Slider value={value} onValueChange={onValueChange} min={0} max={100} step={1} />
+      <Slider aria-label={label} value={value} onValueChange={onValueChange} min={0} max={100} step={1} />
     </div>
   );
 }
