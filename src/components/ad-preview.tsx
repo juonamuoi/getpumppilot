@@ -51,6 +51,17 @@ export function AdPreview({ href, label = "Start free" }: Props) {
    * choice is remembered per browser.
    */
   const [captionsOn, setCaptionsOn] = useState(false);
+  /** Transcript line currently playing, synced to the video's timeline. */
+  const [activeLine, setActiveLine] = useState(-1);
+
+  function seekTo(seconds: number) {
+    const el = videoRef.current;
+    if (!el) return;
+    setInView(true);
+    el.currentTime = seconds;
+    setActiveLine(activeTranscriptIndex(seconds));
+    void el.play().catch(() => {});
+  }
 
   useEffect(() => {
     try {
