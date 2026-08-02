@@ -41,6 +41,7 @@ import {
 } from "@/components/wallet-recovery-checklist";
 import { WalletPasswordManager } from "@/components/wallet-password-manager";
 import { WalletAutoLock } from "@/components/wallet-auto-lock";
+import { trackWalletStep } from "@/lib/funnel";
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -94,11 +95,13 @@ export function PumpWalletPanel() {
       return;
     }
     setBusy(true);
+    void trackWalletStep("wallet_create_started");
     try {
       const { mnemonic } = await createPumpWallet(password);
       setPhrase(mnemonic);
       setMode("idle");
       reset();
+      void trackWalletStep("wallet_created");
       toast.success("PumpPilot wallet created");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create wallet");
@@ -112,6 +115,7 @@ export function PumpWalletPanel() {
     try {
       await unlockPumpWallet(password);
       reset();
+      void trackWalletStep("wallet_unlocked");
       toast.success("Wallet unlocked");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not unlock");
@@ -119,6 +123,7 @@ export function PumpWalletPanel() {
       setBusy(false);
     }
   }
+
 
   async function handleReveal() {
     setBusy(true);
@@ -194,6 +199,7 @@ export function PumpWalletPanel() {
             onClick={() => {
               markBackedUp();
               setPhrase(null);
+              void trackWalletStep("wallet_backup_confirmed");
               toast.success("Backup confirmed — the phrase will not be shown again.");
             }}
           >
@@ -398,6 +404,7 @@ export function PumpWalletPanel() {
               )
             ) {
               deletePumpWallet();
+              void trackWalletStep("wallet_removed");
               toast.success("Wallet removed from this device");
             }
           }}

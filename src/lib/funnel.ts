@@ -305,3 +305,72 @@ export async function trackAdPreviewEvent(
     /* ignore */
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * PumpPilot wallet funnel
+ *
+ * Tracks the path from "connected something" to "active in-app wallet":
+ * created -> backup confirmed -> unlocked -> removed. Only step names and
+ * UTM attribution are recorded — never addresses, passwords or phrases.
+ * ------------------------------------------------------------------ */
+
+export const WALLET_EXPERIMENT = "wallet_funnel";
+
+export type WalletFunnelStep =
+  | "wallet_create_started"
+  | "wallet_created"
+  | "wallet_backup_confirmed"
+  | "wallet_unlocked"
+  | "wallet_locked_idle"
+  | "wallet_password_rotated"
+  | "wallet_removed";
+
+export const WALLET_FUNNEL_STEPS: { step: WalletFunnelStep; label: string }[] = [
+  { step: "wallet_create_started", label: "Started creation" },
+  { step: "wallet_created", label: "Wallet created" },
+  { step: "wallet_backup_confirmed", label: "Backup confirmed" },
+  { step: "wallet_unlocked", label: "Unlocked (active)" },
+  { step: "wallet_locked_idle", label: "Auto-locked" },
+  { step: "wallet_password_rotated", label: "Password changed" },
+  { step: "wallet_removed", label: "Wallet removed" },
+];
+
+/** Steps that only make sense once per browser for conversion reporting. */
+const WALLET_ONCE_STEPS: WalletFunnelStep[] = [
+  "wallet_create_started",
+  "wallet_created",
+  "wallet_backup_confirmed",
+];
+
+/**
+ * Record a wallet funnel step. Best-effort — analytics must never block or
+ * break a wallet action.
+ */
+export async function trackWalletStep(
+  step: WalletFunnelStep,
+  detail?: { method?: string; userId?: string | null },
+) {
+  if (typeof window === "undefined") return;
+  if (WALLET_ONCE_STEPS.includes(step)) {
+    const key = `pp_wallet_funnel:${step}`;
+    if (safeGet(key)) return;
+    safeSet(key, new Date().toISOString());
+  }
+
+  const ctx = getUtmContext();
+  try {
+    await supabase.from("ad_creative_events").insert({
+      experiment: WALLET_EXPERIMENT,
+      variant: ctx?.variant ?? "site",
+      creative_id: detail?.method ?? "pump_wallet",
+      event: step,
+      visitor_id: getVisitorId(),
+      user_id: detail?.userId ?? null,
+      utm_source: ctx?.utm_source ?? null,
+      utm_medium: ctx?.utm_medium ?? null,
+      utm_campaign: ctx?.utm_campaign ?? null,
+    });
+  } catch {
+    /* ignore */
+  }
+}
