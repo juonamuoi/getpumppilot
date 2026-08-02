@@ -143,8 +143,10 @@ function hydrate() {
     // Corrupt entry — treat as "no wallet" rather than crashing the app.
   }
   try {
-    const saved = Number(window.localStorage.getItem(AUTOLOCK_KEY));
-    if (Number.isFinite(saved) && saved >= 0) state = { ...state, autoLockMinutes: saved };
+    const rawMinutes = window.localStorage.getItem(AUTOLOCK_KEY);
+    const saved = Number(rawMinutes);
+    if (rawMinutes !== null && Number.isFinite(saved) && saved >= 0)
+      state = { ...state, autoLockMinutes: saved };
   } catch {
     // Ignore — fall back to the default inactivity window.
   }
