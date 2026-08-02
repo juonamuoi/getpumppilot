@@ -48,6 +48,8 @@ import {
 } from "@/lib/swap-errors";
 import { SwapCostEstimateCard } from "@/components/swap-cost-estimate";
 import { estimateSwapCost, nativeSymbolFor } from "@/lib/swap-fees";
+import { SwapReadinessPanel } from "@/components/swap-readiness-panel";
+import { evaluateSwapReadiness, type ReadinessCheck } from "@/lib/swap-readiness";
 
 
 function encodeApprove(spender: string, amountHex: string) {
