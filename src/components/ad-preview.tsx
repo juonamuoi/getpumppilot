@@ -282,22 +282,36 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={() => {
-          const el = videoRef.current;
-          if (!el) return;
-          el.muted = !el.muted;
-          setMuted(el.muted);
-          void trackAdPreviewEvent(el.muted ? "mute" : "unmute");
-          void el.play().catch(() => {});
-        }}
+      <div className="absolute right-3 top-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={togglePlayback}
+          aria-label={playing ? "Pause ad" : "Play ad"}
+          aria-pressed={playing}
+          className="rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        >
+          {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </button>
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute ad" : "Mute ad"}
+          aria-pressed={!muted}
+          className="rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        >
+          {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
+      </div>
 
-        aria-label={muted ? "Unmute ad" : "Mute ad"}
-        className="absolute right-3 top-3 rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white"
-      >
-        {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-      </button>
+      {/* Screen-reader status + keyboard hint */}
+      <p aria-live="polite" className="sr-only">
+        {playing ? "Ad playing" : "Ad paused"}
+        {muted ? ", muted" : ", sound on"}
+      </p>
+      <p className="sr-only">
+        Press Space or K to play or pause the ad, and M to toggle sound.
+      </p>
+
     </div>
   );
 }
