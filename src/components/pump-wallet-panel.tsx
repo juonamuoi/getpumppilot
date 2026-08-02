@@ -189,19 +189,8 @@ export function PumpWalletPanel({
         />
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void navigator.clipboard.writeText(phrase);
-              setCopied(true);
-              toast.warning("Clipboard is not a safe backup — paste it nowhere online.");
-              setTimeout(() => setCopied(false), 1500);
-            }}
-          >
-            {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
-            Copy phrase
-          </Button>
+          <PhraseCopyGuard phrase={phrase} />
+
           <Button
             size="sm"
             disabled={!checklist.complete}
