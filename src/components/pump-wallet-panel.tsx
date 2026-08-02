@@ -34,6 +34,10 @@ import {
   unlockPumpWallet,
   usePumpWallet,
 } from "@/lib/pump-wallet";
+import {
+  useRecoveryChecklist,
+  WalletRecoveryChecklist,
+} from "@/components/wallet-recovery-checklist";
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -66,6 +70,9 @@ export function PumpWalletPanel() {
   const [copied, setCopied] = useState(false);
   const [revealPassword, setRevealPassword] = useState("");
   const [showReveal, setShowReveal] = useState(false);
+  const checklist = useRecoveryChecklist();
+
+
 
   const reset = () => {
     setPassword("");
@@ -129,20 +136,44 @@ export function PumpWalletPanel() {
     return (
       <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-amber-400">
-          <AlertTriangle className="h-4 w-4" /> Write these 12 words down
+          <AlertTriangle className="h-4 w-4" /> Shown once — write these 12 words down now
         </div>
-        <p className="text-xs text-muted-foreground">
-          This recovery phrase is the only way to restore your wallet. Store it offline. Anyone with
-          these words can spend your funds — PumpPilot support will never ask for them.
-        </p>
+        <div className="space-y-1 rounded-md border border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-300">
+          <p className="font-medium">Read this before you continue:</p>
+          <ul className="list-disc space-y-0.5 pl-4">
+            <li>
+              This phrase is displayed <strong>one time</strong>. Once you dismiss it, it can only be
+              re-shown by re-entering your wallet password on this device.
+            </li>
+            <li>
+              Store it <strong>offline</strong> — paper or metal. Never a screenshot, photo, notes
+              app, password manager sync, email or cloud drive.
+            </li>
+            <li>
+              Anyone with these 12 words can drain this wallet instantly, with no password and no way
+              to reverse it.
+            </li>
+            <li>Lose the phrase and lose this device, and the funds are gone permanently.</li>
+            <li>PumpPilot support will never ask for it. Every such request is a scam.</li>
+          </ul>
+        </div>
         <PhraseGrid mnemonic={phrase} />
-        <div className="flex flex-wrap gap-2">
+
+        <WalletRecoveryChecklist
+          checked={checklist.checked}
+          onToggle={checklist.toggle}
+          done={checklist.done}
+          total={checklist.total}
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
               void navigator.clipboard.writeText(phrase);
               setCopied(true);
+              toast.warning("Clipboard is not a safe backup — paste it nowhere online.");
               setTimeout(() => setCopied(false), 1500);
             }}
           >
@@ -151,18 +182,31 @@ export function PumpWalletPanel() {
           </Button>
           <Button
             size="sm"
+            disabled={!checklist.complete}
+            title={
+              checklist.complete
+                ? undefined
+                : "Tick every checklist item to confirm your backup is safe."
+            }
             onClick={() => {
               markBackedUp();
               setPhrase(null);
-              toast.success("Backup confirmed");
+              toast.success("Backup confirmed — the phrase will not be shown again.");
             }}
           >
             I've saved it securely
           </Button>
+          {!checklist.complete ? (
+            <span className="text-[11px] text-muted-foreground">
+              {checklist.total - checklist.done} step
+              {checklist.total - checklist.done === 1 ? "" : "s"} left before you can continue.
+            </span>
+          ) : null}
         </div>
       </div>
     );
   }
+
 
   /* ------------------------------ no wallet ----------------------------- */
   if (!record) {
@@ -208,7 +252,9 @@ export function PumpWalletPanel() {
               />
             </div>
             <p className="text-[11px] text-muted-foreground">
-              We can't reset this password — it never leaves your device.
+              We can't reset this password — it never leaves your device. After you generate the
+              wallet, a 12-word recovery phrase is shown <strong>once</strong>: have pen and paper
+              ready and store it offline, never as a screenshot or in the cloud.
             </p>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => void handleCreate()} disabled={busy}>
@@ -261,11 +307,29 @@ export function PumpWalletPanel() {
       </div>
 
       {!record.backedUp ? (
-        <p className="flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] text-amber-400">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Recovery phrase not confirmed yet. Reveal and store it before funding this wallet.
+        <div className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2.5 text-[11px] text-amber-400">
+          <p className="flex items-start gap-1.5">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>
+              Backup not confirmed ({checklist.done}/{checklist.total} checklist steps done). Reveal
+              the phrase with your password, write it down offline, and finish the checklist before
+              funding this wallet.
+            </span>
+          </p>
+          <WalletRecoveryChecklist
+            checked={checklist.checked}
+            onToggle={checklist.toggle}
+            done={checklist.done}
+            total={checklist.total}
+          />
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground">
+          Backup confirmed. Your 12 words are never shown again automatically — reveal them with your
+          password only when you are somewhere private, and keep the offline copy safe.
         </p>
-      ) : null}
+      )}
+
 
       {!unlocked ? (
         <div className="space-y-2">
