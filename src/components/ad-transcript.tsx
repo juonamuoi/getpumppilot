@@ -1,7 +1,7 @@
 /**
  * Text transcript fallback for the PumpPilot ad video.
  *
- * The rendered ad has no caption (WebVTT) track, so this transcript is the
+ * An optional WebVTT caption track ships with the ad; this transcript is the
  * accessible equivalent of the audio + on-screen text. It is always available
  * in the DOM (inside a <details> disclosure) so screen-reader and
  * captions-dependent users can read the full ad content.
