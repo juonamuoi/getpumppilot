@@ -107,16 +107,28 @@ export function passwordProblem(password: string): string | null {
 
 /* ------------------------------- store ------------------------------- */
 
-let state: PumpWalletState = { record: null, unlockedAddress: null };
+const AUTOLOCK_KEY = "pp.pump-wallet.autolock-minutes";
+const DEFAULT_AUTOLOCK_MINUTES = 10;
+
+const EMPTY: PumpWalletState = {
+  record: null,
+  unlockedAddress: null,
+  lockedReason: null,
+  autoLockMinutes: DEFAULT_AUTOLOCK_MINUTES,
+  autoLockAt: null,
+};
+
+let state: PumpWalletState = { ...EMPTY };
 let account: Account | null = null;
 let hydrated = false;
 const listeners = new Set<() => void>();
-const SERVER_STATE: PumpWalletState = { record: null, unlockedAddress: null };
+const SERVER_STATE: PumpWalletState = { ...EMPTY };
 
 function emit() {
   state = { ...state };
   for (const l of listeners) l();
 }
+
 
 function hydrate() {
   if (hydrated || typeof window === "undefined") return;
