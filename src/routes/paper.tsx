@@ -166,7 +166,10 @@ function PaperPage() {
   return (
     <AppShell>
       <div className="space-y-5">
+        {announcerRegion}
+        <ExecutionModeAnnouncer live={liveMode} />
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-end sm:justify-between">
+
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-bold sm:text-3xl">Trading</h1>
             <p className="mt-1 text-sm text-muted-foreground">
