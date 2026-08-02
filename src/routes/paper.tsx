@@ -152,14 +152,19 @@ function PaperPage() {
           return;
         }
         const r = paper.trade(symbol, side, n);
-        r.ok ? toast.success(r.msg) : toast.error(r.msg);
-        announce(
-          r.ok
-            ? `Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`
-            : `Paper order rejected: ${r.msg}`,
-          r.ok ? "polite" : "assertive",
-          "essential",
-        );
+        if (r.ok) {
+          toast.success(r.msg);
+          announce(`Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`, "polite", "essential");
+        } else if (r.block) {
+          setLastBlock(r.block);
+          toast.error(`Blocked by ${riskBlockTitle(r.block)}`, { description: r.msg });
+          announce(announceRiskBlock(r.block, side, n, symbol), "assertive", "essential");
+        } else {
+          toast.error(r.msg);
+          announce(`Paper order rejected: ${r.msg}`, "assertive", "essential");
+        }
+        if (r.ok) setLastBlock(null);
+
         if (r.ok) setQty("");
       },
     });
