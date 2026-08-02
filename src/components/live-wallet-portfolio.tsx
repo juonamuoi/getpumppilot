@@ -277,7 +277,7 @@ export function LiveWalletPortfolio() {
             value={syncValue}
             onValueChange={(v) => setSyncValue(v as SyncIntervalValue)}
           >
-            <SelectTrigger className="h-7 w-[168px] text-xs" title="Auto-refresh interval">
+            <SelectTrigger aria-label="Auto-refresh interval" className="h-7 w-[168px] text-xs" title="Auto-refresh interval">
               <Clock className="mr-1 h-3.5 w-3.5 text-muted-foreground" />
               <SelectValue placeholder="Auto-refresh" />
             </SelectTrigger>
@@ -535,7 +535,7 @@ export function LiveWalletPortfolio() {
                 value={String(staleMs)}
                 onValueChange={(v) => setStaleMs(Number(v))}
               >
-                <SelectTrigger className="h-7 w-[130px] text-xs">
+                <SelectTrigger aria-label="Flag prices older than" className="h-7 w-[130px] text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -685,6 +685,8 @@ export function LiveWalletPortfolio() {
                   <div className="relative min-w-[180px] flex-1">
                     <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      type="search"
+                      aria-label="Search holdings"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Search symbol, name or contract…"
@@ -695,7 +697,7 @@ export function LiveWalletPortfolio() {
                     value={sort}
                     onValueChange={(v) => setSort(v as HoldingSort)}
                   >
-                    <SelectTrigger className="h-8 w-[190px] text-xs">
+                    <SelectTrigger aria-label="Sort holdings" className="h-8 w-[190px] text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
