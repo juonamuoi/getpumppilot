@@ -46,7 +46,7 @@ import {
   type FriendlySwapError,
   type SwapErrorStage,
 } from "@/lib/swap-errors";
-import { SwapCostEstimateCard } from "@/components/swap-cost-estimate";
+import { SwapCostBar, SwapCostEstimateCard } from "@/components/swap-cost-estimate";
 import { estimateSwapCost, nativeSymbolFor } from "@/lib/swap-fees";
 import { SwapReadinessPanel } from "@/components/swap-readiness-panel";
 import { evaluateSwapReadiness, type ReadinessCheck } from "@/lib/swap-readiness";
@@ -74,6 +74,8 @@ export function LiveSwapPanel() {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [failure, setFailure] = useState<FriendlySwapError | null>(null);
   const [progress, setProgress] = useState<SwapProgress>(IDLE_PROGRESS);
+  /** When the current quote (and therefore its gas figures) was fetched. */
+  const [quotedAt, setQuotedAt] = useState<number | null>(null);
 
   const sell = findToken(settings.chainId, sellSymbol);
   const buy = findToken(settings.chainId, buySymbol);
@@ -268,6 +270,7 @@ export function LiveSwapPanel() {
         },
       });
       setQuote(q);
+      setQuotedAt(q.ok ? Date.now() : null);
       if (!q.ok) {
         fail(new Error(q.error ?? "Quote failed."), "quote");
         return;
@@ -366,6 +369,7 @@ export function LiveSwapPanel() {
       })) as string;
       setTxHash(hash);
       setQuote(null);
+      setQuotedAt(null);
       step("submit", "done", `Broadcast as ${hash.slice(0, 10)}…${hash.slice(-6)}`);
       toast.success("Swap submitted to the network.");
 
@@ -502,6 +506,7 @@ export function LiveSwapPanel() {
               onChange={(e) => {
                 setAmount(e.target.value);
                 setQuote(null);
+                setQuotedAt(null);
               }}
             />
           </div>
@@ -521,42 +526,6 @@ export function LiveSwapPanel() {
           busy={busy !== null}
           onFix={handleFix}
         />
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={handleQuote}
-            disabled={busy !== null || !readiness.canQuote}
-          >
-            {busy === "quote" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Get route &amp; quote
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleSwap}
-            disabled={busy !== null || !readiness.ready}
-            title={readiness.ready ? undefined : readiness.headline}
-          >
-            {(busy === "swap" || busy === "approve") && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            {quote?.allowanceTarget ? `Approve ${sellSymbol}` : "Sign & submit swap"}
-          </Button>
-        </div>
-
-
-        <SwapProgressSteps progress={progress} />
-
-        {failure && (
-          <SwapErrorPanel
-            error={failure}
-            busy={busy !== null}
-            onRetry={handleRetry}
-            onDismiss={() => setFailure(null)}
-          />
-        )}
-
-
 
         {quote?.ok && buy && (
           <div className="space-y-1 rounded-md border border-border bg-muted/30 p-3 text-xs">
@@ -587,6 +556,51 @@ export function LiveSwapPanel() {
         {quote?.ok && costEstimate && (
           <SwapCostEstimateCard estimate={costEstimate} slippageBps={settings.slippageBps} />
         )}
+
+        {/* Costs stay pinned right above the signing buttons so the latest gas,
+            USD fee and worst-case slippage are on screen at the moment of signing. */}
+        <div className="sticky bottom-0 -mx-6 space-y-2 border-t border-border bg-card/95 px-6 py-3 backdrop-blur">
+          <SwapCostBar
+            estimate={costEstimate}
+            slippageBps={settings.slippageBps}
+            quotedAt={quotedAt}
+            onRefresh={handleQuote}
+            busy={busy !== null}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={handleQuote}
+              disabled={busy !== null || !readiness.canQuote}
+            >
+              {busy === "quote" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Get route &amp; quote
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleSwap}
+              disabled={busy !== null || !readiness.ready}
+              title={readiness.ready ? undefined : readiness.headline}
+            >
+              {(busy === "swap" || busy === "approve") && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {quote?.allowanceTarget ? `Approve ${sellSymbol}` : "Sign & submit swap"}
+            </Button>
+          </div>
+        </div>
+
+        <SwapProgressSteps progress={progress} />
+
+        {failure && (
+          <SwapErrorPanel
+            error={failure}
+            busy={busy !== null}
+            onRetry={handleRetry}
+            onDismiss={() => setFailure(null)}
+          />
+        )}
+
 
 
         {txHash && (
