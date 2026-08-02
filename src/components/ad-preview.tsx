@@ -140,9 +140,26 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           <Button
             size="lg"
             asChild
-            onClick={() => {
+            onClick={(e) => {
               void trackCtaClick("hero-ad-overlay");
               void trackAdPreviewEvent("cta_click");
+              // Smooth-scroll to the signup section and move focus to the
+              // email field so keyboard/screen-reader users land on the form.
+              const section = document.getElementById("signup");
+              const field = document.getElementById("signup-email");
+              if (!section) return;
+              e.preventDefault();
+              const reduce =
+                typeof window !== "undefined" &&
+                window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+              section.scrollIntoView({
+                behavior: reduce ? "auto" : "smooth",
+                block: "center",
+              });
+              window.setTimeout(
+                () => (field ?? section).focus({ preventScroll: true }),
+                reduce ? 0 : 500,
+              );
             }}
             className="absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-7 text-base shadow-xl shadow-emerald-500/40"
           >
@@ -150,6 +167,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
               {label} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
+
         </div>
         <p className="mt-3 text-[11px] text-white/70">
           No card. Paper trading by default.
