@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { useSecurity } from "@/lib/security-store";
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
+import { PumpWalletPanel } from "@/components/pump-wallet-panel";
+
 import { scanWallet, shortAddress, type WalletScanResult } from "@/lib/wallet-scan";
 import { Link } from "@tanstack/react-router";
 import { notifyNewThreats } from "@/lib/threat-notify";
