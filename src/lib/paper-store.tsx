@@ -187,7 +187,12 @@ type State = {
     stopLossPct: number;
     takeProfitPct: number;
   };
-  trade: (symbol: string, side: "buy" | "sell", qty: number) => { ok: boolean; msg: string };
+  trade: (
+    symbol: string,
+    side: "buy" | "sell",
+    qty: number,
+  ) => { ok: boolean; msg: string; block?: RiskBlock };
+
   addAlert: (a: Omit<Alert, "id" | "active"> & { active?: boolean }) => void;
   removeAlert: (id: string) => void;
   toggleAlert: (id: string) => void;
