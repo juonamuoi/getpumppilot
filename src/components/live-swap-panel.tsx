@@ -5,7 +5,7 @@
  * approval -> eth_sendTransaction in the user's own wallet. PumpPilot never
  * holds keys, never auto-trades, and never asks for a seed phrase.
  * ------------------------------------------------------------------ */
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
