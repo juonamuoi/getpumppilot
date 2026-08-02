@@ -44,6 +44,7 @@ import {
 } from "@/components/wallet-recovery-checklist";
 import { WalletPasswordManager } from "@/components/wallet-password-manager";
 import { WalletAutoLock } from "@/components/wallet-auto-lock";
+import { VaultTransferPanel } from "@/components/vault-transfer-panel";
 import { trackWalletStep } from "@/lib/funnel";
 import { PhraseCopyGuard } from "@/components/phrase-copy-guard";
 
@@ -414,6 +415,8 @@ export function PumpWalletPanel({
       )}
 
       <WalletAutoLock />
+
+      <VaultTransferPanel />
 
 
       <div className="flex flex-wrap gap-2 pt-1">
