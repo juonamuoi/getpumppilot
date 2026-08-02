@@ -15,6 +15,8 @@ import {
   Loader2,
   Lock,
   Plus,
+  Printer,
+
   ShieldAlert,
   ShieldCheck,
   Timer,
@@ -202,6 +204,23 @@ export function PumpWalletPanel({
 
         <div className="flex flex-wrap items-center gap-2">
           <PhraseCopyGuard phrase={phrase} />
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={async () => {
+              try {
+                const { downloadRecoveryGuidePdf } = await import("@/lib/recovery-guide-pdf");
+                await downloadRecoveryGuidePdf(unlockedAddress ?? record?.address ?? null);
+                toast.success("Recovery guide downloaded — print it and write the words by hand.");
+              } catch {
+                toast.error("Could not generate the recovery guide PDF.");
+              }
+            }}
+          >
+            <Printer className="mr-1.5 h-3.5 w-3.5" /> Printable guide (PDF)
+          </Button>
+
 
           <Button
             size="sm"
