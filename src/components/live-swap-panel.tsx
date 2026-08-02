@@ -341,6 +341,29 @@ export function LiveSwapPanel() {
   }
 
 
+  /** One-tap fixes offered by the readiness checklist. */
+  async function handleFix(fix: NonNullable<ReadinessCheck["fix"]>) {
+    if (fix === "connect") {
+      document
+        .getElementById("live-swap-connect")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (fix === "switch-chain") {
+      if (await ensureChain()) toast.success(`Switched to ${chainName(settings.chainId)}.`);
+      return;
+    }
+    if (fix === "amount") {
+      focusAmount();
+      return;
+    }
+    if (fix === "limit") {
+      toast.info("Raise your per-trade limit in Risk controls to place this size.");
+      return;
+    }
+    await handleQuote();
+  }
+
   /** One-click retry: pick the right action for the failure we saw. */
   async function handleRetry() {
     const action = failure?.retry ?? "requote";
