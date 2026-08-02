@@ -53,6 +53,7 @@ export function LiveSwapPanel() {
   const [quote, setQuote] = useState<SwapQuote | null>(null);
   const [busy, setBusy] = useState<null | "quote" | "approve" | "swap">(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [failure, setFailure] = useState<FriendlySwapError | null>(null);
 
   const sell = findToken(settings.chainId, sellSymbol);
   const buy = findToken(settings.chainId, buySymbol);
@@ -68,6 +69,16 @@ export function LiveSwapPanel() {
 
   if (settings.mode !== "live") return null;
 
+  function fail(e: unknown, stage: SwapErrorStage) {
+    const friendly = explainSwapError(e, stage, {
+      sellSymbol,
+      chainName: chainName(settings.chainId),
+    });
+    setFailure(friendly);
+    if (friendly.userRejected) toast.info(friendly.title);
+    else toast.error(friendly.title);
+  }
+
   async function ensureChain(): Promise<boolean> {
     const provider = getInjectedProvider();
     if (!provider) return false;
@@ -79,8 +90,8 @@ export function LiveSwapPanel() {
         params: [{ chainId: `0x${settings.chainId.toString(16)}` }],
       });
       return true;
-    } catch {
-      toast.error(`Switch your wallet to ${chainName(settings.chainId)} to continue.`);
+    } catch (e) {
+      fail(e, "chain");
       return false;
     }
   }
@@ -98,6 +109,7 @@ export function LiveSwapPanel() {
     }
     setBusy("quote");
     setTxHash(null);
+    setFailure(null);
     try {
       const q = await quoteFn({
         data: {
@@ -110,9 +122,9 @@ export function LiveSwapPanel() {
         },
       });
       setQuote(q);
-      if (!q.ok) toast.error(q.error ?? "Quote failed.");
-    } catch {
-      toast.error("Quote failed. Try again.");
+      if (!q.ok) fail(new Error(q.error ?? "Quote failed."), "quote");
+    } catch (e) {
+      fail(e, "quote");
     } finally {
       setBusy(null);
     }
@@ -125,8 +137,10 @@ export function LiveSwapPanel() {
       toast.error(`Trade exceeds your $${settings.maxTradeUsd} per-trade limit.`);
       return;
     }
+    setFailure(null);
     if (!(await ensureChain())) return;
 
+    const stage: SwapErrorStage = quote.allowanceTarget ? "approve" : "swap";
     try {
       if (quote.allowanceTarget) {
         setBusy("approve");
@@ -186,12 +200,33 @@ export function LiveSwapPanel() {
       setQuote(null);
       toast.success("Swap submitted to the network.");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Transaction rejected.";
-      toast.error(msg.slice(0, 160));
+      fail(e, stage);
     } finally {
       setBusy(null);
     }
   }
+
+  /** One-click retry: pick the right action for the failure we saw. */
+  async function handleRetry() {
+    const action = failure?.retry ?? "requote";
+    setFailure(null);
+    if (action === "requote") {
+      await handleQuote();
+      return;
+    }
+    if (action === "switch-chain") {
+      if (await ensureChain()) await handleQuote();
+      return;
+    }
+    // "approve" and "swap" both resume the signing flow; re-quote first when
+    // the route is gone so we never sign a stale transaction.
+    if (!quote?.ok) {
+      await handleQuote();
+      return;
+    }
+    await handleSwap();
+  }
+
 
   return (
     <Card className="border-destructive/40">
