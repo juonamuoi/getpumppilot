@@ -233,7 +233,11 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         } else if (e.key === "m" || e.key === "M") {
           e.preventDefault();
           toggleMute();
+        } else if (e.key === "c" || e.key === "C") {
+          e.preventDefault();
+          toggleCaptions();
         }
+
       }}
 
       className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10"
