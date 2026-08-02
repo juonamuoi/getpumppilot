@@ -40,7 +40,9 @@ export const Route = createFileRoute("/wallet-funnel")({
   component: WalletFunnelPage,
 });
 
-const STEP_LABELS = new Map(WALLET_FUNNEL_STEPS.map((s) => [s.step, s.label]));
+const STEP_LABELS = new Map<string, string>(
+  WALLET_FUNNEL_STEPS.map((s) => [s.step as string, s.label]),
+);
 
 /** The ordered conversion path; other steps are shown as lifecycle signals. */
 const CONVERSION_PATH = [
