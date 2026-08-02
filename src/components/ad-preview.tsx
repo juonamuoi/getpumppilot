@@ -324,15 +324,17 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
         aria-describedby="ad-preview-transcript-note"
       >
-        {inView && (
-          <track
-            kind="captions"
-            src={adCaptions.url}
-            srcLang="en"
-            label="English captions"
-            default={captionsOn}
-          />
-        )}
+        {inView &&
+          AD_CAPTION_TRACKS.map((track) => (
+            <track
+              key={track.code}
+              kind="captions"
+              src={track.src}
+              srcLang={track.code}
+              label={`${track.label} captions`}
+              default={captionsOn && track.code === captionLang}
+            />
+          ))}
       </video>
 
 
