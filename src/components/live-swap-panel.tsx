@@ -49,6 +49,8 @@ import {
 import { SwapCostBar, SwapCostEstimateCard } from "@/components/swap-cost-estimate";
 import { estimateSwapCost, nativeSymbolFor } from "@/lib/swap-fees";
 import { SwapReadinessPanel } from "@/components/swap-readiness-panel";
+import { SwapConfirmDialog } from "@/components/swap-confirm-dialog";
+
 import { evaluateSwapReadiness, type ReadinessCheck } from "@/lib/swap-readiness";
 import { loadSwapProgress, saveSwapProgress } from "@/lib/swap-progress-store";
 
