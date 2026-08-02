@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Play, Volume2, VolumeX } from "lucide-react";
+import { ArrowRight, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   trackCtaClick,
@@ -135,13 +135,48 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     });
   }
 
+  function togglePlayback() {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      startPlayback();
+    } else {
+      el.pause();
+      setPlaying(false);
+    }
+  }
+
+  function toggleMute() {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = !el.muted;
+    setMuted(el.muted);
+    void trackAdPreviewEvent(el.muted ? "mute" : "unmute");
+    void el.play().catch(() => {});
+  }
+
   const showPoster = !ready || (reducedMotion === true && !playing);
 
   return (
     <div
       ref={containerRef}
+      role="group"
+      aria-label="PumpPilot AI ad preview"
+      onKeyDown={(e) => {
+        // Don't hijack keys meant for the focused button/link.
+        const target = e.target as HTMLElement;
+        if (target.closest("button, a, input")) return;
+        if (e.key === " " || e.key === "k") {
+          e.preventDefault();
+          togglePlayback();
+        } else if (e.key === "m") {
+          e.preventDefault();
+          toggleMute();
+        }
+      }}
       className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10"
     >
+
       <video
         ref={videoRef}
         className="block size-full object-cover"
@@ -182,7 +217,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         <button
           type="button"
           onClick={startPlayback}
-          className="absolute inset-x-0 top-0 flex h-3/5 flex-col items-center justify-center gap-2 text-white/90"
+          className="absolute inset-x-0 top-0 flex h-3/5 flex-col items-center justify-center gap-2 text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-inset"
           aria-label="Play the PumpPilot AI ad"
         >
           <span className="rounded-full bg-emerald-500/90 p-4 shadow-lg shadow-emerald-500/40">
@@ -247,22 +282,36 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={() => {
-          const el = videoRef.current;
-          if (!el) return;
-          el.muted = !el.muted;
-          setMuted(el.muted);
-          void trackAdPreviewEvent(el.muted ? "mute" : "unmute");
-          void el.play().catch(() => {});
-        }}
+      <div className="absolute right-3 top-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={togglePlayback}
+          aria-label={playing ? "Pause ad" : "Play ad"}
+          aria-pressed={playing}
+          className="rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        >
+          {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </button>
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute ad" : "Mute ad"}
+          aria-pressed={!muted}
+          className="rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        >
+          {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
+      </div>
 
-        aria-label={muted ? "Unmute ad" : "Mute ad"}
-        className="absolute right-3 top-3 rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white"
-      >
-        {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-      </button>
+      {/* Screen-reader status + keyboard hint */}
+      <p aria-live="polite" className="sr-only">
+        {playing ? "Ad playing" : "Ad paused"}
+        {muted ? ", muted" : ", sound on"}
+      </p>
+      <p className="sr-only">
+        Press Space or K to play or pause the ad, and M to toggle sound.
+      </p>
+
     </div>
   );
 }
