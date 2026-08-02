@@ -21,6 +21,7 @@ import {
 } from "viem";
 import { english, generateMnemonic, mnemonicToAccount } from "viem/accounts";
 import { arbitrum, base, mainnet, optimism, polygon } from "viem/chains";
+import { getLiveTrading } from "@/lib/live-trading";
 
 const KEY = "pp.pump-wallet.v1";
 const PBKDF2_ITERATIONS = 310_000;
@@ -263,10 +264,12 @@ type Eip1193 = {
  */
 export function getPumpWalletProvider(): Eip1193 | null {
   if (!account) return null;
+  setPumpWalletChain(getLiveTrading().chainId);
   const acct = account;
 
   return {
     async request({ method, params }) {
+      // Follow the app's selected trading chain unless it was switched here.
       const chain = CHAINS[shimChainId] ?? mainnet;
       const publicClient = createPublicClient({ chain, transport: http() });
 
