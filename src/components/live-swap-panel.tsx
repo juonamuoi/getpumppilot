@@ -35,6 +35,13 @@ import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { PumpWalletPanel } from "@/components/pump-wallet-panel";
 import { SwapErrorPanel } from "@/components/swap-error-panel";
 import {
+  IDLE_PROGRESS,
+  SwapProgressSteps,
+  type SwapProgress,
+  type SwapStepId,
+  type SwapStepStatus,
+} from "@/components/swap-progress";
+import {
   explainSwapError,
   type FriendlySwapError,
   type SwapErrorStage,
