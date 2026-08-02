@@ -11,6 +11,7 @@ const Progress = React.forwardRef<
 >(({ className, value, ...props }, ref) => (
   <ProgressPrimitive.Root
     ref={ref}
+    aria-label={props["aria-label"] ?? (props["aria-labelledby"] ? undefined : "Progress")}
     className={cn("relative h-2 w-full overflow-hidden rounded-full bg-primary/20", className)}
     {...props}
   >
