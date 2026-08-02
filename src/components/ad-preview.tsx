@@ -44,8 +44,46 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   /** Poster + skeleton stay up until the first frame is decodable. */
   const [ready, setReady] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
-  /** No WebVTT track ships with the ad, so the transcript is the fallback. */
+  /** True once the WebVTT caption track is attached to the video element. */
   const [hasCaptions, setHasCaptions] = useState(false);
+  /**
+   * Captions are optional and off by default (the ad autoplays muted); the
+   * choice is remembered per browser.
+   */
+  const [captionsOn, setCaptionsOn] = useState(false);
+
+  useEffect(() => {
+    try {
+      setCaptionsOn(window.localStorage.getItem("pp.ad-captions") === "on");
+    } catch {
+      /* storage blocked — keep the default */
+    }
+  }, []);
+
+  // Keep the native text track in sync with the toggle.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const tracks = el.textTracks;
+    for (let i = 0; i < tracks.length; i += 1) {
+      tracks[i].mode = captionsOn ? "showing" : "hidden";
+    }
+    setHasCaptions(tracks.length > 0);
+  }, [captionsOn, inView, ready]);
+
+  function toggleCaptions() {
+    setCaptionsOn((on) => {
+      const next = !on;
+      try {
+        window.localStorage.setItem("pp.ad-captions", next ? "on" : "off");
+      } catch {
+        /* ignore */
+      }
+      void trackAdPreviewEvent(next ? "captions_on" : "captions_off");
+      return next;
+    });
+  }
+
 
 
   useEffect(() => {
