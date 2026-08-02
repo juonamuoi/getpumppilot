@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Captions,
   CaptionsOff,
+  Languages,
   Pause,
   Play,
   Volume2,
@@ -12,6 +13,21 @@ import {
 
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AD_CAPTION_TRACKS,
+  DEFAULT_CAPTION_LANG,
+  getCaptionTrack,
+  preferredCaptionLang,
+} from "@/lib/ad-captions";
+import {
   trackCtaClick,
   trackAdPreviewEvent,
   AD_VIEW_DEPTH_MILESTONES,
@@ -19,7 +35,7 @@ import {
 } from "@/lib/funnel";
 import { AdTranscript, activeTranscriptIndex } from "@/components/ad-transcript";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
-import adCaptions from "@/assets/pumppilot-ad.en.vtt.asset.json";
+
 import adPoster from "@/assets/pumppilot-ad-poster.jpg.asset.json";
 import robotImg from "@/assets/pumppilot-robot.png.asset.json";
 
@@ -51,8 +67,12 @@ export function AdPreview({ href, label = "Start free" }: Props) {
    * choice is remembered per browser.
    */
   const [captionsOn, setCaptionsOn] = useState(false);
+  /** Selected caption language (BCP-47), remembered per browser. */
+  const [captionLang, setCaptionLang] = useState(DEFAULT_CAPTION_LANG);
   /** Transcript line currently playing, synced to the video's timeline. */
   const [activeLine, setActiveLine] = useState(-1);
+
+  const activeTrack = getCaptionTrack(captionLang);
 
   function seekTo(seconds: number) {
     const el = videoRef.current;
@@ -66,21 +86,29 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   useEffect(() => {
     try {
       setCaptionsOn(window.localStorage.getItem("pp.ad-captions") === "on");
+      const saved = window.localStorage.getItem("pp.ad-caption-lang");
+      setCaptionLang(
+        saved && AD_CAPTION_TRACKS.some((t) => t.code === saved)
+          ? saved
+          : preferredCaptionLang(navigator.languages ?? [navigator.language]),
+      );
     } catch {
-      /* storage blocked — keep the default */
+      /* storage blocked — keep the defaults */
     }
   }, []);
 
-  // Keep the native text track in sync with the toggle.
+  // Keep the native text tracks in sync with the toggle and language choice.
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     const tracks = el.textTracks;
     for (let i = 0; i < tracks.length; i += 1) {
-      tracks[i].mode = captionsOn ? "showing" : "hidden";
+      const track = tracks[i];
+      track.mode =
+        captionsOn && track.language === captionLang ? "showing" : "hidden";
     }
     setHasCaptions(tracks.length > 0);
-  }, [captionsOn, inView, ready]);
+  }, [captionsOn, captionLang, inView, ready]);
 
   function toggleCaptions() {
     setCaptionsOn((on) => {
@@ -94,6 +122,20 @@ export function AdPreview({ href, label = "Start free" }: Props) {
       return next;
     });
   }
+
+  /** Pick a caption language; also switches captions on so the change is visible. */
+  function chooseCaptionLang(code: string) {
+    setCaptionLang(code);
+    setCaptionsOn(true);
+    try {
+      window.localStorage.setItem("pp.ad-caption-lang", code);
+      window.localStorage.setItem("pp.ad-captions", "on");
+    } catch {
+      /* ignore */
+    }
+    void trackAdPreviewEvent(`captions_lang_${code}`);
+  }
+
 
 
 
@@ -282,15 +324,17 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
         aria-describedby="ad-preview-transcript-note"
       >
-        {inView && (
-          <track
-            kind="captions"
-            src={adCaptions.url}
-            srcLang="en"
-            label="English captions"
-            default={captionsOn}
-          />
-        )}
+        {inView &&
+          AD_CAPTION_TRACKS.map((track) => (
+            <track
+              key={track.code}
+              kind="captions"
+              src={track.src}
+              srcLang={track.code}
+              label={`${track.label} captions`}
+              default={captionsOn && track.code === captionLang}
+            />
+          ))}
       </video>
 
 
@@ -420,8 +464,8 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           onClick={toggleCaptions}
           aria-label={
             captionsOn
-              ? "Turn off English captions for the PumpPilot AI ad video. Keyboard shortcut: C"
-              : "Turn on English captions for the PumpPilot AI ad video. Keyboard shortcut: C"
+              ? `Turn off ${activeTrack.englishName} captions for the PumpPilot AI ad video. Keyboard shortcut: C`
+              : `Turn on ${activeTrack.englishName} captions for the PumpPilot AI ad video. Keyboard shortcut: C`
           }
           aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
           aria-pressed={captionsOn}
@@ -436,25 +480,59 @@ export function AdPreview({ href, label = "Start free" }: Props) {
             <CaptionsOff className="h-4 w-4" />
           )}
         </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Caption language: ${activeTrack.englishName}. Choose a different caption language for the PumpPilot AI ad video.`}
+              aria-describedby="ad-preview-transcript-note"
+              title="Caption language"
+              className="flex min-h-11 items-center justify-center gap-1 rounded-full bg-black/60 px-2 py-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <Languages className="h-4 w-4" />
+              <span className="text-[10px] font-semibold uppercase tracking-wide">
+                {activeTrack.code}
+              </span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>Caption language</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={captionLang}
+              onValueChange={chooseCaptionLang}
+            >
+              {AD_CAPTION_TRACKS.map((track) => (
+                <DropdownMenuRadioItem key={track.code} value={track.code}>
+                  {track.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
         {/* Screen-reader status + keyboard instructions */}
         <p aria-live="polite" className="sr-only">
           {playing ? "Ad playing" : "Ad paused"}
           {muted ? ", muted" : ", sound on"}
-          {captionsOn ? ", captions on" : ", captions off"}
+          {captionsOn
+            ? `, ${activeTrack.englishName} captions on`
+            : ", captions off"}
         </p>
         <p id="ad-preview-shortcuts" className="sr-only">
           Keyboard shortcuts for this ad preview: press Space or K to play or pause the video,
-          press M to mute or unmute it, and press C to turn English captions on or off. Shortcuts
+          press M to mute or unmute it, and press C to turn captions on or off. Shortcuts
           work while focus is anywhere inside the preview, including on these controls. Press Tab
-          to reach the sign-up button below the video, then the text transcript.
+          to reach the caption language menu, then the sign-up button below the video, then the
+          text transcript.
         </p>
         <p id="ad-preview-transcript-note" className="sr-only">
           {hasCaptions
-            ? "Optional English captions are available for this video and can be toggled with the captions button or the C key. A full text transcript is also provided directly below the player."
+            ? `Optional captions are available for this video in ${AD_CAPTION_TRACKS.map((t) => t.englishName).join(", ")}. Toggle them with the captions button or the C key, and switch language with the caption language menu. A full text transcript in English is also provided directly below the player.`
             : "Captions are not available for this video. A full text transcript of the ad is provided directly below the player."}
         </p>
+
 
       </div>
 
