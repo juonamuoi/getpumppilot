@@ -135,13 +135,48 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     });
   }
 
+  function togglePlayback() {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      startPlayback();
+    } else {
+      el.pause();
+      setPlaying(false);
+    }
+  }
+
+  function toggleMute() {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = !el.muted;
+    setMuted(el.muted);
+    void trackAdPreviewEvent(el.muted ? "mute" : "unmute");
+    void el.play().catch(() => {});
+  }
+
   const showPoster = !ready || (reducedMotion === true && !playing);
 
   return (
     <div
       ref={containerRef}
+      role="group"
+      aria-label="PumpPilot AI ad preview"
+      onKeyDown={(e) => {
+        // Don't hijack keys meant for the focused button/link.
+        const target = e.target as HTMLElement;
+        if (target.closest("button, a, input")) return;
+        if (e.key === " " || e.key === "k") {
+          e.preventDefault();
+          togglePlayback();
+        } else if (e.key === "m") {
+          e.preventDefault();
+          toggleMute();
+        }
+      }}
       className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10"
     >
+
       <video
         ref={videoRef}
         className="block size-full object-cover"
