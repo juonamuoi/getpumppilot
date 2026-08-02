@@ -125,8 +125,14 @@ function PaperPage() {
 
   const doTrade = (side: "buy" | "sell") => {
     const n = parseFloat(qty);
-    if (!n) return toast.error("Enter a quantity");
+    if (!n) {
+      announce("Order rejected: enter a quantity first.", "assertive");
+      return toast.error("Enter a quantity");
+    }
     // Global safety gate — nothing is submitted until the notice is acknowledged.
+    announce(
+      `Paper order placed: ${side} ${n} ${symbol}. Awaiting confirmation of the safety notice.`,
+    );
     requestTrade({
       action: `${side.toUpperCase()} ${n} ${symbol}`,
       mode: "paper",
@@ -134,19 +140,27 @@ function PaperPage() {
       onConfirm: async () => {
         const charge = await spend("bot_execution", { description: `${side.toUpperCase()} ${symbol}`, metadata: { symbol, side } });
         if (!charge.ok) {
-          toast.error(
+          const msg =
             charge.reason === "insufficient_credits"
               ? `Out of credits — execution stopped. Each order costs ${CREDIT_COSTS.bot_execution} credit. Recharge to resume.`
-              : "Could not charge credits. Try again.",
-          );
+              : "Could not charge credits. Try again.";
+          toast.error(msg);
+          announce(`Paper order rejected: ${msg}`, "assertive");
           return;
         }
         const r = paper.trade(symbol, side, n);
         r.ok ? toast.success(r.msg) : toast.error(r.msg);
+        announce(
+          r.ok
+            ? `Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`
+            : `Paper order rejected: ${r.msg}`,
+          r.ok ? "polite" : "assertive",
+        );
         if (r.ok) setQty("");
       },
     });
   };
+
 
 
   return (
