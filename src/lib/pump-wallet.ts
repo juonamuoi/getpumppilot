@@ -142,6 +142,12 @@ function hydrate() {
   } catch {
     // Corrupt entry — treat as "no wallet" rather than crashing the app.
   }
+  try {
+    const saved = Number(window.localStorage.getItem(AUTOLOCK_KEY));
+    if (Number.isFinite(saved) && saved >= 0) state = { ...state, autoLockMinutes: saved };
+  } catch {
+    // Ignore — fall back to the default inactivity window.
+  }
 }
 
 function persist(record: PumpWalletRecord | null) {
