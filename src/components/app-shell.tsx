@@ -232,6 +232,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         Skip to main content
       </a>
       <RouteAnnouncer />
+      <WalletBackupReminder />
+
       {/* Sidebar (desktop) */}
       <aside aria-label="Sidebar" className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-border/60 bg-card/40 backdrop-blur lg:flex">
         <div className="p-4">
