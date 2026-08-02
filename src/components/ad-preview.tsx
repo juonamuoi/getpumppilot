@@ -23,9 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   AD_CAPTION_TRACKS,
+  CAPTION_BACKGROUNDS,
+  CAPTION_SIZES,
   DEFAULT_CAPTION_LANG,
+  captionAppearanceClass,
   getCaptionTrack,
   preferredCaptionLang,
+  type CaptionBg,
+  type CaptionSize,
 } from "@/lib/ad-captions";
 import {
   trackCtaClick,
@@ -69,6 +74,9 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   const [captionsOn, setCaptionsOn] = useState(false);
   /** Selected caption language (BCP-47), remembered per browser. */
   const [captionLang, setCaptionLang] = useState(DEFAULT_CAPTION_LANG);
+  /** Caption text size and cue background, for readability. Remembered per browser. */
+  const [captionSize, setCaptionSize] = useState<CaptionSize>("md");
+  const [captionBg, setCaptionBg] = useState<CaptionBg>("solid");
   /** Transcript line currently playing, synced to the video's timeline. */
   const [activeLine, setActiveLine] = useState(-1);
 
@@ -92,10 +100,19 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           ? saved
           : preferredCaptionLang(navigator.languages ?? [navigator.language]),
       );
+      const size = window.localStorage.getItem("pp.ad-caption-size");
+      if (CAPTION_SIZES.some((s) => s.value === size)) {
+        setCaptionSize(size as CaptionSize);
+      }
+      const bg = window.localStorage.getItem("pp.ad-caption-bg");
+      if (CAPTION_BACKGROUNDS.some((b) => b.value === bg)) {
+        setCaptionBg(bg as CaptionBg);
+      }
     } catch {
       /* storage blocked — keep the defaults */
     }
   }, []);
+
 
   // Keep the native text tracks in sync with the toggle and language choice.
   useEffect(() => {
@@ -134,6 +151,30 @@ export function AdPreview({ href, label = "Start free" }: Props) {
       /* ignore */
     }
     void trackAdPreviewEvent(`captions_lang_${code}`);
+  }
+
+  /** Caption text size — larger sizes help on small phone screens. */
+  function chooseCaptionSize(value: string) {
+    setCaptionSize(value as CaptionSize);
+    setCaptionsOn(true);
+    try {
+      window.localStorage.setItem("pp.ad-caption-size", value);
+      window.localStorage.setItem("pp.ad-captions", "on");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /** Cue background — solid box, dimmed box, or outlined text only. */
+  function chooseCaptionBg(value: string) {
+    setCaptionBg(value as CaptionBg);
+    setCaptionsOn(true);
+    try {
+      window.localStorage.setItem("pp.ad-caption-bg", value);
+      window.localStorage.setItem("pp.ad-captions", "on");
+    } catch {
+      /* ignore */
+    }
   }
 
 
@@ -298,7 +339,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
 
       <video
         ref={videoRef}
-        className="block size-full object-cover"
+        className={`block size-full object-cover ${captionAppearanceClass(captionSize, captionBg)}`}
         src={inView ? adVideo.url : undefined}
         poster={adPoster.url}
         autoPlay={inView && reducedMotion === false}
@@ -484,9 +525,9 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label={`Caption language: ${activeTrack.englishName}. Choose a different caption language for the PumpPilot AI ad video.`}
+              aria-label={`Caption settings. Language: ${activeTrack.englishName}, size: ${captionSize}, background: ${captionBg}. Opens a menu to change caption language, text size, and background.`}
               aria-describedby="ad-preview-transcript-note"
-              title="Caption language"
+              title="Caption settings — language, size, background"
               className="flex min-h-11 items-center justify-center gap-1 rounded-full bg-black/60 px-2 py-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               <Languages className="h-4 w-4" />
@@ -495,7 +536,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
               </span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Caption language</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup
@@ -508,7 +549,37 @@ export function AdPreview({ href, label = "Start free" }: Props) {
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Caption size</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={captionSize}
+              onValueChange={chooseCaptionSize}
+            >
+              {CAPTION_SIZES.map((size) => (
+                <DropdownMenuRadioItem key={size.value} value={size.value}>
+                  {size.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Caption background</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={captionBg}
+              onValueChange={chooseCaptionBg}
+            >
+              {CAPTION_BACKGROUNDS.map((bg) => (
+                <DropdownMenuRadioItem key={bg.value} value={bg.value}>
+                  <span>
+                    {bg.label}
+                    <span className="block text-[11px] text-muted-foreground">
+                      {bg.hint}
+                    </span>
+                  </span>
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
           </DropdownMenuContent>
+
         </DropdownMenu>
       </div>
 
@@ -517,15 +588,15 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           {playing ? "Ad playing" : "Ad paused"}
           {muted ? ", muted" : ", sound on"}
           {captionsOn
-            ? `, ${activeTrack.englishName} captions on`
+            ? `, ${activeTrack.englishName} captions on, ${captionSize} size, ${captionBg} background`
             : ", captions off"}
         </p>
         <p id="ad-preview-shortcuts" className="sr-only">
           Keyboard shortcuts for this ad preview: press Space or K to play or pause the video,
           press M to mute or unmute it, and press C to turn captions on or off. Shortcuts
           work while focus is anywhere inside the preview, including on these controls. Press Tab
-          to reach the caption language menu, then the sign-up button below the video, then the
-          text transcript.
+          to reach the caption settings menu, where you can change caption language, text size,
+          and background, then the sign-up button below the video, then the text transcript.
         </p>
         <p id="ad-preview-transcript-note" className="sr-only">
           {hasCaptions

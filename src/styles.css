@@ -143,3 +143,34 @@
     color: var(--color-foreground);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Ad preview caption appearance
+   Native WebVTT cues can only be styled through ::cue, so the size/background
+   choices in the ad preview map to these classes on the <video> element.
+--------------------------------------------------------------------------- */
+video.cue-sm::cue {
+  font-size: 0.75em;
+}
+video.cue-md::cue {
+  font-size: 1em;
+}
+video.cue-lg::cue {
+  font-size: 1.35em;
+}
+video.cue-xl::cue {
+  font-size: 1.7em;
+}
+
+video.cue-bg-solid::cue {
+  background-color: rgba(0, 0, 0, 0.92);
+}
+video.cue-bg-dim::cue {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+video.cue-bg-none::cue {
+  background-color: transparent;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.95),
+    0 0 6px rgba(0, 0, 0, 0.85);
+}

@@ -69,3 +69,30 @@ export function preferredCaptionLang(languages: readonly string[]): string {
   }
   return DEFAULT_CAPTION_LANG;
 }
+
+/** Caption text size options, mapped to the `video.cue-*` rules in styles.css. */
+export type CaptionSize = "sm" | "md" | "lg" | "xl";
+
+export const CAPTION_SIZES: { value: CaptionSize; label: string }[] = [
+  { value: "sm", label: "Small" },
+  { value: "md", label: "Medium" },
+  { value: "lg", label: "Large" },
+  { value: "xl", label: "Extra large" },
+];
+
+/** Caption background options, mapped to the `video.cue-bg-*` rules. */
+export type CaptionBg = "solid" | "dim" | "none";
+
+export const CAPTION_BACKGROUNDS: {
+  value: CaptionBg;
+  label: string;
+  hint: string;
+}[] = [
+  { value: "solid", label: "Solid black", hint: "highest contrast" },
+  { value: "dim", label: "Dimmed", hint: "see more of the video" },
+  { value: "none", label: "None (outlined text)", hint: "no box" },
+];
+
+export function captionAppearanceClass(size: CaptionSize, bg: CaptionBg) {
+  return `cue-${size} cue-bg-${bg}`;
+}
