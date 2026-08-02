@@ -445,15 +445,26 @@ export function LiveSwapPanel() {
           </p>
         )}
 
+        <SwapReadinessPanel
+          result={readiness}
+          busy={busy !== null}
+          onFix={handleFix}
+        />
+
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={handleQuote} disabled={busy !== null || !address}>
+          <Button
+            variant="outline"
+            onClick={handleQuote}
+            disabled={busy !== null || !readiness.canQuote}
+          >
             {busy === "quote" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Get route &amp; quote
           </Button>
           <Button
             variant="destructive"
             onClick={handleSwap}
-            disabled={busy !== null || !quote?.ok || overLimit}
+            disabled={busy !== null || !readiness.ready}
+            title={readiness.ready ? undefined : readiness.headline}
           >
             {(busy === "swap" || busy === "approve") && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -461,6 +472,7 @@ export function LiveSwapPanel() {
             {quote?.allowanceTarget ? `Approve ${sellSymbol}` : "Sign & submit swap"}
           </Button>
         </div>
+
 
         <SwapProgressSteps progress={progress} />
 
