@@ -418,6 +418,16 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     return cash + posValue;
   }, [cash, positions]);
 
+  // Baseline equity for today's drawdown check; rolls over at local midnight.
+  const [dayStart, setDayStart] = useState(() => ({
+    day: new Date().toDateString(),
+    equity: STARTING_CASH,
+  }));
+  useEffect(() => {
+    const today = new Date().toDateString();
+    if (dayStart.day !== today) setDayStart({ day: today, equity });
+  }, [equity, dayStart.day]);
+
   const trade: State["trade"] = (symbol, side, qty) => {
     const a = getAsset(symbol);
     if (!a) return { ok: false, msg: "Unknown symbol" };
@@ -427,10 +437,50 @@ export function PaperProvider({ children }: { children: ReactNode }) {
     const notional = price * qty;
 
     if (side === "buy") {
-      if (notional > cash) return { ok: false, msg: "Insufficient paper cash" };
-      const posPct = (notional / equity) * 100;
-      if (posPct > risk.maxPositionPct)
-        return { ok: false, msg: `Blocked by risk control: position > ${risk.maxPositionPct}% of equity` };
+      if (notional > cash) {
+        const block: RiskBlock = {
+          code: "insufficient_cash",
+          control: "available paper cash",
+          remedy: `Reduce the order size to ${cash > 0 ? (cash / price).toFixed(4) : "0"} ${symbol} or less.`,
+        };
+        return { ok: false, msg: describeRiskBlock(block), block };
+      }
+
+      const drawdownPct =
+        dayStart.equity > 0 ? ((dayStart.equity - equity) / dayStart.equity) * 100 : 0;
+      if (drawdownPct >= risk.maxDailyLossPct) {
+        const block: RiskBlock = {
+          code: "max_daily_loss",
+          control: "max daily loss",
+          limitPct: risk.maxDailyLossPct,
+          actualPct: drawdownPct,
+          remedy:
+            "Raise the max daily loss limit in Risk controls, or wait for the next session before opening new positions.",
+        };
+        return { ok: false, msg: describeRiskBlock(block), block };
+      }
+
+      const existing = positions.find((p) => p.symbol === symbol);
+      const existingValue = existing ? markPrice(symbol, a.price) * existing.qty : 0;
+      const posPct = ((notional + existingValue) / (equity || 1)) * 100;
+      if (posPct > risk.maxPositionPct) {
+        const headroom = Math.max(
+          0,
+          (risk.maxPositionPct / 100) * equity - existingValue,
+        );
+        const block: RiskBlock = {
+          code: "max_position",
+          control: "max position size",
+          limitPct: risk.maxPositionPct,
+          actualPct: posPct,
+          remedy:
+            headroom > 0
+              ? `Trade at most ${(headroom / price).toFixed(4)} ${symbol}, or raise the limit in Risk controls.`
+              : `${symbol} is already at the limit. Trim the position or raise the limit in Risk controls.`,
+        };
+        return { ok: false, msg: describeRiskBlock(block), block };
+      }
+
       setCash((c) => c - notional);
       setPositions((prev) => {
         const ex = prev.find((p) => p.symbol === symbol);
