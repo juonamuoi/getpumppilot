@@ -16,6 +16,7 @@ import {
   mergeActivity,
   type CachedActivity,
 } from "@/lib/log-scan-cache";
+import { getPumpWalletProvider, usePumpWallet } from "@/lib/pump-wallet";
 
 type Eip1193 = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -25,9 +26,13 @@ type Eip1193 = {
 
 export function getInjectedProvider(): Eip1193 | null {
   if (typeof window === "undefined") return null;
+  // An unlocked in-app PumpPilot wallet takes priority over a browser wallet.
+  const pump = getPumpWalletProvider();
+  if (pump) return pump;
   const eth = (window as unknown as { ethereum?: Eip1193 }).ethereum;
   return eth && typeof eth.request === "function" ? eth : null;
 }
+
 
 /** Native coin per chain, mapped onto our live-price symbols. */
 const NATIVE_BY_CHAIN: Record<number, { symbol: string; name: string; decimals: number }> = {
@@ -442,15 +447,26 @@ async function readBalances(address: string): Promise<WalletBalances> {
 }
 
 
-/** Tracks the injected wallet's currently authorised account (read-only). */
+/**
+ * Tracks the currently authorised account (read-only): the unlocked in-app
+ * PumpPilot wallet if there is one, otherwise the injected browser wallet.
+ */
 export function useInjectedAccount() {
   const [address, setAddress] = useState<string | null>(null);
   const [available, setAvailable] = useState(false);
+  const pumpAddress = usePumpWallet().unlockedAddress;
 
   useEffect(() => {
     const provider = getInjectedProvider();
     setAvailable(Boolean(provider));
-    if (!provider) return;
+    if (pumpAddress) {
+      setAddress(pumpAddress);
+      return;
+    }
+    if (!provider) {
+      setAddress(null);
+      return;
+    }
 
     let alive = true;
     void provider
@@ -469,7 +485,8 @@ export function useInjectedAccount() {
       alive = false;
       provider.removeListener?.("accountsChanged", onAccounts);
     };
-  }, []);
+  }, [pumpAddress]);
+
 
   /** Prompts the wallet for read-only account access. */
   const connect = useCallback(async () => {

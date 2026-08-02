@@ -32,6 +32,8 @@ import {
 import { getInjectedProvider, useInjectedAccount } from "@/lib/wallet-balances";
 import { livePriceOf } from "@/lib/live-price-registry";
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
+import { PumpWalletPanel } from "@/components/pump-wallet-panel";
+
 
 function encodeApprove(spender: string, amountHex: string) {
   // approve(address,uint256)
@@ -213,12 +215,17 @@ export function LiveSwapPanel() {
         </div>
 
         {!address ? (
-          <ConnectWalletButton label="Connect wallet to trade live" />
+          <div className="space-y-3">
+            <ConnectWalletButton label="Connect wallet to trade live" />
+            <p className="text-center text-[11px] text-muted-foreground">or</p>
+            <PumpWalletPanel />
+          </div>
         ) : (
           <p className="text-xs text-muted-foreground">
             Signing as <span className="font-mono">{address.slice(0, 6)}…{address.slice(-4)}</span>
           </p>
         )}
+
 
 
         <div className="grid gap-3 sm:grid-cols-3">
