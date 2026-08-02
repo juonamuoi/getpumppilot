@@ -40,6 +40,7 @@ import {
   WalletRecoveryChecklist,
 } from "@/components/wallet-recovery-checklist";
 import { WalletPasswordManager } from "@/components/wallet-password-manager";
+import { WalletAutoLock } from "@/components/wallet-auto-lock";
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
