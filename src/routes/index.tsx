@@ -737,7 +737,7 @@ function LandingPage() {
               <Link to="/pricing">See pricing</Link>
             </Button>
           </div>
-          <div className="mt-8 border-t border-border/40 pt-6">
+          <div id="signup" className="mt-8 scroll-mt-24 border-t border-border/40 pt-6">
             <h3 className="text-sm font-semibold">
               Not ready yet? Join the waitlist
             </h3>
