@@ -440,7 +440,7 @@ export function WalletConnect() {
           </div>
 
           {/* Optional in-app wallet for users without a browser extension */}
-          <PumpWalletPanel />
+          <PumpWalletPanel onSensitiveChange={setWalletSensitive} />
 
 
 
