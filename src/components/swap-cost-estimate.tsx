@@ -125,6 +125,13 @@ export function SwapCostBar({
   const age = useAgeSeconds(quotedAt);
   const stale = age !== null && age >= 30;
 
+  // Countdown to the next automatic re-quote, so the route is always fresh at
+  // the moment of signing. Paused while a wallet action is in flight.
+  const cadence = Math.max(1, Math.round(refreshMs / 1000));
+  const secondsLeft =
+    autoRefresh && age !== null ? Math.max(0, cadence - (busy ? cadence : age)) : null;
+  const pct = secondsLeft === null ? 0 : ((cadence - secondsLeft) / cadence) * 100;
+
   const tone =
     estimate?.severity === "high"
       ? "border-destructive/50 bg-destructive/10"
@@ -169,8 +176,27 @@ export function SwapCostBar({
             checked={autoRefresh}
             onChange={(e) => onAutoRefreshChange(e.target.checked)}
           />
-          Auto-refresh {autoRefresh && `(${Math.round(refreshMs / 1000)}s)`}
+          Auto-refresh
         </label>
+        {secondsLeft !== null && (
+          <span
+            className="flex items-center gap-1.5 text-muted-foreground"
+            title={`Re-quoting every ${cadence}s`}
+          >
+            <span
+              aria-hidden
+              className="h-1 w-12 overflow-hidden rounded-full bg-border"
+            >
+              <span
+                className="block h-full bg-primary transition-[width] duration-1000 ease-linear"
+                style={{ width: `${pct}%` }}
+              />
+            </span>
+            <span className="tabular-nums">
+              {busy || secondsLeft === 0 ? "Refreshing…" : `New route in ${secondsLeft}s`}
+            </span>
+          </span>
+        )}
         <span className={stale && !autoRefresh ? "text-amber-500" : "text-muted-foreground"}>
           {age === null
             ? "No quote yet"
