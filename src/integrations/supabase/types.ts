@@ -56,6 +56,87 @@ export type Database = {
         }
         Relationships: []
       }
+      app_config_audit: {
+        Row: {
+          actor_id: string | null
+          correlation_id: string | null
+          created_at: string
+          field: string
+          flag_key: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          reason: string | null
+          source: string
+        }
+        Insert: {
+          actor_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          field: string
+          flag_key: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          reason?: string | null
+          source?: string
+        }
+        Update: {
+          actor_id?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          field?: string
+          flag_key?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          reason?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
+      app_feature_flags: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          enabled: boolean
+          key: string
+          label: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+          value: string
+          value_type: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          key: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+          value_type?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+          value_type?: string
+        }
+        Relationships: []
+      }
       credit_balances: {
         Row: {
           balance: number
