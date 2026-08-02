@@ -66,6 +66,7 @@ export function WaitlistForm({ source = "landing" }: { source?: string }) {
     <form onSubmit={submit} className="mx-auto max-w-md">
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input
+          id="signup-email"
           type="email"
           inputMode="email"
           autoComplete="email"
