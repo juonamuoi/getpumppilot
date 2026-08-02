@@ -83,6 +83,17 @@ export function LiveSwapPanel() {
 
   const overLimit = notionalUsd !== null && notionalUsd > settings.maxTradeUsd;
 
+  const costEstimate = useMemo(() => {
+    if (!quote?.ok) return null;
+    return estimateSwapCost({
+      chainId: settings.chainId,
+      totalNetworkFeeWei: quote.totalNetworkFeeWei,
+      nativeUsd: livePriceOf(nativeSymbolFor(settings.chainId)) ?? null,
+      notionalUsd,
+      slippageBps: settings.slippageBps,
+    });
+  }, [quote, settings.chainId, settings.slippageBps, notionalUsd]);
+
   if (settings.mode !== "live") return null;
 
   function step(id: SwapStepId, status: SwapStepStatus, note?: string) {
