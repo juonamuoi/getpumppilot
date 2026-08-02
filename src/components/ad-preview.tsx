@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Captions,
   CaptionsOff,
+  Languages,
   Pause,
   Play,
   Volume2,
@@ -11,6 +12,21 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AD_CAPTION_TRACKS,
+  DEFAULT_CAPTION_LANG,
+  getCaptionTrack,
+  preferredCaptionLang,
+} from "@/lib/ad-captions";
 import {
   trackCtaClick,
   trackAdPreviewEvent,
