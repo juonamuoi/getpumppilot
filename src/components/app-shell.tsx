@@ -36,6 +36,8 @@ import { CreditBadge, CreditMeter } from "./credit-badge";
 import { AccountButton } from "./account-button";
 import { SeoAlertNotifier } from "./seo-alert-notifier";
 import { PositionRiskNotifier } from "./position-risk-notifier";
+import { WalletBackupReminder } from "./wallet-backup-reminder";
+
 
 import { cn } from "@/lib/utils";
 import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
