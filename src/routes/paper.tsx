@@ -81,6 +81,7 @@ export const Route = createFileRoute("/paper")({
 function PaperPage() {
   const paper = usePaper();
   const liveMode = useLiveTrading().mode === "live";
+  const { announce, region: announcerRegion } = useExecutionAnnouncer();
 
   const { spend } = useCredits();
   const [symbol, setSymbol] = useState("BTC");
