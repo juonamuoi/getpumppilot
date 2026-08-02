@@ -272,6 +272,12 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         onCanPlay={() => setReady(true)}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) =>
+          setActiveLine(activeTranscriptIndex(e.currentTarget.currentTime))
+        }
+        onSeeked={(e) =>
+          setActiveLine(activeTranscriptIndex(e.currentTarget.currentTime))
+        }
         onEnded={() => void trackAdPreviewEvent("complete")}
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
         aria-describedby="ad-preview-transcript-note"
