@@ -17,6 +17,7 @@ import {
   Lock,
   Plus,
   ShieldCheck,
+  Timer,
   Trash2,
   Unlock,
 } from "lucide-react";
@@ -39,6 +40,7 @@ import {
   WalletRecoveryChecklist,
 } from "@/components/wallet-recovery-checklist";
 import { WalletPasswordManager } from "@/components/wallet-password-manager";
+import { WalletAutoLock } from "@/components/wallet-auto-lock";
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -62,7 +64,7 @@ function PhraseGrid({ mnemonic }: { mnemonic: string }) {
 }
 
 export function PumpWalletPanel() {
-  const { record, unlockedAddress } = usePumpWallet();
+  const { record, unlockedAddress, lockedReason } = usePumpWallet();
   const [mode, setMode] = useState<"idle" | "create">("idle");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -334,6 +336,15 @@ export function PumpWalletPanel() {
 
       {!unlocked ? (
         <div className="space-y-2">
+          {lockedReason === "idle" ? (
+            <p className="flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] text-amber-400">
+              <Timer className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                Locked automatically after inactivity. Enter your password to see balances and use
+                live swaps again.
+              </span>
+            </p>
+          ) : null}
           <Label htmlFor="pw-unlock" className="text-xs">
             Password
           </Label>
@@ -361,6 +372,9 @@ export function PumpWalletPanel() {
           This wallet is now the active account for balances, scans and live swaps.
         </p>
       )}
+
+      <WalletAutoLock />
+
 
       <div className="flex flex-wrap gap-2 pt-1">
         {unlocked ? (

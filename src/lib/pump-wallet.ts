@@ -42,11 +42,21 @@ export type PumpWalletRecord = {
   rotatedAt?: string;
 };
 
+/** Why the wallet is currently locked (null while unlocked). */
+export type LockReason = "manual" | "idle" | null;
+
 export type PumpWalletState = {
   record: PumpWalletRecord | null;
   /** Address of the unlocked in-memory account, if any. */
   unlockedAddress: string | null;
+  /** Set when the session was ended by the idle timer or a manual lock. */
+  lockedReason: LockReason;
+  /** Minutes of inactivity before auto-lock. 0 = never. */
+  autoLockMinutes: number;
+  /** Epoch ms when the idle timer fires, or null when not armed. */
+  autoLockAt: number | null;
 };
+
 
 const CHAINS: Record<number, Chain> = {
   1: mainnet,
@@ -97,16 +107,28 @@ export function passwordProblem(password: string): string | null {
 
 /* ------------------------------- store ------------------------------- */
 
-let state: PumpWalletState = { record: null, unlockedAddress: null };
+const AUTOLOCK_KEY = "pp.pump-wallet.autolock-minutes";
+const DEFAULT_AUTOLOCK_MINUTES = 10;
+
+const EMPTY: PumpWalletState = {
+  record: null,
+  unlockedAddress: null,
+  lockedReason: null,
+  autoLockMinutes: DEFAULT_AUTOLOCK_MINUTES,
+  autoLockAt: null,
+};
+
+let state: PumpWalletState = { ...EMPTY };
 let account: Account | null = null;
 let hydrated = false;
 const listeners = new Set<() => void>();
-const SERVER_STATE: PumpWalletState = { record: null, unlockedAddress: null };
+const SERVER_STATE: PumpWalletState = { ...EMPTY };
 
 function emit() {
   state = { ...state };
   for (const l of listeners) l();
 }
+
 
 function hydrate() {
   if (hydrated || typeof window === "undefined") return;
@@ -119,6 +141,14 @@ function hydrate() {
     }
   } catch {
     // Corrupt entry — treat as "no wallet" rather than crashing the app.
+  }
+  try {
+    const rawMinutes = window.localStorage.getItem(AUTOLOCK_KEY);
+    const saved = Number(rawMinutes);
+    if (rawMinutes !== null && Number.isFinite(saved) && saved >= 0)
+      state = { ...state, autoLockMinutes: saved };
+  } catch {
+    // Ignore — fall back to the default inactivity window.
   }
 }
 
@@ -178,8 +208,9 @@ export async function createPumpWallet(password: string): Promise<{ address: str
   };
   persist(record);
   account = acct;
-  state = { record, unlockedAddress: acct.address };
+  state = { ...state, record, unlockedAddress: acct.address, lockedReason: null };
   emit();
+  startAutoLock();
   return { address: acct.address, mnemonic };
 }
 
@@ -204,17 +235,20 @@ export async function unlockPumpWallet(password: string): Promise<string> {
   if (!record) throw new Error("No PumpPilot wallet on this device.");
   const mnemonic = await decryptMnemonic(record, password);
   account = mnemonicToAccount(mnemonic);
-  state = { ...state, unlockedAddress: account.address };
+  state = { ...state, unlockedAddress: account.address, lockedReason: null };
   emit();
+  startAutoLock();
   return account.address;
 }
 
 /** Drops the in-memory key. The encrypted vault stays on the device. */
-export function lockPumpWallet() {
+export function lockPumpWallet(reason: LockReason = "manual") {
+  stopAutoLock();
   account = null;
-  state = { ...state, unlockedAddress: null };
+  state = { ...state, unlockedAddress: null, lockedReason: reason };
   emit();
 }
+
 
 /** Reveals the recovery phrase — always password-gated. */
 export async function revealRecoveryPhrase(password: string): Promise<string> {
@@ -314,18 +348,92 @@ export async function resetPumpWalletPassword(
   const next = await reencrypt(record, phrase, newPassword);
   persist(next);
   account = acct;
-  state = { record: next, unlockedAddress: acct.address };
+  state = { ...state, record: next, unlockedAddress: acct.address, lockedReason: null };
+  emit();
+  startAutoLock();
+}
+
+/* ---------------------------- idle auto-lock -------------------------- */
+
+const ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel", "touchstart", "scroll"] as const;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+export const AUTO_LOCK_OPTIONS = [1, 5, 10, 30, 60, 0] as const;
+
+function armIdleTimer() {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = null;
+  const minutes = state.autoLockMinutes;
+  if (!account || minutes <= 0) {
+    if (state.autoLockAt !== null) {
+      state = { ...state, autoLockAt: null };
+      emit();
+    }
+    return;
+  }
+  const at = Date.now() + minutes * 60_000;
+  idleTimer = setTimeout(() => lockPumpWallet("idle"), minutes * 60_000);
+  state = { ...state, autoLockAt: at };
   emit();
 }
 
+/** Any user interaction pushes the auto-lock deadline back. */
+export function noteWalletActivity() {
+  if (!account) return;
+  armIdleTimer();
+}
+
+function onActivity() {
+  noteWalletActivity();
+}
+
+function onVisibility() {
+  // Returning to a backgrounded tab counts as activity; leaving does not.
+  if (typeof document !== "undefined" && document.visibilityState === "visible") noteWalletActivity();
+}
+
+function startAutoLock() {
+  if (typeof window === "undefined") return;
+  stopAutoLock();
+  for (const ev of ACTIVITY_EVENTS)
+    window.addEventListener(ev, onActivity, { passive: true });
+  document.addEventListener("visibilitychange", onVisibility);
+  armIdleTimer();
+}
+
+function stopAutoLock() {
+  if (typeof window === "undefined") return;
+  for (const ev of ACTIVITY_EVENTS) window.removeEventListener(ev, onActivity);
+  document.removeEventListener("visibilitychange", onVisibility);
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = null;
+  if (state.autoLockAt !== null) state = { ...state, autoLockAt: null };
+}
+
+/** Updates the inactivity window (minutes; 0 disables auto-lock). */
+export function setAutoLockMinutes(minutes: number) {
+  hydrate();
+  state = { ...state, autoLockMinutes: minutes };
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(AUTOLOCK_KEY, String(minutes));
+    } catch {
+      // Storage denied — the preference applies to this session only.
+    }
+  }
+  emit();
+  if (account) armIdleTimer();
+}
 
 /** Permanently removes the encrypted vault from this browser. */
 export function deletePumpWallet() {
+  stopAutoLock();
   persist(null);
   account = null;
-  state = { record: null, unlockedAddress: null };
+  state = { ...state, record: null, unlockedAddress: null, lockedReason: null };
   emit();
 }
+
 
 export function isPumpWalletUnlocked() {
   return account !== null;
