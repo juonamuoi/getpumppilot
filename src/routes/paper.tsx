@@ -179,6 +179,16 @@ function PaperPage() {
       <div className="space-y-5">
         {announcerRegion}
         <ExecutionModeAnnouncer live={liveMode} />
+        {lastBlock && (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-foreground"
+          >
+            <p className="font-medium">Order blocked — {riskBlockTitle(lastBlock)}</p>
+            <p className="mt-1 text-muted-foreground">{describeRiskBlock(lastBlock)}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-end sm:justify-between">
 
           <div className="min-w-0">
