@@ -58,11 +58,11 @@ export function AdTranscript({ id }: { id: string }) {
       className="mt-3 rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left"
     >
       <summary className="cursor-pointer text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400">
-        Read the ad transcript (captions unavailable)
+        Read the ad transcript
       </summary>
       <p className="mt-2 text-[11px] text-muted-foreground">
-        This video has no caption track. The full text of what is shown and said
-        is below.
+        Optional English captions can be toggled on the player (captions button or
+        the C key). The full text of what is shown and said is below.
       </p>
       <ol className="mt-2 space-y-2">
         {AD_TRANSCRIPT.map((line) => (
