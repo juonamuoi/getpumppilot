@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { useSecurity } from "@/lib/security-store";
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
+import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { scanWallet, shortAddress, type WalletScanResult } from "@/lib/wallet-scan";
 import { Link } from "@tanstack/react-router";
 import { notifyNewThreats } from "@/lib/threat-notify";
@@ -382,6 +383,18 @@ export function WalletConnect() {
             </div>
           )}
 
+          {/* One-tap real wallet connect (read-only account access) */}
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+            <p className="mb-2 text-xs font-semibold text-emerald-300">
+              Connect your real wallet
+            </p>
+            <ConnectWalletButton />
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              One tap — approve the request in your wallet. Read-only access; you still sign every
+              trade yourself.
+            </p>
+          </div>
+
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
             <div className="flex items-center gap-2 font-semibold">
               <ShieldAlert className="h-4 w-4" /> Security notice
@@ -394,6 +407,9 @@ export function WalletConnect() {
           </div>
 
           <div className="grid gap-2">
+            <p className="text-[11px] font-medium text-muted-foreground">
+              Or explore with a simulated wallet
+            </p>
             {WALLETS.map((w) => (
               <Button
                 key={w}
@@ -406,6 +422,7 @@ export function WalletConnect() {
               </Button>
             ))}
           </div>
+
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
             <p className="text-[11px] text-muted-foreground">

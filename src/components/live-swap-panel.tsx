@@ -8,7 +8,7 @@
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import {
 } from "@/lib/live-trading";
 import { getInjectedProvider, useInjectedAccount } from "@/lib/wallet-balances";
 import { livePriceOf } from "@/lib/live-price-registry";
+import { ConnectWalletButton } from "@/components/connect-wallet-button";
 
 function encodeApprove(spender: string, amountHex: string) {
   // approve(address,uint256)
@@ -40,7 +41,7 @@ function encodeApprove(spender: string, amountHex: string) {
 
 export function LiveSwapPanel() {
   const settings = useLiveTrading();
-  const { address, available, connect } = useInjectedAccount();
+  const { address } = useInjectedAccount();
   const quoteFn = useServerFn(getSwapQuote);
 
   const tokens = tokensFor(settings.chainId);
@@ -128,7 +129,7 @@ export function LiveSwapPanel() {
       if (quote.allowanceTarget) {
         setBusy("approve");
         const max = "f".repeat(64);
-        await provider.request({
+        const approvalHash = (await provider.request({
           method: "eth_sendTransaction",
           params: [
             {
@@ -137,11 +138,32 @@ export function LiveSwapPanel() {
               data: encodeApprove(quote.allowanceTarget, max),
             },
           ],
-        });
-        toast.success("Approval submitted — re-quote once it confirms.");
+        })) as string;
+        toast.info("Approval submitted — waiting for confirmation, then we'll re-quote for you.");
+
+        // Wait for the approval receipt so the user doesn't have to re-quote
+        // by hand; poll for up to ~2 minutes, then hand control back.
+        let confirmed = false;
+        for (let i = 0; i < 60; i++) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const receipt = await provider
+            .request({ method: "eth_getTransactionReceipt", params: [approvalHash] })
+            .catch(() => null);
+          if (receipt) {
+            confirmed = true;
+            break;
+          }
+        }
         setBusy(null);
+        if (confirmed) {
+          toast.success("Approval confirmed — refreshing your quote.");
+          await handleQuote();
+        } else {
+          toast.warning("Approval is still pending. Tap “Get route & quote” once it confirms.");
+        }
         return;
       }
+
 
       setBusy("swap");
       const hash = (await provider.request({
@@ -191,20 +213,13 @@ export function LiveSwapPanel() {
         </div>
 
         {!address ? (
-          <Button
-            className="w-full"
-            variant="outline"
-            disabled={!available}
-            onClick={() => connect().catch(() => toast.error("Wallet connection cancelled."))}
-          >
-            <Wallet className="mr-2 h-4 w-4" />
-            {available ? "Connect wallet to trade live" : "No browser wallet detected"}
-          </Button>
+          <ConnectWalletButton label="Connect wallet to trade live" />
         ) : (
           <p className="text-xs text-muted-foreground">
             Signing as <span className="font-mono">{address.slice(0, 6)}…{address.slice(-4)}</span>
           </p>
         )}
+
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="space-y-1.5">
