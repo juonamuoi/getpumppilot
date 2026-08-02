@@ -525,9 +525,9 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label={`Caption language: ${activeTrack.englishName}. Choose a different caption language for the PumpPilot AI ad video.`}
+              aria-label={`Caption settings. Language: ${activeTrack.englishName}, size: ${captionSize}, background: ${captionBg}. Opens a menu to change caption language, text size, and background.`}
               aria-describedby="ad-preview-transcript-note"
-              title="Caption language"
+              title="Caption settings — language, size, background"
               className="flex min-h-11 items-center justify-center gap-1 rounded-full bg-black/60 px-2 py-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               <Languages className="h-4 w-4" />
@@ -588,15 +588,15 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           {playing ? "Ad playing" : "Ad paused"}
           {muted ? ", muted" : ", sound on"}
           {captionsOn
-            ? `, ${activeTrack.englishName} captions on`
+            ? `, ${activeTrack.englishName} captions on, ${captionSize} size, ${captionBg} background`
             : ", captions off"}
         </p>
         <p id="ad-preview-shortcuts" className="sr-only">
           Keyboard shortcuts for this ad preview: press Space or K to play or pause the video,
           press M to mute or unmute it, and press C to turn captions on or off. Shortcuts
           work while focus is anywhere inside the preview, including on these controls. Press Tab
-          to reach the caption language menu, then the sign-up button below the video, then the
-          text transcript.
+          to reach the caption settings menu, where you can change caption language, text size,
+          and background, then the sign-up button below the video, then the text transcript.
         </p>
         <p id="ad-preview-transcript-note" className="sr-only">
           {hasCaptions
