@@ -76,6 +76,9 @@ export function LiveSwapPanel() {
   const [progress, setProgress] = useState<SwapProgress>(IDLE_PROGRESS);
   /** When the current quote (and therefore its gas figures) was fetched. */
   const [quotedAt, setQuotedAt] = useState<number | null>(null);
+  /** Last-look review modal shown before anything is signed. */
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
 
   const sell = findToken(settings.chainId, sellSymbol);
   const buy = findToken(settings.chainId, buySymbol);
