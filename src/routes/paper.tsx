@@ -37,6 +37,7 @@ import { TradeModeSwitch } from "@/components/trade-mode-switch";
 import { LiveSwapPanel } from "@/components/live-swap-panel";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 import {
+  AnnouncementVerbosityControl,
   ExecutionModeAnnouncer,
   useExecutionAnnouncer,
 } from "@/components/execution-announcer";
