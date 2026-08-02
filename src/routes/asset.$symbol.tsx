@@ -20,6 +20,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { FaqSection } from "@/components/faq-section";
 import { assetFaqs } from "@/lib/page-faqs";
 import { useExecutionAnnouncer } from "@/components/execution-announcer";
+import { announceRiskBlock, riskBlockTitle } from "@/lib/risk-block";
 import { requestTrade } from "@/lib/trade-gate";
 import {
   SPARK_WINDOW_OPTIONS,
@@ -150,6 +151,13 @@ function AssetPage() {
             "essential",
           );
           setQty("");
+        } else if (r.block) {
+          toast.error(`Blocked by ${riskBlockTitle(r.block)}`, { description: r.msg });
+          announce(
+            announceRiskBlock(r.block, side, n, asset.symbol),
+            "assertive",
+            "essential",
+          );
         } else {
           toast.error(r.msg);
           announce(`Paper order rejected: ${r.msg}`, "assertive", "essential");

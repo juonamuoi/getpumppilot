@@ -23,6 +23,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
+import { announceRiskBlock, riskBlockTitle, describeRiskBlock, type RiskBlock } from "@/lib/risk-block";
 import { Lock, RotateCcw, ShieldCheck } from "lucide-react";
 import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
 
@@ -85,6 +86,7 @@ function PaperPage() {
   const { announce, region: announcerRegion } = useExecutionAnnouncer();
 
   const { spend } = useCredits();
+  const [lastBlock, setLastBlock] = useState<RiskBlock | null>(null);
   const [symbol, setSymbol] = useState("BTC");
   const [qty, setQty] = useState("");
   const [sized, setSized] = useState<{
@@ -152,14 +154,19 @@ function PaperPage() {
           return;
         }
         const r = paper.trade(symbol, side, n);
-        r.ok ? toast.success(r.msg) : toast.error(r.msg);
-        announce(
-          r.ok
-            ? `Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`
-            : `Paper order rejected: ${r.msg}`,
-          r.ok ? "polite" : "assertive",
-          "essential",
-        );
+        if (r.ok) {
+          toast.success(r.msg);
+          announce(`Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`, "polite", "essential");
+        } else if (r.block) {
+          setLastBlock(r.block);
+          toast.error(`Blocked by ${riskBlockTitle(r.block)}`, { description: r.msg });
+          announce(announceRiskBlock(r.block, side, n, symbol), "assertive", "essential");
+        } else {
+          toast.error(r.msg);
+          announce(`Paper order rejected: ${r.msg}`, "assertive", "essential");
+        }
+        if (r.ok) setLastBlock(null);
+
         if (r.ok) setQty("");
       },
     });
@@ -172,6 +179,16 @@ function PaperPage() {
       <div className="space-y-5">
         {announcerRegion}
         <ExecutionModeAnnouncer live={liveMode} />
+        {lastBlock && (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-foreground"
+          >
+            <p className="font-medium">Order blocked — {riskBlockTitle(lastBlock)}</p>
+            <p className="mt-1 text-muted-foreground">{describeRiskBlock(lastBlock)}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-end sm:justify-between">
 
           <div className="min-w-0">
