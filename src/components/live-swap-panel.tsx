@@ -170,6 +170,39 @@ export function LiveSwapPanel() {
     };
   }, [restored, txHash, progress.confirm.status, resumedHash]);
 
+  /* ---------------- Automatic quote refresh ----------------
+   * Gas moves fast. While a quote is on screen and nothing is being signed we
+   * silently re-quote so the fee/slippage figures are current at signing time,
+   * and we tighten the cadence when the estimate says fees are unusually high.
+   */
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const quoteRef = useRef<() => Promise<void>>(async () => {});
+  quoteRef.current = handleQuote;
+
+  const refreshMs =
+    costEstimate?.severity === "high" ? 10_000 : costEstimate?.severity === "warn" ? 20_000 : 30_000;
+
+  useEffect(() => {
+    if (!autoRefresh || !quote?.ok || busy !== null || !quotedAt) return;
+    const due = Math.max(1_000, quotedAt + refreshMs - Date.now());
+    const t = setTimeout(() => {
+      void quoteRef.current();
+    }, due);
+    return () => clearTimeout(t);
+  }, [autoRefresh, quote, busy, quotedAt, refreshMs]);
+
+  // Tell the user when a refresh reveals unusually expensive gas.
+  const lastSeverity = useRef<string | null>(null);
+  useEffect(() => {
+    const sev = costEstimate?.severity ?? null;
+    if (sev && sev !== lastSeverity.current && sev === "high") {
+      toast.warning("Network fees just spiked — re-check the cost strip before signing.");
+    }
+    lastSeverity.current = sev;
+  }, [costEstimate?.severity]);
+
+
+
 
 
   const readiness = useMemo(
