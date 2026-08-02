@@ -158,12 +158,14 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   const showPoster = !ready || (reducedMotion === true && !playing);
 
   return (
+    <div className="mx-auto w-full max-w-[340px]">
     <div
       ref={containerRef}
       role="group"
       tabIndex={0}
       aria-label="PumpPilot AI ad preview with playback controls"
-      aria-describedby="ad-preview-shortcuts"
+      aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
+
       onKeyDown={(e) => {
         const target = e.target as HTMLElement;
         const onControl = !!target.closest("button, a, input");
