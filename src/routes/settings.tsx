@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/auth-store";
 import { McpAuditExport } from "@/components/mcp-audit-export";
 import { McpRateLimits } from "@/components/mcp-rate-limits";
 import { Gauge } from "lucide-react";
+import { AnnouncementVerbosityControl } from "@/components/execution-announcer";
 
 import { toast } from "sonner";
 import {
@@ -233,6 +234,15 @@ function SettingsPage() {
             connected agent, and revoke any client immediately.
           </p>
         </header>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Accessibility</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AnnouncementVerbosityControl />
+          </CardContent>
+        </Card>
 
         {authLoading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

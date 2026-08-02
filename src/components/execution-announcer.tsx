@@ -1,23 +1,51 @@
 import { useCallback, useRef, useState } from "react";
+import { Volume2, VolumeX, Volume1 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  useAnnounceVerbosity,
+  shouldAnnounce,
+  VERBOSITY_OPTIONS,
+  type AnnounceImportance,
+} from "@/lib/announce-verbosity";
 
 type Politeness = "polite" | "assertive";
 
 /**
  * Screen-reader live announcements for trade execution events.
  * Returns a render-able region plus an `announce()` callback.
+ * Messages are filtered by the user's verbosity preference
+ * (off / minimal / full) so live trading can stay quiet.
  */
 export function useExecutionAnnouncer() {
   const [polite, setPolite] = useState("");
   const [assertive, setAssertive] = useState("");
   const seq = useRef(0);
+  const { verbosity } = useAnnounceVerbosity();
+  const verbosityRef = useRef(verbosity);
+  verbosityRef.current = verbosity;
 
-  const announce = useCallback((message: string, level: Politeness = "polite") => {
-    // Bump an invisible counter so repeated identical messages are re-read.
-    seq.current += 1;
-    const text = seq.current % 2 === 0 ? `${message}\u200B` : message;
-    if (level === "assertive") setAssertive(text);
-    else setPolite(text);
-  }, []);
+  const announce = useCallback(
+    (
+      message: string,
+      level: Politeness = "polite",
+      importance: AnnounceImportance = "detail",
+    ) => {
+      if (!shouldAnnounce(verbosityRef.current, importance)) return;
+      // Bump an invisible counter so repeated identical messages are re-read.
+      seq.current += 1;
+      const text = seq.current % 2 === 0 ? `${message}\u200B` : message;
+      if (level === "assertive") setAssertive(text);
+      else setPolite(text);
+    },
+    [],
+  );
 
   const region = (
     <>
@@ -30,17 +58,84 @@ export function useExecutionAnnouncer() {
     </>
   );
 
-  return { announce, region };
+  return { announce, region, verbosity };
 }
 
 /** Visible + announced badge describing which execution mode is active. */
 export function ExecutionModeAnnouncer({ live }: { live: boolean }) {
+  const { verbosity } = useAnnounceVerbosity();
+  if (verbosity === "off") return null;
   const label = live
     ? "Execution mode: LIVE. Orders route real swaps you sign in your wallet."
     : "Execution mode: PAPER. Orders are simulated with no wallet signature.";
   return (
     <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
       {label}
+    </div>
+  );
+}
+
+const ICONS = {
+  off: VolumeX,
+  minimal: Volume1,
+  full: Volume2,
+} as const;
+
+/**
+ * Compact control for how verbose execution announcements are.
+ * `variant="inline"` renders just the picker for toolbars.
+ */
+export function AnnouncementVerbosityControl({
+  variant = "block",
+  className,
+}: {
+  variant?: "block" | "inline";
+  className?: string;
+}) {
+  const { verbosity, setVerbosity } = useAnnounceVerbosity();
+  const Icon = ICONS[verbosity];
+  const active = VERBOSITY_OPTIONS.find((o) => o.value === verbosity);
+
+  const picker = (
+    <Select value={verbosity} onValueChange={(v) => setVerbosity(v as typeof verbosity)}>
+      <SelectTrigger
+        id="announce-verbosity"
+        className={variant === "inline" ? "h-9 w-[150px]" : "w-full sm:w-[220px]"}
+        aria-label="Execution announcement verbosity"
+      >
+        <span className="flex items-center gap-2 truncate">
+          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <SelectValue />
+        </span>
+      </SelectTrigger>
+      <SelectContent>
+        {VERBOSITY_OPTIONS.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  if (variant === "inline") {
+    return <div className={className}>{picker}</div>;
+  }
+
+  return (
+    <div className={className}>
+      <Label htmlFor="announce-verbosity" className="text-sm font-medium">
+        Execution announcements
+      </Label>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Controls how much of an order's progress is announced out loud by screen readers while you
+        trade.
+      </p>
+      <div className="mt-3">{picker}</div>
+      {active ? <p className="mt-2 text-xs text-muted-foreground">{active.hint}</p> : null}
+      <p aria-live="polite" className="sr-only">
+        {`Execution announcements set to ${active?.label ?? verbosity}.`}
+      </p>
     </div>
   );
 }
