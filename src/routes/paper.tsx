@@ -23,6 +23,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { usePaper } from "@/lib/paper-store";
 import { toast } from "sonner";
+import { announceRiskBlock, riskBlockTitle, describeRiskBlock, type RiskBlock } from "@/lib/risk-block";
 import { Lock, RotateCcw, ShieldCheck } from "lucide-react";
 import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
 
@@ -85,6 +86,7 @@ function PaperPage() {
   const { announce, region: announcerRegion } = useExecutionAnnouncer();
 
   const { spend } = useCredits();
+  const [lastBlock, setLastBlock] = useState<RiskBlock | null>(null);
   const [symbol, setSymbol] = useState("BTC");
   const [qty, setQty] = useState("");
   const [sized, setSized] = useState<{
