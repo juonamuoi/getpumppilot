@@ -179,7 +179,7 @@ function StrategyPage() {
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Publishing shares your rule set publicly. <Link to="/community" className="text-emerald-300 hover:underline">Browse community</Link>.
+                Publishing shares your rule set publicly. <Link to="/community" className="text-emerald-300 underline underline-offset-2">Browse community</Link>.
               </p>
             </CardContent>
           </Card>
