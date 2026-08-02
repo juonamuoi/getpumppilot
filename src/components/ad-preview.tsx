@@ -323,18 +323,26 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         </button>
       </div>
 
-      {/* Screen-reader status + keyboard instructions */}
-      <p aria-live="polite" className="sr-only">
-        {playing ? "Ad playing" : "Ad paused"}
-        {muted ? ", muted" : ", sound on"}
-      </p>
-      <p id="ad-preview-shortcuts" className="sr-only">
-        Keyboard shortcuts for this ad preview: press Space or K to play or pause the video, and
-        press M to mute or unmute it. Shortcuts work while focus is anywhere inside the preview,
-        including on these controls. Press Tab to reach the sign-up button below the video.
-      </p>
+        {/* Screen-reader status + keyboard instructions */}
+        <p aria-live="polite" className="sr-only">
+          {playing ? "Ad playing" : "Ad paused"}
+          {muted ? ", muted" : ", sound on"}
+        </p>
+        <p id="ad-preview-shortcuts" className="sr-only">
+          Keyboard shortcuts for this ad preview: press Space or K to play or pause the video, and
+          press M to mute or unmute it. Shortcuts work while focus is anywhere inside the preview,
+          including on these controls. Press Tab to reach the sign-up button below the video, then
+          the text transcript.
+        </p>
+        <p id="ad-preview-transcript-note" className="sr-only">
+          {hasCaptions
+            ? "Captions are available for this video."
+            : "Captions are not available for this video. A full text transcript of the ad is provided directly below the player."}
+        </p>
+      </div>
 
-
+      <AdTranscript id="ad-preview-transcript" />
     </div>
   );
 }
+
