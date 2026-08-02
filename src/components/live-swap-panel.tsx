@@ -333,6 +333,17 @@ export function LiveSwapPanel() {
           </Button>
         </div>
 
+        {failure && (
+          <SwapErrorPanel
+            error={failure}
+            busy={busy !== null}
+            onRetry={handleRetry}
+            onDismiss={() => setFailure(null)}
+          />
+        )}
+
+
+
         {quote?.ok && buy && (
           <div className="space-y-1 rounded-md border border-border bg-muted/30 p-3 text-xs">
             <p className="font-medium text-foreground">
