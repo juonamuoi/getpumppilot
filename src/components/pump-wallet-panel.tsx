@@ -15,6 +15,7 @@ import {
   Loader2,
   Lock,
   Plus,
+  ShieldAlert,
   ShieldCheck,
   Timer,
   Trash2,
@@ -24,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   createPumpWallet,
   deletePumpWallet,
@@ -43,6 +45,12 @@ import { WalletAutoLock } from "@/components/wallet-auto-lock";
 import { trackWalletStep } from "@/lib/funnel";
 import { PhraseCopyGuard } from "@/components/phrase-copy-guard";
 
+
+/** Warnings that must be ticked immediately before the phrase is shown. */
+const REVEAL_ACKS = [
+  "I understand the phrase is shown once — dismissing it means re-entering my password to see it again.",
+  "I will store it offline (paper or metal), never as a screenshot, note, cloud file or message.",
+] as const;
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -80,6 +88,7 @@ export function PumpWalletPanel({
   const [phrase, setPhrase] = useState<string | null>(null);
   const [revealPassword, setRevealPassword] = useState("");
   const [showReveal, setShowReveal] = useState(false);
+  const [revealAcks, setRevealAcks] = useState<boolean[]>(() => REVEAL_ACKS.map(() => false));
   const checklist = useRecoveryChecklist();
 
   const sensitive = phrase !== null || busy;
@@ -91,6 +100,8 @@ export function PumpWalletPanel({
 
 
 
+
+  const revealAcksDone = revealAcks.every(Boolean);
 
   const reset = () => {
     setPassword("");
@@ -146,6 +157,7 @@ export function PumpWalletPanel({
       setPhrase(m);
       setShowReveal(false);
       setRevealPassword("");
+      setRevealAcks(REVEAL_ACKS.map(() => false));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Wrong password");
     } finally {
@@ -391,7 +403,11 @@ export function PumpWalletPanel({
             <Lock className="mr-1.5 h-3.5 w-3.5" /> Lock
           </Button>
         ) : null}
-        <Button variant="outline" size="sm" onClick={() => setShowReveal((v) => !v)}>
+        <Button variant="outline" size="sm" onClick={() => {
+            setRevealAcks(REVEAL_ACKS.map(() => false));
+            setRevealPassword("");
+            setShowReveal((v) => !v);
+          }}>
           <Eye className="mr-1.5 h-3.5 w-3.5" /> Recovery phrase
         </Button>
         <WalletPasswordManager rotatedAt={record?.rotatedAt} />
@@ -417,22 +433,61 @@ export function PumpWalletPanel({
       </div>
 
       {showReveal ? (
-        <div className="space-y-2 rounded-md border border-border p-3">
-          <Label htmlFor="pw-reveal" className="text-xs">
-            Confirm password to reveal the phrase
-          </Label>
-          <Input
-            id="pw-reveal"
-            type="password"
-            autoComplete="current-password"
-            value={revealPassword}
-            onChange={(e) => setRevealPassword(e.target.value)}
-          />
-          <Button size="sm" onClick={() => void handleReveal()} disabled={busy || !revealPassword}>
-            Reveal
-          </Button>
+        <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-3">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+            <ShieldAlert className="h-3.5 w-3.5" /> Acknowledge before the phrase appears
+          </p>
+          <div className="space-y-2">
+            {REVEAL_ACKS.map((text, i) => (
+              <label key={text} className="flex cursor-pointer items-start gap-2 text-[11px]">
+                <Checkbox
+                  checked={revealAcks[i]}
+                  onCheckedChange={(v) =>
+                    setRevealAcks((prev) => prev.map((a, idx) => (idx === i ? v === true : a)))
+                  }
+                  className="mt-0.5"
+                />
+                <span className="text-muted-foreground">{text}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pw-reveal" className="text-xs">
+              Confirm password to reveal the phrase
+            </Label>
+            <Input
+              id="pw-reveal"
+              type="password"
+              autoComplete="current-password"
+              disabled={!revealAcksDone}
+              value={revealPassword}
+              onChange={(e) => setRevealPassword(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => void handleReveal()}
+              disabled={busy || !revealPassword || !revealAcksDone}
+              title={
+                revealAcksDone ? undefined : "Tick both warnings before the phrase can be revealed."
+              }
+            >
+              {busy ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
+              Reveal phrase
+            </Button>
+            {!revealAcksDone ? (
+              <span className="text-[11px] text-muted-foreground">
+                {REVEAL_ACKS.length - revealAcks.filter(Boolean).length} warning
+                {REVEAL_ACKS.length - revealAcks.filter(Boolean).length === 1 ? "" : "s"} left to
+                acknowledge.
+              </span>
+            ) : null}
+          </div>
         </div>
       ) : null}
+
     </div>
   );
 }
