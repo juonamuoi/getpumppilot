@@ -305,11 +305,29 @@ export function PumpWalletPanel() {
       </div>
 
       {!record.backedUp ? (
-        <p className="flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-[11px] text-amber-400">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Recovery phrase not confirmed yet. Reveal and store it before funding this wallet.
+        <div className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2.5 text-[11px] text-amber-400">
+          <p className="flex items-start gap-1.5">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>
+              Backup not confirmed ({checklist.done}/{checklist.total} checklist steps done). Reveal
+              the phrase with your password, write it down offline, and finish the checklist before
+              funding this wallet.
+            </span>
+          </p>
+          <WalletRecoveryChecklist
+            checked={checklist.checked}
+            onToggle={checklist.toggle}
+            done={checklist.done}
+            total={checklist.total}
+          />
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground">
+          Backup confirmed. Your 12 words are never shown again automatically — reveal them with your
+          password only when you are somewhere private, and keep the offline copy safe.
         </p>
-      ) : null}
+      )}
+
 
       {!unlocked ? (
         <div className="space-y-2">
