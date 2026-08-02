@@ -224,7 +224,9 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           type="button"
           onClick={startPlayback}
           className="absolute inset-x-0 top-0 flex h-3/5 flex-col items-center justify-center gap-2 text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-inset"
-          aria-label="Play the PumpPilot AI ad"
+          aria-label="Play the PumpPilot AI ad. Motion is paused because your system prefers reduced motion. Keyboard shortcut: Space or K"
+          aria-describedby="ad-preview-shortcuts"
+
         >
           <span className="rounded-full bg-emerald-500/90 p-4 shadow-lg shadow-emerald-500/40">
             <Play className="h-6 w-6 fill-current" />
