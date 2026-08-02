@@ -129,7 +129,7 @@ export function LiveSwapPanel() {
       if (quote.allowanceTarget) {
         setBusy("approve");
         const max = "f".repeat(64);
-        await provider.request({
+        const approvalHash = (await provider.request({
           method: "eth_sendTransaction",
           params: [
             {
@@ -138,11 +138,32 @@ export function LiveSwapPanel() {
               data: encodeApprove(quote.allowanceTarget, max),
             },
           ],
-        });
-        toast.success("Approval submitted — re-quote once it confirms.");
+        })) as string;
+        toast.info("Approval submitted — waiting for confirmation, then we'll re-quote for you.");
+
+        // Wait for the approval receipt so the user doesn't have to re-quote
+        // by hand; poll for up to ~2 minutes, then hand control back.
+        let confirmed = false;
+        for (let i = 0; i < 60; i++) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const receipt = await provider
+            .request({ method: "eth_getTransactionReceipt", params: [approvalHash] })
+            .catch(() => null);
+          if (receipt) {
+            confirmed = true;
+            break;
+          }
+        }
         setBusy(null);
+        if (confirmed) {
+          toast.success("Approval confirmed — refreshing your quote.");
+          await handleQuote();
+        } else {
+          toast.warning("Approval is still pending. Tap “Get route & quote” once it confirms.");
+        }
         return;
       }
+
 
       setBusy("swap");
       const hash = (await provider.request({
