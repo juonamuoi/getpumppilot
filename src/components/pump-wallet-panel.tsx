@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
-  Check,
   Copy,
   Eye,
   KeyRound,
@@ -42,6 +41,8 @@ import {
 import { WalletPasswordManager } from "@/components/wallet-password-manager";
 import { WalletAutoLock } from "@/components/wallet-auto-lock";
 import { trackWalletStep } from "@/lib/funnel";
+import { PhraseCopyGuard } from "@/components/phrase-copy-guard";
+
 
 function shortAddr(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -77,7 +78,6 @@ export function PumpWalletPanel({
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [phrase, setPhrase] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [revealPassword, setRevealPassword] = useState("");
   const [showReveal, setShowReveal] = useState(false);
   const checklist = useRecoveryChecklist();
@@ -189,19 +189,8 @@ export function PumpWalletPanel({
         />
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void navigator.clipboard.writeText(phrase);
-              setCopied(true);
-              toast.warning("Clipboard is not a safe backup — paste it nowhere online.");
-              setTimeout(() => setCopied(false), 1500);
-            }}
-          >
-            {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
-            Copy phrase
-          </Button>
+          <PhraseCopyGuard phrase={phrase} />
+
           <Button
             size="sm"
             disabled={!checklist.complete}
