@@ -425,6 +425,11 @@ export function LiveSwapPanel() {
           </div>
         )}
 
+        {quote?.ok && costEstimate && (
+          <SwapCostEstimateCard estimate={costEstimate} slippageBps={settings.slippageBps} />
+        )}
+
+
         {txHash && (
           <a
             className="inline-flex items-center gap-1 text-xs text-primary underline"
