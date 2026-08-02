@@ -180,6 +180,7 @@ function PaperPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <AnnouncementVerbosityControl variant="inline" />
             <TourStartButton />
             <div
               data-tour="paper-live-lock"
