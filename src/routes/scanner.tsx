@@ -103,18 +103,38 @@ function SortHeader({
   const Icon = active ? (dir === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
   return (
     <button
+      type="button"
       onClick={() => onSort(k)}
+      aria-label={
+        active
+          ? `${label} — sorted ${dir === "asc" ? "ascending" : "descending"}. Activate to reverse.`
+          : `Sort by ${label}`
+      }
       className={cn(
-        "flex items-center gap-1 text-[11px] uppercase tracking-wider transition hover:text-foreground",
+        "flex items-center gap-1 rounded-sm text-[11px] uppercase tracking-wider transition hover:text-foreground",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         active ? "text-foreground" : "text-muted-foreground",
         className,
       )}
     >
       <span>{label}</span>
-      <Icon className="h-3 w-3 opacity-70" />
+      <Icon className="h-3 w-3 opacity-70" aria-hidden="true" />
     </button>
   );
 }
+
+const SHORTCUTS: { keys: string; action: string }[] = [
+  { keys: "/", action: "Focus the search box" },
+  { keys: "Esc", action: "Clear search / collapse the open row" },
+  { keys: "↓ / j", action: "Move to the next result" },
+  { keys: "↑ / k", action: "Move to the previous result" },
+  { keys: "Home / End", action: "Jump to first or last result" },
+  { keys: "Enter / Space", action: "Expand or collapse the focused result" },
+  { keys: "o", action: "Open asset details for the focused result" },
+  { keys: "f", action: "Cycle the category filter" },
+  { keys: "r", action: "Reverse the sort direction" },
+  { keys: "?", action: "Show or hide this shortcut list" },
+];
 
 function ScoreCell({ v }: { v: number }) {
   return (
@@ -124,6 +144,7 @@ function ScoreCell({ v }: { v: number }) {
     </div>
   );
 }
+
 
 function Scanner() {
   useEffect(() => {
