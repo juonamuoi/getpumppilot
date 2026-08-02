@@ -125,7 +125,7 @@ export async function buildRecoveryGuideDoc(opts: { address?: string | null } = 
   });
 
   /* ----------------------------- Recovery ----------------------------- */
-  ensure(60);
+  ensure(150);
   text("How to recover", { size: 13, bold: true, gap: 4 });
   rule(12);
   [
