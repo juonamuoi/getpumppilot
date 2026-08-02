@@ -23,9 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   AD_CAPTION_TRACKS,
+  CAPTION_BACKGROUNDS,
+  CAPTION_SIZES,
   DEFAULT_CAPTION_LANG,
+  captionAppearanceClass,
   getCaptionTrack,
   preferredCaptionLang,
+  type CaptionBg,
+  type CaptionSize,
 } from "@/lib/ad-captions";
 import {
   trackCtaClick,
