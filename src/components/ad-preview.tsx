@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Volume2, VolumeX } from "lucide-react";
+import { ArrowRight, Play, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackCtaClick, trackAdPreviewEvent } from "@/lib/funnel";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
@@ -18,19 +18,45 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [muted, setMuted] = useState(true);
+  // null until the media query is read on the client (avoids SSR mismatch).
+  const [reducedMotion, setReducedMotion] = useState<boolean | null>(null);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      setReducedMotion(false);
+      return;
+    }
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion === null) return;
     const el = videoRef.current;
     if (!el) return;
+    if (reducedMotion) {
+      // Respect the OS setting: hold on the poster frame until the user asks.
+      el.pause();
+      setPlaying(false);
+      void trackAdPreviewEvent("reduced_motion_hold");
+      return;
+    }
     el.muted = true;
     void el
       .play()
-      .then(() => void trackAdPreviewEvent("autoplay_started"))
+      .then(() => {
+        setPlaying(true);
+        void trackAdPreviewEvent("autoplay_started");
+      })
       .catch(() => {
         /* autoplay blocked — poster stays visible */
         void trackAdPreviewEvent("autoplay_blocked");
       });
-  }, []);
+  }, [reducedMotion]);
 
   // Impression: fired once the ad is actually visible in the viewport.
   useEffect(() => {
@@ -49,6 +75,15 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     return () => obs.disconnect();
   }, []);
 
+  function startPlayback() {
+    const el = videoRef.current;
+    if (!el) return;
+    void el.play().then(() => {
+      setPlaying(true);
+      void trackAdPreviewEvent("manual_play");
+    });
+  }
+
   return (
     <div
       ref={containerRef}
@@ -59,14 +94,34 @@ export function AdPreview({ href, label = "Start free" }: Props) {
         className="block h-auto w-full"
         src={adVideo.url}
         poster={adPoster.url}
-        autoPlay
+        autoPlay={reducedMotion === false}
         loop
         muted={muted}
         playsInline
         preload="metadata"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
         onEnded={() => void trackAdPreviewEvent("complete")}
         aria-label="PumpPilot AI ad — the AI robot pumping crypto into a wallet while you sleep"
       />
+
+      {/* Reduced-motion fallback: static poster + explicit play control */}
+      {reducedMotion && !playing && (
+        <button
+          type="button"
+          onClick={startPlayback}
+          className="absolute inset-x-0 top-0 flex h-3/5 flex-col items-center justify-center gap-2 text-white/90"
+          aria-label="Play the PumpPilot AI ad"
+        >
+          <span className="rounded-full bg-emerald-500/90 p-4 shadow-lg shadow-emerald-500/40">
+            <Play className="h-6 w-6 fill-current" />
+          </span>
+          <span className="rounded-full bg-black/60 px-3 py-1 text-[11px] backdrop-blur">
+            Motion paused — tap to play
+          </span>
+        </button>
+      )}
+
 
 
       {/* bottom gradient so the CTA stays legible over any frame */}

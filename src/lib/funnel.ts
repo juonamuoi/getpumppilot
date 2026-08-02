@@ -249,6 +249,8 @@ export type AdPreviewEvent =
   | "unmute"
   | "mute"
   | "complete"
+  | "reduced_motion_hold"
+  | "manual_play"
   | "cta_click";
 
 /** Fire-once-per-browser events (impressions, first completion). */
