@@ -15,6 +15,8 @@ import {
   Loader2,
   Lock,
   Plus,
+  Printer,
+
   ShieldAlert,
   ShieldCheck,
   Timer,
