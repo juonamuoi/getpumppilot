@@ -24,6 +24,8 @@ import {
 import { toast } from "sonner";
 import { useSecurity } from "@/lib/security-store";
 import { WalletThreatDialog } from "@/components/wallet-threat-dialog";
+import { OPEN_WALLET_EVENT } from "@/lib/backup-reminder";
+
 import { ConnectWalletButton } from "@/components/connect-wallet-button";
 import { PumpWalletPanel } from "@/components/pump-wallet-panel";
 
