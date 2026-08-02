@@ -5,7 +5,7 @@
  * approval -> eth_sendTransaction in the user's own wallet. PumpPilot never
  * holds keys, never auto-trades, and never asks for a seed phrase.
  * ------------------------------------------------------------------ */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
@@ -599,6 +599,9 @@ export function LiveSwapPanel() {
             quotedAt={quotedAt}
             onRefresh={handleQuote}
             busy={busy !== null}
+            autoRefresh={autoRefresh}
+            onAutoRefreshChange={setAutoRefresh}
+            refreshMs={refreshMs}
           />
           <div className="flex flex-wrap gap-2">
             <Button

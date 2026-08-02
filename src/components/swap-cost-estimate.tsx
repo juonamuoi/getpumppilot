@@ -101,13 +101,27 @@ interface BarProps {
   quotedAt: number | null;
   onRefresh: () => void;
   busy: boolean;
+  /** Auto re-quote so fees are current at signing time. */
+  autoRefresh: boolean;
+  onAutoRefreshChange: (v: boolean) => void;
+  /** Current auto-refresh cadence, tightened when fees are high. */
+  refreshMs: number;
 }
 
 /**
  * Always-visible cost strip pinned above the sign button: latest gas, its USD
  * value and the worst-case slippage give-up, so nothing is signed blind.
  */
-export function SwapCostBar({ estimate, slippageBps, quotedAt, onRefresh, busy }: BarProps) {
+export function SwapCostBar({
+  estimate,
+  slippageBps,
+  quotedAt,
+  onRefresh,
+  busy,
+  autoRefresh,
+  onAutoRefreshChange,
+  refreshMs,
+}: BarProps) {
   const age = useAgeSeconds(quotedAt);
   const stale = age !== null && age >= 30;
 
@@ -148,10 +162,19 @@ export function SwapCostBar({ estimate, slippageBps, quotedAt, onRefresh, busy }
         </span>
       </span>
       <span className="ml-auto flex items-center gap-2">
-        <span className={stale ? "text-amber-500" : "text-muted-foreground"}>
+        <label className="flex cursor-pointer items-center gap-1 text-muted-foreground">
+          <input
+            type="checkbox"
+            className="h-3 w-3 accent-primary"
+            checked={autoRefresh}
+            onChange={(e) => onAutoRefreshChange(e.target.checked)}
+          />
+          Auto-refresh {autoRefresh && `(${Math.round(refreshMs / 1000)}s)`}
+        </label>
+        <span className={stale && !autoRefresh ? "text-amber-500" : "text-muted-foreground"}>
           {age === null
             ? "No quote yet"
-            : stale
+            : stale && !autoRefresh
               ? `Quote ${age}s old — refresh`
               : `Updated ${age}s ago`}
         </span>
