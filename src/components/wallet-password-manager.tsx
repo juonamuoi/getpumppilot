@@ -51,6 +51,7 @@ export function WalletPasswordManager({ rotatedAt }: { rotatedAt?: string }) {
       else await resetPumpWalletPassword(phrase, next);
       clear();
       setOpen(false);
+      void trackWalletStep("wallet_password_rotated", { method: tab });
       toast.success(
         tab === "change" ? "Password changed — vault re-encrypted" : "Password reset — wallet unlocked",
       );
