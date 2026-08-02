@@ -1321,6 +1321,7 @@ export type Database = {
         Returns: Json
       }
       resolve_referral_code: { Args: { _code: string }; Returns: string }
+      wallet_funnel_report: { Args: { _days?: number }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
