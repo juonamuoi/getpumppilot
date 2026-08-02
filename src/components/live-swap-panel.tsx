@@ -8,7 +8,7 @@
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowDownUp, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import {
 } from "@/lib/live-trading";
 import { getInjectedProvider, useInjectedAccount } from "@/lib/wallet-balances";
 import { livePriceOf } from "@/lib/live-price-registry";
+import { ConnectWalletButton } from "@/components/connect-wallet-button";
 
 function encodeApprove(spender: string, amountHex: string) {
   // approve(address,uint256)
@@ -40,7 +41,7 @@ function encodeApprove(spender: string, amountHex: string) {
 
 export function LiveSwapPanel() {
   const settings = useLiveTrading();
-  const { address, available, connect } = useInjectedAccount();
+  const { address } = useInjectedAccount();
   const quoteFn = useServerFn(getSwapQuote);
 
   const tokens = tokensFor(settings.chainId);
