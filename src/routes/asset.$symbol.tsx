@@ -127,10 +127,14 @@ function AssetPage() {
   const doTrade = (side: "buy" | "sell") => {
     const n = parseFloat(qty);
     if (!n || n <= 0) {
-      announce("Order rejected: enter a positive quantity.", "assertive");
+      announce("Order rejected: enter a positive quantity.", "assertive", "essential");
       return toast.error("Enter a positive quantity");
     }
-    announce(`Paper order placed: ${side} ${n} ${asset.symbol}. Confirm the safety notice to continue.`);
+    announce(
+      `Paper order placed: ${side} ${n} ${asset.symbol}. Confirm the safety notice to continue.`,
+      "polite",
+      "detail",
+    );
     // Global safety gate — nothing is submitted until the notice is acknowledged.
     requestTrade({
       action: `${side.toUpperCase()} ${n} ${asset.symbol}`,
@@ -140,11 +144,15 @@ function AssetPage() {
         const r = paper.trade(asset.symbol, side, n);
         if (r.ok) {
           toast.success(r.msg);
-          announce(`Paper order filled: ${side} ${n} ${asset.symbol}. ${r.msg}`);
+          announce(
+            `Paper order filled: ${side} ${n} ${asset.symbol}. ${r.msg}`,
+            "polite",
+            "essential",
+          );
           setQty("");
         } else {
           toast.error(r.msg);
-          announce(`Paper order rejected: ${r.msg}`, "assertive");
+          announce(`Paper order rejected: ${r.msg}`, "assertive", "essential");
         }
       },
     });
