@@ -10,6 +10,8 @@
 export type AdTranscriptLine = {
   /** Timestamp label, e.g. "0:00" */
   at: string;
+  /** Start time of this line in the video, in seconds */
+  start: number;
   /** What is shown on screen */
   visual: string;
   /** Narration / on-screen copy */
