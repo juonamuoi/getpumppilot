@@ -85,7 +85,10 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           <Button
             size="lg"
             asChild
-            onClick={() => void trackCtaClick("hero-ad-overlay")}
+            onClick={() => {
+              void trackCtaClick("hero-ad-overlay");
+              void trackAdPreviewEvent("cta_click");
+            }}
             className="absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-7 text-base shadow-xl shadow-emerald-500/40"
           >
             <Link to={href}>
@@ -105,8 +108,10 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           if (!el) return;
           el.muted = !el.muted;
           setMuted(el.muted);
+          void trackAdPreviewEvent(el.muted ? "mute" : "unmute");
           void el.play().catch(() => {});
         }}
+
         aria-label={muted ? "Unmute ad" : "Mute ad"}
         className="absolute right-3 top-3 rounded-full bg-black/60 p-2 text-white/80 backdrop-blur transition hover:text-white"
       >
