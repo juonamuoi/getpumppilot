@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Volume2, VolumeX } from "lucide-react";
+import { ArrowRight, Play, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackCtaClick, trackAdPreviewEvent } from "@/lib/funnel";
 import adVideo from "@/assets/pumppilot-ad.mp4.asset.json";
