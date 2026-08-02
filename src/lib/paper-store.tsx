@@ -493,7 +493,15 @@ export function PaperProvider({ children }: { children: ReactNode }) {
       });
     } else {
       const ex = positions.find((p) => p.symbol === symbol);
-      if (!ex || ex.qty < qty) return { ok: false, msg: "Insufficient position" };
+      if (!ex || ex.qty < qty) {
+        const block: RiskBlock = {
+          code: "insufficient_position",
+          control: "position size",
+          remedy: `You hold ${ex ? ex.qty : 0} ${symbol}. Sell that amount or less.`,
+        };
+        return { ok: false, msg: describeRiskBlock(block), block };
+      }
+
       setCash((c) => c + notional);
       setPositions((prev) =>
         prev
