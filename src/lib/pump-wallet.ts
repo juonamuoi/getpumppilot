@@ -203,7 +203,6 @@ export async function createPumpWallet(password: string): Promise<{ address: str
   state = { ...state, record, unlockedAddress: acct.address, lockedReason: null };
   emit();
   startAutoLock();
-  emit();
   return { address: acct.address, mnemonic };
 }
 
