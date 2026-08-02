@@ -447,15 +447,26 @@ async function readBalances(address: string): Promise<WalletBalances> {
 }
 
 
-/** Tracks the injected wallet's currently authorised account (read-only). */
+/**
+ * Tracks the currently authorised account (read-only): the unlocked in-app
+ * PumpPilot wallet if there is one, otherwise the injected browser wallet.
+ */
 export function useInjectedAccount() {
   const [address, setAddress] = useState<string | null>(null);
   const [available, setAvailable] = useState(false);
+  const pumpAddress = usePumpWallet().unlockedAddress;
 
   useEffect(() => {
     const provider = getInjectedProvider();
     setAvailable(Boolean(provider));
-    if (!provider) return;
+    if (pumpAddress) {
+      setAddress(pumpAddress);
+      return;
+    }
+    if (!provider) {
+      setAddress(null);
+      return;
+    }
 
     let alive = true;
     void provider
@@ -474,7 +485,8 @@ export function useInjectedAccount() {
       alive = false;
       provider.removeListener?.("accountsChanged", onAccounts);
     };
-  }, []);
+  }, [pumpAddress]);
+
 
   /** Prompts the wallet for read-only account access. */
   const connect = useCallback(async () => {
