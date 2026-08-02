@@ -464,8 +464,8 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           onClick={toggleCaptions}
           aria-label={
             captionsOn
-              ? "Turn off English captions for the PumpPilot AI ad video. Keyboard shortcut: C"
-              : "Turn on English captions for the PumpPilot AI ad video. Keyboard shortcut: C"
+              ? `Turn off ${activeTrack.englishName} captions for the PumpPilot AI ad video. Keyboard shortcut: C`
+              : `Turn on ${activeTrack.englishName} captions for the PumpPilot AI ad video. Keyboard shortcut: C`
           }
           aria-describedby="ad-preview-shortcuts ad-preview-transcript-note"
           aria-pressed={captionsOn}
@@ -480,25 +480,59 @@ export function AdPreview({ href, label = "Start free" }: Props) {
             <CaptionsOff className="h-4 w-4" />
           )}
         </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Caption language: ${activeTrack.englishName}. Choose a different caption language for the PumpPilot AI ad video.`}
+              aria-describedby="ad-preview-transcript-note"
+              title="Caption language"
+              className="flex min-h-11 items-center justify-center gap-1 rounded-full bg-black/60 px-2 py-2 text-white/80 backdrop-blur transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <Languages className="h-4 w-4" />
+              <span className="text-[10px] font-semibold uppercase tracking-wide">
+                {activeTrack.code}
+              </span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel>Caption language</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={captionLang}
+              onValueChange={chooseCaptionLang}
+            >
+              {AD_CAPTION_TRACKS.map((track) => (
+                <DropdownMenuRadioItem key={track.code} value={track.code}>
+                  {track.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
         {/* Screen-reader status + keyboard instructions */}
         <p aria-live="polite" className="sr-only">
           {playing ? "Ad playing" : "Ad paused"}
           {muted ? ", muted" : ", sound on"}
-          {captionsOn ? ", captions on" : ", captions off"}
+          {captionsOn
+            ? `, ${activeTrack.englishName} captions on`
+            : ", captions off"}
         </p>
         <p id="ad-preview-shortcuts" className="sr-only">
           Keyboard shortcuts for this ad preview: press Space or K to play or pause the video,
-          press M to mute or unmute it, and press C to turn English captions on or off. Shortcuts
+          press M to mute or unmute it, and press C to turn captions on or off. Shortcuts
           work while focus is anywhere inside the preview, including on these controls. Press Tab
-          to reach the sign-up button below the video, then the text transcript.
+          to reach the caption language menu, then the sign-up button below the video, then the
+          text transcript.
         </p>
         <p id="ad-preview-transcript-note" className="sr-only">
           {hasCaptions
-            ? "Optional English captions are available for this video and can be toggled with the captions button or the C key. A full text transcript is also provided directly below the player."
+            ? `Optional captions are available for this video in ${AD_CAPTION_TRACKS.map((t) => t.englishName).join(", ")}. Toggle them with the captions button or the C key, and switch language with the caption language menu. A full text transcript in English is also provided directly below the player.`
             : "Captions are not available for this video. A full text transcript of the ad is provided directly below the player."}
         </p>
+
 
       </div>
 
