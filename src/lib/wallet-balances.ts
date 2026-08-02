@@ -16,7 +16,7 @@ import {
   mergeActivity,
   type CachedActivity,
 } from "@/lib/log-scan-cache";
-import { getPumpWalletProvider, getPumpWallet, usePumpWallet } from "@/lib/pump-wallet";
+import { getPumpWalletProvider, usePumpWallet } from "@/lib/pump-wallet";
 
 type Eip1193 = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
