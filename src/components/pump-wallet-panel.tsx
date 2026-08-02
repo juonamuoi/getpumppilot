@@ -70,6 +70,9 @@ export function PumpWalletPanel() {
   const [copied, setCopied] = useState(false);
   const [revealPassword, setRevealPassword] = useState("");
   const [showReveal, setShowReveal] = useState(false);
+  const checklist = useRecoveryChecklist();
+
+
 
   const reset = () => {
     setPassword("");
