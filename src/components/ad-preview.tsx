@@ -339,7 +339,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
 
       <video
         ref={videoRef}
-        className="block size-full object-cover"
+        className={`block size-full object-cover ${captionAppearanceClass(captionSize, captionBg)}`}
         src={inView ? adVideo.url : undefined}
         poster={adPoster.url}
         autoPlay={inView && reducedMotion === false}
