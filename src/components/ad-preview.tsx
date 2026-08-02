@@ -458,7 +458,11 @@ export function AdPreview({ href, label = "Start free" }: Props) {
 
       </div>
 
-      <AdTranscript id="ad-preview-transcript" />
+      <AdTranscript
+        id="ad-preview-transcript"
+        activeIndex={playing ? activeLine : -1}
+        onSeek={seekTo}
+      />
     </div>
   );
 }
