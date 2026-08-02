@@ -370,6 +370,8 @@ export function PumpWalletPanel() {
         <Button variant="outline" size="sm" onClick={() => setShowReveal((v) => !v)}>
           <Eye className="mr-1.5 h-3.5 w-3.5" /> Recovery phrase
         </Button>
+        <WalletPasswordManager rotatedAt={record?.rotatedAt} />
+
         <Button
           variant="ghost"
           size="sm"
