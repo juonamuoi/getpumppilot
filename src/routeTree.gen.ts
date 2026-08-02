@@ -47,6 +47,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StorageAuditRouteImport } from './routes/storage-audit'
 import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as WalletFunnelRouteImport } from './routes/wallet-funnel'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AssetSymbolRouteImport } from './routes/asset.$symbol'
@@ -257,6 +258,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalletFunnelRoute = WalletFunnelRouteImport.update({
+  id: '/wallet-funnel',
+  path: '/wallet-funnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93ListToolsRoute =
   Char91DotmcpChar93ListToolsRouteImport.update({
     id: '/.mcp/list-tools',
@@ -399,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
+  '/wallet-funnel': typeof WalletFunnelRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/asset/$symbol': typeof AssetSymbolRoute
@@ -458,6 +465,7 @@ export interface FileRoutesByTo {
   '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
+  '/wallet-funnel': typeof WalletFunnelRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/asset/$symbol': typeof AssetSymbolRoute
@@ -518,6 +526,7 @@ export interface FileRoutesById {
   '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
+  '/wallet-funnel': typeof WalletFunnelRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/asset/$symbol': typeof AssetSymbolRoute
@@ -579,6 +588,7 @@ export interface FileRouteTypes {
     | '/storage-audit'
     | '/strategy'
     | '/terms'
+    | '/wallet-funnel'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/asset/$symbol'
@@ -638,6 +648,7 @@ export interface FileRouteTypes {
     | '/storage-audit'
     | '/strategy'
     | '/terms'
+    | '/wallet-funnel'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/asset/$symbol'
@@ -697,6 +708,7 @@ export interface FileRouteTypes {
     | '/storage-audit'
     | '/strategy'
     | '/terms'
+    | '/wallet-funnel'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/asset/$symbol'
@@ -757,6 +769,7 @@ export interface RootRouteChildren {
   StorageAuditRoute: typeof StorageAuditRoute
   StrategyRoute: typeof StrategyRoute
   TermsRoute: typeof TermsRoute
+  WalletFunnelRoute: typeof WalletFunnelRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   AssetSymbolRoute: typeof AssetSymbolRoute
@@ -1045,6 +1058,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wallet-funnel': {
+      id: '/wallet-funnel'
+      path: '/wallet-funnel'
+      fullPath: '/wallet-funnel'
+      preLoaderRoute: typeof WalletFunnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/list-tools': {
       id: '/.mcp/list-tools'
       path: '/.mcp/list-tools'
@@ -1231,6 +1251,7 @@ const rootRouteChildren: RootRouteChildren = {
   StorageAuditRoute: StorageAuditRoute,
   StrategyRoute: StrategyRoute,
   TermsRoute: TermsRoute,
+  WalletFunnelRoute: WalletFunnelRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
