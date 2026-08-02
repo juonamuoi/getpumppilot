@@ -42,11 +42,21 @@ export type PumpWalletRecord = {
   rotatedAt?: string;
 };
 
+/** Why the wallet is currently locked (null while unlocked). */
+export type LockReason = "manual" | "idle" | null;
+
 export type PumpWalletState = {
   record: PumpWalletRecord | null;
   /** Address of the unlocked in-memory account, if any. */
   unlockedAddress: string | null;
+  /** Set when the session was ended by the idle timer or a manual lock. */
+  lockedReason: LockReason;
+  /** Minutes of inactivity before auto-lock. 0 = never. */
+  autoLockMinutes: number;
+  /** Epoch ms when the idle timer fires, or null when not armed. */
+  autoLockAt: number | null;
 };
+
 
 const CHAINS: Record<number, Chain> = {
   1: mainnet,
