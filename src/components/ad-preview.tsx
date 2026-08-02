@@ -161,19 +161,25 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     <div
       ref={containerRef}
       role="group"
-      aria-label="PumpPilot AI ad preview"
+      tabIndex={0}
+      aria-label="PumpPilot AI ad preview with playback controls"
+      aria-describedby="ad-preview-shortcuts"
       onKeyDown={(e) => {
-        // Don't hijack keys meant for the focused button/link.
         const target = e.target as HTMLElement;
-        if (target.closest("button, a, input")) return;
-        if (e.key === " " || e.key === "k") {
+        const onControl = !!target.closest("button, a, input");
+        // Space/Enter belong to the focused control; letter shortcuts still work.
+        if (e.key === " " && !onControl) {
           e.preventDefault();
           togglePlayback();
-        } else if (e.key === "m") {
+        } else if (e.key === "k" || e.key === "K") {
+          e.preventDefault();
+          togglePlayback();
+        } else if (e.key === "m" || e.key === "M") {
           e.preventDefault();
           toggleMute();
         }
       }}
+
       className="relative mx-auto aspect-[9/16] w-full max-w-[340px] overflow-hidden rounded-3xl border border-emerald-500/25 bg-black shadow-2xl shadow-emerald-500/10"
     >
 
