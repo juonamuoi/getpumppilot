@@ -69,6 +69,9 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   const [captionsOn, setCaptionsOn] = useState(false);
   /** Selected caption language (BCP-47), remembered per browser. */
   const [captionLang, setCaptionLang] = useState(DEFAULT_CAPTION_LANG);
+  /** Caption text size and cue background, for readability. Remembered per browser. */
+  const [captionSize, setCaptionSize] = useState<CaptionSize>("md");
+  const [captionBg, setCaptionBg] = useState<CaptionBg>("solid");
   /** Transcript line currently playing, synced to the video's timeline. */
   const [activeLine, setActiveLine] = useState(-1);
 
@@ -92,10 +95,19 @@ export function AdPreview({ href, label = "Start free" }: Props) {
           ? saved
           : preferredCaptionLang(navigator.languages ?? [navigator.language]),
       );
+      const size = window.localStorage.getItem("pp.ad-caption-size");
+      if (CAPTION_SIZES.some((s) => s.value === size)) {
+        setCaptionSize(size as CaptionSize);
+      }
+      const bg = window.localStorage.getItem("pp.ad-caption-bg");
+      if (CAPTION_BACKGROUNDS.some((b) => b.value === bg)) {
+        setCaptionBg(bg as CaptionBg);
+      }
     } catch {
       /* storage blocked — keep the defaults */
     }
   }, []);
+
 
   // Keep the native text tracks in sync with the toggle and language choice.
   useEffect(() => {
