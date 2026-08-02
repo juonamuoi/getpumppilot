@@ -340,7 +340,10 @@ export async function resetPumpWalletPassword(
   const next = await reencrypt(record, phrase, newPassword);
   persist(next);
   account = acct;
-  state = { record: next, unlockedAddress: acct.address };
+  state = { ...state, record: next, unlockedAddress: acct.address, lockedReason: null };
+  emit();
+  startAutoLock();
+  return;
   emit();
 }
 
