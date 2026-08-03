@@ -196,12 +196,17 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb);
 }
 
+// Stable empty snapshots — returning a fresh [] on every call makes
+// useSyncExternalStore loop forever ("Maximum update depth exceeded").
+const EMPTY_RULES: WalletAlertRule[] = [];
+const EMPTY_EVENTS: WalletAlertEvent[] = [];
+
 export function useWalletAlertRules(): WalletAlertRule[] {
-  return useSyncExternalStore(subscribe, getRules, () => [] as WalletAlertRule[]);
+  return useSyncExternalStore(subscribe, getRules, () => EMPTY_RULES);
 }
 
 export function useWalletAlertEvents(): WalletAlertEvent[] {
-  return useSyncExternalStore(subscribe, getEvents, () => [] as WalletAlertEvent[]);
+  return useSyncExternalStore(subscribe, getEvents, () => EMPTY_EVENTS);
 }
 
 type Observation = { price: number | null; change24h: number | null };
