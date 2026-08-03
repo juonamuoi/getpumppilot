@@ -189,7 +189,7 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     } catch {
       /* ignore */
     }
-    void trackAdPreviewEvent("captions_appearance_reset" as AdPreviewEvent);
+    void trackAdPreviewEvent("captions_appearance_reset");
   }
 
 
