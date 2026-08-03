@@ -179,6 +179,20 @@ export function AdPreview({ href, label = "Start free" }: Props) {
     }
   }
 
+  /** Revert caption size + background to the app defaults (language is kept). */
+  function resetCaptionAppearance() {
+    setCaptionSize(DEFAULT_CAPTION_SIZE);
+    setCaptionBg(DEFAULT_CAPTION_BG);
+    try {
+      window.localStorage.removeItem("pp.ad-caption-size");
+      window.localStorage.removeItem("pp.ad-caption-bg");
+    } catch {
+      /* ignore */
+    }
+    void trackAdPreviewEvent("captions_appearance_reset" as AdPreviewEvent);
+  }
+
+
 
 
 
