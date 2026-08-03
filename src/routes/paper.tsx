@@ -359,6 +359,10 @@ function PaperPage() {
                 )}
               </div>
 
+              <RiskLimitsPanel symbol={symbol} className="bg-background/40" />
+
+
+
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   onClick={() => doTrade("buy")}
