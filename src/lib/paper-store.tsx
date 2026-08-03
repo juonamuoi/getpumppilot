@@ -233,6 +233,8 @@ type State = {
   setRisk: (r: State["risk"]) => void;
   resetPaper: () => void;
   equity: number;
+  /** Equity at the start of today's session — baseline for the drawdown limit. */
+  dayStartEquity: number;
 };
 
 
