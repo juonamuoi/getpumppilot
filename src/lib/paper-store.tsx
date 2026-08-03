@@ -6,7 +6,7 @@ import { describeRiskBlock, type RiskBlock } from "./risk-block";
 
 
 /** Live price when the feed covers the symbol, else the simulated demo price. */
-function markPrice(symbol: string, fallback: number): number {
+export function markPrice(symbol: string, fallback: number): number {
   return livePriceOf(symbol) ?? fallback;
 }
 
@@ -233,6 +233,8 @@ type State = {
   setRisk: (r: State["risk"]) => void;
   resetPaper: () => void;
   equity: number;
+  /** Equity at the start of today's session — baseline for the drawdown limit. */
+  dayStartEquity: number;
 };
 
 
@@ -759,6 +761,7 @@ export function PaperProvider({ children }: { children: ReactNode }) {
       setTrades([]);
     },
     equity,
+    dayStartEquity: dayStart.equity,
   };
 
 

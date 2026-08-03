@@ -6,6 +6,7 @@ import { DemoBadge, DisclaimerBanner } from "@/components/disclaimer";
 import { getAsset, fmtPct, fmtUsd } from "@/lib/mock-data";
 import { useLiveAsset } from "@/lib/live-assets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RiskLimitsPanel } from "@/components/risk-limits-panel";
 import { MomentumBreakdown } from "@/components/momentum";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -330,6 +331,7 @@ function AssetPage() {
                   ≈ {qty ? fmtUsd((parseFloat(qty) || 0) * asset.price) : "$0.00"}
                 </div>
               </div>
+              <RiskLimitsPanel symbol={asset.symbol} className="border-border/60 bg-background/40" />
               <div className="grid grid-cols-2 gap-2">
                 <Button onClick={() => doTrade("buy")} className="bg-emerald-500 text-black hover:bg-emerald-400">
                   Buy

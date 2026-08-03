@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { announceRiskBlock, riskBlockTitle, describeRiskBlock, type RiskBlock } from "@/lib/risk-block";
 import { Lock, RotateCcw, ShieldCheck } from "lucide-react";
 import { RiskPresetSwitcher } from "@/components/risk-preset-switcher";
+import { RiskLimitsPanel } from "@/components/risk-limits-panel";
 
 import { Switch } from "@/components/ui/switch";
 import { HowToSteps } from "@/components/how-to-steps";
@@ -358,6 +359,10 @@ function PaperPage() {
                   </div>
                 )}
               </div>
+
+              <RiskLimitsPanel symbol={symbol} className="bg-background/40" />
+
+
 
               <div className="grid grid-cols-2 gap-2">
                 <Button
