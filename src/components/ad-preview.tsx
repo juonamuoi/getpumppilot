@@ -7,6 +7,7 @@ import {
   Languages,
   Pause,
   Play,
+  RotateCcw,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -26,6 +28,8 @@ import {
   CAPTION_BACKGROUNDS,
   CAPTION_SIZES,
   DEFAULT_CAPTION_LANG,
+  DEFAULT_CAPTION_BG,
+  DEFAULT_CAPTION_SIZE,
   captionAppearanceClass,
   getCaptionTrack,
   preferredCaptionLang,
@@ -75,8 +79,8 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   /** Selected caption language (BCP-47), remembered per browser. */
   const [captionLang, setCaptionLang] = useState(DEFAULT_CAPTION_LANG);
   /** Caption text size and cue background, for readability. Remembered per browser. */
-  const [captionSize, setCaptionSize] = useState<CaptionSize>("md");
-  const [captionBg, setCaptionBg] = useState<CaptionBg>("solid");
+  const [captionSize, setCaptionSize] = useState<CaptionSize>(DEFAULT_CAPTION_SIZE);
+  const [captionBg, setCaptionBg] = useState<CaptionBg>(DEFAULT_CAPTION_BG);
   /** Transcript line currently playing, synced to the video's timeline. */
   const [activeLine, setActiveLine] = useState(-1);
 
@@ -176,6 +180,20 @@ export function AdPreview({ href, label = "Start free" }: Props) {
       /* ignore */
     }
   }
+
+  /** Revert caption size + background to the app defaults (language is kept). */
+  function resetCaptionAppearance() {
+    setCaptionSize(DEFAULT_CAPTION_SIZE);
+    setCaptionBg(DEFAULT_CAPTION_BG);
+    try {
+      window.localStorage.removeItem("pp.ad-caption-size");
+      window.localStorage.removeItem("pp.ad-caption-bg");
+    } catch {
+      /* ignore */
+    }
+    void trackAdPreviewEvent("captions_appearance_reset");
+  }
+
 
 
 
@@ -578,6 +596,25 @@ export function AdPreview({ href, label = "Start free" }: Props) {
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={
+                captionSize === DEFAULT_CAPTION_SIZE &&
+                captionBg === DEFAULT_CAPTION_BG
+              }
+              onSelect={(e) => {
+                e.preventDefault();
+                resetCaptionAppearance();
+              }}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              <span>
+                Reset caption settings
+                <span className="block text-[11px] text-muted-foreground">
+                  Back to medium text, solid background
+                </span>
+              </span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
 
         </DropdownMenu>
