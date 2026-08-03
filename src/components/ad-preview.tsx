@@ -77,8 +77,8 @@ export function AdPreview({ href, label = "Start free" }: Props) {
   /** Selected caption language (BCP-47), remembered per browser. */
   const [captionLang, setCaptionLang] = useState(DEFAULT_CAPTION_LANG);
   /** Caption text size and cue background, for readability. Remembered per browser. */
-  const [captionSize, setCaptionSize] = useState<CaptionSize>("md");
-  const [captionBg, setCaptionBg] = useState<CaptionBg>("solid");
+  const [captionSize, setCaptionSize] = useState<CaptionSize>(DEFAULT_CAPTION_SIZE);
+  const [captionBg, setCaptionBg] = useState<CaptionBg>(DEFAULT_CAPTION_BG);
   /** Transcript line currently playing, synced to the video's timeline. */
   const [activeLine, setActiveLine] = useState(-1);
 
