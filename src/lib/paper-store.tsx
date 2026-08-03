@@ -6,7 +6,7 @@ import { describeRiskBlock, type RiskBlock } from "./risk-block";
 
 
 /** Live price when the feed covers the symbol, else the simulated demo price. */
-function markPrice(symbol: string, fallback: number): number {
+export function markPrice(symbol: string, fallback: number): number {
   return livePriceOf(symbol) ?? fallback;
 }
 
