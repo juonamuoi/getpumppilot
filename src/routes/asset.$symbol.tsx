@@ -6,6 +6,7 @@ import { DemoBadge, DisclaimerBanner } from "@/components/disclaimer";
 import { getAsset, fmtPct, fmtUsd } from "@/lib/mock-data";
 import { useLiveAsset } from "@/lib/live-assets";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RiskLimitsPanel } from "@/components/risk-limits-panel";
 import { MomentumBreakdown } from "@/components/momentum";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
