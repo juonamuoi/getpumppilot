@@ -759,6 +759,7 @@ export function PaperProvider({ children }: { children: ReactNode }) {
       setTrades([]);
     },
     equity,
+    dayStartEquity: dayStart.equity,
   };
 
 
