@@ -594,6 +594,25 @@ export function AdPreview({ href, label = "Start free" }: Props) {
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={
+                captionSize === DEFAULT_CAPTION_SIZE &&
+                captionBg === DEFAULT_CAPTION_BG
+              }
+              onSelect={(e) => {
+                e.preventDefault();
+                resetCaptionAppearance();
+              }}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              <span>
+                Reset caption settings
+                <span className="block text-[11px] text-muted-foreground">
+                  Back to medium text, solid background
+                </span>
+              </span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
 
         </DropdownMenu>
