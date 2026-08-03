@@ -86,6 +86,8 @@ export const CAPTION_SIZES: { value: CaptionSize; label: string }[] = [
 /** Caption background options, mapped to the `video.cue-bg-*` rules. */
 export type CaptionBg = "solid" | "dim" | "none";
 
+export const DEFAULT_CAPTION_BG: CaptionBg = "solid";
+
 export const CAPTION_BACKGROUNDS: {
   value: CaptionBg;
   label: string;
