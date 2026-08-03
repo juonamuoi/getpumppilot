@@ -73,6 +73,9 @@ export function preferredCaptionLang(languages: readonly string[]): string {
 /** Caption text size options, mapped to the `video.cue-*` rules in styles.css. */
 export type CaptionSize = "sm" | "md" | "lg" | "xl";
 
+/** App defaults used by the "Reset caption settings" action. */
+export const DEFAULT_CAPTION_SIZE: CaptionSize = "md";
+
 export const CAPTION_SIZES: { value: CaptionSize; label: string }[] = [
   { value: "sm", label: "Small" },
   { value: "md", label: "Medium" },
