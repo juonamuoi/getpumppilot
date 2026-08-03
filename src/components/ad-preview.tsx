@@ -26,6 +26,8 @@ import {
   CAPTION_BACKGROUNDS,
   CAPTION_SIZES,
   DEFAULT_CAPTION_LANG,
+  DEFAULT_CAPTION_BG,
+  DEFAULT_CAPTION_SIZE,
   captionAppearanceClass,
   getCaptionTrack,
   preferredCaptionLang,
