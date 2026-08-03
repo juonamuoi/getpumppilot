@@ -7,6 +7,7 @@ import {
   Languages,
   Pause,
   Play,
+  RotateCcw,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
