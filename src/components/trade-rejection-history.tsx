@@ -14,9 +14,8 @@ import {
   clearRejections,
   rejectionsToCsv,
   useRejectionLog,
-  type RejectionEntry,
 } from "@/lib/rejection-log";
-import { describeRiskBlock, riskBlockTitle } from "@/lib/risk-block";
+import { controlTitle, describeRiskBlock } from "@/lib/risk-block";
 import { toast } from "sonner";
 
 function pct(n?: number) {
@@ -100,7 +99,7 @@ export function TradeRejectionHistory({ className }: { className?: string }) {
               <SelectItem value="all">All controls</SelectItem>
               {controls.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {riskBlockTitle(c as RejectionEntry["block"]["code"])}
+                  {controlTitle(c)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -140,7 +139,7 @@ export function TradeRejectionHistory({ className }: { className?: string }) {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="rounded border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-destructive">
-                    {riskBlockTitle(e.block.code)}
+                    {controlTitle(e.block.code)}
                   </span>
                   <span className="text-muted-foreground">
                     breached {pct(e.block.actualPct)} vs limit {pct(e.block.limitPct)}

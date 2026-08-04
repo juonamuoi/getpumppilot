@@ -69,3 +69,8 @@ export function announceRiskBlock(
 export function riskBlockTitle(block: RiskBlock): string {
   return CONTROL_TITLE[block.code];
 }
+
+/** Title for a bare control code (e.g. filter chips in rejection history). */
+export function controlTitle(code: RiskBlockCode): string {
+  return CONTROL_TITLE[code];
+}
