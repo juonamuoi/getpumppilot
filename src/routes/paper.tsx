@@ -34,6 +34,8 @@ import { TourStartButton } from "@/components/guided-tour";
 import { PAPER_TRADING_FLOW } from "@/lib/help-flows";
 import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 import { requestTrade } from "@/lib/trade-gate";
+import { recordRejection } from "@/lib/rejection-log";
+import { TradeRejectionHistory } from "@/components/trade-rejection-history";
 import { useLiveTrading } from "@/lib/live-trading";
 import { TradeModeSwitch } from "@/components/trade-mode-switch";
 import { LiveSwapPanel } from "@/components/live-swap-panel";
@@ -160,6 +162,7 @@ function PaperPage() {
           announce(`Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`, "polite", "essential");
         } else if (r.block) {
           setLastBlock(r.block);
+          recordRejection({ symbol, side, qty: n, block: r.block });
           toast.error(`Blocked by ${riskBlockTitle(r.block)}`, { description: r.msg });
           announce(announceRiskBlock(r.block, side, n, symbol), "assertive", "essential");
         } else {
@@ -416,6 +419,7 @@ function PaperPage() {
             )}
           </CardContent>
         </Card>
+        <TradeRejectionHistory />
         <HowToSteps flow={PAPER_TRADING_FLOW} />
         <FaqSection faqs={paperFaqs} title="Paper trading FAQ" />
       </div>
