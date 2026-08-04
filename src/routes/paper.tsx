@@ -36,6 +36,7 @@ import { howToSchema, ldScript, faqSchema } from "@/lib/structured-data";
 import { requestTrade } from "@/lib/trade-gate";
 import { recordRejection } from "@/lib/rejection-log";
 import { TradeRejectionHistory } from "@/components/trade-rejection-history";
+import { DailyRiskSummary } from "@/components/daily-risk-summary";
 import { useLiveTrading } from "@/lib/live-trading";
 import { TradeModeSwitch } from "@/components/trade-mode-switch";
 import { LiveSwapPanel } from "@/components/live-swap-panel";
@@ -419,6 +420,7 @@ function PaperPage() {
             )}
           </CardContent>
         </Card>
+        <DailyRiskSummary />
         <TradeRejectionHistory />
         <HowToSteps flow={PAPER_TRADING_FLOW} />
         <FaqSection faqs={paperFaqs} title="Paper trading FAQ" />
