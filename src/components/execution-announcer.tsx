@@ -1,5 +1,15 @@
 import { useCallback, useRef, useState } from "react";
-import { Volume2, VolumeX, Volume1 } from "lucide-react";
+import { Volume2, VolumeX, Volume1, Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -119,7 +129,45 @@ export function AnnouncementVerbosityControl({
   );
 
   if (variant === "inline") {
-    return <div className={className}>{picker}</div>;
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={className}
+            aria-label={`Notifications: ${active?.label ?? verbosity}`}
+            title="Notifications"
+          >
+            <span className="relative">
+              <Bell className="h-5 w-5" aria-hidden="true" />
+              {verbosity === "off" ? (
+                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-muted-foreground" />
+              ) : (
+                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuRadioGroup
+            value={verbosity}
+            onValueChange={(v) => setVerbosity(v as typeof verbosity)}
+          >
+            {VERBOSITY_OPTIONS.map((o) => (
+              <DropdownMenuRadioItem key={o.value} value={o.value}>
+                {o.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+          {active?.hint ? (
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">{active.hint}</p>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   }
 
   return (
