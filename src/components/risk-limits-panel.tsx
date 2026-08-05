@@ -118,6 +118,13 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
       used: exposurePct,
       cap: "100% of equity",
       breached: exposurePct >= 100,
+      formula: {
+        title: "How total exposure is calculated",
+        expression: "exposure = Σ (mark price × quantity) for every open position",
+        utilisation: "bar % = exposure ÷ equity × 100",
+        numbers: `Σ positions = ${usd(exposure)} · equity = ${usd(equity)} → ${pct(exposurePct)}`,
+        note: "Mark price is the latest live price for the symbol, not your entry price, so exposure moves with the market.",
+      },
     },
     {
       label: "Today's drawdown",
@@ -126,6 +133,14 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
       used: (drawdownPct / (risk.maxDailyLossPct || 1)) * 100,
       cap: `${pct(risk.maxDailyLossPct)} daily loss`,
       breached: drawdownBreached,
+      formula: {
+        title: "How today's drawdown is calculated",
+        expression:
+          "drawdown % = max(0, (session-start equity − current equity) ÷ session-start equity × 100)",
+        utilisation: "bar % = drawdown % ÷ max daily loss % × 100",
+        numbers: `(${usd(dayStartEquity)} − ${usd(equity)}) ÷ ${usd(dayStartEquity)} → ${pct(drawdownPct)} of a ${pct(risk.maxDailyLossPct)} limit`,
+        note: "Clamped at 0 — a profitable session shows no drawdown. Session-start equity resets each trading day.",
+      },
     },
     ...(symbol
       ? [
@@ -138,10 +153,19 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
             used: (heldPct / (risk.maxPositionPct || 1)) * 100,
             cap: `${pct(risk.maxPositionPct)} per symbol`,
             breached: positionBreached,
+            formula: {
+              title: `How ${symbol} headroom is calculated`,
+              expression:
+                "headroom $ = max(0, min(max position % × equity − position value, free cash))",
+              utilisation: "headroom qty = headroom $ ÷ mark price · bar % = position % ÷ max position % × 100",
+              numbers: `min(${pct(risk.maxPositionPct)} × ${usd(equity)} − ${usd(heldValue)}, ${usd(cash)}) = ${usd(headroomUsd)} → ${headroomQty.toFixed(4)} ${symbol} at ${usd(price)}`,
+              note: "Cash caps headroom: you can never buy more than the settled cash you hold, even if the percentage cap allows it.",
+            },
           },
         ]
       : []),
   ].map((r) => ({ ...r, zone: zoneFor(r.used, r.breached) }));
+
 
   const worst = rows.reduce<Zone>((acc, r) => {
     const order: Zone[] = ["safe", "caution", "warning", "breach"];
