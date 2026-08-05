@@ -43,12 +43,18 @@ describe("regression: open_dex_quote", () => {
     expect(Number(max![1])).toBeLessThanOrEqual(60);
   });
 
-  it("never exposes an unauthenticated quote server function elsewhere", () => {
-    // A second, middleware-free copy of the endpoint would re-open the finding.
-    const occurrences = src.match(/createServerFn\(/g) ?? [];
-    const middlewares = src.match(/\.middleware\(\[/g) ?? [];
-    expect(middlewares.length).toBeGreaterThanOrEqual(occurrences.length);
+  it("never exposes a quote/aggregator server function without auth middleware", () => {
+    // Split the module into server-function declarations and require auth on
+    // any of them that can reach the paid aggregator or the quote path.
+    const blocks = src.split(/export\s+const\s+/).slice(1);
+    const unguarded = blocks
+      .filter((b) => b.includes("createServerFn"))
+      .filter((b) => /0x\.org|checkQuoteRateLimit|QuoteInput/.test(b))
+      .filter((b) => !/\.middleware\(\[\s*requireSupabaseAuth\s*\]\)/.test(b))
+      .map((b) => b.slice(0, b.indexOf("=")).trim());
+    expect(unguarded).toEqual([]);
   });
+
 });
 
 describe("regression: SUPA_function_search_path_mutable", () => {
