@@ -25,6 +25,7 @@ export default defineConfig({
         "src/lib/request-context.server.ts",
         "src/lib/storage-audit.server.ts",
         "src/lib/storage-audit-export.server.ts",
+        "src/lib/quote-rate-limit.server.ts",
       ],
       all: true,
     },
