@@ -6,6 +6,7 @@
  * ------------------------------------------------------------------ */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const QuoteInput = z.object({
   chainId: z.number().int().refine((v) => [1, 8453, 42161, 10, 137].includes(v), "Unsupported chain"),
@@ -30,9 +31,23 @@ export type SwapQuote = {
   transaction?: { to: string; data: string; value: string; gas: string | null };
 };
 
+/**
+ * Signed-in callers only, and throttled per user: the upstream aggregator key
+ * is paid and metered, so an anonymous caller must never be able to spend it.
+ */
 export const getSwapQuote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => QuoteInput.parse(input))
-  .handler(async ({ data }): Promise<SwapQuote> => {
+  .handler(async ({ data, context }): Promise<SwapQuote> => {
+    const { checkQuoteRateLimit } = await import("@/lib/quote-rate-limit.server");
+    const verdict = checkQuoteRateLimit(context.userId);
+    if (!verdict.allowed) {
+      return {
+        ok: false,
+        error: `Too many quote requests. Try again in ${verdict.retryAfterSeconds}s.`,
+      };
+    }
+
     const apiKey = process.env["ZEROX_API_KEY"];
     if (!apiKey) {
       return { ok: false, error: "Live routing is not configured yet (missing DEX aggregator key)." };
