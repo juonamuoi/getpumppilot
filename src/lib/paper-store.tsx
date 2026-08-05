@@ -443,6 +443,9 @@ export function PaperProvider({ children }: { children: ReactNode }) {
         const block: RiskBlock = {
           code: "insufficient_cash",
           control: "available paper cash",
+          headroomUsd: Math.max(0, cash),
+          headroomQty: price > 0 ? Math.max(0, cash) / price : 0,
+          headroomLabel: "available paper cash",
           remedy: `Reduce the order size to ${cash > 0 ? (cash / price).toFixed(4) : "0"} ${symbol} or less.`,
         };
         return { ok: false, msg: describeRiskBlock(block), block };
@@ -456,6 +459,11 @@ export function PaperProvider({ children }: { children: ReactNode }) {
           control: "max daily loss",
           limitPct: risk.maxDailyLossPct,
           actualPct: drawdownPct,
+          headroomUsd: Math.max(
+            0,
+            (risk.maxDailyLossPct / 100) * dayStart.equity - (dayStart.equity - equity),
+          ),
+          headroomLabel: "today's loss budget",
           remedy:
             "Raise the max daily loss limit in Risk controls, or wait for the next session before opening new positions.",
         };
@@ -475,6 +483,9 @@ export function PaperProvider({ children }: { children: ReactNode }) {
           control: "max position size",
           limitPct: risk.maxPositionPct,
           actualPct: posPct,
+          headroomUsd: Math.min(headroom, cash),
+          headroomQty: price > 0 ? Math.min(headroom, cash) / price : 0,
+          headroomLabel: `the ${symbol} position cap`,
           remedy:
             headroom > 0
               ? `Trade at most ${(headroom / price).toFixed(4)} ${symbol}, or raise the limit in Risk controls.`
@@ -499,6 +510,9 @@ export function PaperProvider({ children }: { children: ReactNode }) {
         const block: RiskBlock = {
           code: "insufficient_position",
           control: "position size",
+          headroomUsd: (ex ? ex.qty : 0) * price,
+          headroomQty: ex ? ex.qty : 0,
+          headroomLabel: `your ${symbol} holding`,
           remedy: `You hold ${ex ? ex.qty : 0} ${symbol}. Sell that amount or less.`,
         };
         return { ok: false, msg: describeRiskBlock(block), block };

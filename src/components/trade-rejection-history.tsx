@@ -15,7 +15,7 @@ import {
   rejectionsToCsv,
   useRejectionLog,
 } from "@/lib/rejection-log";
-import { controlTitle, describeRiskBlock } from "@/lib/risk-block";
+import { controlTitle, describeHeadroom, describeRiskBlock } from "@/lib/risk-block";
 import { toast } from "sonner";
 
 function pct(n?: number) {
@@ -149,6 +149,12 @@ export function TradeRejectionHistory({ className }: { className?: string }) {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">{describeRiskBlock(e.block)}</p>
+                {describeHeadroom(e.block, e.symbol) ? (
+                  <p className="text-xs">
+                    <span className="text-muted-foreground">Headroom after rejection: </span>
+                    {describeHeadroom(e.block, e.symbol)}
+                  </p>
+                ) : null}
                 <p className="text-xs">
                   <span className="text-muted-foreground">Suggested fix: </span>
                   {e.block.remedy}

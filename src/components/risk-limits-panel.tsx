@@ -13,6 +13,7 @@ import {
 import { getAsset } from "@/lib/mock-data";
 import { markPrice, usePaper } from "@/lib/paper-store";
 import { downloadRiskLimitsPdf } from "@/lib/risk-limits-pdf";
+import { RiskLimitsHistory } from "@/components/risk-limits-history";
 
 
 
@@ -332,6 +333,8 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
               </div>
             );
           })}
+
+          <RiskLimitsHistory symbol={symbol} />
         </CardContent>
       </Card>
     </TooltipProvider>

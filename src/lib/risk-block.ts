@@ -19,9 +19,16 @@ export type RiskBlock = {
   limitPct?: number;
   /** Measured value that breached the limit, in percent where applicable. */
   actualPct?: number;
+  /** Room left under the breached limit after the rejection, in USD. */
+  headroomUsd?: number;
+  /** Same headroom expressed in units of the traded symbol. */
+  headroomQty?: number;
+  /** What the headroom is measured against, e.g. "SOL position cap". */
+  headroomLabel?: string;
   /** What the user can do about it. */
   remedy: string;
 };
+
 
 const CONTROL_TITLE: Record<RiskBlockCode, string> = {
   max_position: "Max position size",
@@ -74,3 +81,25 @@ export function riskBlockTitle(block: RiskBlock): string {
 export function controlTitle(code: RiskBlockCode): string {
   return CONTROL_TITLE[code];
 }
+
+/**
+ * Human summary of the room still available under the breached limit once the
+ * order was rejected. Returns null when the control has no measurable headroom.
+ */
+export function describeHeadroom(block: RiskBlock, symbol?: string): string | null {
+  if (block.headroomUsd == null) return null;
+  const usd = block.headroomUsd.toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
+  const qty =
+    block.headroomQty != null && block.headroomQty > 0 && symbol
+      ? ` (${block.headroomQty.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${symbol})`
+      : "";
+  const scope = block.headroomLabel ? ` under ${block.headroomLabel}` : "";
+  return block.headroomUsd <= 0
+    ? `No headroom left${scope}.`
+    : `${usd}${qty} of headroom left${scope}.`;
+}
+
