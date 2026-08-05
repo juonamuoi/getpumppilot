@@ -90,13 +90,18 @@ export function lintMigrations(migrations = loadMigrations()) {
 
   for (const [name, fn] of latest) {
     const isDefiner = /SECURITY\s+DEFINER/i.test(fn.header);
-    if (!isDefiner) continue;
+    const pinsSearchPath = /SET\s+search_path\s*(?:TO|=)/i.test(fn.header);
 
-    if (!/SET\s+search_path\s*(?:TO|=)/i.test(fn.header)) {
+    // Regression guard for SUPA_function_search_path_mutable: EVERY function in
+    // the public schema must pin search_path, definer or invoker.
+    if (!pinsSearchPath) {
       errors.push(
-        `SECURITY DEFINER function public.${name} (${fn.file}) does not pin \`SET search_path\`.`,
+        `Function public.${name} (${fn.file}) does not pin \`SET search_path\` (mutable search path).`,
       );
     }
+
+    if (!isDefiner) continue;
+
 
     const returnsMatch = /RETURNS\s+([a-z_ ]+)/i.exec(fn.header);
     const returns = returnsMatch ? returnsMatch[1].trim().toLowerCase() : "";
