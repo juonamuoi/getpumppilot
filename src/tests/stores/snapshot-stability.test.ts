@@ -19,10 +19,11 @@ function libFiles(): string[] {
     .map((f) => path.join(LIB_DIR, f));
 }
 
-/** Extract the argument list source of every useSyncExternalStore(...) call. */
-function callArgs(source: string): string[] {
+const CALL_NAMES = ["useSyncExternalStore(", "useStableSyncExternalStore("];
+
+/** Extract the argument list source of every store-subscription call. */
+function callArgsFor(source: string, needle: string): string[] {
   const out: string[] = [];
-  const needle = "useSyncExternalStore(";
   let idx = source.indexOf(needle);
   while (idx !== -1) {
     let depth = 0;
@@ -39,6 +40,10 @@ function callArgs(source: string): string[] {
     idx = source.indexOf(needle, i);
   }
   return out;
+}
+
+function callArgs(source: string): string[] {
+  return CALL_NAMES.flatMap((n) => callArgsFor(source, n));
 }
 
 /** Split a top-level argument list on commas outside brackets/strings. */
@@ -65,9 +70,10 @@ const FRESH_ALLOCATION =
   /^\(\s*\)\s*=>\s*(\(\s*)?(\[\s*\]|\{\s*\}|new\s+(Map|Set|Date|Array|Object)\b)/;
 
 describe("store snapshots are reference-stable", () => {
-  const files = libFiles().filter((f) =>
-    readFileSync(f, "utf8").includes("useSyncExternalStore("),
-  );
+  const files = libFiles().filter((f) => {
+    const src = readFileSync(f, "utf8");
+    return CALL_NAMES.some((n) => src.includes(n));
+  });
 
   it("finds the store modules to check", () => {
     expect(files.length).toBeGreaterThan(0);
