@@ -34,7 +34,12 @@ function subscribe(cb: () => void) {
 }
 
 export function useStaleThresholdMs(): [number, (ms: number) => void] {
-  const value = useSyncExternalStore(subscribe, read, () => DEFAULT_STALE_MS);
+  const value = useStableSyncExternalStore(
+    subscribe,
+    read,
+    () => DEFAULT_STALE_MS,
+    "price-freshness",
+  );
   const set = useCallback((ms: number) => setStaleThresholdMs(ms), []);
   return [value, set];
 }

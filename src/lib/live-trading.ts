@@ -116,7 +116,12 @@ function subscribe(cb: () => void) {
 }
 
 export function useLiveTrading(): LiveTradingSettings {
-  return useSyncExternalStore(subscribe, getLiveTrading, () => DEFAULTS);
+  return useStableSyncExternalStore(
+    subscribe,
+    getLiveTrading,
+    () => DEFAULTS,
+    "live-trading",
+  );
 }
 
 export function chainName(chainId: number) {

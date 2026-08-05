@@ -83,10 +83,11 @@ function subscribe(cb: () => void) {
 const EMPTY: ValueSnapshot[] = [];
 
 export function useValueHistory(address: string | null | undefined): ValueSnapshot[] {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     subscribe,
     () => getHistory(address),
     () => EMPTY,
+    "wallet-history",
   );
 }
 

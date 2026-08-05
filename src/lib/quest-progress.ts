@@ -62,13 +62,14 @@ export function getQuestActions(): Actions {
 }
 
 export function useQuestActions(): Actions {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
     read,
     () => EMPTY_ACTIONS,
+    "quest-progress",
   );
 }
 

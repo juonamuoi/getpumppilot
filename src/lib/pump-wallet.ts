@@ -174,7 +174,12 @@ function subscribe(cb: () => void) {
 }
 
 export function usePumpWallet(): PumpWalletState {
-  return useSyncExternalStore(subscribe, getPumpWallet, () => SERVER_STATE);
+  return useStableSyncExternalStore(
+    subscribe,
+    getPumpWallet,
+    () => SERVER_STATE,
+    "pump-wallet",
+  );
 }
 
 /* ------------------------------ lifecycle ---------------------------- */

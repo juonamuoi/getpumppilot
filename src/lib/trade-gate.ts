@@ -81,9 +81,10 @@ function subscribe(cb: () => void) {
 }
 
 export function useTradeGate(): TradeGateRequest | null {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     subscribe,
     () => current,
     () => null,
+    "trade-gate",
   );
 }
