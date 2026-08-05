@@ -81,7 +81,7 @@ function NotificationRow({
       </span>
       <div className="min-w-0 flex-1">
         <p className={`text-sm leading-snug ${entry.read ? "" : "font-medium"}`}>{entry.message}</p>
-        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
           <time dateTime={new Date(entry.ts).toISOString()} title={absoluteTime(entry.ts)}>
             {formatNotificationTime(entry.ts)}
           </time>
@@ -96,7 +96,7 @@ function NotificationRow({
               New
             </Badge>
           )}
-        </p>
+        </div>
       </div>
       <Button
         variant="ghost"
