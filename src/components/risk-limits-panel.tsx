@@ -1,8 +1,15 @@
-import { ShieldCheck, TriangleAlert } from "lucide-react";
+import { Info, ShieldCheck, TriangleAlert } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getAsset } from "@/lib/mock-data";
 import { markPrice, usePaper } from "@/lib/paper-store";
+
 
 function usd(n: number) {
   return n.toLocaleString(undefined, {
