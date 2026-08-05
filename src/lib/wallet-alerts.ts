@@ -1,6 +1,7 @@
 // Price-change and threshold alerts for live wallet holdings.
 // Monitoring only — this module never places, signs or simulates an order.
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 import { dispatchAlert } from "@/lib/wallet-alert-channels";
 import type { LivePrice } from "@/lib/market-data";
 
@@ -202,11 +203,21 @@ const EMPTY_RULES: WalletAlertRule[] = [];
 const EMPTY_EVENTS: WalletAlertEvent[] = [];
 
 export function useWalletAlertRules(): WalletAlertRule[] {
-  return useSyncExternalStore(subscribe, getRules, () => EMPTY_RULES);
+  return useStableSyncExternalStore(
+    subscribe,
+    getRules,
+    () => EMPTY_RULES,
+    "wallet-alerts.rules",
+  );
 }
 
 export function useWalletAlertEvents(): WalletAlertEvent[] {
-  return useSyncExternalStore(subscribe, getEvents, () => EMPTY_EVENTS);
+  return useStableSyncExternalStore(
+    subscribe,
+    getEvents,
+    () => EMPTY_EVENTS,
+    "wallet-alerts.events",
+  );
 }
 
 type Observation = { price: number | null; change24h: number | null };

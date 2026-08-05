@@ -1,7 +1,7 @@
 // Persistent history of risk-blocked orders.
 // Every rejection is recorded with its timestamp, the control that fired,
 // the breaching value and the suggested fix so it can be reviewed later.
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 import type { RiskBlock } from "./risk-block";
 
 export type RejectionEntry = {
@@ -81,10 +81,11 @@ function subscribe(cb: () => void) {
 }
 
 export function useRejectionLog(): RejectionEntry[] {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     subscribe,
-    () => load(),
+    load,
     () => EMPTY,
+    "rejection-log",
   );
 }
 
