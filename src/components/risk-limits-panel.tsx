@@ -221,49 +221,55 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
   }, "safe");
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          {worst === "safe" ? (
-            <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
-          ) : (
-            <TriangleAlert className={`h-4 w-4 ${ZONE_STYLES[worst].text}`} aria-hidden />
-          )}
-          Risk limits
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Checked before every order: max {pct(risk.maxPositionPct)} per position, max{" "}
-          {pct(risk.maxDailyLossPct)} daily loss, stop {pct(risk.stopLossPct)}, target{" "}
-          {pct(risk.takeProfitPct)}.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {rows.map((r) => {
-          const s = ZONE_STYLES[r.zone];
-          return (
-            <div key={r.label} className="space-y-1.5">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-medium">{r.label}</span>
-                <span className={`font-mono text-sm ${r.zone === "safe" ? "" : s.text}`}>
-                  {r.value}
-                </span>
+    <TooltipProvider delayDuration={150}>
+      <Card className={className}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {worst === "safe" ? (
+              <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
+            ) : (
+              <TriangleAlert className={`h-4 w-4 ${ZONE_STYLES[worst].text}`} aria-hidden />
+            )}
+            Risk limits
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Checked before every order: max {pct(risk.maxPositionPct)} per position, max{" "}
+            {pct(risk.maxDailyLossPct)} daily loss, stop {pct(risk.stopLossPct)}, target{" "}
+            {pct(risk.takeProfitPct)}.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {rows.map((r) => {
+            const s = ZONE_STYLES[r.zone];
+            return (
+              <div key={r.label} className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                    {r.label}
+                    <FormulaTip formula={r.formula} metric={r.label} />
+                  </span>
+                  <span className={`font-mono text-sm ${r.zone === "safe" ? "" : s.text}`}>
+                    {r.value}
+                  </span>
+                </div>
+                <LimitBar
+                  usedPct={r.used}
+                  zone={r.zone}
+                  label={`${r.label} against ${r.cap}`}
+                />
+                <div className="flex items-start justify-between gap-3">
+                  <p className={`text-xs ${s.text}`}>{r.detail}</p>
+                  <span className={`shrink-0 text-[11px] font-medium ${s.text}`}>
+                    {s.label} · {Math.round(r.used)}%
+                  </span>
+                </div>
               </div>
-              <LimitBar
-                usedPct={r.used}
-                zone={r.zone}
-                label={`${r.label} against ${r.cap}`}
-              />
-              <div className="flex items-start justify-between gap-3">
-                <p className={`text-xs ${s.text}`}>{r.detail}</p>
-                <span className={`shrink-0 text-[11px] font-medium ${s.text}`}>
-                  {s.label} · {Math.round(r.used)}%
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+            );
+          })}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
+
 
