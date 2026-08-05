@@ -1,7 +1,6 @@
 import { ShieldCheck, TriangleAlert } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { getAsset } from "@/lib/mock-data";
 import { markPrice, usePaper } from "@/lib/paper-store";
 
@@ -16,6 +15,64 @@ function usd(n: number) {
 function pct(n: number) {
   return `${n.toFixed(1)}%`;
 }
+
+type Zone = "safe" | "caution" | "warning" | "breach";
+
+/** Utilisation of a cap (0-100+) mapped to a colour-coded severity zone. */
+function zoneFor(usedPct: number, breached: boolean): Zone {
+  if (breached || usedPct >= 100) return "breach";
+  if (usedPct >= 90) return "warning";
+  if (usedPct >= 70) return "caution";
+  return "safe";
+}
+
+const ZONE_STYLES: Record<Zone, { bar: string; track: string; text: string; label: string }> = {
+  safe: {
+    bar: "bg-safe",
+    track: "bg-safe/15",
+    text: "text-muted-foreground",
+    label: "Within limit",
+  },
+  caution: {
+    bar: "bg-caution",
+    track: "bg-caution/15",
+    text: "text-caution",
+    label: "Approaching limit",
+  },
+  warning: {
+    bar: "bg-warning",
+    track: "bg-warning/15",
+    text: "text-warning",
+    label: "Near limit",
+  },
+  breach: {
+    bar: "bg-destructive",
+    track: "bg-destructive/15",
+    text: "text-destructive",
+    label: "Limit reached",
+  },
+};
+
+function LimitBar({ usedPct, zone, label }: { usedPct: number; zone: Zone; label: string }) {
+  const s = ZONE_STYLES[zone];
+  return (
+    <div
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(Math.min(100, usedPct))}
+      aria-valuetext={`${Math.round(usedPct)}% of limit used — ${s.label}`}
+      className={`relative h-2 w-full overflow-hidden rounded-full ${s.track}`}
+    >
+      <div
+        className={`h-full rounded-full transition-all duration-500 ${s.bar}`}
+        style={{ width: `${Math.max(2, Math.min(100, usedPct))}%` }}
+      />
+    </div>
+  );
+}
+
 
 type Props = {
   /** Optional symbol context — adds the remaining headroom for that asset. */
