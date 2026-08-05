@@ -16,7 +16,7 @@ const warned = new Set<string>();
 
 /** Frames belonging to the invariant itself or to React internals. */
 const INTERNAL_FRAME =
-  /(snapshot-invariant|react-dom|react\/jsx|node_modules\/react|\/@react-refresh)/;
+  /(snapshot-invariant\.ts|react-dom|react\/jsx|node_modules\/react|\/@react-refresh)/;
 
 /**
  * First application frame above the invariant — the store hook or component

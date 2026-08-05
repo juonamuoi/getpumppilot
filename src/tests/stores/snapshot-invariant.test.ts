@@ -99,7 +99,8 @@ describe("checkSnapshotStability in development", () => {
 
   it("deduplicates repeat warnings from the same store and call site", async () => {
     const { checkSnapshotStability } = await loadInvariant(true);
-    const unstable = () => ({ items: [] as string[] });
+    const items: string[] = [];
+    const unstable = () => ({ items });
 
     for (let i = 0; i < 5; i += 1) {
       checkSnapshotStability(unstable, "demo-dedupe");
