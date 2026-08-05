@@ -57,7 +57,7 @@ function overlay(a: Asset, p?: LivePrice): LiveAsset {
 
 /** Full asset universe with live prices merged in where available. */
 export function useLiveAssets() {
-  const { data, isLoading, isError, dataUpdatedAt } = useLivePrices();
+  const { data, isLoading, isError, dataUpdatedAt, refetch } = useLivePrices();
 
   const map = useMemo(() => {
     const m: Record<string, LivePrice> = {};
