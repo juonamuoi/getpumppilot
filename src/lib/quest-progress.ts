@@ -24,9 +24,12 @@ type Actions = Partial<Record<QuestActionKey, string>>;
 let cache: Actions | null = null;
 const listeners = new Set<() => void>();
 
+// Stable empty snapshot — a fresh {} per call makes useSyncExternalStore loop.
+const EMPTY_ACTIONS: Actions = {};
+
 function read(): Actions {
   if (cache) return cache;
-  if (typeof window === "undefined") return {};
+  if (typeof window === "undefined") return EMPTY_ACTIONS;
   try {
     const raw = window.localStorage.getItem(KEY);
     cache = raw ? (JSON.parse(raw) as Actions) : {};
