@@ -1,7 +1,8 @@
 // Configurable "stale price" threshold for the live wallet portfolio.
 // When a holding's live price is older than this, it is flagged and excluded
 // from wallet totals, 24h change and allocation until the feed refreshes.
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 const KEY = "pp.price-staleness-threshold-ms";
 export const DEFAULT_STALE_MS = 5 * 60_000;

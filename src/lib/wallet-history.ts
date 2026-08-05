@@ -1,6 +1,6 @@
 // Local history of connected-wallet total value, used for the performance chart.
 // Snapshots are stored per address in localStorage — read-only, no execution.
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 export type ValueSnapshot = { ts: number; value: number };
 

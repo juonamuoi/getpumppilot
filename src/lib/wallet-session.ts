@@ -5,7 +5,7 @@
  * scan so any screen (e.g. the Security Center) can show status and
  * trigger a rescan. No keys, seed phrases or signing — ever.
  * ------------------------------------------------------------------ */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 import type { ApprovalRisk, WalletScanResult } from "@/lib/wallet-scan";
 
 export const DEMO_WALLET_ADDRESS = "0xDEMO00000000000000000000000000000000a1b2";

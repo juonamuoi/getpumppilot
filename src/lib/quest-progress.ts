@@ -6,7 +6,7 @@
  * the quest dashboard: unlocked (ready to claim), pending (action not done),
  * or claimed.
  */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 const KEY = "pumppilot.quest-actions.v1";
 
