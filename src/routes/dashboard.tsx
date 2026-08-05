@@ -110,8 +110,21 @@ export const Route = createFileRoute("/dashboard")({
       ),
     ],
   }),
-  component: Dashboard,
+  component: DashboardRoute,
 });
+
+function DashboardRoute() {
+  return (
+    <ErrorBoundary
+      boundary="dashboard_route"
+      title="The dashboard didn't load"
+      description="Something went wrong while rendering the dashboard. No orders were placed and your paper portfolio is unchanged."
+    >
+      <Dashboard />
+    </ErrorBoundary>
+  );
+}
+
 
 function StatCard({
   label,
