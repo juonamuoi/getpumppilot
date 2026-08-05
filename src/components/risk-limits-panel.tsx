@@ -1,8 +1,15 @@
-import { ShieldCheck, TriangleAlert } from "lucide-react";
+import { Info, ShieldCheck, TriangleAlert } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getAsset } from "@/lib/mock-data";
 import { markPrice, usePaper } from "@/lib/paper-store";
+
 
 function usd(n: number) {
   return n.toLocaleString(undefined, {
@@ -73,6 +80,47 @@ function LimitBar({ usedPct, zone, label }: { usedPct: number; zone: Zone; label
   );
 }
 
+type Formula = {
+  title: string;
+  expression: string;
+  utilisation: string;
+  numbers: string;
+  note: string;
+};
+
+/** Explains exactly how a metric is derived, with the live numbers plugged in. */
+function FormulaTip({ formula, metric }: { formula: Formula; metric: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={`How ${metric} is calculated`}
+          className="rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Info className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="start" className="max-w-xs space-y-2 text-left">
+        <p className="text-xs font-semibold">{formula.title}</p>
+        <p className="rounded bg-muted px-2 py-1 font-mono text-[11px] leading-relaxed">
+          {formula.expression}
+        </p>
+        <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+          {formula.utilisation}
+        </p>
+        <p className="text-[11px] leading-relaxed">
+          <span className="font-medium">Right now: </span>
+          {formula.numbers}
+        </p>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">{formula.note}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+
+
 
 type Props = {
   /** Optional symbol context — adds the remaining headroom for that asset. */
@@ -118,6 +166,13 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
       used: exposurePct,
       cap: "100% of equity",
       breached: exposurePct >= 100,
+      formula: {
+        title: "How total exposure is calculated",
+        expression: "exposure = Σ (mark price × quantity) for every open position",
+        utilisation: "bar % = exposure ÷ equity × 100",
+        numbers: `Σ positions = ${usd(exposure)} · equity = ${usd(equity)} → ${pct(exposurePct)}`,
+        note: "Mark price is the latest live price for the symbol, not your entry price, so exposure moves with the market.",
+      },
     },
     {
       label: "Today's drawdown",
@@ -126,6 +181,14 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
       used: (drawdownPct / (risk.maxDailyLossPct || 1)) * 100,
       cap: `${pct(risk.maxDailyLossPct)} daily loss`,
       breached: drawdownBreached,
+      formula: {
+        title: "How today's drawdown is calculated",
+        expression:
+          "drawdown % = max(0, (session-start equity − current equity) ÷ session-start equity × 100)",
+        utilisation: "bar % = drawdown % ÷ max daily loss % × 100",
+        numbers: `(${usd(dayStartEquity)} − ${usd(equity)}) ÷ ${usd(dayStartEquity)} → ${pct(drawdownPct)} of a ${pct(risk.maxDailyLossPct)} limit`,
+        note: "Clamped at 0 — a profitable session shows no drawdown. Session-start equity resets each trading day.",
+      },
     },
     ...(symbol
       ? [
@@ -138,10 +201,19 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
             used: (heldPct / (risk.maxPositionPct || 1)) * 100,
             cap: `${pct(risk.maxPositionPct)} per symbol`,
             breached: positionBreached,
+            formula: {
+              title: `How ${symbol} headroom is calculated`,
+              expression:
+                "headroom $ = max(0, min(max position % × equity − position value, free cash))",
+              utilisation: "headroom qty = headroom $ ÷ mark price · bar % = position % ÷ max position % × 100",
+              numbers: `min(${pct(risk.maxPositionPct)} × ${usd(equity)} − ${usd(heldValue)}, ${usd(cash)}) = ${usd(headroomUsd)} → ${headroomQty.toFixed(4)} ${symbol} at ${usd(price)}`,
+              note: "Cash caps headroom: you can never buy more than the settled cash you hold, even if the percentage cap allows it.",
+            },
           },
         ]
       : []),
   ].map((r) => ({ ...r, zone: zoneFor(r.used, r.breached) }));
+
 
   const worst = rows.reduce<Zone>((acc, r) => {
     const order: Zone[] = ["safe", "caution", "warning", "breach"];
@@ -149,49 +221,55 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
   }, "safe");
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          {worst === "safe" ? (
-            <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
-          ) : (
-            <TriangleAlert className={`h-4 w-4 ${ZONE_STYLES[worst].text}`} aria-hidden />
-          )}
-          Risk limits
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Checked before every order: max {pct(risk.maxPositionPct)} per position, max{" "}
-          {pct(risk.maxDailyLossPct)} daily loss, stop {pct(risk.stopLossPct)}, target{" "}
-          {pct(risk.takeProfitPct)}.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {rows.map((r) => {
-          const s = ZONE_STYLES[r.zone];
-          return (
-            <div key={r.label} className="space-y-1.5">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-medium">{r.label}</span>
-                <span className={`font-mono text-sm ${r.zone === "safe" ? "" : s.text}`}>
-                  {r.value}
-                </span>
+    <TooltipProvider delayDuration={150}>
+      <Card className={className}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {worst === "safe" ? (
+              <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
+            ) : (
+              <TriangleAlert className={`h-4 w-4 ${ZONE_STYLES[worst].text}`} aria-hidden />
+            )}
+            Risk limits
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Checked before every order: max {pct(risk.maxPositionPct)} per position, max{" "}
+            {pct(risk.maxDailyLossPct)} daily loss, stop {pct(risk.stopLossPct)}, target{" "}
+            {pct(risk.takeProfitPct)}.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {rows.map((r) => {
+            const s = ZONE_STYLES[r.zone];
+            return (
+              <div key={r.label} className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                    {r.label}
+                    <FormulaTip formula={r.formula} metric={r.label} />
+                  </span>
+                  <span className={`font-mono text-sm ${r.zone === "safe" ? "" : s.text}`}>
+                    {r.value}
+                  </span>
+                </div>
+                <LimitBar
+                  usedPct={r.used}
+                  zone={r.zone}
+                  label={`${r.label} against ${r.cap}`}
+                />
+                <div className="flex items-start justify-between gap-3">
+                  <p className={`text-xs ${s.text}`}>{r.detail}</p>
+                  <span className={`shrink-0 text-[11px] font-medium ${s.text}`}>
+                    {s.label} · {Math.round(r.used)}%
+                  </span>
+                </div>
               </div>
-              <LimitBar
-                usedPct={r.used}
-                zone={r.zone}
-                label={`${r.label} against ${r.cap}`}
-              />
-              <div className="flex items-start justify-between gap-3">
-                <p className={`text-xs ${s.text}`}>{r.detail}</p>
-                <span className={`shrink-0 text-[11px] font-medium ${s.text}`}>
-                  {s.label} · {Math.round(r.used)}%
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+            );
+          })}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
+
 
