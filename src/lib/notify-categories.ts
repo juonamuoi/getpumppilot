@@ -63,7 +63,11 @@ export function setNotifyCategories(next: NotifyCategory[]) {
   } catch {
     /* storage unavailable — keep the in-memory value only */
   }
-  window.dispatchEvent(new CustomEvent<NotifyCategory[]>(EVENT, { detail: value }));
+  // Notify other subscribers after the current commit so no listener's
+  // setState lands while another component is still rendering.
+  queueMicrotask(() =>
+    window.dispatchEvent(new CustomEvent<NotifyCategory[]>(EVENT, { detail: value })),
+  );
 }
 
 /** True when notifications of this category are not filtered out. */
