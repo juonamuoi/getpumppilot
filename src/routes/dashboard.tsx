@@ -36,6 +36,11 @@ import { RiskWhatIfPanel } from "@/components/risk-whatif-panel";
 import { RiskHitsCard } from "@/components/risk-hits-card";
 
 import { Term } from "@/components/glossary";
+import {
+  DashboardSkeleton,
+  SnapshotRetryBanner,
+  useDashboardSnapshot,
+} from "@/components/dashboard-load-state";
 import { useOnboarding } from "@/lib/onboarding-store";
 
 const DASH_TITLE = "Dashboard — PumpPilot AI";
@@ -146,8 +151,18 @@ function Dashboard() {
   const { cash, positions, equity } = usePaper();
   const { state: onb } = useOnboarding();
 
+  const snapshot = useDashboardSnapshot();
   const { assets: liveAssets } = useLiveAssets();
   const priced = (sym: string) => liveAssets.find((x) => x.symbol === sym) ?? getAsset(sym)!;
+
+  if (snapshot.health.status === "loading") {
+    return (
+      <AppShell>
+        <DashboardSkeleton />
+      </AppShell>
+    );
+  }
+
 
   const posRows = positions.map((p) => {
     const a = priced(p.symbol);
@@ -204,6 +219,9 @@ function Dashboard() {
             </div>
           </div>
         </div>
+
+        <SnapshotRetryBanner {...snapshot} onRetry={snapshot.retryNow} />
+
 
         <DisclaimerBanner />
 
