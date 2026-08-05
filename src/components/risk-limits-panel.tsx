@@ -1,5 +1,8 @@
-import { Info, ShieldCheck, TriangleAlert } from "lucide-react";
+import { Download, Info, Loader2, ShieldCheck, TriangleAlert } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
@@ -9,6 +12,8 @@ import {
 } from "@/components/ui/tooltip";
 import { getAsset } from "@/lib/mock-data";
 import { markPrice, usePaper } from "@/lib/paper-store";
+import { downloadRiskLimitsPdf } from "@/lib/risk-limits-pdf";
+
 
 
 function usd(n: number) {
