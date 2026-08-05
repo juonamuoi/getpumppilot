@@ -14,11 +14,69 @@ const DEV = import.meta.env.DEV;
 
 const warned = new Set<string>();
 
-function warnOnce(label: string, message: string) {
-  if (warned.has(label)) return;
-  warned.add(label);
+/** Frames belonging to the invariant itself or to React internals. */
+const INTERNAL_FRAME =
+  /(snapshot-invariant|react-dom|react\/jsx|node_modules\/react|\/@react-refresh)/;
+
+/**
+ * First application frame above the invariant — the store hook or component
+ * that produced the unstable value. Returns e.g.
+ * `useWalletAlerts (src/lib/wallet-alerts.ts:206:10)`.
+ */
+function callSite(): string {
+  const stack = new Error().stack;
+  if (!stack) return "unknown call site";
+  const frames = stack.split("\n").slice(1);
+  for (const raw of frames) {
+    const frame = raw.trim().replace(/^at\s+/, "");
+    if (!frame || INTERNAL_FRAME.test(frame)) continue;
+    // Trim the origin so the path reads like a project-relative source path.
+    return frame.replace(/https?:\/\/[^/]+\//g, "").replace(/\?[^):]*/g, "");
+  }
+  return "unknown call site";
+}
+
+/**
+ * Names the parts of the value that were rebuilt, so the warning points at the
+ * exact field instead of the whole snapshot. e.g. `.rules`, `.events`, `[0]`.
+ */
+function churnPaths(a: unknown, b: unknown, limit = 4): string {
+  if (!isAllocated(a) || !isAllocated(b)) return "";
+  if (Array.isArray(a)) {
+    return a.length === 0 ? "[] (empty array literal)" : `[0..${a.length - 1}] (array rebuilt)`;
+  }
+  const keys = Object.keys(a as object);
+  if (keys.length === 0) return "{} (empty object literal)";
+  const changed = keys.filter(
+    (k) =>
+      !Object.is(
+        (a as Record<string, unknown>)[k],
+        (b as Record<string, unknown>)[k],
+      ),
+  );
+  const shown = (changed.length ? changed : keys).slice(0, limit).map((k) => `.${k}`);
+  const more = (changed.length || keys.length) - shown.length;
+  return `${shown.join(", ")}${more > 0 ? ` (+${more} more)` : ""}${
+    changed.length ? "" : " (object wrapper rebuilt)"
+  }`;
+}
+
+function warnOnce(
+  label: string,
+  message: string,
+  detail?: { site: string; paths: string },
+) {
+  const key = detail ? `${label}@${detail.site}` : label;
+  if (warned.has(key)) return;
+  warned.add(key);
   // eslint-disable-next-line no-console
-  console.warn(`[snapshot-invariant] ${label}: ${message}`);
+  console.warn(
+    `[snapshot-invariant] store "${label}": ${message}` +
+      (detail
+        ? `\n  unstable path: ${detail.paths || "(root value)"}` +
+          `\n  source: ${detail.site}`
+        : ""),
+  );
 }
 
 function isAllocated(value: unknown) {
@@ -60,6 +118,7 @@ export function checkSnapshotStability<T>(getSnapshot: () => T, label: string) {
         "unchanged. Cache the value in a module-level variable (and hoist a " +
         "stable EMPTY constant for the server snapshot) or React will re-render " +
         "in a loop.",
+      { site: callSite(), paths: churnPaths(first, second) },
     );
   }
   return first;
@@ -111,6 +170,7 @@ export function useStableSelector<T>(value: T, label: string): T {
           "selector produced a new reference on 3 consecutive renders with " +
             "identical contents. Wrap it in useMemo or return a cached value " +
             "to avoid render loops.",
+          { site: callSite(), paths: churnPaths(prev, value) },
         );
       }
     } else {
