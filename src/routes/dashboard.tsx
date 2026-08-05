@@ -220,6 +220,9 @@ function Dashboard() {
           </div>
         </div>
 
+        <SnapshotRetryBanner {...snapshot} onRetry={snapshot.retryNow} />
+
+
         <DisclaimerBanner />
 
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Portfolio overview</h2>
