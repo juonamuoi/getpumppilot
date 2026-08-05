@@ -36,6 +36,11 @@ import { RiskWhatIfPanel } from "@/components/risk-whatif-panel";
 import { RiskHitsCard } from "@/components/risk-hits-card";
 
 import { Term } from "@/components/glossary";
+import {
+  DashboardSkeleton,
+  SnapshotRetryBanner,
+  useDashboardSnapshot,
+} from "@/components/dashboard-load-state";
 import { useOnboarding } from "@/lib/onboarding-store";
 
 const DASH_TITLE = "Dashboard — PumpPilot AI";
