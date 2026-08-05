@@ -227,6 +227,49 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
     return order.indexOf(r.zone) > order.indexOf(acc) ? r.zone : acc;
   }, "safe");
 
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const reportId = await downloadRiskLimitsPdf({
+        equity,
+        cash,
+        dayStartEquity,
+        exposure,
+        limits: {
+          maxPositionPct: risk.maxPositionPct,
+          maxDailyLossPct: risk.maxDailyLossPct,
+          stopLossPct: risk.stopLossPct,
+          takeProfitPct: risk.takeProfitPct,
+        },
+        positions: positions.map((p) => {
+          const a = getAsset(p.symbol);
+          const mark = a ? markPrice(p.symbol, a.price) : 0;
+          const value = mark * p.qty;
+          return {
+            symbol: p.symbol,
+            qty: p.qty,
+            price: mark,
+            value,
+            pct: equity > 0 ? (value / equity) * 100 : 0,
+            headroomUsd: Math.max(
+              0,
+              Math.min((risk.maxPositionPct / 100) * equity - value, cash),
+            ),
+          };
+        }),
+      });
+      toast.success("Risk report downloaded", {
+        description: `${reportId} — estimates only, results are not guaranteed.`,
+      });
+    } catch {
+      toast.error("Could not generate the risk report", {
+        description: "Please try again in a moment.",
+      });
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <TooltipProvider delayDuration={150}>
       <Card className={className}>
@@ -238,7 +281,23 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
               <TriangleAlert className={`h-4 w-4 ${ZONE_STYLES[worst].text}`} aria-hidden />
             )}
             Risk limits
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="ml-auto h-7 gap-1.5 text-xs"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Download className="h-3.5 w-3.5" aria-hidden />
+              )}
+              {exporting ? "Preparing…" : "Risk report (PDF)"}
+            </Button>
           </CardTitle>
+
           <p className="text-xs text-muted-foreground">
             Checked before every order: max {pct(risk.maxPositionPct)} per position, max{" "}
             {pct(risk.maxDailyLossPct)} daily loss, stop {pct(risk.stopLossPct)}, target{" "}
