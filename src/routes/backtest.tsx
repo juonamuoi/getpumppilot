@@ -6,6 +6,7 @@ import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useExecutionAnnouncer } from "@/components/execution-announcer";
 import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,6 +109,7 @@ function BacktestPage() {
   const [result, setResult] = useState<Result | null>(null);
   const { spend, balance } = useCredits();
   const [running, setRunning] = useState(false);
+  const { announce, region: announcerRegion } = useExecutionAnnouncer();
 
   const run = async () => {
     if (running) return;
@@ -120,16 +122,30 @@ function BacktestPage() {
           ? `Out of credits — backtests are paused. Needs ${CREDIT_COSTS.backtest_run}, you have ${charge.balance}.`
           : "Could not charge credits. Try again.",
       );
+      announce(
+        "Backtest could not start: credit charge failed.",
+        "assertive",
+        "essential",
+        "backtest",
+      );
       return;
     }
+    announce("Backtest started.", "polite", "detail", "backtest");
     const seed = strategy === "breakout" ? 3 : strategy === "trend" ? 7 : 11;
     setResult(runBacktest(seed, threshold[0], parseInt(period)));
     toast.success(`Backtest complete — ${CREDIT_COSTS.backtest_run} credits used, ${charge.balance} left.`);
+    announce(
+      `Backtest complete for the ${strategy} strategy over ${period} months.`,
+      "polite",
+      "essential",
+      "backtest",
+    );
   };
 
   return (
     <AppShell>
       <div className="space-y-5">
+        {announcerRegion}
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">Backtest</h1>
           <p className="mt-1 text-sm text-muted-foreground">
