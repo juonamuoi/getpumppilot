@@ -133,7 +133,7 @@ function PaperPage() {
   const doTrade = (side: "buy" | "sell") => {
     const n = parseFloat(qty);
     if (!n) {
-      announce("Order rejected: enter a quantity first.", "assertive", "essential");
+      announce("Order rejected: enter a quantity first.", "assertive", "essential", "order_status");
       return toast.error("Enter a quantity");
     }
     // Global safety gate — nothing is submitted until the notice is acknowledged.
@@ -141,6 +141,7 @@ function PaperPage() {
       `Paper order placed: ${side} ${n} ${symbol}. Awaiting confirmation of the safety notice.`,
       "polite",
       "detail",
+      "order_status",
     );
     requestTrade({
       action: `${side.toUpperCase()} ${n} ${symbol}`,
@@ -154,21 +155,31 @@ function PaperPage() {
               ? `Out of credits — execution stopped. Each order costs ${CREDIT_COSTS.bot_execution} credit. Recharge to resume.`
               : "Could not charge credits. Try again.";
           toast.error(msg);
-          announce(`Paper order rejected: ${msg}`, "assertive", "essential");
+          announce(`Paper order rejected: ${msg}`, "assertive", "essential", "order_status");
           return;
         }
         const r = paper.trade(symbol, side, n);
         if (r.ok) {
           toast.success(r.msg);
-          announce(`Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`, "polite", "essential");
+          announce(
+            `Paper order filled: ${side} ${n} ${symbol}. ${r.msg}`,
+            "polite",
+            "essential",
+            "order_status",
+          );
         } else if (r.block) {
           setLastBlock(r.block);
           recordRejection({ symbol, side, qty: n, block: r.block });
           toast.error(`Blocked by ${riskBlockTitle(r.block)}`, { description: r.msg });
-          announce(announceRiskBlock(r.block, side, n, symbol), "assertive", "essential");
+          announce(
+            announceRiskBlock(r.block, side, n, symbol),
+            "assertive",
+            "essential",
+            "risk_block",
+          );
         } else {
           toast.error(r.msg);
-          announce(`Paper order rejected: ${r.msg}`, "assertive", "essential");
+          announce(`Paper order rejected: ${r.msg}`, "assertive", "essential", "order_status");
         }
         if (r.ok) setLastBlock(null);
 
