@@ -80,6 +80,7 @@ export function useLiveAssets() {
     isLoading,
     isError,
     updatedAt: dataUpdatedAt,
+    refetch,
   };
 }
 
