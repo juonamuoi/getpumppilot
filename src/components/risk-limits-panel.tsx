@@ -73,6 +73,47 @@ function LimitBar({ usedPct, zone, label }: { usedPct: number; zone: Zone; label
   );
 }
 
+type Formula = {
+  title: string;
+  expression: string;
+  utilisation: string;
+  numbers: string;
+  note: string;
+};
+
+/** Explains exactly how a metric is derived, with the live numbers plugged in. */
+function FormulaTip({ formula, metric }: { formula: Formula; metric: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={`How ${metric} is calculated`}
+          className="rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Info className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="start" className="max-w-xs space-y-2 text-left">
+        <p className="text-xs font-semibold">{formula.title}</p>
+        <p className="rounded bg-muted px-2 py-1 font-mono text-[11px] leading-relaxed">
+          {formula.expression}
+        </p>
+        <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+          {formula.utilisation}
+        </p>
+        <p className="text-[11px] leading-relaxed">
+          <span className="font-medium">Right now: </span>
+          {formula.numbers}
+        </p>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">{formula.note}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+
+
 
 type Props = {
   /** Optional symbol context — adds the remaining headroom for that asset. */
