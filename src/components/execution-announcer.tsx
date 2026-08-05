@@ -1,16 +1,6 @@
 import { useCallback, useRef, useState } from "react";
-import { Volume2, VolumeX, Volume1, Bell } from "lucide-react";
+import { Volume2, VolumeX, Volume1 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -26,12 +16,12 @@ import {
   type AnnounceImportance,
 } from "@/lib/announce-verbosity";
 import {
-  ALL_CATEGORIES,
   isCategoryEnabled,
-  NOTIFY_CATEGORIES,
   useNotifyCategories,
   type NotifyCategory,
 } from "@/lib/notify-categories";
+import { recordNotification } from "@/lib/notification-log";
+import { NotificationCenter } from "@/components/notification-center";
 
 type Politeness = "polite" | "assertive";
 
@@ -59,9 +49,12 @@ export function useExecutionAnnouncer() {
       importance: AnnounceImportance = "detail",
       category?: NotifyCategory,
     ) => {
-      if (!shouldAnnounce(verbosityRef.current, importance)) return;
       // Category filters let the user mute whole classes of notification.
       if (!isCategoryEnabled(categoriesRef.current, category)) return;
+      // The notifications center keeps a timestamped history even when the
+      // verbosity setting keeps this message from being read out loud.
+      recordNotification({ message, category, level });
+      if (!shouldAnnounce(verbosityRef.current, importance)) return;
       // Bump an invisible counter so repeated identical messages are re-read.
       seq.current += 1;
       const text = seq.current % 2 === 0 ? `${message}\u200B` : message;
@@ -117,9 +110,6 @@ export function AnnouncementVerbosityControl({
   className?: string;
 }) {
   const { verbosity, setVerbosity } = useAnnounceVerbosity();
-  const { categories, toggle, setAll } = useNotifyCategories();
-  const allOn = categories.length === ALL_CATEGORIES.length;
-  const filtered = !allOn;
   const Icon = ICONS[verbosity];
   const active = VERBOSITY_OPTIONS.find((o) => o.value === verbosity);
 
@@ -146,82 +136,7 @@ export function AnnouncementVerbosityControl({
   );
 
   if (variant === "inline") {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={className}
-            aria-label={`Notifications: ${active?.label ?? verbosity}${
-              filtered ? `, filtered to ${categories.length} of ${ALL_CATEGORIES.length} types` : ""
-            }`}
-            title="Notifications"
-          >
-            <span className="relative">
-              <Bell className="h-5 w-5" aria-hidden="true" />
-              {verbosity === "off" || categories.length === 0 ? (
-                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-muted-foreground" />
-              ) : filtered ? (
-                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-caution" />
-              ) : (
-                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary" />
-              )}
-            </span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72">
-          <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup
-            value={verbosity}
-            onValueChange={(v) => setVerbosity(v as typeof verbosity)}
-          >
-            {VERBOSITY_OPTIONS.map((o) => (
-              <DropdownMenuRadioItem key={o.value} value={o.value}>
-                {o.label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-          {active?.hint ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">{active.hint}</p>
-          ) : null}
-
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="flex items-center justify-between gap-2">
-            <span>Show types</span>
-            <button
-              type="button"
-              className="text-[11px] font-normal text-primary hover:underline"
-              onClick={(e) => {
-                e.preventDefault();
-                setAll(!allOn);
-              }}
-            >
-              {allOn ? "None" : "All"}
-            </button>
-          </DropdownMenuLabel>
-          {NOTIFY_CATEGORIES.map((c) => (
-            <DropdownMenuCheckboxItem
-              key={c.value}
-              checked={categories.includes(c.value)}
-              onSelect={(e) => e.preventDefault()}
-              onCheckedChange={(on) => toggle(c.value, Boolean(on))}
-            >
-              <span className="flex flex-col">
-                <span>{c.label}</span>
-                <span className="text-[11px] text-muted-foreground">{c.hint}</span>
-              </span>
-            </DropdownMenuCheckboxItem>
-          ))}
-          {categories.length === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-muted-foreground">
-              All notification types are hidden.
-            </p>
-          ) : null}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
+    return <NotificationCenter className={className} />;
   }
 
   return (
