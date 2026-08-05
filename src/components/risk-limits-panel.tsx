@@ -115,14 +115,16 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
       label: "Total exposure",
       value: usd(exposure),
       detail: `${pct(exposurePct)} of ${usd(equity)} equity · ${usd(cash)} cash free`,
-      progress: Math.min(100, exposurePct),
-      breached: false,
+      used: exposurePct,
+      cap: "100% of equity",
+      breached: exposurePct >= 100,
     },
     {
       label: "Today's drawdown",
       value: pct(drawdownPct),
       detail: `Limit ${pct(risk.maxDailyLossPct)} · session start ${usd(dayStartEquity)}`,
-      progress: Math.min(100, (drawdownPct / (risk.maxDailyLossPct || 1)) * 100),
+      used: (drawdownPct / (risk.maxDailyLossPct || 1)) * 100,
+      cap: `${pct(risk.maxDailyLossPct)} daily loss`,
       breached: drawdownBreached,
     },
     ...(symbol
@@ -133,21 +135,27 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
             detail: positionBreached
               ? `At or over the ${pct(risk.maxPositionPct)} cap — trim before buying more`
               : `Room for ${headroomQty.toFixed(4)} ${symbol} (${usd(headroomUsd)}) under the ${pct(risk.maxPositionPct)} cap`,
-            progress: Math.min(100, (heldPct / (risk.maxPositionPct || 1)) * 100),
+            used: (heldPct / (risk.maxPositionPct || 1)) * 100,
+            cap: `${pct(risk.maxPositionPct)} per symbol`,
             breached: positionBreached,
           },
         ]
       : []),
-  ];
+  ].map((r) => ({ ...r, zone: zoneFor(r.used, r.breached) }));
+
+  const worst = rows.reduce<Zone>((acc, r) => {
+    const order: Zone[] = ["safe", "caution", "warning", "breach"];
+    return order.indexOf(r.zone) > order.indexOf(acc) ? r.zone : acc;
+  }, "safe");
 
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          {drawdownBreached || positionBreached ? (
-            <TriangleAlert className="h-4 w-4 text-destructive" aria-hidden />
-          ) : (
+          {worst === "safe" ? (
             <ShieldCheck className="h-4 w-4 text-primary" aria-hidden />
+          ) : (
+            <TriangleAlert className={`h-4 w-4 ${ZONE_STYLES[worst].text}`} aria-hidden />
           )}
           Risk limits
         </CardTitle>
@@ -158,25 +166,32 @@ export function RiskLimitsPanel({ symbol, className }: Props) {
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {rows.map((r) => (
-          <div key={r.label} className="space-y-1.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-sm font-medium">{r.label}</span>
-              <span
-                className={`font-mono text-sm ${r.breached ? "text-destructive" : ""}`}
-              >
-                {r.value}
-              </span>
+        {rows.map((r) => {
+          const s = ZONE_STYLES[r.zone];
+          return (
+            <div key={r.label} className="space-y-1.5">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-sm font-medium">{r.label}</span>
+                <span className={`font-mono text-sm ${r.zone === "safe" ? "" : s.text}`}>
+                  {r.value}
+                </span>
+              </div>
+              <LimitBar
+                usedPct={r.used}
+                zone={r.zone}
+                label={`${r.label} against ${r.cap}`}
+              />
+              <div className="flex items-start justify-between gap-3">
+                <p className={`text-xs ${s.text}`}>{r.detail}</p>
+                <span className={`shrink-0 text-[11px] font-medium ${s.text}`}>
+                  {s.label} · {Math.round(r.used)}%
+                </span>
+              </div>
             </div>
-            <Progress value={r.progress} className="h-1.5" />
-            <p
-              className={`text-xs ${r.breached ? "text-destructive" : "text-muted-foreground"}`}
-            >
-              {r.detail}
-            </p>
-          </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );
 }
+
