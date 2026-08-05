@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { History } from "lucide-react";
 
-import { controlTitle, describeHeadroom, type RejectionControlFilter } from "@/lib/risk-block";
+import { controlTitle, describeHeadroom } from "@/lib/risk-block";
 import { useRejectionLog } from "@/lib/rejection-log";
 
 function pct(n?: number) {
@@ -83,5 +83,3 @@ export function RiskLimitsHistory({
     </div>
   );
 }
-
-export type { RejectionControlFilter };
