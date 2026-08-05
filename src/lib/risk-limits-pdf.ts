@@ -54,7 +54,9 @@ const ascii = (v: string) =>
     .replace(/\u2248/g, "~");
 
 const usd = (n: number) =>
-  `$${n.toLocaleString("en-US", { maximumFractionDigits: n < 10 ? 4 : 2 })}`;
+  n < 10
+    ? `$${n.toLocaleString("en-US", { maximumFractionDigits: 4 })}`
+    : `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 
@@ -330,6 +332,11 @@ export async function buildRiskLimitsDoc(input: RiskLimitsReportInput, reportId?
   );
 
   /* ---------------------------- Disclaimers ---------------------------- */
+  // Keep the disclaimer block intact rather than splitting it across pages.
+  if (y + 170 > H - 64) {
+    doc.addPage();
+    y = M;
+  }
   rule();
   text("Important disclaimers", { size: 11, bold: true, gap: 2 });
   const disclaimers = [
