@@ -42,6 +42,8 @@ import {
   useDashboardSnapshot,
 } from "@/components/dashboard-load-state";
 import { useOnboarding } from "@/lib/onboarding-store";
+import { ErrorBoundary } from "@/components/error-boundary";
+
 
 const DASH_TITLE = "Dashboard — PumpPilot AI";
 const DASH_DESC =
