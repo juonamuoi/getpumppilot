@@ -16,10 +16,10 @@ async function loadInvariant(dev: boolean): Promise<Invariant> {
   return import("@/lib/snapshot-invariant");
 }
 
-let warn: ReturnType<typeof vi.spyOn>;
+let warn: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  warn = vi.spyOn(console, "warn").mockImplementation(() => {}) as unknown as ReturnType<typeof vi.fn>;
 });
 
 afterEach(() => {
@@ -29,7 +29,7 @@ afterEach(() => {
 });
 
 function warnings() {
-  return warn.mock.calls.map((call) => String(call[0]));
+  return (warn.mock.calls as unknown[][]).map((call) => String(call[0]));
 }
 
 describe("checkSnapshotStability in development", () => {
