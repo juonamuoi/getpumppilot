@@ -2,7 +2,7 @@
 // Every trade/submit action in the app routes through this store first, so a
 // single read-only / probabilistic-signal notice is shown before anything runs.
 // Live execution is opt-in per account and always user-signed; paper stays the default.
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 export type TradeGateRequest = {
   /** Short action label, e.g. "Buy 1.5 BTC". */
@@ -81,9 +81,10 @@ function subscribe(cb: () => void) {
 }
 
 export function useTradeGate(): TradeGateRequest | null {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     subscribe,
     () => current,
     () => null,
+    "trade-gate",
   );
 }

@@ -10,7 +10,7 @@
  * saved history shows exactly where each alert went (and why it did not).
  * Alerts are informational only — nothing here can place or sign a trade.
  */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 import { toast } from "sonner";
 import { recordDelivery, type NotifyChannel } from "@/lib/notify-log";
 import {
@@ -78,7 +78,7 @@ export function setChannel(channel: keyof AlertChannelPrefs, enabled: boolean) {
 }
 
 export function useAlertChannels(): AlertChannelPrefs {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       load();
       listeners.add(cb);
@@ -86,6 +86,7 @@ export function useAlertChannels(): AlertChannelPrefs {
     },
     getChannelPrefs,
     () => DEFAULTS,
+    "wallet-alert-channels",
   );
 }
 

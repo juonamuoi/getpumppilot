@@ -9,7 +9,7 @@
  * PumpPilot never holds keys: every live swap is a transaction the user
  * signs in their own wallet. No seed phrase is ever requested or stored.
  * ------------------------------------------------------------------ */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 export type TradeMode = "paper" | "live";
 
@@ -116,7 +116,12 @@ function subscribe(cb: () => void) {
 }
 
 export function useLiveTrading(): LiveTradingSettings {
-  return useSyncExternalStore(subscribe, getLiveTrading, () => DEFAULTS);
+  return useStableSyncExternalStore(
+    subscribe,
+    getLiveTrading,
+    () => DEFAULTS,
+    "live-trading",
+  );
 }
 
 export function chainName(chainId: number) {

@@ -8,7 +8,7 @@
  *
  * Persisted to localStorage. Demo data only — no keys, no seed phrases.
  * ------------------------------------------------------------------ */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 export type AlertRisk = "critical" | "high" | "medium" | "low" | string;
 
@@ -94,7 +94,7 @@ export function clearAlertHistory() {
 }
 
 export function useAlertHistory(): AlertEvent[] {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       listeners.add(cb);
       return () => listeners.delete(cb);
@@ -104,6 +104,7 @@ export function useAlertHistory(): AlertEvent[] {
       return events;
     },
     () => events,
+    "notify-history",
   );
 }
 

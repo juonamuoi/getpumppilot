@@ -11,7 +11,7 @@
  * PumpPilot never transmits, uploads or asks for an existing seed phrase.
  * Users who prefer MetaMask/Rabby/Coinbase can keep using those instead.
  * ------------------------------------------------------------------ */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 import {
   createPublicClient,
   createWalletClient,
@@ -174,7 +174,12 @@ function subscribe(cb: () => void) {
 }
 
 export function usePumpWallet(): PumpWalletState {
-  return useSyncExternalStore(subscribe, getPumpWallet, () => SERVER_STATE);
+  return useStableSyncExternalStore(
+    subscribe,
+    getPumpWallet,
+    () => SERVER_STATE,
+    "pump-wallet",
+  );
 }
 
 /* ------------------------------ lifecycle ---------------------------- */

@@ -10,7 +10,7 @@
  * Persisted to localStorage so the Security Center can show delivery
  * history across reloads. No wallet keys or personal data are stored.
  * ------------------------------------------------------------------ */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 export type NotifyChannel = "push" | "email" | "in_app";
 export type NotifyStatus = "sent" | "failed" | "skipped";
@@ -149,7 +149,7 @@ export function clearDeliveryLog() {
 }
 
 export function useDeliveryLog(): NotifyDelivery[] {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       listeners.add(cb);
       return () => listeners.delete(cb);
@@ -159,6 +159,7 @@ export function useDeliveryLog(): NotifyDelivery[] {
       return log;
     },
     () => log,
+    "notify-log",
   );
 }
 

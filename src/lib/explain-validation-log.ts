@@ -9,7 +9,7 @@
  * Persisted to localStorage. Notes carry no wallet keys or personal data —
  * only the entry identity, the affected fields and the Zod messages.
  * ------------------------------------------------------------------ */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 
 import type { TuningLogEntry } from "@/lib/paper-store";
 import { safeExplainFields, sanitizedExplainFields } from "@/lib/mitigation-explain";
@@ -147,7 +147,7 @@ export function clearValidationNotes() {
 }
 
 export function useValidationNotes(): ExplainValidationNote[] {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       listeners.add(cb);
       return () => listeners.delete(cb);
@@ -157,6 +157,7 @@ export function useValidationNotes(): ExplainValidationNote[] {
       return notes;
     },
     () => notes,
+    "explain-validation-log",
   );
 }
 

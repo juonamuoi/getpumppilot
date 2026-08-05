@@ -5,7 +5,7 @@
  * scan so any screen (e.g. the Security Center) can show status and
  * trigger a rescan. No keys, seed phrases or signing — ever.
  * ------------------------------------------------------------------ */
-import { useSyncExternalStore } from "react";
+import { useStableSyncExternalStore } from "@/lib/snapshot-invariant";
 import type { ApprovalRisk, WalletScanResult } from "@/lib/wallet-scan";
 
 export const DEMO_WALLET_ADDRESS = "0xDEMO00000000000000000000000000000000a1b2";
@@ -43,13 +43,14 @@ export function requestWalletRescan(opts?: { background?: boolean }) {
 }
 
 export function useWalletSession(): WalletSession {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
     () => state,
     () => state,
+    "wallet-session",
   );
 }
 
@@ -299,13 +300,14 @@ export function isReportDue(schedule: ReportSchedule, now: number = Date.now()):
 }
 
 export function useWalletMonitor(): WalletMonitorSettings {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       monitorListeners.add(cb);
       return () => monitorListeners.delete(cb);
     },
     () => monitor,
     () => defaultMonitor,
+    "wallet-session/monitor",
   );
 }
 
@@ -438,12 +440,13 @@ export function clearScanHistory() {
 }
 
 export function useScanHistory(): ScanRun[] {
-  return useSyncExternalStore(
+  return useStableSyncExternalStore(
     (cb) => {
       historyListeners.add(cb);
       return () => historyListeners.delete(cb);
     },
     () => history.runs,
     () => emptyHistory.runs,
+    "wallet-session/scan-history",
   );
 }
