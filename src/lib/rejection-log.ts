@@ -91,7 +91,8 @@ export function useRejectionLog(): RejectionEntry[] {
 
 /** CSV export of the rejection history. */
 export function rejectionsToCsv(list: RejectionEntry[]): string {
-  const head = "timestamp,side,symbol,qty,mode,control,limit_pct,actual_pct,suggested_fix";
+  const head =
+    "timestamp,side,symbol,qty,mode,control,limit_pct,actual_pct,headroom_usd,headroom_qty,headroom_scope,suggested_fix";
   const rows = list.map((e) =>
     [
       new Date(e.ts).toISOString(),
@@ -102,6 +103,9 @@ export function rejectionsToCsv(list: RejectionEntry[]): string {
       e.block.control,
       e.block.limitPct != null ? e.block.limitPct.toFixed(2) : "",
       e.block.actualPct != null ? e.block.actualPct.toFixed(2) : "",
+      e.block.headroomUsd != null ? e.block.headroomUsd.toFixed(2) : "",
+      e.block.headroomQty != null ? e.block.headroomQty.toFixed(6) : "",
+      `"${(e.block.headroomLabel ?? "").replace(/"/g, '""')}"`,
       `"${e.block.remedy.replace(/"/g, '""')}"`,
     ].join(","),
   );
