@@ -135,6 +135,8 @@ type Props = {
 export function RiskLimitsPanel({ symbol, className }: Props) {
   const paper = usePaper();
   const { risk, equity, dayStartEquity, cash, positions } = paper;
+  const [exporting, setExporting] = useState(false);
+
 
   const exposure = positions.reduce((s, p) => {
     const a = getAsset(p.symbol);
