@@ -98,6 +98,44 @@ describe("store snapshots are reference-stable", () => {
   }
 });
 
+describe("snapshot invariant coverage", () => {
+  it("routes every store through useStableSyncExternalStore", () => {
+    const offenders: string[] = [];
+    for (const file of libFiles()) {
+      const source = readFileSync(file, "utf8");
+      if (file.endsWith("snapshot-invariant.ts")) continue;
+      // Ignore comment lines that merely mention the raw React hook.
+      const code = source
+        .split("\n")
+        .filter((l) => !l.trimStart().startsWith("//") && !l.trimStart().startsWith("*"))
+        .join("\n");
+      const raw = code.split("useStableSyncExternalStore(").join("");
+      if (raw.includes("useSyncExternalStore(")) offenders.push(path.basename(file));
+    }
+    expect(
+      offenders,
+      `these stores call useSyncExternalStore directly and skip the dev-only ` +
+        `stability invariant; import useStableSyncExternalStore from ` +
+        `@/lib/snapshot-invariant and pass a label instead`,
+    ).toEqual([]);
+  });
+
+  it("labels every stable-store call", () => {
+    for (const file of libFiles()) {
+      const source = readFileSync(file, "utf8");
+      for (const args of callArgsFor(source, "useStableSyncExternalStore(")) {
+        const parts = splitArgs(args);
+        expect(
+          parts.length,
+          `${path.basename(file)}: useStableSyncExternalStore needs subscribe, ` +
+            `getSnapshot, getServerSnapshot and a label`,
+        ).toBe(4);
+        expect(parts[3].trim()).toMatch(/^["'`]/);
+      }
+    }
+  });
+});
+
 describe("wallet alerts snapshots", () => {
   it("returns identical references across repeated reads", async () => {
     const store = await import("@/lib/wallet-alerts");
