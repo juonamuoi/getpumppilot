@@ -67,8 +67,8 @@ export function useQuestActions(): Actions {
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
-    () => read(),
-    () => ({}) as Actions,
+    read,
+    () => EMPTY_ACTIONS,
   );
 }
 
