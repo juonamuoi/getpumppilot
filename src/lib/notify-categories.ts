@@ -97,15 +97,18 @@ export function useNotifyCategories() {
     };
   }, []);
 
-  const toggle = useCallback((category: NotifyCategory, on: boolean) => {
-    setLocal((prev) => {
+  const toggle = useCallback(
+    (category: NotifyCategory, on: boolean) => {
+      // Persist outside the state updater: setNotifyCategories dispatches an
+      // event that other subscribers react to, which must not run in render.
       const next = on
-        ? Array.from(new Set([...prev, category]))
-        : prev.filter((c) => c !== category);
+        ? Array.from(new Set([...categories, category]))
+        : categories.filter((c) => c !== category);
+      setLocal(next);
       setNotifyCategories(next);
-      return next;
-    });
-  }, []);
+    },
+    [categories],
+  );
 
   const setAll = useCallback((on: boolean) => {
     const next = on ? ALL_CATEGORIES : [];
