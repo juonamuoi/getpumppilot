@@ -19,9 +19,16 @@ export type RiskBlock = {
   limitPct?: number;
   /** Measured value that breached the limit, in percent where applicable. */
   actualPct?: number;
+  /** Room left under the breached limit after the rejection, in USD. */
+  headroomUsd?: number;
+  /** Same headroom expressed in units of the traded symbol. */
+  headroomQty?: number;
+  /** What the headroom is measured against, e.g. "SOL position cap". */
+  headroomLabel?: string;
   /** What the user can do about it. */
   remedy: string;
 };
+
 
 const CONTROL_TITLE: Record<RiskBlockCode, string> = {
   max_position: "Max position size",
