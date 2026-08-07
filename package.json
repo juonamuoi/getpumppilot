@@ -55,7 +55,9 @@
     "ping:indexing:all": "node scripts/ping-indexing.mjs --all",
     "ping:indexing:dry": "node scripts/ping-indexing.mjs --dry-run",
     "test:security:coverage": "node scripts/security-coverage-summary.mjs",
-    "test:seo:pagination": "vitest run --config vitest.seo.config.ts src/tests/seo/journal-pagination.test.ts"
+    "test:seo:pagination": "vitest run --config vitest.seo.config.ts src/tests/seo/journal-pagination.test.ts",
+    "scan:findings": "node scripts/security-findings-scan.mjs",
+    "scan:findings:json": "node scripts/security-findings-scan.mjs --json"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
