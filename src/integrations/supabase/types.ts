@@ -1320,6 +1320,7 @@ export type Database = {
         Args: { _limit?: number; _offset?: number }
         Returns: Json
       }
+      require_admin: { Args: never; Returns: undefined }
       resolve_referral_code: { Args: { _code: string }; Returns: string }
       wallet_funnel_report: { Args: { _days?: number }; Returns: Json }
     }
