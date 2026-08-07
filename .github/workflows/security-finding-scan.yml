@@ -1,0 +1,46 @@
+name: Security finding scan (PR gate)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  finding-gate:
+    name: open_dex_quote + SUPA_function_search_path_mutable
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Full security analysis for visibility. Other findings are advisory here
+      # and must not fail the pull request.
+      - name: Full security suite (advisory)
+        continue-on-error: true
+        run: |
+          bun run test:security
+          bun run lint:supabase
+          bun run lint:supabase:authz
+
+      # The only gate: these two findings must never come back.
+      - name: Finding gate
+        run: bun run scan:findings
+
+      - name: Finding gate report
+        if: always()
+        run: bun run scan:findings:json > finding-gate.json || true
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-finding-gate
+          path: finding-gate.json
+          if-no-files-found: ignore
