@@ -206,6 +206,45 @@ export type Database = {
         }
         Relationships: []
       }
+      definer_call_audit: {
+        Row: {
+          allowed: boolean
+          args: Json
+          correlation_id: string | null
+          created_at: string
+          db_role: string
+          function_name: string
+          id: string
+          reason: string | null
+          request: Json
+          user_id: string | null
+        }
+        Insert: {
+          allowed?: boolean
+          args?: Json
+          correlation_id?: string | null
+          created_at?: string
+          db_role?: string
+          function_name: string
+          id?: string
+          reason?: string | null
+          request?: Json
+          user_id?: string | null
+        }
+        Update: {
+          allowed?: boolean
+          args?: Json
+          correlation_id?: string | null
+          created_at?: string
+          db_role?: string
+          function_name?: string
+          id?: string
+          reason?: string | null
+          request?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       lead_captures: {
         Row: {
           consent: boolean
@@ -1239,6 +1278,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_definer_call: {
+        Args: {
+          _allowed?: boolean
+          _args?: Json
+          _function: string
+          _reason?: string
+        }
+        Returns: undefined
+      }
       lp_variant_report: {
         Args: { _days?: number }
         Returns: {
@@ -1320,7 +1368,7 @@ export type Database = {
         Args: { _limit?: number; _offset?: number }
         Returns: Json
       }
-      require_admin: { Args: never; Returns: undefined }
+      require_admin: { Args: { _function?: string }; Returns: undefined }
       resolve_referral_code: { Args: { _code: string }; Returns: string }
       wallet_funnel_report: { Args: { _days?: number }; Returns: Json }
     }
