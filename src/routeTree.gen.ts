@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdsReportRouteImport } from './routes/ads-report'
 import { Route as AlertsRouteImport } from './routes/alerts'
+import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AtomDotxmlRouteImport } from './routes/atom[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BacktestRouteImport } from './routes/backtest'
@@ -81,6 +82,11 @@ const AdsReportRoute = AdsReportRouteImport.update({
 const AlertsRoute = AlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApprovalsRoute = ApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AtomDotxmlRoute = AtomDotxmlRouteImport.update({
@@ -370,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/approvals': typeof ApprovalsRoute
   '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
@@ -430,6 +437,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/approvals': typeof ApprovalsRoute
   '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
@@ -491,6 +499,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
   '/alerts': typeof AlertsRoute
+  '/approvals': typeof ApprovalsRoute
   '/atom.xml': typeof AtomDotxmlRoute
   '/auth': typeof AuthRoute
   '/backtest': typeof BacktestRoute
@@ -553,6 +562,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/approvals'
     | '/atom.xml'
     | '/auth'
     | '/backtest'
@@ -613,6 +623,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/approvals'
     | '/atom.xml'
     | '/auth'
     | '/backtest'
@@ -673,6 +684,7 @@ export interface FileRouteTypes {
     | '/'
     | '/ads-report'
     | '/alerts'
+    | '/approvals'
     | '/atom.xml'
     | '/auth'
     | '/backtest'
@@ -734,6 +746,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdsReportRoute: typeof AdsReportRoute
   AlertsRoute: typeof AlertsRoute
+  ApprovalsRoute: typeof ApprovalsRoute
   AtomDotxmlRoute: typeof AtomDotxmlRoute
   AuthRoute: typeof AuthRoute
   BacktestRoute: typeof BacktestRoute
@@ -811,6 +824,13 @@ declare module '@tanstack/react-router' {
       path: '/alerts'
       fullPath: '/alerts'
       preLoaderRoute: typeof AlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/approvals': {
+      id: '/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof ApprovalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/atom.xml': {
@@ -1216,6 +1236,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdsReportRoute: AdsReportRoute,
   AlertsRoute: AlertsRoute,
+  ApprovalsRoute: ApprovalsRoute,
   AtomDotxmlRoute: AtomDotxmlRoute,
   AuthRoute: AuthRoute,
   BacktestRoute: BacktestRoute,

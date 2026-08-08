@@ -28,6 +28,7 @@ export const CANONICAL_ORIGIN = "https://www.getpumppilot.app";
 /** Wallet/session-gated app surfaces: crawlable, never indexed. */
 export const WALLET_GATED_ROUTES = [
   "/dashboard",
+  "/approvals",
   "/journal",
   "/paper",
   "/alerts",
