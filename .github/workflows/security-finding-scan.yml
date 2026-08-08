@@ -2,13 +2,15 @@ name: Security finding scan (PR gate)
 
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
   finding-gate:
-    name: open_dex_quote + SUPA_function_search_path_mutable
+    # Stable name — this exact string is the required status check on main.
+    name: security-scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
