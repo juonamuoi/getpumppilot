@@ -240,9 +240,15 @@ function Dashboard() {
 
         <DisclaimerBanner />
 
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Portfolio overview</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Portfolio overview</h2>
+          <Link to="/approvals" className="text-xs text-primary hover:underline">
+            Assets &amp; approval control →
+          </Link>
+        </div>
 
         <LiveWalletPortfolio />
+
 
         <WalletPriceAlerts />
 
