@@ -7,6 +7,7 @@ import {
   History,
   ShieldCheck,
   ShieldAlert,
+  KeyRound,
   Menu,
   Lock,
   Sparkles,
