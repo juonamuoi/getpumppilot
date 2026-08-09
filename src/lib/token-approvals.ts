@@ -15,6 +15,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getInjectedProvider } from "@/lib/wallet-balances";
+import { getLiveTrading } from "@/lib/live-trading";
+
 
 /** keccak256("Approval(address,address,uint256)") */
 const APPROVAL_TOPIC =
@@ -415,8 +417,16 @@ export async function submitOverwrite(
   change: ApprovalChange,
   from: string,
 ): Promise<string> {
+  // Hard gate: while the live adapter switch is off, no approval write may
+  // ever reach the chain. Paper mode goes through simulateOverwrite instead.
+  if (getLiveTrading().mode !== "live") {
+    throw new Error(
+      "Paper mode is on — approval changes are simulated. Turn on live execution to sign for real.",
+    );
+  }
   const provider = getInjectedProvider() as Eip1193 | null;
   if (!provider) throw new Error("No wallet connected");
+
   const tx = buildOverwriteTx(a, change, from);
   const hash = await provider.request({ method: "eth_sendTransaction", params: [tx] });
   return String(hash);
