@@ -1,4 +1,17 @@
 {
   "$comment": "Advisory security findings that are tracked and explained, but do not fail CI. The gate still hard-fails on open_dex_quote and SUPA_function_search_path_mutable, which can never be listed here. Each entry needs id, reason, owner, and a match/pattern; expires (YYYY-MM-DD) is optional and, once past, the finding becomes unacknowledged again.",
-  "allow": []
+  "allow": [
+    {
+      "id": "pump_self_scoped_definers",
+      "pattern": "SECURITY DEFINER function public\\.pump_\\w+ is still executable by `authenticated`",
+      "reason": "Every pump_* function derives the acting account from auth.uid() internally and never trusts a caller-supplied user id, so signed-in execution is the intended surface. Cross-user execution is covered by the cross-user-authz regression suite.",
+      "owner": "platform-security"
+    },
+    {
+      "id": "require_admin_helper",
+      "pattern": "SECURITY DEFINER function public\\.require_admin is still executable by `authenticated`",
+      "reason": "require_admin is the guard itself: it raises unless the caller holds the admin role, so exposing it to signed-in callers cannot grant access. It must stay callable because the gated functions invoke it as the caller.",
+      "owner": "platform-security"
+    }
+  ]
 }
