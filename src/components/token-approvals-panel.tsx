@@ -307,8 +307,26 @@ export function TokenApprovalsPanel() {
                           Whole collection
                         </Badge>
                       )}
+                      {a.simulated && (
+                        <Badge variant="outline" className="gap-1 border-primary/40 bg-primary/10 text-primary">
+                          <FlaskConical className="h-3 w-3" /> Simulated cap
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-1 truncate text-xs text-muted-foreground">{a.name}</p>
+                    {a.simulated && (
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-primary">
+                        Paper change applied — nothing was sent on-chain.
+                        <button
+                          type="button"
+                          className="underline underline-offset-2"
+                          onClick={() => address && clearSimulation(a.id, address)}
+                        >
+                          Undo
+                        </button>
+                      </p>
+                    )}
+
                     <p className="mt-1 text-xs text-muted-foreground">
                       Granted to <span className="font-mono">{shortAddress(a.spender)}</span> ·{" "}
                       {a.kind === "operator"
