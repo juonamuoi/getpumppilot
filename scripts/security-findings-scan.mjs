@@ -15,7 +15,9 @@
  *       Every function in the public schema must pin `SET search_path`.
  *
  * Everything else the scanners report is printed as advisory output and does
- * NOT fail the run.
+ * NOT fail the run. Advisory items can be tracked and explained in
+ * `security/findings-allowlist.json`; gated findings can never be listed there
+ * (an attempt to do so is a configuration error and fails the run).
  *
  * Usage: node scripts/security-findings-scan.mjs [--json]
  */
@@ -26,6 +28,8 @@ import { join, relative } from "node:path";
 import { lintMigrations } from "./supabase-lint-check.mjs";
 // eslint-disable-next-line import/no-unresolved
 import { auditAll } from "./supabase-authz-check.mjs";
+// eslint-disable-next-line import/no-unresolved
+import { loadAllowlist, applyAllowlist, ALLOWLIST_PATH } from "./security-allowlist.mjs";
 
 const ROOT = process.cwd();
 const SRC = join(ROOT, "src");
@@ -102,11 +106,23 @@ function main() {
     ...authz.errors,
   ];
 
+  // Configurable allowlist: track/explain advisory findings without gating them.
+  const triage = applyAllowlist(advisory, loadAllowlist());
+
   const failed = gated.filter((g) => g.errors.length > 0);
+  const ok = failed.length === 0 && triage.configErrors.length === 0;
   const report = {
-    ok: failed.length === 0,
+    ok,
     gatedFindings: gated.map((g) => ({ id: g.id, reappeared: g.errors.length > 0, errors: g.errors })),
     advisory,
+    allowlist: {
+      path: ALLOWLIST_PATH,
+      acknowledged: triage.acknowledged,
+      unacknowledged: triage.unacknowledged,
+      expired: triage.expired,
+      unusedEntries: triage.unusedEntries,
+      configErrors: triage.configErrors,
+    },
   };
 
   if (process.argv.includes("--json")) {
@@ -121,13 +137,32 @@ function main() {
         for (const e of g.errors) console.log(`          - ${e}`);
       }
     }
-    if (advisory.length) {
-      console.log(`\n  Advisory (not gated, ${advisory.length} item(s)):`);
-      for (const a of advisory) console.log(`    - ${a}`);
+    if (triage.configErrors.length) {
+      console.log(`\n  FAIL  ${ALLOWLIST_PATH} is invalid:`);
+      for (const e of triage.configErrors) console.log(`          - ${e}`);
+    }
+    if (triage.acknowledged.length) {
+      console.log(`\n  Acknowledged via ${ALLOWLIST_PATH} (${triage.acknowledged.length} item(s)):`);
+      for (const a of triage.acknowledged) {
+        const until = a.expires ? `, expires ${a.expires}` : "";
+        console.log(`    - [${a.id}] ${a.message}`);
+        console.log(`        reason: ${a.reason} (owner: ${a.owner}${until})`);
+      }
+    }
+    if (triage.expired.length) {
+      console.log(`\n  Expired allowlist entries (re-review or renew):`);
+      for (const e of triage.expired) console.log(`    - ${e.id} expired ${e.expires} (owner: ${e.owner})`);
+    }
+    if (triage.unusedEntries.length) {
+      console.log(`\n  Stale allowlist entries matching nothing: ${triage.unusedEntries.join(", ")}`);
+    }
+    if (triage.unacknowledged.length) {
+      console.log(`\n  Advisory, not acknowledged (not gated, ${triage.unacknowledged.length} item(s)):`);
+      for (const a of triage.unacknowledged) console.log(`    - ${a}`);
     }
   }
 
-  process.exit(failed.length ? 1 : 0);
+  process.exit(ok ? 0 : 1);
 }
 
 const isMain = process.argv[1] && process.argv[1].endsWith("security-findings-scan.mjs");
