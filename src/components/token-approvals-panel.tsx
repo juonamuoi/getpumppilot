@@ -381,7 +381,7 @@ export function TokenApprovalsPanel() {
                         })
                       }
                     >
-                      Set cap
+                      {paper ? "Simulate cap" : "Set cap"}
                     </Button>
                   </div>
                 )}
