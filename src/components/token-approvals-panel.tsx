@@ -436,7 +436,7 @@ export function TokenApprovalsPanel() {
             <AlertDialogAction
               onClick={() => pending && void apply(pending.approval, pending.change)}
             >
-              Sign in wallet
+              {paper ? "Run simulation" : "Sign in wallet"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
