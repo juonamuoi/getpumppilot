@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 // @ts-expect-error - plain ESM script without type declarations
-import {
-  applyAllowlist,
-  validateAllowlist,
-  loadAllowlist,
-  GATED_FINDING_IDS,
-  ALLOWLIST_PATH,
-} from "../../../scripts/security-allowlist.mjs";
+import * as allowlistModule from "../../../scripts/security-allowlist.mjs";
+
+const { applyAllowlist, validateAllowlist, loadAllowlist, GATED_FINDING_IDS, ALLOWLIST_PATH } =
+  allowlistModule as {
+    applyAllowlist: (advisory: string[], allowlist: unknown, now?: Date) => Record<string, unknown>;
+    validateAllowlist: (doc: unknown) => { entries: unknown[]; configErrors: string[] };
+    loadAllowlist: () => { entries: unknown[]; configErrors: string[] };
+    GATED_FINDING_IDS: string[];
+    ALLOWLIST_PATH: string;
+  };
 
 /**
  * The finding gate hard-fails only on `open_dex_quote` and
