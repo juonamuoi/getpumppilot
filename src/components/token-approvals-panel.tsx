@@ -217,6 +217,42 @@ export function TokenApprovalsPanel() {
       </CardHeader>
 
       <CardContent className="space-y-3">
+        {paper && (
+          <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+            <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div className="text-xs text-muted-foreground">
+              <p>
+                <span className="font-medium text-primary">Paper mode.</span> Every revoke and
+                spending-cap change here is simulated: the exact calldata is built and the result is
+                projected below, but nothing is signed, broadcast, or charged a network fee. Turn on
+                live execution in Execution mode to send these for real.
+              </p>
+              {simCount > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span>
+                    {simCount} simulated change{simCount === 1 ? "" : "s"} applied to the view below.
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7"
+                    onClick={() => {
+                      clearSimulations(address);
+                      toast.success("Simulations cleared", {
+                        description: "Showing the real on-chain approvals again.",
+                      });
+                    }}
+                  >
+                    <RotateCcw className="mr-1.5 h-3 w-3" />
+                    Reset simulation
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+
         {criticalCount > 0 && (
           <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
