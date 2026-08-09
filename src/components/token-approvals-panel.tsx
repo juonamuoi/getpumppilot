@@ -39,7 +39,16 @@ import {
 } from "@/components/ui/select";
 import { useInjectedAccount } from "@/lib/wallet-balances";
 import { shortAddress } from "@/lib/wallet-scan";
-import { explorerTxUrl } from "@/lib/live-trading";
+import { explorerTxUrl, useLiveTrading } from "@/lib/live-trading";
+import {
+  clearSimulation,
+  clearSimulations,
+  latestByApproval,
+  projectApprovals,
+  simulateOverwrite,
+  useApprovalSimulations,
+  type ProjectedApproval,
+} from "@/lib/approval-simulation";
 import {
   RISK_LABEL,
   buildOverwriteTx,
@@ -52,6 +61,7 @@ import {
   type ApprovalRisk,
   type TokenApproval,
 } from "@/lib/token-approvals";
+
 
 const RISK_STYLE: Record<ApprovalRisk, string> = {
   critical: "border-destructive/40 bg-destructive/10 text-destructive",
