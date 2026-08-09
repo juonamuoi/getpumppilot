@@ -1,0 +1,4 @@
+{
+  "$comment": "Advisory security findings that are tracked and explained, but do not fail CI. The gate still hard-fails on open_dex_quote and SUPA_function_search_path_mutable, which can never be listed here. Each entry needs id, reason, owner, and a match/pattern; expires (YYYY-MM-DD) is optional and, once past, the finding becomes unacknowledged again.",
+  "allow": []
+}
