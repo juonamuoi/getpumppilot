@@ -344,13 +344,14 @@ export function TokenApprovalsPanel() {
                   <div className="flex shrink-0 items-center gap-2">
                     <Button
                       size="sm"
-                      variant="destructive"
+                      variant={paper ? "secondary" : "destructive"}
                       disabled={busy}
                       onClick={() => setPending({ approval: a, change: { type: "revoke" } })}
                     >
                       {busy ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ShieldOff className="mr-2 h-3.5 w-3.5" />}
-                      Revoke
+                      {paper ? "Simulate revoke" : "Revoke"}
                     </Button>
+
                   </div>
                 </div>
 
