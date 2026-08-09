@@ -15,6 +15,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getInjectedProvider } from "@/lib/wallet-balances";
+import { getLiveTrading } from "@/lib/live-trading";
+
 
 /** keccak256("Approval(address,address,uint256)") */
 const APPROVAL_TOPIC =
