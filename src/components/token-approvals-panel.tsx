@@ -177,15 +177,21 @@ export function TokenApprovalsPanel() {
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
         <div>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-base">
             <ShieldCheck className="h-4 w-4 text-primary" />
             Approval control
+            <Badge variant={paper ? "secondary" : "destructive"} className="gap-1">
+              {paper && <FlaskConical className="h-3 w-3" />}
+              {paper ? "Paper — simulated" : "Live — real transactions"}
+            </Badge>
           </CardTitle>
           <p className="mt-1 text-xs text-muted-foreground">
             {shortAddress(address)} · {approvals.length} live grant{approvals.length === 1 ? "" : "s"} ·{" "}
             {unlimitedCount} unlimited
+            {simCount > 0 && <> · {simCount} simulated change{simCount === 1 ? "" : "s"}</>}
           </p>
         </div>
+
         <div className="flex items-center gap-2">
           <Select value={filter} onValueChange={(v) => setFilter(v as RiskFilter)}>
             <SelectTrigger className="h-8 w-[130px]" aria-label="Filter approvals by risk">
