@@ -81,6 +81,8 @@ function fmtAmount(value: number): string {
 export function TokenApprovalsPanel() {
   const { address, available, connect } = useInjectedAccount();
   const scan = useApprovalScan(address);
+  const live = useLiveTrading();
+  const simulations = useApprovalSimulations();
   const [filter, setFilter] = useState<RiskFilter>("all");
   const [limits, setLimits] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<{ approval: TokenApproval; change: ApprovalChange } | null>(
@@ -88,13 +90,26 @@ export function TokenApprovalsPanel() {
   );
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const approvals = scan.data?.approvals ?? [];
+  /** Live adapter switch is off → every write stays a simulation. */
+  const paper = live.mode !== "live";
+  const chainId = scan.data?.chainId;
+
+  const sims = useMemo(
+    () => latestByApproval(simulations, address, chainId),
+    [simulations, address, chainId],
+  );
+  const rawApprovals = scan.data?.approvals ?? [];
+  const approvals: ProjectedApproval[] = useMemo(
+    () => (paper ? projectApprovals(rawApprovals, sims) : rawApprovals),
+    [paper, rawApprovals, sims],
+  );
   const visible = useMemo(
     () => (filter === "all" ? approvals : approvals.filter((a) => riskOf(a) === filter)),
     [approvals, filter],
   );
   const criticalCount = approvals.filter((a) => riskOf(a) === "critical").length;
   const unlimitedCount = approvals.filter((a) => a.unlimited).length;
+  const simCount = paper ? sims.size : 0;
 
   const preview = pending ? buildOverwriteTx(pending.approval, pending.change, address ?? "0x") : null;
 
@@ -102,6 +117,18 @@ export function TokenApprovalsPanel() {
     if (!address) return;
     setBusyId(approval.id);
     try {
+      if (paper) {
+        // Nothing is signed and nothing is broadcast: we build the exact
+        // calldata, then record the outcome locally.
+        const entry = simulateOverwrite(approval, change, address, chainId ?? 0);
+        toast.success(
+          change.type === "revoke" ? "Revoke simulated" : "Spending cap simulated",
+          {
+            description: `Paper mode — no transaction sent. ${approval.symbol} · ${shortAddress(approval.spender)} · sim ${entry.simHash.slice(0, 10)}…`,
+          },
+        );
+        return;
+      }
       const hash = await submitOverwrite(approval, change, address);
       const url = scan.data ? explorerTxUrl(scan.data.chainId, hash) : null;
       toast.success(
@@ -113,7 +140,7 @@ export function TokenApprovalsPanel() {
       );
       setTimeout(() => void scan.refetch(), 6_000);
     } catch (error) {
-      toast.error("Transaction not sent", {
+      toast.error(paper ? "Simulation failed" : "Transaction not sent", {
         description: error instanceof Error ? error.message : "Your wallet rejected the request.",
       });
     } finally {
@@ -121,6 +148,7 @@ export function TokenApprovalsPanel() {
       setPending(null);
     }
   }
+
 
   if (!address) {
     return (
