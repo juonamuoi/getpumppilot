@@ -391,8 +391,9 @@ export function TokenApprovalsPanel() {
         </ul>
 
         <p className="pt-1 text-[11px] text-muted-foreground">
-          Only your wallet can change these grants, so every action here is a transaction you sign
-          yourself. PumpPilot cannot alter approvals on your behalf and never sees your keys.
+          {paper
+            ? "Paper mode is on, so no approval transaction can be sent from here — changes are simulated locally until you enable live execution."
+            : "Only your wallet can change these grants, so every action here is a transaction you sign yourself. PumpPilot cannot alter approvals on your behalf and never sees your keys."}
         </p>
       </CardContent>
 
@@ -400,7 +401,13 @@ export function TokenApprovalsPanel() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {pending?.change.type === "revoke" ? "Revoke this grant?" : "Overwrite the allowance?"}
+              {paper
+                ? pending?.change.type === "revoke"
+                  ? "Simulate revoking this grant?"
+                  : "Simulate this spending cap?"
+                : pending?.change.type === "revoke"
+                  ? "Revoke this grant?"
+                  : "Overwrite the allowance?"}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
@@ -410,9 +417,11 @@ export function TokenApprovalsPanel() {
                     : `${shortAddress(pending?.approval.spender ?? "")} will be capped at ${pending?.change.type === "limit" ? pending.change.amount : ""} ${pending?.approval.symbol}.`}
                 </p>
                 <p className="text-muted-foreground">
-                  This replaces the old on-chain signature. Your wallet will ask you to confirm, and
-                  you pay the network fee.
+                  {paper
+                    ? "Paper mode: this is a dry run. The calldata below is built but never signed or broadcast, and no fee is paid — the list just updates to show the outcome."
+                    : "This replaces the old on-chain signature. Your wallet will ask you to confirm, and you pay the network fee."}
                 </p>
+
                 {preview && (
                   <div className="rounded-md border border-border bg-muted/40 p-2 font-mono text-[11px] break-all">
                     <div>to: {preview.to}</div>
