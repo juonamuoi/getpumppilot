@@ -50,6 +50,11 @@ import {
   type ProjectedApproval,
 } from "@/lib/approval-simulation";
 import {
+  ApprovalProvenance,
+  DataOriginBadge,
+  ScanProvenancePanel,
+} from "@/components/approval-provenance";
+import {
   RISK_LABEL,
   buildOverwriteTx,
   exposureAmount,
