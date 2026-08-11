@@ -351,6 +351,10 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
         unlimited: allowance >= UNLIMITED_THRESHOLD,
         balance: fromBaseUnits(balance, decimals),
         lastBlock: block,
+        chainId,
+        txHash: log.transactionHash ?? null,
+        source: "onchain-log-scan",
+        scannedAt,
       });
     } catch {
       // A contract that doesn't answer standard calls is skipped rather than
