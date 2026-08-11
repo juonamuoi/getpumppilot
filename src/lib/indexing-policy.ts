@@ -27,6 +27,10 @@ export const CANONICAL_ORIGIN = "https://www.getpumppilot.app";
 
 /** Wallet/session-gated app surfaces: crawlable, never indexed. */
 export const WALLET_GATED_ROUTES = [
+  // Sign-in screen: no indexable content, and Google reports it as an
+  // "affected page" when it sits in the sitemap without unique content.
+  "/auth",
+  "/login",
   "/dashboard",
   "/approvals",
   "/journal",

@@ -804,7 +804,42 @@ function LandingPage() {
                 coaching.
               </p>
             </div>
-            <div className="grid gap-8 sm:grid-cols-3 text-sm">
+            <div className="grid gap-8 sm:grid-cols-4 text-sm">
+              <div>
+                <h4 className="font-semibold text-foreground">Features</h4>
+                <ul className="mt-2 space-y-1 text-muted-foreground">
+                  <li>
+                    <Link to="/features" className="hover:text-foreground">
+                      All features
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/features/dashboard" className="hover:text-foreground">
+                      Momentum dashboard
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/features/journal" className="hover:text-foreground">
+                      Trade journal
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/pump" className="hover:text-foreground">
+                      PUMP rewards
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/quests" className="hover:text-foreground">
+                      Quests
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/refer" className="hover:text-foreground">
+                      Refer a friend
+                    </Link>
+                  </li>
+                </ul>
+              </div>
               <div>
                 <h4 className="font-semibold text-foreground">Product</h4>
                 <ul className="mt-2 space-y-1 text-muted-foreground">
