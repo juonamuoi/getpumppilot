@@ -1,4 +1,5 @@
 import { withSocialMeta } from "@/lib/social-meta";
+import { robotsMetaFor } from "@/lib/indexing-policy";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
