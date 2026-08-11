@@ -369,8 +369,18 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
     chainId,
     approvals,
     scannedBlocks: head - fromBlock,
+    fromBlock,
+    toBlock: head,
+    scannedAt,
+    rpc: "injected-wallet",
     scanFailed,
   };
+}
+
+/** Explorer link for an address on a supported chain, when we know one. */
+export function explorerAddressUrl(chainId: number, address: string): string | null {
+  const base = SUPPORTED_CHAINS.find((c) => c.id === chainId)?.explorer;
+  return base ? `${base.replace(/\/tx\/$/, "/address/")}${address}` : null;
 }
 
 /** Value the spender can pull right now, in tokens. */
