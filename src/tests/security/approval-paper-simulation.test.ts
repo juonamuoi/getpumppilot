@@ -24,6 +24,10 @@ const erc20: TokenApproval = {
   unlimited: true,
   balance: 500,
   lastBlock: 10,
+  chainId: 1,
+  txHash: "0xdeadbeef",
+  source: "onchain-log-scan",
+  scannedAt: 1_700_000_000_000,
 };
 
 const operator: TokenApproval = {
