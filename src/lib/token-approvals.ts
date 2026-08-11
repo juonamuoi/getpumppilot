@@ -174,6 +174,7 @@ type RawLog = {
   topics?: string[];
   data?: string;
   blockNumber?: string;
+  transactionHash?: string;
 };
 
 async function getLogsChunked(
