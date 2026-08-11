@@ -287,6 +287,7 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
     .sort((a, b) => b[1].block - a[1].block)
     .slice(0, MAX_GRANTS);
 
+  const scannedAt = Date.now();
   const approvals: TokenApproval[] = [];
   for (const [key, { log, kind, block }] of candidates) {
     const contract = String(log.address).toLowerCase();
