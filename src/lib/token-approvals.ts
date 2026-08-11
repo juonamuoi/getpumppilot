@@ -15,7 +15,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getInjectedProvider } from "@/lib/wallet-balances";
-import { getLiveTrading } from "@/lib/live-trading";
+import { getLiveTrading, SUPPORTED_CHAINS } from "@/lib/live-trading";
 
 
 /** keccak256("Approval(address,address,uint256)") */
@@ -65,7 +65,19 @@ export type TokenApproval = {
   balance: number;
   /** Block of the most recent grant we saw. */
   lastBlock: number;
+  /* ---- provenance: where this row came from ---- */
+  /** Chain the grant lives on. */
+  chainId: number;
+  /** Transaction that emitted the grant event, when the RPC returned it. */
+  txHash: string | null;
+  /** How the entry was discovered. */
+  source: ApprovalSource;
+  /** Epoch ms of the scan that produced this row. */
+  scannedAt: number;
 };
+
+/** Provenance of an approval row. */
+export type ApprovalSource = "onchain-log-scan" | "paper-simulation";
 
 export type ApprovalRisk = "critical" | "high" | "medium" | "low";
 
@@ -75,6 +87,14 @@ export type ApprovalScan = {
   approvals: TokenApproval[];
   /** Blocks actually scanned. */
   scannedBlocks: number;
+  /** First block covered by the scan. */
+  fromBlock: number;
+  /** Latest block at scan time. */
+  toBlock: number;
+  /** Epoch ms the scan completed. */
+  scannedAt: number;
+  /** Where the reads came from — always the user's own wallet RPC. */
+  rpc: "injected-wallet";
   /** True when the RPC refused log scans on this network. */
   scanFailed: boolean;
 };
@@ -154,6 +174,7 @@ type RawLog = {
   topics?: string[];
   data?: string;
   blockNumber?: string;
+  transactionHash?: string;
 };
 
 async function getLogsChunked(
@@ -266,6 +287,7 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
     .sort((a, b) => b[1].block - a[1].block)
     .slice(0, MAX_GRANTS);
 
+  const scannedAt = Date.now();
   const approvals: TokenApproval[] = [];
   for (const [key, { log, kind, block }] of candidates) {
     const contract = String(log.address).toLowerCase();
@@ -294,6 +316,10 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
           unlimited: true,
           balance: 0,
           lastBlock: block,
+          chainId,
+          txHash: log.transactionHash ?? null,
+          source: "onchain-log-scan",
+          scannedAt,
         });
         continue;
       }
@@ -325,6 +351,10 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
         unlimited: allowance >= UNLIMITED_THRESHOLD,
         balance: fromBaseUnits(balance, decimals),
         lastBlock: block,
+        chainId,
+        txHash: log.transactionHash ?? null,
+        source: "onchain-log-scan",
+        scannedAt,
       });
     } catch {
       // A contract that doesn't answer standard calls is skipped rather than
@@ -339,8 +369,18 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
     chainId,
     approvals,
     scannedBlocks: head - fromBlock,
+    fromBlock,
+    toBlock: head,
+    scannedAt,
+    rpc: "injected-wallet",
     scanFailed,
   };
+}
+
+/** Explorer link for an address on a supported chain, when we know one. */
+export function explorerAddressUrl(chainId: number, address: string): string | null {
+  const base = SUPPORTED_CHAINS.find((c) => c.id === chainId)?.explorer;
+  return base ? `${base.replace(/\/tx\/$/, "/address/")}${address}` : null;
 }
 
 /** Value the spender can pull right now, in tokens. */

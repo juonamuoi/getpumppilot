@@ -50,6 +50,11 @@ import {
   type ProjectedApproval,
 } from "@/lib/approval-simulation";
 import {
+  ApprovalProvenance,
+  DataOriginBadge,
+  ScanProvenancePanel,
+} from "@/components/approval-provenance";
+import {
   RISK_LABEL,
   buildOverwriteTx,
   exposureAmount,
@@ -252,6 +257,8 @@ export function TokenApprovalsPanel() {
           </div>
         )}
 
+        <ScanProvenancePanel scan={scan.data} paper={paper} simCount={simCount} />
+
 
         {criticalCount > 0 && (
           <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
@@ -307,6 +314,7 @@ export function TokenApprovalsPanel() {
                           Whole collection
                         </Badge>
                       )}
+                      <DataOriginBadge simulated={Boolean(a.simulated)} />
                       {a.simulated && (
                         <Badge variant="outline" className="gap-1 border-primary/40 bg-primary/10 text-primary">
                           <FlaskConical className="h-3 w-3" /> Simulated cap
@@ -385,6 +393,7 @@ export function TokenApprovalsPanel() {
                     </Button>
                   </div>
                 )}
+                <ApprovalProvenance approval={a} />
               </li>
             );
           })}
