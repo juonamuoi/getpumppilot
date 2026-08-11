@@ -65,7 +65,19 @@ export type TokenApproval = {
   balance: number;
   /** Block of the most recent grant we saw. */
   lastBlock: number;
+  /* ---- provenance: where this row came from ---- */
+  /** Chain the grant lives on. */
+  chainId: number;
+  /** Transaction that emitted the grant event, when the RPC returned it. */
+  txHash: string | null;
+  /** How the entry was discovered. */
+  source: ApprovalSource;
+  /** Epoch ms of the scan that produced this row. */
+  scannedAt: number;
 };
+
+/** Provenance of an approval row. */
+export type ApprovalSource = "onchain-log-scan" | "paper-simulation";
 
 export type ApprovalRisk = "critical" | "high" | "medium" | "low";
 
@@ -75,6 +87,14 @@ export type ApprovalScan = {
   approvals: TokenApproval[];
   /** Blocks actually scanned. */
   scannedBlocks: number;
+  /** First block covered by the scan. */
+  fromBlock: number;
+  /** Latest block at scan time. */
+  toBlock: number;
+  /** Epoch ms the scan completed. */
+  scannedAt: number;
+  /** Where the reads came from — always the user's own wallet RPC. */
+  rpc: "injected-wallet";
   /** True when the RPC refused log scans on this network. */
   scanFailed: boolean;
 };
