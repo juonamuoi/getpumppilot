@@ -227,6 +227,9 @@ export function projectApprovals(
       allowance: next,
       allowanceAmount: fromBaseUnits(next, a.decimals),
       unlimited: next >= UNLIMITED_THRESHOLD,
+      // Provenance: the row is still an on-chain discovery, but the numbers
+      // shown are a local paper projection.
+      source: "paper-simulation",
       simulated: sim,
     });
   }
