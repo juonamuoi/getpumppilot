@@ -312,6 +312,7 @@ export function TokenApprovalsPanel() {
                           Whole collection
                         </Badge>
                       )}
+                      <DataOriginBadge simulated={Boolean(a.simulated)} />
                       {a.simulated && (
                         <Badge variant="outline" className="gap-1 border-primary/40 bg-primary/10 text-primary">
                           <FlaskConical className="h-3 w-3" /> Simulated cap
