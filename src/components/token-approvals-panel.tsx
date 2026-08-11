@@ -257,6 +257,8 @@ export function TokenApprovalsPanel() {
           </div>
         )}
 
+        <ScanProvenancePanel scan={scan.data} paper={paper} simCount={simCount} />
+
 
         {criticalCount > 0 && (
           <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
