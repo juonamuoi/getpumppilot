@@ -315,6 +315,10 @@ export async function scanApprovals(address: string): Promise<ApprovalScan> {
           unlimited: true,
           balance: 0,
           lastBlock: block,
+          chainId,
+          txHash: log.transactionHash ?? null,
+          source: "onchain-log-scan",
+          scannedAt,
         });
         continue;
       }
