@@ -390,6 +390,7 @@ export function TokenApprovalsPanel() {
                     </Button>
                   </div>
                 )}
+                <ApprovalProvenance approval={a} />
               </li>
             );
           })}
