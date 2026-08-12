@@ -142,7 +142,9 @@ export function RealtimeMomentumAlerts() {
             Cooldown {scannerRules.cooldownMinutes}m.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <DevicePushToggle />
+
           <Switch
             checked={enabled}
             onCheckedChange={setEnabled}
