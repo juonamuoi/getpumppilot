@@ -13,6 +13,9 @@ import { Switch } from "@/components/ui/switch";
 import { usePaper, type AlertDelivery } from "@/lib/paper-store";
 import { useLiveMomentum, type LiveMomentum } from "@/lib/live-momentum";
 import { scoreColor } from "@/components/momentum";
+import { sendMomentumPush } from "@/lib/momentum-push";
+import { DevicePushToggle } from "@/components/device-push-toggle";
+
 
 const TICK_MS = 5000;
 
@@ -100,6 +103,19 @@ export function RealtimeMomentumAlerts() {
         toast.success(`${row.symbol} momentum ${row.score}`, { description: rule });
       }
     }
+
+    // OS-level push (iOS / Android via Capacitor, Web Notifications in the browser).
+    if (scannerRules.channels.push) {
+      void sendMomentumPush(
+        hits.map(({ row, rule }) => ({
+          symbol: row.symbol,
+          score: row.score,
+          delta: row.delta,
+          rule,
+        })),
+      );
+    }
+
     // Re-evaluate on every tick only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ts, enabled]);
@@ -126,7 +142,9 @@ export function RealtimeMomentumAlerts() {
             Cooldown {scannerRules.cooldownMinutes}m.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <DevicePushToggle />
+
           <Switch
             checked={enabled}
             onCheckedChange={setEnabled}
