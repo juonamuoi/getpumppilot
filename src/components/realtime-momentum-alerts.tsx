@@ -100,6 +100,19 @@ export function RealtimeMomentumAlerts() {
         toast.success(`${row.symbol} momentum ${row.score}`, { description: rule });
       }
     }
+
+    // OS-level push (iOS / Android via Capacitor, Web Notifications in the browser).
+    if (scannerRules.channels.push) {
+      void sendMomentumPush(
+        hits.map(({ row, rule }) => ({
+          symbol: row.symbol,
+          score: row.score,
+          delta: row.delta,
+          rule,
+        })),
+      );
+    }
+
     // Re-evaluate on every tick only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ts, enabled]);
