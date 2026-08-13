@@ -12,6 +12,7 @@
 import { isNativeApp, nativePlatform, registerPushNotifications, kvSet, kvGet } from "@/lib/native";
 import { pushPermission, pushSupported, requestPushPermission, showPush } from "@/lib/threat-notify";
 import type { PushPermission } from "@/lib/threat-notify";
+import { isPushTypeEnabled, type PushAlertType } from "@/lib/push-alert-types";
 
 const TOKEN_KEY = "pp.push.deviceToken";
 const OPT_IN_KEY = "pp.push.momentum.optIn";
@@ -76,8 +77,12 @@ export type MomentumPushHit = {
  * Coalesces a tick's hits into a single notification so a busy market never
  * spams the lock screen. Tapping it opens the dashboard.
  */
-export async function sendMomentumPush(hits: MomentumPushHit[]): Promise<boolean> {
+export async function sendMomentumPush(
+  hits: MomentumPushHit[],
+  type: PushAlertType = "momentum",
+): Promise<boolean> {
   if (hits.length === 0) return false;
+  if (!isPushTypeEnabled(type)) return false;
   if (!pushSupported() || pushPermission() !== "granted") return false;
 
   const first = hits[0];
@@ -94,5 +99,21 @@ export async function sendMomentumPush(hits: MomentumPushHit[]): Promise<boolean
           .join(", ")}${hits.length > 3 ? ` and ${hits.length - 3} more` : ""}. Tap to review.`;
 
   const res = await showPush(title, body, `pp-momentum-${Date.now()}`, "/dashboard");
+  return res.ok;
+}
+
+/**
+ * Generic typed push for non-momentum alerts (strategy/backtest, portfolio).
+ * Silently no-ops when the alert type is switched off or permission is missing.
+ */
+export async function sendTypedPush(
+  type: PushAlertType,
+  title: string,
+  body: string,
+  route = "/dashboard",
+): Promise<boolean> {
+  if (!isPushTypeEnabled(type)) return false;
+  if (!pushSupported() || pushPermission() !== "granted") return false;
+  const res = await showPush(title, body, `pp-${type}-${Date.now()}`, route);
   return res.ok;
 }

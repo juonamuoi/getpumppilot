@@ -5,6 +5,7 @@ import { CreditGate } from "@/components/credit-gate";
 import { useCredits } from "@/hooks/useCredits";
 import { CREDIT_COSTS } from "@/lib/credits";
 import { toast } from "sonner";
+import { sendTypedPush } from "@/lib/momentum-push";
 import { useState } from "react";
 import { useExecutionAnnouncer } from "@/components/execution-announcer";
 import { AppShell } from "@/components/app-shell";
@@ -139,6 +140,12 @@ function BacktestPage() {
       "polite",
       "essential",
       "backtest",
+    );
+    void sendTypedPush(
+      "strategy",
+      "Backtest complete",
+      `${strategy} strategy over ${period} months finished. Demo results — not investment advice.`,
+      "/backtest",
     );
   };
 
