@@ -55,3 +55,17 @@ bun run cap:assets
 - If you later want to bundle the web app locally instead, change `server.url` to `undefined` and set `webDir` to a static build folder. You will also need to replace TanStack server functions with API calls.
 - Apple sometimes rejects simple “website wrapper” apps. To reduce rejection risk, this wrapper already uses native splash screen, status bar styling, and the native share sheet. You can add more native features (push notifications, biometric lock, widgets) over time.
 - Keep `capacitor-www/index.html` simple — it only appears when the remote URL cannot be reached.
+
+## Push notifications
+
+Momentum and scanner alerts are delivered to the device OS:
+
+- **Native (iOS/Android)** — `@capacitor/local-notifications` schedules the alert; `@capacitor/push-notifications` registers the device with APNs/FCM for future server-sent pushes. The token is stored per device via Capacitor Preferences.
+- **Browser** — falls back to the Web Notifications API.
+
+Enable it from the **Realtime momentum alerts** card ("Enable push"), and make sure the *Push* channel is on in `/alerts` → Rules.
+
+Platform setup needed before store builds:
+
+- **Android** — `POST_NOTIFICATIONS` is declared in `AndroidManifest.xml`. For remote push add your Firebase `google-services.json` to `android/app/`.
+- **iOS** — `UIBackgroundModes: remote-notification` is set in `Info.plist`. In Xcode enable the **Push Notifications** capability and upload an APNs key in the Apple Developer console.
