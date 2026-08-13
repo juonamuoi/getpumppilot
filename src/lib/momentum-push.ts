@@ -101,3 +101,19 @@ export async function sendMomentumPush(
   const res = await showPush(title, body, `pp-momentum-${Date.now()}`, "/dashboard");
   return res.ok;
 }
+
+/**
+ * Generic typed push for non-momentum alerts (strategy/backtest, portfolio).
+ * Silently no-ops when the alert type is switched off or permission is missing.
+ */
+export async function sendTypedPush(
+  type: PushAlertType,
+  title: string,
+  body: string,
+  route = "/dashboard",
+): Promise<boolean> {
+  if (!isPushTypeEnabled(type)) return false;
+  if (!pushSupported() || pushPermission() !== "granted") return false;
+  const res = await showPush(title, body, `pp-${type}-${Date.now()}`, route);
+  return res.ok;
+}
