@@ -19,6 +19,7 @@ import {
   requestPushPermission,
   showPush,
 } from "@/lib/threat-notify";
+import { isPushTypeEnabled } from "@/lib/push-alert-types";
 import { sendPriceAlertEmail } from "@/lib/wallet-price-alert-email.functions";
 
 export type AlertChannelPrefs = {
@@ -120,6 +121,10 @@ async function deliverPush(a: AlertPayload, enabled: boolean): Promise<ChannelOu
   if (!enabled) {
     recordDelivery({ channel: "push", status: "skipped", reason: "channel_off", title, ...meta });
     return { channel: "push", ok: false, reason: "channel_off" };
+  }
+  if (!isPushTypeEnabled("portfolio")) {
+    recordDelivery({ channel: "push", status: "skipped", reason: "type_off", title, ...meta });
+    return { channel: "push", ok: false, reason: "type_off" };
   }
   if (!pushSupported()) {
     recordDelivery({ channel: "push", status: "skipped", reason: "unsupported", title, ...meta });
