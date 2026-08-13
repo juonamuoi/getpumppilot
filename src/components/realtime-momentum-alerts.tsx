@@ -14,7 +14,9 @@ import { usePaper, type AlertDelivery } from "@/lib/paper-store";
 import { useLiveMomentum, type LiveMomentum } from "@/lib/live-momentum";
 import { scoreColor } from "@/components/momentum";
 import { sendMomentumPush } from "@/lib/momentum-push";
+import { isPushTypeEnabled } from "@/lib/push-alert-types";
 import { DevicePushToggle } from "@/components/device-push-toggle";
+import { PushAlertTypeToggles } from "@/components/push-alert-type-toggles";
 
 
 const TICK_MS = 5000;
@@ -98,7 +100,7 @@ export function RealtimeMomentumAlerts() {
       ].slice(0, 12),
     );
 
-    if (scannerRules.channels.inApp) {
+    if (scannerRules.channels.inApp && isPushTypeEnabled("momentum")) {
       for (const { row, rule } of hits.slice(0, 3)) {
         toast.success(`${row.symbol} momentum ${row.score}`, { description: rule });
       }
@@ -144,6 +146,7 @@ export function RealtimeMomentumAlerts() {
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <DevicePushToggle />
+          <PushAlertTypeToggles />
 
           <Switch
             checked={enabled}
