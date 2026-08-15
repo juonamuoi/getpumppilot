@@ -19,6 +19,7 @@ import { AD_CREATIVES } from "@/lib/ad-creatives";
 import { LANDING_VARIANTS } from "@/lib/landing-variants";
 import { useAuth } from "@/lib/auth-store";
 import { FunnelReport } from "@/components/funnel-report";
+import { PlacementReport } from "@/components/placement-report";
 import { SignificancePanel, type SignificanceRow } from "@/components/significance-panel";
 import { wilsonInterval } from "@/lib/ab-stats";
 
@@ -272,6 +273,8 @@ function AdsReport() {
           </Card>
 
           <SignificancePanel rows={sigRows} />
+
+          <PlacementReport days={days} />
 
           <FunnelReport days={days} />
 
