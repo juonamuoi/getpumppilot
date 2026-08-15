@@ -21,8 +21,10 @@ export type Database = {
           event: string
           experiment: string
           id: string
+          placement: string | null
           user_id: string | null
           utm_campaign: string | null
+          utm_content: string | null
           utm_medium: string | null
           utm_source: string | null
           variant: string
@@ -34,8 +36,10 @@ export type Database = {
           event: string
           experiment: string
           id?: string
+          placement?: string | null
           user_id?: string | null
           utm_campaign?: string | null
+          utm_content?: string | null
           utm_medium?: string | null
           utm_source?: string | null
           variant: string
@@ -47,8 +51,10 @@ export type Database = {
           event?: string
           experiment?: string
           id?: string
+          placement?: string | null
           user_id?: string | null
           utm_campaign?: string | null
+          utm_content?: string | null
           utm_medium?: string | null
           utm_source?: string | null
           variant?: string
@@ -1233,6 +1239,20 @@ export type Database = {
           source: string
           variant: string
           visitors: number
+        }[]
+      }
+      ad_placement_report: {
+        Args: { _days?: number }
+        Returns: {
+          campaign: string
+          click_visitors: number
+          clicks: number
+          creative: string
+          placement: string
+          signup_rate: number
+          signups: number
+          source: string
+          variant: string
         }[]
       }
       consume_credits: {
