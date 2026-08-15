@@ -124,6 +124,8 @@ export async function trackFunnelStep(step: FunnelStep, userId?: string | null) 
       utm_source: ctx?.utm_source ?? null,
       utm_medium: ctx?.utm_medium ?? null,
       utm_campaign: ctx?.utm_campaign ?? null,
+      utm_content: ctx?.utm_content ?? null,
+      placement: null,
     });
   } catch {
     /* ignore */
@@ -196,6 +198,8 @@ export async function trackCtaClick(placement: string, variantOverride?: string)
       utm_source: attribution.utm_source,
       utm_medium: attribution.utm_medium,
       utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      placement: attribution.placement,
     });
   } catch {
     /* analytics must never break the CTA */
@@ -225,6 +229,8 @@ export async function trackSignupAttribution(userId: string) {
       utm_source: cta?.utm_source ?? ctx?.utm_source ?? null,
       utm_medium: cta?.utm_medium ?? ctx?.utm_medium ?? null,
       utm_campaign: cta?.utm_campaign ?? ctx?.utm_campaign ?? null,
+      utm_content: cta?.utm_content ?? ctx?.utm_content ?? null,
+      placement: cta?.placement ?? "unknown",
     });
   } catch {
     /* ignore */

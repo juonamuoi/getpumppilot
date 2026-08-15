@@ -230,6 +230,8 @@ export async function trackCreativeEvent(
       utm_source: assignment.utm_source,
       utm_medium: assignment.utm_medium,
       utm_campaign: assignment.utm_campaign,
+      utm_content: assignment.creativeId,
+      placement: `creative:${event}`,
     });
   } catch {
     /* analytics is best-effort and must never break the page */
