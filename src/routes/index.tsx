@@ -814,7 +814,20 @@ function LandingPage() {
       </section>
 
 
+      {/* Campaign creative — demoted below the product content */}
+      <section className="px-4 pb-12" aria-label="Campaign creative">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            Campaign creative
+          </h2>
+          <div className="mt-3">
+            <AdPreview href={launchHref} label={user ? "Open dashboard" : "Start paper trading free"} />
+          </div>
+        </div>
+      </section>
+
       {/* Share */}
+
       <section className="px-4 pb-4">
         <div className="mx-auto max-w-3xl">
           <ShareLinks path="/" />
