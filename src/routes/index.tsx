@@ -1,6 +1,6 @@
 import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   FlaskConical,
   TrendingUp,
@@ -17,8 +17,10 @@ import {
   Trophy,
   Brain,
   Eye,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { trackCtaClick } from "@/lib/funnel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -328,6 +330,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
