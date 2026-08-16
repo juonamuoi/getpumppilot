@@ -23,6 +23,7 @@ import {
   TerminalSquare,
   Rss,
   Coins,
+  Handshake,
 
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -61,6 +62,7 @@ const nav = [
   { to: "/security", label: "Security", icon: ShieldAlert },
   { to: "/learn", label: "Learn", icon: BookOpen },
   { to: "/refer", label: "Invite & earn", icon: Gift },
+  { to: "/affiliate", label: "Affiliate program", icon: Handshake },
   { to: "/pump", label: "PUMP token", icon: Coins },
   { to: "/pricing", label: "Credits & Pricing", icon: Zap },
   { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },

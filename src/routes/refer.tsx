@@ -8,7 +8,7 @@ import { nativeShare } from "@/lib/native";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Copy, Share2, Twitter, Mail, MessageCircle, Gift, Users, Sparkles, Check } from "lucide-react";
+import { Copy, Share2, Twitter, Mail, MessageCircle, Gift, Users, Sparkles, Check, Clock, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { PumpReferralRewards } from "@/components/pump-referral-rewards";
 
@@ -105,11 +105,25 @@ function ReferPage() {
           Share your personal link. When a friend signs up and completes their first required action, <span className="text-foreground font-medium">you both get PUMP instantly</span> — and you each get 1 month of Pro free once they stay active for 7 days.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-4">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard icon={<Users className="h-5 w-5" />} label="Friends referred" value={String(count)} />
           <StatCard icon={<Check className="h-5 w-5" />} label="Qualified (7-day)" value={String(qualified)} />
           <StatCard icon={<Sparkles className="h-5 w-5" />} label="Free months earned" value={String(rewardMonths)} />
           <StatCard icon={<Gift className="h-5 w-5" />} label="Your code" value={code ?? "—"} mono />
+          <StatCard icon={<Clock className="h-5 w-5" />} label="Pending rewards" value={String(Math.max(0, count - qualified))} />
+          <StatCard icon={<Wallet className="h-5 w-5" />} label="Paid rewards" value={`${rewardMonths} mo`} />
+        </div>
+
+        <p className="mt-4 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Qualification:</span> a referral counts once
+          your friend signs up with your link and stays active for 7 days. Pending referrals are
+          signups that have not reached day 7 yet.
+        </p>
+
+        <div className="mt-4">
+          <Button variant="outline" asChild>
+            <Link to="/affiliate">Looking for the affiliate program?</Link>
+          </Button>
         </div>
 
         <Card className="mt-8">
