@@ -1,6 +1,6 @@
 import { withSocialMeta } from "@/lib/social-meta";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   FlaskConical,
   TrendingUp,
@@ -17,8 +17,10 @@ import {
   Trophy,
   Brain,
   Eye,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { trackCtaClick } from "@/lib/funnel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -328,6 +330,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.add("dark");
@@ -340,100 +343,158 @@ function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+          <Link to="/" className="flex min-w-0 items-center gap-2">
             <img
               src="/favicon.png"
               alt="PumpPilot AI logo"
               className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-lg shadow-emerald-500/20"
             />
-            <div>
-              <div className="text-sm font-bold tracking-tight">PumpPilot AI</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Paper mode
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <a href="#features">Features</a>
+            <span className="truncate text-sm font-bold tracking-tight">PumpPilot AI</span>
+          </Link>
+
+          <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
+            <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+              <Link to="/scanner">Product</Link>
             </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/scanner">Scanner</Link>
+            <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
+              <a href="#how-it-works">How it works</a>
             </Button>
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
               <Link to="/pricing">Pricing</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <a href="#guides">Guides</a>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/blog">Blog</Link>
+              <Link to="/auth">Log in</Link>
             </Button>
             <Button size="sm" asChild onClick={() => void trackCtaClick("nav")}>
               <Link to={launchHref}>{launchLabel}</Link>
             </Button>
-          </div>
 
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetTitle>Menu</SheetTitle>
+                <div className="mt-6 flex flex-col gap-1">
+                  {[
+                    { label: "Product & scanner", to: "/scanner" },
+                    { label: "Pricing & credits", to: "/pricing" },
+                    { label: "Learn hub", to: "/learn" },
+                    { label: "Guides & blog", to: "/blog" },
+                    { label: "Log in", to: "/auth" },
+                  ].map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                  <a
+                    href="#how-it-works"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    How it works
+                  </a>
+                  <Button className="mt-4" asChild onClick={() => void trackCtaClick("mobile_menu")}>
+                    <Link to={launchHref} onClick={() => setMenuOpen(false)}>
+                      {launchLabel}
+                    </Link>
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </nav>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 pt-12 pb-20">
+      <section className="relative overflow-hidden px-4 pt-14 pb-16 sm:pt-20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent" />
-        <div className="relative mx-auto max-w-4xl text-center">
-          <img
-            src="/favicon.png"
-            alt="PumpPilot AI mascot — AI robot pumping crypto into a wallet while you sleep"
-            width={160}
-            height={160}
-            fetchPriority="high"
-            decoding="async"
-            className="mx-auto mb-6 h-32 w-32 rounded-3xl object-cover shadow-2xl shadow-emerald-500/10 sm:h-40 sm:w-40"
-          />
-          <Badge
-            variant="outline"
-            className="mb-4 border-emerald-500/30 px-3 py-1 text-emerald-300"
-          >
-            <Lock className="mr-1.5 h-3 w-3" /> Live execution locked — paper trading only
-          </Badge>
+        <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
-            The best AI investment app <br className="hidden sm:block" />
+            Spot crypto momentum,{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              for explainable crypto momentum.
+              and see exactly why.
             </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            Spot momentum. Control risk. Trade smarter. PumpPilot AI pairs an explainable momentum
-            scanner with paper trading, AI coaching and hard risk controls — so you learn how the
-            signal works before you ever put real money on the line.
+          <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
+            Scan the market, read the plain-English reasons behind every score, and test your ideas
+            with paper trading — no real money, no seed phrases.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
             <Button size="lg" asChild onClick={() => void trackCtaClick("hero")}>
               <Link to={launchHref}>
-                {launchLabel} <ArrowRight className="ml-2 h-4 w-4" />
+                {user ? "Open dashboard" : "Start paper trading free"}
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <Link to="/learn">See how it works</Link>
+              <a href="#how-it-works">See how it works</a>
             </Button>
           </div>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> No seed phrases stored
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Lock className="h-3.5 w-3.5 text-emerald-400" /> Live trades disabled by default
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 text-amber-400" /> 4.8 avg from early users
-            </span>
+          <p className="mt-6 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-emerald-500/25 bg-emerald-500/5 px-4 py-2 text-xs text-emerald-200/90">
+            <Lock className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
+            <span>Paper trading only — live execution locked. Demo data. Not financial advice.</span>
+          </p>
+        </div>
+      </section>
+
+      {/* How it works — three steps */}
+      <section id="how-it-works" className="scroll-mt-20 border-y border-border/60 bg-muted/10 px-4 py-14">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">How it works</h2>
+            <p className="mt-2 text-muted-foreground">Three steps, no real capital required.</p>
           </div>
-          <div className="mt-12">
-            <AdPreview href={launchHref} label={user ? "Open dashboard" : "Sign up free"} />
+          <ol className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: Radar,
+                title: "Scan momentum",
+                desc: "The scanner ranks demo assets by momentum so you see what is moving first.",
+              },
+              {
+                icon: Eye,
+                title: "Understand the reasons",
+                desc: "Each score lists the exact rules that fired and how much they contributed.",
+              },
+              {
+                icon: FlaskConical,
+                title: "Test safely with paper trading",
+                desc: "Place simulated orders, track the journal, and learn before risking anything.",
+              },
+            ].map((step, i) => (
+              <li key={step.title}>
+                <Card className="h-full border-border/60 bg-card/60">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500/10 text-sm font-semibold text-emerald-300">
+                        {i + 1}
+                      </span>
+                      <step.icon className="h-5 w-5 text-emerald-400" aria-hidden />
+                    </div>
+                    <h3 className="mt-3 font-semibold">{step.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{step.desc}</p>
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-8 text-center">
+            <Button variant="outline" asChild>
+              <Link to="/scanner">Open the momentum scanner</Link>
+            </Button>
           </div>
         </div>
       </section>
+
 
       {/* Why PumpPilot */}
       <section className="border-y border-border/60 bg-muted/10 px-4 py-14">
@@ -753,7 +814,20 @@ function LandingPage() {
       </section>
 
 
+      {/* Campaign creative — demoted below the product content */}
+      <section className="px-4 pb-12" aria-label="Campaign creative">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            Campaign creative
+          </h2>
+          <div className="mt-3">
+            <AdPreview href={launchHref} label={user ? "Open dashboard" : "Start paper trading free"} />
+          </div>
+        </div>
+      </section>
+
       {/* Share */}
+
       <section className="px-4 pb-4">
         <div className="mx-auto max-w-3xl">
           <ShareLinks path="/" />

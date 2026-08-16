@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdsReportRouteImport } from './routes/ads-report'
+import { Route as AffiliateRouteImport } from './routes/affiliate'
 import { Route as AlertsRouteImport } from './routes/alerts'
 import { Route as ApprovalsRouteImport } from './routes/approvals'
 import { Route as AtomDotxmlRouteImport } from './routes/atom[.]xml'
@@ -77,6 +78,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdsReportRoute = AdsReportRouteImport.update({
   id: '/ads-report',
   path: '/ads-report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateRoute = AffiliateRouteImport.update({
+  id: '/affiliate',
+  path: '/affiliate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlertsRoute = AlertsRouteImport.update({
@@ -375,6 +381,7 @@ const ApiPublicWaitlistFollowupRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
+  '/affiliate': typeof AffiliateRoute
   '/alerts': typeof AlertsRoute
   '/approvals': typeof ApprovalsRoute
   '/atom.xml': typeof AtomDotxmlRoute
@@ -436,6 +443,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
+  '/affiliate': typeof AffiliateRoute
   '/alerts': typeof AlertsRoute
   '/approvals': typeof ApprovalsRoute
   '/atom.xml': typeof AtomDotxmlRoute
@@ -498,6 +506,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ads-report': typeof AdsReportRoute
+  '/affiliate': typeof AffiliateRoute
   '/alerts': typeof AlertsRoute
   '/approvals': typeof ApprovalsRoute
   '/atom.xml': typeof AtomDotxmlRoute
@@ -561,6 +570,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/ads-report'
+    | '/affiliate'
     | '/alerts'
     | '/approvals'
     | '/atom.xml'
@@ -622,6 +632,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/ads-report'
+    | '/affiliate'
     | '/alerts'
     | '/approvals'
     | '/atom.xml'
@@ -683,6 +694,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/ads-report'
+    | '/affiliate'
     | '/alerts'
     | '/approvals'
     | '/atom.xml'
@@ -745,6 +757,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdsReportRoute: typeof AdsReportRoute
+  AffiliateRoute: typeof AffiliateRoute
   AlertsRoute: typeof AlertsRoute
   ApprovalsRoute: typeof ApprovalsRoute
   AtomDotxmlRoute: typeof AtomDotxmlRoute
@@ -817,6 +830,13 @@ declare module '@tanstack/react-router' {
       path: '/ads-report'
       fullPath: '/ads-report'
       preLoaderRoute: typeof AdsReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate': {
+      id: '/affiliate'
+      path: '/affiliate'
+      fullPath: '/affiliate'
+      preLoaderRoute: typeof AffiliateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/alerts': {
@@ -1235,6 +1255,7 @@ const ApiPublicWaitlistRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdsReportRoute: AdsReportRoute,
+  AffiliateRoute: AffiliateRoute,
   AlertsRoute: AlertsRoute,
   ApprovalsRoute: ApprovalsRoute,
   AtomDotxmlRoute: AtomDotxmlRoute,
