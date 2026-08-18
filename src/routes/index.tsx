@@ -36,7 +36,7 @@ import {
 import { useAuth } from "@/lib/auth-store";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { ShareLinks } from "@/components/share-links";
-import { AdPreview } from "@/components/ad-preview";
+
 
 
 import { CREDIT_PACKS } from "@/lib/credits";
