@@ -129,31 +129,39 @@ function Brand() {
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav aria-label="Primary" className="flex flex-col gap-1">
-      {nav.map((n) => {
-        const active = pathname === n.to || pathname.startsWith(n.to + "/");
-        const Icon = n.icon;
-        return (
-          <Link
-            key={n.to}
-            to={n.to}
-            onClick={onNavigate}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-              active
-                ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{n.label}</span>
-          </Link>
-        );
-      })}
+    <nav aria-label="Primary" className="flex flex-col gap-4">
+      {navGroups.map((group) => (
+        <div key={group.label} className="flex flex-col gap-1">
+          <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+            {group.label}
+          </div>
+          {group.items.map((n) => {
+            const active = pathname === n.to || pathname.startsWith(n.to + "/");
+            const Icon = n.icon;
+            return (
+              <Link
+                key={n.to}
+                to={n.to}
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  active
+                    ? "bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{n.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 }
+
 
 /** Prominent in-app links to the comparison guides + blog index. */
 function GuideLinks({ onNavigate }: { onNavigate?: () => void }) {
