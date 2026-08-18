@@ -35,6 +35,8 @@ export const WALLET_GATED_ROUTES = [
   "/approvals",
   "/journal",
   "/paper",
+  "/trade",
+
   "/alerts",
   "/risk",
   "/copilot",

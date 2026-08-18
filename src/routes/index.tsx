@@ -18,6 +18,9 @@ import {
   Brain,
   Eye,
   Menu,
+  Wallet,
+  ArrowLeftRight,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -33,7 +36,7 @@ import {
 import { useAuth } from "@/lib/auth-store";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { ShareLinks } from "@/components/share-links";
-import { AdPreview } from "@/components/ad-preview";
+
 
 
 import { CREDIT_PACKS } from "@/lib/credits";
@@ -419,19 +422,19 @@ function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
-            Spot crypto momentum,{" "}
+            Find, size and execute crypto trades{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              and see exactly why.
+              with the reasons in view.
             </span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Scan the market, read the plain-English reasons behind every score, and test your ideas
-            with paper trading — no real money, no seed phrases.
+            Connect a wallet, read why an asset is moving, set your risk limits, then preview every
+            fee, slippage and risk check before you sign. Paper trading is the default.
           </p>
           <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
             <Button size="lg" asChild onClick={() => void trackCtaClick("hero")}>
               <Link to={launchHref}>
-                {user ? "Open dashboard" : "Start paper trading free"}
+                Open trading dashboard
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -441,34 +444,44 @@ function LandingPage() {
           </div>
           <p className="mt-6 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-emerald-500/25 bg-emerald-500/5 px-4 py-2 text-xs text-emerald-200/90">
             <Lock className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
-            <span>Paper trading only — live execution locked. Demo data. Not financial advice.</span>
+            <span>
+              Paper by default · live broadcast gated · we never ask for a seed phrase. Demo data,
+              not financial advice.
+            </span>
           </p>
         </div>
       </section>
 
-      {/* How it works — three steps */}
+      {/* How it works — the trading journey */}
       <section id="how-it-works" className="scroll-mt-20 border-y border-border/60 bg-muted/10 px-4 py-14">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">How it works</h2>
-            <p className="mt-2 text-muted-foreground">Three steps, no real capital required.</p>
+            <p className="mt-2 text-muted-foreground">
+              Four steps from wallet to signed transaction — or to a simulated one.
+            </p>
           </div>
-          <ol className="grid gap-4 md:grid-cols-3">
+          <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
+                icon: Wallet,
+                title: "Connect your wallet",
+                desc: "Read-only by default. No seed phrase, no private key, no custody — ever.",
+              },
+              {
                 icon: Radar,
-                title: "Scan momentum",
-                desc: "The scanner ranks demo assets by momentum so you see what is moving first.",
+                title: "Find and understand opportunities",
+                desc: "The scanner ranks assets by momentum and lists the exact rules that fired.",
               },
               {
-                icon: Eye,
-                title: "Understand the reasons",
-                desc: "Each score lists the exact rules that fired and how much they contributed.",
+                icon: ShieldCheck,
+                title: "Set your risk limits",
+                desc: "Position caps, stop-loss, take-profit and daily loss limits check every order.",
               },
               {
-                icon: FlaskConical,
-                title: "Test safely with paper trading",
-                desc: "Place simulated orders, track the journal, and learn before risking anything.",
+                icon: ArrowLeftRight,
+                title: "Preview and execute",
+                desc: "See quote, network fee, slippage and price impact, then sign in your own wallet.",
               },
             ].map((step, i) => (
               <li key={step.title}>
@@ -487,13 +500,17 @@ function LandingPage() {
               </li>
             ))}
           </ol>
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button variant="outline" asChild>
               <Link to="/scanner">Open the momentum scanner</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/trade">See the trade workflow</Link>
             </Button>
           </div>
         </div>
       </section>
+
 
 
       {/* Why PumpPilot */}
@@ -814,17 +831,8 @@ function LandingPage() {
       </section>
 
 
-      {/* Campaign creative — demoted below the product content */}
-      <section className="px-4 pb-12" aria-label="Campaign creative">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-            Campaign creative
-          </h2>
-          <div className="mt-3">
-            <AdPreview href={launchHref} label={user ? "Open dashboard" : "Start paper trading free"} />
-          </div>
-        </div>
-      </section>
+
+
 
       {/* Share */}
 
