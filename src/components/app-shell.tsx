@@ -46,28 +46,56 @@ import { ATOM_PATH, RSS_PATH } from "@/lib/feed";
 import { getPostBySlug } from "@/lib/blog-posts";
 
 
-const nav = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/scanner", label: "Scanner", icon: Radar },
-  { to: "/doctor", label: "Portfolio Doctor", icon: Stethoscope },
-  { to: "/copilot", label: "AI Copilot", icon: Bot },
-  { to: "/journal", label: "Trade Journal", icon: LineChart },
-  { to: "/alerts", label: "Alerts", icon: Bell },
-  { to: "/paper", label: "Paper Trading", icon: Wallet },
-  { to: "/approvals", label: "Assets & Approvals", icon: KeyRound },
-  { to: "/strategy", label: "Strategy Builder", icon: Sparkles },
-  { to: "/community", label: "Community", icon: Users },
-  { to: "/backtest", label: "Backtest", icon: History },
-  { to: "/risk", label: "Risk Controls", icon: ShieldCheck },
-  { to: "/security", label: "Security", icon: ShieldAlert },
-  { to: "/learn", label: "Learn", icon: BookOpen },
-  { to: "/refer", label: "Invite & earn", icon: Gift },
-  { to: "/affiliate", label: "Affiliate program", icon: Handshake },
-  { to: "/pump", label: "PUMP token", icon: Coins },
-  { to: "/pricing", label: "Credits & Pricing", icon: Zap },
-  { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+/**
+ * Primary product hierarchy first (the trading journey), then the tools that
+ * support it, then secondary "Earn" and account surfaces.
+ */
+const navGroups = [
+  {
+    label: "Trading",
+    items: [
+      { to: "/dashboard", label: "Portfolio", icon: LayoutDashboard },
+      { to: "/scanner", label: "Market Scanner", icon: Radar },
+      { to: "/trade", label: "Trade", icon: ArrowLeftRight },
+      { to: "/strategy", label: "Strategies", icon: Sparkles },
+      { to: "/risk", label: "Risk Controls", icon: ShieldCheck },
+      { to: "/journal", label: "Activity", icon: LineChart },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      { to: "/paper", label: "Paper Trading", icon: Wallet },
+      { to: "/alerts", label: "Alerts", icon: Bell },
+      { to: "/backtest", label: "Backtest", icon: History },
+      { to: "/doctor", label: "Portfolio Doctor", icon: Stethoscope },
+      { to: "/copilot", label: "AI Copilot", icon: Bot },
+      { to: "/approvals", label: "Assets & Approvals", icon: KeyRound },
+      { to: "/security", label: "Security", icon: ShieldAlert },
+    ],
+  },
+  {
+    label: "Earn",
+    items: [
+      { to: "/refer", label: "Invite & earn", icon: Gift },
+      { to: "/affiliate", label: "Affiliate program", icon: Handshake },
+      { to: "/pump", label: "PUMP token", icon: Coins },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { to: "/pricing", label: "Credits & Pricing", icon: Zap },
+      { to: "/learn", label: "Learn", icon: BookOpen },
+      { to: "/community", label: "Community", icon: Users },
+      { to: "/mcp-console", label: "MCP Console", icon: TerminalSquare },
+      { to: "/settings", label: "Settings", icon: SettingsIcon },
+    ],
+  },
 ] as const;
+
+const nav = navGroups.flatMap((g) => g.items);
+
 
 /** Comparison guides surfaced in-app so crawlers and users reach them from every page. */
 const guideSlugs = [
