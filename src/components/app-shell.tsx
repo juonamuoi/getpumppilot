@@ -92,9 +92,10 @@ const navGroups = [
       { to: "/settings", label: "Settings", icon: SettingsIcon },
     ],
   },
-] as const;
+];
 
 const nav = navGroups.flatMap((g) => g.items);
+
 
 
 /** Comparison guides surfaced in-app so crawlers and users reach them from every page. */
