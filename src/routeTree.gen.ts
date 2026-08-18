@@ -49,6 +49,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StorageAuditRouteImport } from './routes/storage-audit'
 import { Route as StrategyRouteImport } from './routes/strategy'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TradeRouteImport } from './routes/trade'
 import { Route as WalletFunnelRouteImport } from './routes/wallet-funnel'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -270,6 +271,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TradeRoute = TradeRouteImport.update({
+  id: '/trade',
+  path: '/trade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WalletFunnelRoute = WalletFunnelRouteImport.update({
   id: '/wallet-funnel',
   path: '/wallet-funnel',
@@ -419,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
+  '/trade': typeof TradeRoute
   '/wallet-funnel': typeof WalletFunnelRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -481,6 +488,7 @@ export interface FileRoutesByTo {
   '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
+  '/trade': typeof TradeRoute
   '/wallet-funnel': typeof WalletFunnelRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -544,6 +552,7 @@ export interface FileRoutesById {
   '/storage-audit': typeof StorageAuditRoute
   '/strategy': typeof StrategyRoute
   '/terms': typeof TermsRoute
+  '/trade': typeof TradeRoute
   '/wallet-funnel': typeof WalletFunnelRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -608,6 +617,7 @@ export interface FileRouteTypes {
     | '/storage-audit'
     | '/strategy'
     | '/terms'
+    | '/trade'
     | '/wallet-funnel'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/storage-audit'
     | '/strategy'
     | '/terms'
+    | '/trade'
     | '/wallet-funnel'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -732,6 +743,7 @@ export interface FileRouteTypes {
     | '/storage-audit'
     | '/strategy'
     | '/terms'
+    | '/trade'
     | '/wallet-funnel'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -795,6 +807,7 @@ export interface RootRouteChildren {
   StorageAuditRoute: typeof StorageAuditRoute
   StrategyRoute: typeof StrategyRoute
   TermsRoute: typeof TermsRoute
+  TradeRoute: typeof TradeRoute
   WalletFunnelRoute: typeof WalletFunnelRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -1098,6 +1111,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trade': {
+      id: '/trade'
+      path: '/trade'
+      fullPath: '/trade'
+      preLoaderRoute: typeof TradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wallet-funnel': {
       id: '/wallet-funnel'
       path: '/wallet-funnel'
@@ -1293,6 +1313,7 @@ const rootRouteChildren: RootRouteChildren = {
   StorageAuditRoute: StorageAuditRoute,
   StrategyRoute: StrategyRoute,
   TermsRoute: TermsRoute,
+  TradeRoute: TradeRoute,
   WalletFunnelRoute: WalletFunnelRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
