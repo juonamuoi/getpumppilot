@@ -18,6 +18,9 @@ import {
   Brain,
   Eye,
   Menu,
+  Wallet,
+  ArrowLeftRight,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
