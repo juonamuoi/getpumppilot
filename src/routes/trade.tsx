@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { DisclaimerBanner } from "@/components/disclaimer";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { TradeModeSwitch } from "@/components/trade-mode-switch";
-import { TradeSafetyGate } from "@/components/trade-safety-gate";
+
 import { LiveSwapPanel } from "@/components/live-swap-panel";
 import { LiveStatusIndicator } from "@/components/live-status-indicator";
 import { RiskLimitsPanel } from "@/components/risk-limits-panel";
@@ -100,7 +100,6 @@ function TradePage() {
         </Card>
 
         <LiveStatusIndicator />
-        <TradeSafetyGate />
         <TradeModeSwitch />
 
         <LiveSwapPanel />
